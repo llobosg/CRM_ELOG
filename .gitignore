@@ -1,0 +1,7 @@
+# Archivos sensibles
+config.php
+.env
+*.log
+
+# XAMPP
+/xamppfiles/
