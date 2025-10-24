@@ -1,9 +1,10 @@
 <?php
 // config.php - Compatible con XAMPP local y Railway.app
 
-if (getenv('RAILWAY_ENVIRONMENT')) {
-    // Entorno Railway: usa las variables de entorno oficiales del plugin MySQL
-    $host     = $_ENV['MYSQLHOST']     ?? 'mysql.railway.internal';
+// Detectar entorno Railway: Railway inyecta MYSQLHOST automáticamente
+if (getenv('MYSQLHOST')) {
+    // Entorno Railway
+    $host     = $_ENV['MYSQLHOST'];
     $port     = $_ENV['MYSQLPORT']     ?? 3306;
     $dbname   = $_ENV['MYSQLDATABASE'] ?? 'railway';
     $username = $_ENV['MYSQLUSER']     ?? 'root';
@@ -12,9 +13,9 @@ if (getenv('RAILWAY_ENVIRONMENT')) {
     // Entorno local (XAMPP)
     $host     = '127.0.0.1';
     $port     = 3306;
-    $dbname   = 'crm_aduanas';  // ajusta si usas otro nombre localmente
+    $dbname   = 'crm_aduanas';
     $username = 'root';
-    $password = ''; // XAMPP por defecto no tiene contraseña
+    $password = ''; // XAMPP no tiene contraseña por defecto
 }
 
 try {
@@ -25,7 +26,7 @@ try {
     ]);
 } catch (PDOException $e) {
     // En producción, evita mostrar detalles sensibles
-    if (getenv('RAILWAY_ENVIRONMENT')) {
+    if (getenv('MYSQLHOST')) {
         die("Error: No se pudo conectar a la base de datos.");
     } else {
         die("Error de conexión local: " . $e->getMessage());
