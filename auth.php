@@ -1,4 +1,6 @@
 <?php
+    // ¡¡¡VERSIÓN DE PRUEBA - OCT 2025!!!
+    error_log("🚀 auth.php versión: OCT2025-LOGIN-FIX");
     // auth.php
     session_start();
 
