@@ -26,7 +26,7 @@ error_log("🔍 Resultado SQL: " . json_encode($user));
 // 🔍 LOG DEL RESULTADO
 error_log("🔍 Usuario encontrado: " . ($user ? $user['nombre'] : 'NINGUNO'));
 
-if ($user && password_verify($password, $user['password'])) {
+if ($user && $password === $user['password']) {
     $_SESSION['user'] = $user['nombre'];
     $_SESSION['rol'] = $user['rol'];
     header('Location: index.php');
