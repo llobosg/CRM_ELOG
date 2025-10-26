@@ -2398,7 +2398,7 @@ if (isset($_SESSION['rol'])) {
             if (!term) return;
 
             try {
-                const response = await fetch(`/CRM_Qwen/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
+                const response = await fetch(`/api/buscar_inteligente.php?term=...`);
                 const data = await response.json();
 
                 resultadosDiv.innerHTML = '';
