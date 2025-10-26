@@ -1,27 +1,33 @@
 <?php
-    session_start();
+session_start();
 
-    if (empty($_POST['nombre']) || empty($_POST['password'])) {
-        header('Location: login.php?error=1');
-        exit;
-    }
+if (empty($_POST['nombre']) || empty($_POST['password'])) {
+    header('Location: login.php?error=1');
+    exit;
+}
 
-    $username = $_POST['nombre'];
-    $password = $_POST['password'];
+$username = $_POST['nombre'];
+$password = $_POST['password'];
 
-    require_once __DIR__ . '/config.php';
+// 🔍 LOG MÍNIMO (solo para diagnóstico)
+error_log("🔍 Login intentado con: '$username'");
 
-    $stmt = $pdo->prepare("SELECT nombre, rol, password FROM usuarios WHERE nombre = ?");
-    $stmt->execute([$username]);
-    $user = $stmt->fetch();
+require_once __DIR__ . '/config.php';
 
-    if ($user && $password === $user['password']) {
-        $_SESSION['user'] = $user['nombre'];
-        $_SESSION['rol'] = $user['rol'];
-        header('Location: index.php');
-        exit;
-    } else {
-        header('Location: login.php?error=1');
-        exit;
-    }
+$stmt = $pdo->prepare("SELECT nombre, rol, password FROM usuarios WHERE nombre = ?");
+$stmt->execute([$username]);
+$user = $stmt->fetch();
+
+// 🔍 LOG DEL RESULTADO
+error_log("🔍 Usuario encontrado: " . ($user ? $user['nombre'] : 'NINGUNO'));
+
+if ($user && $password === $user['password']) {
+    $_SESSION['user'] = $user['nombre'];
+    $_SESSION['rol'] = $user['rol'];
+    header('Location: index.php');
+    exit;
+} else {
+    header('Location: login.php?error=1');
+    exit;
+}
 ?>
