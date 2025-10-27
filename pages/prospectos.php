@@ -1,299 +1,3 @@
-
-<?php
-    define('DEVELOPMENT', true);
-    file_put_contents('php://stderr', "MÉTODO: " . $_SERVER['REQUEST_METHOD'] . "\n");
-    file_put_contents('php://stderr', "servicios_json: " . ($_POST['servicios_json'] ?? 'VACÍO') . "\n");
-    require_once __DIR__ . '/../config.php';
-    require_once './includes/auth_check.php';
-    // === Solo procesar si hay POST y tiene datos mínimos ===
-    if ($_POST && isset($_POST['modo'])) {
-        // Determinar modo: 'prospecto' (solo prospecto) o 'servicios' (prospecto + servicios)
-        $modo = $_POST['modo'] ?? 'prospecto';
-        file_put_contents('php://stderr', "🔍 [PHP] Modo de guardado: " . $modo . "\n");
-        file_put_contents('php://stderr', "📦 [PHP] servicios_json: " . ($_POST['servicios_json'] ?? 'VACÍO') . "\n");
-
-        try {
-            $pdo->beginTransaction();
-            $id_ppl = (int)($_POST['id_ppl'] ?? 0);
-            $tipo_oper = $_POST['tipo_oper'] ?? '';
-            $modo_update = ($id_ppl > 0);
-            $servicios_existentes = false;
-
-            if ($modo_update) {
-                // Verificar si ya tiene servicios
-                $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM servicios WHERE id_prospect = ?");
-                $stmt_check->execute([$id_ppl]);
-                $servicios_existentes = $stmt_check->fetchColumn() > 0;
-
-                // Si ya tenía servicios, mantener su tipo_oper original
-                if ($servicios_existentes) {
-                    $stmt_orig = $pdo->prepare("SELECT tipo_oper FROM prospectos WHERE id_ppl = ?");
-                    $stmt_orig->execute([$id_ppl]);
-                    $tipo_oper_original = $stmt_orig->fetchColumn();
-                    $tipo_oper = $tipo_oper_original ?: $tipo_oper;
-                }
-
-                // Obtener id_prospect
-                $stmt_id = $pdo->prepare("SELECT id_prospect FROM prospectos WHERE id_ppl = ?");
-                $stmt_id->execute([$id_ppl]);
-                $id_prospect = (int)$stmt_id->fetchColumn();
-            } else {
-                // Nuevo prospecto
-                $ultimo = $pdo->query("SELECT MAX(id_prospect) as max_id FROM prospectos")->fetch();
-                $id_prospect = (int)($ultimo['max_id'] ?? 0) + 1;
-            }
-
-            // Manejo de fecha_alta
-            $estado_anterior = null;
-            if ($modo_update) {
-                $stmt_orig = $pdo->prepare("SELECT estado FROM prospectos WHERE id_ppl = ?");
-                $stmt_orig->execute([$id_ppl]);
-                $estado_anterior = $stmt_orig->fetchColumn();
-            }
-            $fecha_alta = $_POST['fecha_alta'] ?? date('Y-m-d');
-            if ($modo_update && $estado_anterior !== ($_POST['estado'] ?? 'Pendiente')) {
-                $fecha_alta = date('Y-m-d');
-            }
-
-            // === Generar concatenado ===
-            $operacion = $_POST['operacion'] ?? '';
-            $tipo_oper = $_POST['tipo_oper'] ?? '';
-
-            // Extraer solo letras y convertir a mayúsculas
-            $op_clean = preg_replace('/[^a-zA-Z]/', '', $operacion);
-            $tipo_clean = preg_replace('/[^a-zA-Z]/', '', $tipo_oper);
-
-            // Tomar primeras 2 letras de operación y primeras 4 de tipo_oper
-            $op_abrev = strtoupper(substr($op_clean, 0, 2));
-            $tipo_abrev = strtoupper(substr($tipo_clean, 0, 4));
-
-            // Valores por defecto si están vacíos
-            if (empty($op_abrev)) {
-                if (stripos($operacion, 'import') !== false) {
-                    $op_abrev = 'IM';
-                } elseif (stripos($operacion, 'export') !== false) {
-                    $op_abrev = 'EX';
-                } else {
-                    $op_abrev = 'XX';
-                }
-            }
-            if (empty($tipo_abrev)) {
-                $tipo_abrev = 'XXXX';
-            }
-
-            $prefijo = $op_abrev . $tipo_abrev;
-            $fecha_actual = date('ymd');
-            $correlativo = str_pad($id_prospect + 1, 2, '0', STR_PAD_LEFT);
-            $concatenado = $prefijo . $fecha_actual . '-' . $correlativo;
-
-            // === Preparar datos del prospecto ===
-            $id_comercial = !empty($_POST['id_comercial']) ? (int)$_POST['id_comercial'] : null;
-            $data = [
-                'id_prospect' => $id_prospect,
-                'razon_social' => $_POST['razon_social'] ?? '',
-                'rut_empresa' => $_POST['rut_empresa'] ?? '',
-                'fono_empresa' => $_POST['fono_empresa'] ?? '',
-                'pais' => $_POST['pais'] ?? '',
-                'direccion' => $_POST['direccion'] ?? '',
-                'operacion' => $_POST['operacion'] ?? '',
-                'tipo_oper' => $tipo_oper,
-                'estado' => $_POST['estado'] ?? 'Pendiente',
-                'concatenado' => $concatenado,
-                'booking' => $_POST['booking'] ?? '',
-                'incoterm' => $_POST['incoterm'] ?? '',
-                'id_comercial' => $id_comercial,
-                'nombre' => $_POST['nombre'] ?? '',
-                'notas_comerciales' => $_POST['notas_comerciales'] ?? '',
-                'notas_operaciones' => $_POST['notas_operaciones'] ?? '',
-                'fecha_alta' => $fecha_alta,
-                'fecha_estado' => $_POST['fecha_estado'] ?? date('Y-m-d'),
-            ];
-
-            // === Insertar o Actualizar Prospecto ===
-            if ($modo_update) {
-                $setParts = [];
-                $values = [];
-                foreach ($data as $key => $value) {
-                    $setParts[] = "$key = ?";
-                    $values[] = $value;
-                }
-                $values[] = $id_ppl;
-                $stmt = "UPDATE prospectos SET " . implode(', ', $setParts) . " WHERE id_ppl = ?";
-                $pdo->prepare($stmt)->execute($values);
-            } else {
-                $fields = implode(', ', array_keys($data));
-                $placeholders = str_repeat('?,', count($data) - 1) . '?';
-                $stmt = "INSERT INTO prospectos ($fields) VALUES ($placeholders)";
-                $pdo->prepare($stmt)->execute(array_values($data));
-                $id_ppl = $pdo->lastInsertId();
-            }
-
-            // === Solo procesar servicios si el modo es 'servicios' ===
-            if ($modo === 'servicios') {
-                file_put_contents('php://stderr', "🗑️ [PHP] Eliminando servicios anteriores para id_ppl: " . $id_ppl . "\n");
-                $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
-                $servicios_json = $_POST['servicios_json'] ?? '';
-                $total_costo = 0;
-                $total_venta = 0;
-                $total_costogasto = 0;
-                $total_ventagasto = 0;
-                if ($servicios_json) {
-                    file_put_contents('php://stderr', "📦 [PHP] Procesando servicios_json: " . $servicios_json . "\n");
-                    $servicios_data = json_decode($servicios_json, true);
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        throw new Exception('Error al decodificar servicios JSON: ' . json_last_error_msg());
-                    }
-                    if (!is_array($servicios_data)) {
-                        throw new Exception('Formato inválido en servicios JSON');
-                    }
-                    file_put_contents('php://stderr', "✅ [PHP] Número de servicios a insertar: " . count($servicios_data) . "\n");
-                    $stmt_serv = $pdo->prepare("INSERT INTO servicios (
-                        id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
-                        base_calculo, moneda, tarifa, iva, estado, costo, venta,
-                        costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
-                        commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
-                        lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
-                        agente, aol, aod, aerolinea, naviera, terrestre, ref_cliente, proveedor_nac, tipo_cambio,
-                        ciudad, pais, direc_serv
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    foreach ($servicios_data as $i => $s) {
-                        file_put_contents('php://stderr', "🔧 [PHP] Procesando servicio #" . $i . ": " . json_encode($s) . "\n");
-                        // === LOGGING DE COSTOS ===
-                        file_put_contents('php://stderr', "🔍 [PHP] Servicio #" . $i . " costos: " . json_encode($s['costos'] ?? []) . "\n");
-
-                        $costo = (float)($s['costo'] ?? 0);
-                        $venta = (float)($s['venta'] ?? 0);
-                        $costogasto = (float)($s['costogastoslocalesdestino'] ?? 0);
-                        $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
-                        $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
-                        $stmt_last->execute([$id_ppl]);
-                        $last = $stmt_last->fetch();
-                        $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
-                        $id_srvc = "{$concatenado}-{$correlativo_srvc}";
-
-                        $stmt_serv->execute([
-                            $id_srvc,
-                            $id_ppl,
-                            $s['servicio'] ?? '',
-                            $s['nombre_corto'] ?? '',
-                            $s['tipo'] ?? '',
-                            $s['trafico'] ?? '',
-                            $s['sub_trafico'] ?? '',
-                            $s['base_calculo'] ?? '',
-                            $s['moneda'] ?? 'CLP',
-                            (float)($s['tarifa'] ?? 0),
-                            (int)($s['iva'] ?? 19),
-                            $s['estado'] ?? 'Activo',
-                            $costo,
-                            $venta,
-                            $costogasto,
-                            $ventagasto,
-                            $s['desconsolidac'] ?? '',
-                            $s['commodity'] ?? '',
-                            $s['origen'] ?? '',
-                            $s['pais_origen'] ?? '',
-                            $s['destino'] ?? '',
-                            $s['pais_destino'] ?? '',
-                            $s['transito'] ?? '',
-                            $s['frecuencia'] ?? '',
-                            $s['lugar_carga'] ?? '',
-                            $s['sector'] ?? '',
-                            $s['mercancia'] ?? '',
-                            (int)($s['bultos'] ?? 0),
-                            (float)($s['peso'] ?? 0),
-                            (float)($s['volumen'] ?? 0),
-                            $s['dimensiones'] ?? '',
-                            $s['agente'] ?? '',
-                            $s['aol'] ?? '',
-                            $s['aod'] ?? '',
-                            $s['aerolinea'] ?? '',
-                            $s['naviera'] ?? '',
-                            $s['terrestre'] ?? '',
-                            $s['ref_cliente'] ?? '',
-                            $s['proveedor_nac'] ?? '',
-                            (float)($s['tipo_cambio'] ?? 1),
-                            $s['ciudad'] ?? '',
-                            $s['pais'] ?? '',
-                            $s['direc_serv'] ?? ''
-                        ]);
-
-                        // === Insertar costos asociados ===
-                        if (!empty($s['costos'])) {
-                            $stmt_costo = $pdo->prepare("
-                                INSERT INTO costos_servicios (
-                                    id_servicio, concepto, moneda, qty, costo, total_costo, tarifa, total_tarifa, aplica
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            ");
-                            foreach ($s['costos'] as $c) {
-                                $stmt_costo->execute([
-                                    $id_srvc,
-                                    $c['concepto'] ?? '',
-                                    $c['moneda'] ?? 'CLP',
-                                    (float)($c['qty'] ?? 0),
-                                    (float)($c['costo'] ?? 0),
-                                    (float)($c['total_costo'] ?? 0),
-                                    (float)($c['tarifa'] ?? 0),
-                                    (float)($c['total_tarifa'] ?? 0),
-                                    $c['aplica'] ?? ''
-                                ]);
-                            }
-                        }
-                        // === Insertar gastos locales asociados ===
-                        if (!empty($s['gastos_locales'])) {
-                            $stmt_gasto = $pdo->prepare("
-                                INSERT INTO gastos_locales_detalle (
-                                    id_servicio, tipo, gasto, moneda, monto, afecto, iva
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                            ");
-                            foreach ($s['gastos_locales'] as $g) {
-                                $stmt_gasto->execute([
-                                    $id_srvc,
-                                    $g['tipo'] ?? '',
-                                    $g['gasto'] ?? '',
-                                    $g['moneda'] ?? 'CLP',
-                                    (float)($g['monto'] ?? 0),
-                                    $g['afecto'] ?? 'SI',
-                                    (float)($g['iva'] ?? 0)
-                                ]);
-                            }
-                        }
-
-                        $total_costo += $costo;
-                        $total_venta += $venta;
-                        $total_costogasto += $costogasto;
-                        $total_ventagasto += $ventagasto;
-                    }
-                    // Actualizar totales en prospecto
-                    $pdo->prepare("UPDATE prospectos SET
-                        total_costo = ?, total_venta = ?,
-                        total_costogastoslocalesdestino = ?, total_ventasgastoslocalesdestino = ?
-                    WHERE id_ppl = ?")->execute([
-                        $total_costo, $total_venta, $total_costogasto, $total_ventagasto, $id_ppl
-                    ]);
-                    file_put_contents('php://stderr', "✅ [PHP] Totales actualizados para id_ppl: " . $id_ppl . "\n");
-                }
-            }
-
-            $pdo->commit();
-            header("Location: " . $_SERVER['PHP_SELF'] . "?exito=1&concatenado=" . urlencode($concatenado) . "&id_ppl=" . $id_ppl);
-            exit;
-
-        } catch (Exception $e) {
-            try { $pdo->rollback(); } catch (Exception $ex) {}
-            $mensajeUsuario = "Error al guardar el prospecto.";
-            if (defined('DEVELOPMENT') && DEVELOPMENT) {
-                $mensajeUsuario = $e->getMessage();
-            }
-            header("Location: " . $_SERVER['PHP_SELF'] . "?error=" . urlencode($mensajeUsuario));
-            exit;
-        }
-    }
-    /// Obtener datos auxiliares
-    $comerciales = $pdo->query("SELECT * FROM comerciales")->fetchAll();
-    $traficos = $pdo->query("SELECT * FROM trafico")->fetchAll();
-    $incoterms = $pdo->query("SELECT * FROM incoterm")->fetchAll();
-?>
-
 <!-- Mini consola de depuración -->
 <div id="debug-trace" style="margin: 1rem; padding: 0.5rem; background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
 
@@ -316,30 +20,23 @@
 <form method="POST" id="form-prospecto" action="">
     <!-- Mini consola de depuración -->
     <div id="debug-trace" style="margin: 1rem; padding: 0.5rem; background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
-    
     <!-- Campos ocultos -->
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
-    
     <!-- Sección Prospecto -->
     <div class="card" style="margin-bottom: 2rem;">
         <h3 style="margin:0 0 1rem 0; color:#3a4f63; font-size:1.1rem;"><i class="fas fa-user"></i> Datos del Prospecto</h3>
-
         <!-- Fila 1: RUT, Razón Social, Teléfono, Fecha Alta -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">RUT Empresa *</label>
             <input type="text" name="rut_empresa" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" />
-
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Razón Social *</label>
             <input type="text" name="razon_social" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" />
-
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Teléfono</label>
             <input type="tel" name="fono_empresa" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" />
-
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Fecha</label>
             <input type="date" name="fecha_alta" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" value="<?= date('Y-m-d') ?>" />
         </div>
-
         <!-- Fila 2: País, Dirección, Estado -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <!-- País -->
@@ -348,12 +45,10 @@
                 <option value="">Seleccionar país</option>
                 <!-- Llenado por JS -->
             </select>
-
             <!-- Dirección -->
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Dirección</label>
             <input type="text" name="direccion" id="direccion" 
                 style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" />
-
             <!-- Estado -->
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Estado</label>
             <select name="estado" id="estado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
@@ -364,27 +59,21 @@
                 <option value="Rechazado">Rechazado</option>
             </select>
         </div>
-
         <!-- Fila 3: Operación, Tipo Operación, Concatenado -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Operación</label>
             <select name="operacion" id="operacion" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" required>
                 <option value="">Seleccionar</option>
             </select>
-
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Tipo Operación</label>
             <select name="tipo_oper" id="tipo_oper" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" required>
                 <option value="">Seleccionar</option>
             </select>
-
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Concatenado</label>
             <input type="text" name="concatenado" id="concatenado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; font-weight: bold; box-sizing: border-box;" readonly />
-
         </div>
-
         <!-- Fila 4: Booking, Comercial ID, Nombre, Incoterm + Botón Eliminar Prospecto -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
-            <!-- ... los 6 campos anteriores (Booking, Comercial ID, Nombre, Incoterm) ... -->
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Booking</label>
             <input type="text" name="booking" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" />
             <label style="font-size: 0.9rem; font-weight: 500; color: #444;">Comercial ID</label>
@@ -401,7 +90,6 @@
                 </button>
             </div>
         </div>
-
         <!-- Espacio entre Prospecto y Servicios -->
         <div style="height: 1rem;"></div>
         <button type="button" id="btn-eliminar-prospecto" class="btn-delete" 
@@ -427,7 +115,7 @@
                     <i class="fas fa-undo"></i> Volver
                 </button>
             </div>
-            <!-- Botón Grabar Todo -----  Reemplazar el contenedor actual por este -->
+            <!-- Botón Grabar Todo -->
             <div id="contenedor-boton-prospecto" style="display: flex;">
                 <button type="button" class="btn-primary" id="btn-save-all" style="min-width: 120px; padding: 0.6rem 1rem;">
                     <!-- Texto gestionado por JS -->
@@ -445,6 +133,7 @@
                 </div>
             </div>
         </div>
+
         <div class="table-container">
             <table id="tabla-servicios">
                 <thead>
@@ -475,6 +164,7 @@
             </table>
         </div>
     </div>
+
     <!-- Modal: Servicio -->
     <div id="modal-servicio" class="modal">
         <div class="modal-content" style="max-width: 1500px; width: 95%;">
@@ -483,12 +173,10 @@
                 <span style="color: #007bff; font-weight: bold;" id="serv_titulo_concatenado">-</span>
             </h3>
             <span class="close" onclick="cerrarModalServicio()" style="cursor:pointer;">&times;</span>
-
             <!-- Campos ocultos -->
             <input type="hidden" id="id_prospect_serv" name="id_prospect_serv" />
             <input type="hidden" id="concatenado_serv" name="concatenado_serv" />
             <input type="hidden" id="id_srvc_actual" />
-
             <!-- Formulario en grid de 8 columnas -->
             <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.8rem; margin-top: 1.2rem; align-items: center;">
                 <!-- Fila 1 -->
@@ -502,7 +190,6 @@
                 <select id="serv_commodity" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="">Seleccionar</option>
                 </select>
-
                 <!-- Fila 2 -->
                 <label style="font-size: 0.9rem;">Origen</label>
                 <select id="serv_origen" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
@@ -516,7 +203,6 @@
                 </select>
                 <label style="font-size: 0.9rem;">País Destino</label>
                 <input type="text" id="serv_pais_destino" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
-
                 <!-- Fila 3 -->
                 <label style="font-size: 0.9rem;">Tránsito</label>
                 <input type="text" id="serv_transito" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
@@ -526,7 +212,6 @@
                 <input type="text" id="serv_lugar_carga" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label style="font-size: 0.9rem;">Sector</label>
                 <input type="text" id="serv_sector" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-
                 <!-- Fila 4 -->
                 <label style="font-size: 0.9rem;">Mercancía</label>
                 <input type="text" id="serv_mercancia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
@@ -536,60 +221,46 @@
                 <input type="number" id="serv_peso" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label style="font-size: 0.9rem;">Volumen (m³)</label>
                 <input type="number" id="serv_volumen" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-
                 <!-- Fila 5 -->
                 <label style="font-size: 0.9rem;">Dimensiones</label>
                 <input type="text" id="serv_dimensiones" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" placeholder="Ej: 120x80x90 cm" />
-
                 <label style="font-size: 0.9rem;">Moneda</label>
                 <select id="serv_moneda" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
                     <option value="CLP">CLP</option>
                 </select>
-
                 <label style="font-size: 0.9rem;">Tipo Cambio</label>
                 <input type="number" id="serv_tipo_cambio" step="0.01" min="0" value="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-
                 <label style="font-size: 0.9rem;">Proveedor Nac</label>
                 <select id="serv_proveedor_nac" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="">Seleccionar</option>
                     <!-- Se llenará desde API -->
                 </select>
-
                 <!-- Fila 6 -->
                 <label style="font-size: 0.9rem;">AOL</label>
                 <input type="text" id="serv_aol" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
-
                 <label style="font-size: 0.9rem;">AOD</label>
                 <input type="text" id="serv_aod" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
-
                 <label style="font-size: 0.9rem;">Desconsolidación</label>
                 <input type="text" id="serv_desconsolidacion" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-
                 <label style="font-size: 0.9rem;">Agente</label>
                 <select id="serv_agente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="">Seleccionar</option>
                     <!-- Se llenará desde API -->
                 </select>
-
                 <!-- Fila 7 -->
                 <label style="font-size: 0.9rem;">Aerolínea</label>
                 <input type="text" id="serv_aerolinea" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-
                 <label style="font-size: 0.9rem;">Terrestre</label>
                 <input type="text" id="serv_terrestre" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-
                 <label style="font-size: 0.9rem;">Marítimo</label>
                 <input type="text" id="serv_maritimo" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-
                 <label style="font-size: 0.9rem;">Ref. Cliente</label>
                 <input type="text" id="serv_ref_cliente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
             </div>
-
             <!-- Botones de acción del modal Servicio -->
             <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem;">
-                <!-- Dentro del Modal Servicio, en la sección de botones -->
                 <button type="button" class="btn-comment" id="btn-costos-servicio"
                         style="background: #231b92ff; color: white; font-size: 0.8rem; margin-top: 1rem; 
                             cursor: pointer !important; 
@@ -598,7 +269,6 @@
                             z-index: 2;">
                     <i class="fas fa-calculator"></i> Costos - Ventas
                 </button>
-                <!-- Dentro del Modal Gastos Locales, en la sección de botones -->
                 <button type="button" class="btn-comment" id="btn-gastos-locales"
                         style="background: #8a2be2; color: white; font-size: 0.8rem; margin-top: 1rem; 
                             cursor: pointer !important; pointer-events: auto !important;">
@@ -616,8 +286,6 @@
 
     <!-- Servicios en formato JSON -->
     <input type="hidden" name="servicios_json" id="servicios_json" />
-
-    <!-- ===============================     CIERRE DEL FORM ======================= --->
 </form>
 
 <!-- Modal: Resultados de Búsqueda -->
@@ -846,6 +514,9 @@ if (isset($_SESSION['rol'])) {
 <!-- ******************************************************************************************** -->
 <!-- *************************************      SCRIPT     ************************************** -->
 <script>
+    // === VARIABLE GLOBAL DE ROL ===
+    const USER_ROLE = '<?php echo htmlspecialchars($_SESSION['rol'] ?? 'comercial'); ?>';
+    console.log('✅ Rol cargado:', USER_ROLE);
     // Variables globales para el modal de servicios
     let servicioData = null;
     // === VARIABLES GLOBALES ===
