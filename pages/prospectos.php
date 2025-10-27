@@ -489,24 +489,6 @@
         </div>
     </div>
 </div>
-    
-<!-- Botón de eliminación si rol no es admin  -->
-<td>
-    <?php
-        $esAdmin = false;
-        if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
-            $esAdmin = true;
-        }
-    ?>
-</td>
-<!-- === VARIABLE GLOBAL DE ROL (única vez, antes del script principal) === -->
-<?php
-$rol_usuario = 'comercial'; // valor por defecto
-if (isset($_SESSION['rol'])) {
-    $rol_usuario = $_SESSION['rol'];
-}
-?>
 <script>
-    const USER_ROLE = '<?php echo htmlspecialchars($rol_usuario); ?>';
     console.log('✅ Rol cargado:', USER_ROLE);
 </script>
