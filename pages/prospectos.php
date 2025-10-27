@@ -970,6 +970,266 @@
             });
     }
 
+    // === ELIMINAR SERVICIOS ===
+    function eliminarServicio(index) {
+        const servicio = servicios[index];
+        if (servicio && Array.isArray(servicio.costos) && servicio.costos.length > 0) {
+            error('⚠️ No se puede eliminar el servicio porque tiene costos asociados.\n\nPrimero elimine todos los costos.');
+            return;
+        }
+
+        mostrarConfirmacion('¿Eliminar servicio?', () => {
+            servicios.splice(index, 1);
+            actualizarTabla();
+            exito('✅ Servicio eliminado');
+            actualizarBotonEliminarProspecto();
+        });
+    }
+
+    // === BOTÓN ELIMINAR OCULTA/MUESTRA  ===
+    function actualizarBotonEliminarProspecto() {
+        const btn = document.getElementById('btn-eliminar-prospecto');
+        const idPpl = document.getElementById('id_ppl')?.value;
+        const tieneServicios = servicios && servicios.length > 0;
+        if (btn && idPpl && idPpl !== '0' && !tieneServicios) {
+            btn.style.display = 'inline-block';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    // === MODALES COMERCIAL Y OPERACIONES ===
+    function cerrarModalComercial() {
+        document.getElementById('modal-comercial').style.display = 'none';
+    }
+    function abrirModalComercial() {
+        const input = document.querySelector('input[name="notas_comerciales"]');
+        const valorActual = input ? input.value : '';
+        document.getElementById('notas_comerciales_input').value = valorActual;
+        document.getElementById('modal-comercial').style.display = 'flex';
+    }
+    function cerrarModalOperaciones() {
+        document.getElementById('modal-operaciones').style.display = 'none';
+    }
+    function abrirModalOperaciones() {
+        const input = document.querySelector('input[name="notas_operaciones"]');
+        const valorActual = input ? input.value : '';
+        document.getElementById('notas_operaciones_input').value = valorActual;
+        document.getElementById('modal-operaciones').style.display = 'flex';
+    }
+
+    function guardarNotasComerciales() {
+        const idPpl = document.getElementById('id_ppl')?.value;
+        if (!idPpl || idPpl === '0') {
+            error('❌ No se puede guardar la nota: prospecto no válido');
+            return;
+        }
+        const valor = document.getElementById('notas_comerciales_input').value.trim();
+        fetch('api/guardar_nota.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_ppl: idPpl, campo: 'notas_comerciales', valor: valor })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                exito('✅ Notas comerciales guardadas');
+                // Actualizar campo oculto
+                let input = document.querySelector('input[name="notas_comerciales"]');
+                if (!input) {
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'notas_comerciales';
+                    document.getElementById('form-prospecto').appendChild(input);
+                }
+                input.value = valor;
+            } else {
+                error('❌ ' + (data.message || 'Error al guardar'));
+            }
+            cerrarModalComercial();
+        })
+        .catch(err => {
+            console.error('Error al guardar nota:', err);
+            error('❌ Error de conexión al guardar la nota');
+        });
+    }
+
+    function guardarNotasOperaciones() {
+        const idPpl = document.getElementById('id_ppl')?.value;
+        if (!idPpl || idPpl === '0') {
+            error('❌ No se puede guardar la nota: prospecto no válido');
+            return;
+        }
+        const valor = document.getElementById('notas_operaciones_input').value.trim();
+        fetch('api/guardar_nota.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_ppl: idPpl, campo: 'notas_operaciones', valor: valor })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                exito('✅ Notas de operaciones guardadas');
+                // Actualizar campo oculto
+                let input = document.querySelector('input[name="notas_operaciones"]');
+                if (!input) {
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'notas_operaciones';
+                    document.getElementById('form-prospecto').appendChild(input);
+                }
+                input.value = valor;
+            } else {
+                error('❌ ' + (data.message || 'Error al guardar'));
+            }
+            cerrarModalOperaciones();
+        })
+        .catch(err => {
+            console.error('Error al guardar nota:', err);
+            error('❌ Error de conexión al guardar la nota');
+        });
+    }
+
+    // Editar servicio (no implementado en este fragmento)
+    function editarServicio(index) {
+        abrirModalServicio(index);
+    }
+
+    // Modales: Resultados y Servicio
+    function abrirModalResultados() {
+        document.getElementById('modal-resultados').style.display = 'flex';
+    }
+    function cerrarModalResultados() {
+        document.getElementById('modal-resultados').style.display = 'none';
+    }
+    function mostrarResultados(resultados) {
+        const tbody = document.getElementById('resultados-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        resultados.forEach(p => {
+            const tr = document.createElement('tr');
+            const btn = document.createElement('button');
+            btn.className = 'btn-select';
+            btn.textContent = 'Seleccionar';
+
+            btn.addEventListener('click', () => {
+                if (p.id_ppl) {
+                    seleccionarProspecto(p.id_ppl);
+                } else {
+                    console.error('❌ id_ppl no válido:', p);
+                    error('❌ Prospecto sin ID');
+                }
+            });
+            tr.innerHTML = `
+                <td>${p.concatenado || ''}</td>
+                <td>${p.razon_social || ''}</td>
+                <td>${p.rut_empresa || ''}</td>
+                <td>${p.estado || ''}</td>
+                <td></td>
+            `;
+            tr.cells[4].appendChild(btn); // Añadir botón a la última celda
+            tbody.appendChild(tr);
+        });
+    }
+
+    // AbrirModal Servicio
+    function abrirModalServicio(index = null) {
+        const idPpl = document.getElementById('id_ppl').value;
+        const concatInput = document.querySelector('input[name="concatenado"]');
+        const concatenado = concatInput ? concatInput.value : '';
+        if (!idPpl || !concatenado) {
+            error('❌ Debe guardar el prospecto primero para generar el código de concatenado.');
+            return;
+        }
+
+        // ✅ Asignar id_prospect desde el prospecto (no desde un campo oculto)
+        const idProspect = document.getElementById('id_prospect')?.value || idPpl;
+
+        // Reiniciar el modal
+        document.getElementById('id_prospect_serv').value = idProspect;
+        document.getElementById('concatenado_serv').value = concatenado;
+        document.getElementById('serv_titulo_concatenado').textContent = concatenado;
+
+        // Modo edición
+        if (index !== null) {
+            servicioEnEdicion = index;
+            const s = servicios[index];
+
+            // Inicializar costos del servicio
+            costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
+
+            // Función para rellenar los campos después de cargar los selects
+            const rellenarCampos = () => {
+                document.getElementById('serv_servicio').value = s.servicio || '';
+                document.getElementById('serv_commodity').value = s.commodity || '';
+                document.getElementById('serv_medio_transporte').value = s.trafico || '';
+                document.getElementById('serv_origen').value = s.origen || '';
+                document.getElementById('serv_pais_origen').value = s.pais_origen || '';
+                document.getElementById('serv_destino').value = s.destino || '';
+                document.getElementById('serv_pais_destino').value = s.pais_destino || '';
+                document.getElementById('serv_transito').value = s.transito || '';
+                document.getElementById('serv_frecuencia').value = s.frecuencia || '';
+                document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
+                document.getElementById('serv_sector').value = s.sector || '';
+                document.getElementById('serv_mercancia').value = s.mercancia || '';
+                document.getElementById('serv_bultos').value = s.bultos || '';
+                document.getElementById('serv_peso').value = s.peso || '';
+                document.getElementById('serv_volumen').value = s.volumen || '';
+                document.getElementById('serv_dimensiones').value = s.dimensiones || '';
+                document.getElementById('serv_moneda').value = s.moneda || 'CLP';
+                document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
+                document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
+                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
+                document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
+                document.getElementById('serv_aol').value = s.aol || '';
+                document.getElementById('serv_aod').value = s.aod || '';
+                document.getElementById('serv_agente').value = s.agente || '';
+                document.getElementById('serv_aerolinea').value = s.aerolinea || '';
+                document.getElementById('serv_terrestre').value = s.terrestre || '';
+                document.getElementById('serv_maritimo').value = s.naviera || '';
+
+                // Dentro de rellenarCampos() en modo edición
+                const selectMedio = document.getElementById('serv_medio_transporte');
+                if (selectMedio && s.trafico) {
+                    selectMedio.value = s.trafico;
+                    // Forzar carga de origen/destino
+                    selectMedio.dispatchEvent(new Event('change', { bubbles: true }));
+                    // Luego, asignar origen/destino (con un pequeño delay)
+                    setTimeout(() => {
+                        document.getElementById('serv_origen').value = s.origen || '';
+                        document.getElementById('serv_destino').value = s.destino || '';
+                    }, 300);
+                }
+
+                // === Actualizar submodal de costos ===
+                actualizarTablaCostos();
+            };
+
+            // Cargar datos y luego rellenar
+            cargarDatosModalServicio(rellenarCampos);
+        } else {
+            // Modo nuevo
+            servicioEnEdicion = null;
+            costosServicio = []; // Reiniciar costos
+            // Limpiar campos
+            const campos = document.querySelectorAll('#modal-servicio input, #modal-servicio select');
+            campos.forEach(campo => {
+                if (campo.id !== 'concatenado_serv' && campo.id !== 'id_prospect_serv' && campo.id !== 'id_srvc_actual') {
+                    if (campo.type === 'select-one') {
+                        campo.selectedIndex = 0;
+                    } else {
+                        campo.value = '';
+                    }
+                }
+            });
+            cargarDatosModalServicio();
+        }
+
+        // Mostrar modal
+        document.getElementById('modal-servicio').style.display = 'flex';
+
+    }
+
     // Convertir operación a modo lectura
     function convertirOperacionAModoLectura(valor) {
         const contenedor = document.getElementById('contenedor-operacion');
