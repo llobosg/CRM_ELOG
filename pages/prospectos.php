@@ -860,156 +860,73 @@
     }
 
     function seleccionarProspecto(id) {
-        // ✅ Cerrar modal de resultados inmediatamente
-        const resultadosDiv = document.getElementById('resultados-busqueda');
-        if (resultadosDiv) resultadosDiv.style.display = 'none';
-
         fetch('/api/get_prospecto.php?id=' + id)
             .then(res => res.json())
             .then(data => {
                 if (!data.success || !data.prospecto) {
-                    alert('Prospecto no encontrado');
+                    error('❌ Prospecto no encontrado');
                     return;
                 }
                 const p = data.prospecto;
+                const serviciosData = data.servicios || [];
 
-                // ✅ Recalcular servicios con totales correctos
-                const serviciosRecalculados = (data.servicios || []).map(s => {
-                    // Recalcular totales desde costos
-                    let totalCosto = 0, totalVenta = 0;
-                    if (Array.isArray(s.costos)) {
-                        s.costos.forEach(c => {
-                            totalCosto += parseFloat(c.total_costo) || 0;
-                            totalVenta += parseFloat(c.total_tarifa) || 0;
-                        });
-                    }
-                    return {
-                        ...s,
-                        costo: totalCosto,
-                        venta: totalVenta,
-                        // Asegurar que los gastos locales estén presentes
-                        costogastoslocalesdestino: s.costogastoslocalesdestino || 0,
-                        ventasgastoslocalesdestino: s.ventasgastoslocalesdestino || 0,
-                        gastos_locales: Array.isArray(s.gastos_locales) ? s.gastos_locales : []
-                    };
-                });
-
-                servicios = serviciosRecalculados;
-                tieneServiciosIniciales = servicios.length > 0;
-                estadoProspecto = p.estado || 'Pendiente';
-                const tieneServicios = servicios.length > 0;
-                const esCerradoOK = (p.estado === 'CerradoOK');
-
-                // === Asignar campos genéricos ===
-                const camposGenericos = [
-                    'razon_social', 'rut_empresa', 'fono_empresa',
-                    'booking', 'incoterm', 'direccion', 'fecha_alta', 'fecha_estado',
-                    'nombre', 'apellido', 'cargo', 'concatenado', 'id_comercial'
+                // === Asignar campos del prospecto ===
+                const fields = [
+                    'razon_social', 'rut_empresa', 'fono_empresa', 'direccion',
+                    'booking', 'incoterm', 'concatenado', 'fecha_alta', 'fecha_estado'
                 ];
-                camposGenericos.forEach(name => {
-                    const el = document.querySelector(`[name="${name}"]`);
-                    if (el && el.tagName === 'INPUT') {
-                        el.value = p[name] || '';
-                        el.readOnly = true;
-                        el.style.backgroundColor = '#f9f9f9';
-                    }
+                fields.forEach(field => {
+                    const el = document.querySelector(`[name="${field}"]`);
+                    if (el) el.value = p[field] || '';
                 });
 
-                // === Cargar NOTAS ===
-                ['notas_comerciales', 'notas_operaciones'].forEach(nombre => {
-                    const valor = p[nombre] || '';
-                    let input = document.querySelector(`input[name="${nombre}"]`);
+                // === Comercial ===
+                document.getElementById('id_comercial').value = p.id_comercial || '';
+                document.getElementById('nombre').value = p.nombre || '';
+
+                // === Estado ===
+                document.getElementById('estado').value = p.estado || 'Pendiente';
+
+                // === Notas: asignar a campos ocultos Y a inputs de modales ===
+                const setNota = (name, value) => {
+                    // Campo oculto para el formulario
+                    let input = document.querySelector(`input[name="${name}"]`);
                     if (!input) {
                         input = document.createElement('input');
                         input.type = 'hidden';
-                        input.name = nombre;
+                        input.name = name;
                         document.getElementById('form-prospecto').appendChild(input);
                     }
-                    input.value = valor;
-                    document.getElementById(`${nombre}_input`).value = valor;
-                });
+                    input.value = value || '';
+                    // Input del modal
+                    const modalInput = document.getElementById(name.replace('notas_', 'notas_') + '_input');
+                    if (modalInput) modalInput.value = value || '';
+                };
+                setNota('notas_comerciales', p.notas_comerciales);
+                setNota('notas_operaciones', p.notas_operaciones);
 
-                // === Asignar PAÍS ===
-                const inputPais = document.getElementById('pais');
-                if (inputPais && p.pais) {
-                    inputPais.value = p.pais;
-                    inputPais.readOnly = true;
-                    inputPais.style.backgroundColor = '#f9f9f9';
-                    setTimeout(() => inputPais.dispatchEvent(new Event('change')), 100);
-                }
-
-                // === Asignar OPERACIÓN y TIPO OPERACIÓN ===
-                const selectOper = document.getElementById('operacion');
-                const selectTipoOper = document.getElementById('tipo_oper');
-                if (selectOper) selectOper.value = p.operacion || '';
-                if (selectOper && selectTipoOper) {
-                    const event = new Event('change', { bubbles: true });
-                    selectOper.dispatchEvent(event);
-                    setTimeout(() => {
-                        if (selectTipoOper) selectTipoOper.value = p.tipo_oper || '';
-                    }, 300);
-                }
-
-                // === Modo lectura si NO tiene servicios ===
-                if (!tieneServicios) {
-                    setTimeout(() => {
-                        convertirOperacionAModoLectura(p.operacion);
-                        convertirTipoOperAModoLectura(p.tipo_oper);
-                        convertirEstadoAModoLectura(p.estado);
-                    }, 100);
-                } else {
-                    // ✅ Solo deshabilitar estado si es "CerradoOK"
-                    const selectEstado = document.getElementById('estado');
-                    if (selectEstado) {
-                        selectEstado.value = p.estado;
-                        selectEstado.disabled = esCerradoOK;
-                    }
-                }
+                // === Servicios ===
+                servicios = serviciosData.map(s => ({
+                    ...s,
+                    costo: parseFloat(s.costo) || 0,
+                    venta: parseFloat(s.venta) || 0,
+                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
+                }));
 
                 // === Campos ocultos ===
                 document.getElementById('id_ppl').value = p.id_ppl || '';
-                document.getElementById('id_prospect').value = p.id_prospect || p.id_ppl || '';
+                document.getElementById('id_prospect').value = p.id_prospect || '';
 
-                // === Actualizar tabla y botones ===
-                actualizarTabla();
-                document.getElementById('btn-volver').style.display = 'inline-block';
-
-                // === Habilitar/deshabilitar botones de Notas según estado (NO según tieneServicios) ===
-                const btnComercial = document.querySelector('.btn-comment:nth-of-type(1)');
-                const btnOperaciones = document.querySelector('.btn-comment:nth-of-type(2)');
-                if (btnComercial && btnOperaciones) {
-                    btnComercial.disabled = esCerradoOK;
-                    btnOperaciones.disabled = esCerradoOK;
-                    btnComercial.style.opacity = esCerradoOK ? '0.5' : '1';
-                    btnOperaciones.style.opacity = esCerradoOK ? '0.5' : '1';
-                    btnComercial.style.cursor = esCerradoOK ? 'not-allowed' : 'pointer';
-                    btnOperaciones.style.cursor = esCerradoOK ? 'not-allowed' : 'pointer';
-                }
-
-                // El botón de costos siempre debe estar habilitado
-                const btnCostos = document.getElementById('btn-costos-servicio');
-                if (btnCostos) {
-                    btnCostos.disabled = false;
-                    btnCostos.style.opacity = '1';
-                    btnCostos.style.cursor = 'pointer';
-                }
-
-                // Habilitar/deshabilitar botón "Agregar Servicio"
-                document.getElementById('btn-agregar-servicio').disabled = esCerradoOK;
-
-                // === Botón "Grabar Todo": ocultar solo si ya tenía servicios ===
-                const contenedorBoton = document.getElementById('contenedor-boton-prospecto');
-                if (contenedorBoton) {
-                    contenedorBoton.style.display = tieneServiciosIniciales ? 'none' : 'flex';
-                }
-
-                // Actualizar visibilidad de botones
-                actualizarVisibilidadBotones();
+                // === Actualizar UI ===
+                actualizarTabla(); // ← Esto refresca la tabla de servicios
                 habilitarBotonAgregar();
+                mostrarBotonVolver();
+                exito('✅ Prospecto cargado');
             })
             .catch(err => {
                 console.error('Error al cargar prospecto:', err);
-                alert('Error al cargar prospecto');
+                error('❌ Error al cargar el prospecto');
             });
     }
 
