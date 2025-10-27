@@ -860,75 +860,74 @@
     }
 
     function seleccionarProspecto(id) {
-        fetch('/api/get_prospecto.php?id=' + id)
-            .then(res => res.json())
-            .then(data => {
-                if (!data.success || !data.prospecto) {
-                    error('❌ Prospecto no encontrado');
-                    return;
-                }
-                const p = data.prospecto;
-                const serviciosData = data.servicios || [];
+    fetch('/api/get_prospecto.php?id=' + id)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success || !data.prospecto) {
+                error('❌ Prospecto no encontrado');
+                return;
+            }
+            const p = data.prospecto;
 
-                // === Asignar campos del prospecto ===
-                const fields = [
-                    'razon_social', 'rut_empresa', 'fono_empresa', 'direccion',
-                    'booking', 'incoterm', 'concatenado', 'fecha_alta', 'fecha_estado'
-                ];
-                fields.forEach(field => {
-                    const el = document.querySelector(`[name="${field}"]`);
-                    if (el) el.value = p[field] || '';
-                });
-
-                // === Comercial ===
-                document.getElementById('id_comercial').value = p.id_comercial || '';
-                document.getElementById('nombre').value = p.nombre || '';
-
-                // === Estado ===
-                document.getElementById('estado').value = p.estado || 'Pendiente';
-
-                // === Notas: asignar a campos ocultos Y a inputs de modales ===
-                const setNota = (name, value) => {
-                    // Campo oculto para el formulario
-                    let input = document.querySelector(`input[name="${name}"]`);
-                    if (!input) {
-                        input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = name;
-                        document.getElementById('form-prospecto').appendChild(input);
-                    }
-                    input.value = value || '';
-                    // Input del modal
-                    const modalInput = document.getElementById(name.replace('notas_', 'notas_') + '_input');
-                    if (modalInput) modalInput.value = value || '';
-                };
-                setNota('notas_comerciales', p.notas_comerciales);
-                setNota('notas_operaciones', p.notas_operaciones);
-
-                // === Servicios ===
-                servicios = serviciosData.map(s => ({
-                    ...s,
-                    costo: parseFloat(s.costo) || 0,
-                    venta: parseFloat(s.venta) || 0,
-                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
-                }));
-
-                // === Campos ocultos ===
-                document.getElementById('id_ppl').value = p.id_ppl || '';
-                document.getElementById('id_prospect').value = p.id_prospect || '';
-
-                // === Actualizar UI ===
-                actualizarTabla(); // ← Esto refresca la tabla de servicios
-                habilitarBotonAgregar();
-                mostrarBotonVolver();
-                exito('✅ Prospecto cargado');
-            })
-            .catch(err => {
-                console.error('Error al cargar prospecto:', err);
-                error('❌ Error al cargar el prospecto');
+            // === Asignar campos del prospecto ===
+            const fields = [
+                'razon_social', 'rut_empresa', 'fono_empresa', 'direccion',
+                'booking', 'incoterm', 'concatenado', 'fecha_alta', 'fecha_estado'
+            ];
+            fields.forEach(field => {
+                const el = document.querySelector(`[name="${field}"]`);
+                if (el) el.value = p[field] || '';
             });
-    }
+
+            // === Comercial ===
+            document.getElementById('id_comercial').value = p.id_comercial || '';
+            document.getElementById('nombre').value = p.nombre || '';
+
+            // === Estado ===
+            document.getElementById('estado').value = p.estado || 'Pendiente';
+
+            // === Notas ===
+            const setNota = (name, value) => {
+                let input = document.querySelector(`input[name="${name}"]`);
+                if (!input) {
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = name;
+                    document.getElementById('form-prospecto').appendChild(input);
+                }
+                input.value = value || '';
+                const modalInput = document.getElementById(`${name}_input`);
+                if (modalInput) modalInput.value = value || '';
+            };
+            setNota('notas_comerciales', p.notas_comerciales);
+            setNota('notas_operaciones', p.notas_operaciones);
+
+            // === Servicios (CORREGIDO) ===
+            servicios = (data.servicios || []).map(s => ({
+                ...s,
+                costo: parseFloat(s.costo) || 0,
+                venta: parseFloat(s.venta) || 0,
+                costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0,
+                costos: s.costos || [],
+                gastos_locales: s.gastos_locales || []
+            }));
+
+            // === Campos ocultos ===
+            document.getElementById('id_ppl').value = p.id_ppl || '';
+            document.getElementById('id_prospect').value = p.id_prospect || '';
+
+            // === Actualizar UI (CORREGIDO: llamar después de asignar servicios) ===
+            actualizarTabla();
+            habilitarBotonAgregar();
+            mostrarBotonVolver();
+            exito('✅ Prospecto cargado');
+        })
+        .catch(err => {
+            console.error('Error al cargar prospecto:', err);
+            error('❌ Error al cargar el prospecto');
+        });
+}
 
     // Convertir operación a modo lectura
     function convertirOperacionAModoLectura(valor) {
