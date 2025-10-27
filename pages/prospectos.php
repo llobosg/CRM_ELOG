@@ -543,7 +543,7 @@ if (isset($_SESSION['rol'])) {
             selectGasto.innerHTML = '<option value="">Seleccione tipo primero</option>';
             return;
         }
-        fetch(`api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+        fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
             .then(res => res.json())
             .then(data => {
                 selectGasto.innerHTML = '<option value="">Seleccionar gasto</option>';
@@ -1030,7 +1030,7 @@ if (isset($_SESSION['rol'])) {
     window.abrirSubmodalCostos = abrirSubmodalCostos;
 
     function cargarConceptosCostos() {
-        fetch('api/get_conceptos_costos.php')
+        fetch('/api/get_conceptos_costos.php')
             .then(r => r.json())
             .then(data => {
                 const sel = document.getElementById('costo_concepto');
@@ -1050,7 +1050,7 @@ if (isset($_SESSION['rol'])) {
     }
 
     function cargarAplicacionesCostos(medio) {
-        fetch(`api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
+        fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
             .then(r => r.json())
             .then(data => {
                 const sel = document.getElementById('costo_aplica');
@@ -1318,7 +1318,7 @@ if (isset($_SESSION['rol'])) {
         }
 
         // === Cargar Commodity ===
-        fetch('api/get_commoditys.php')
+        fetch('/api/get_commoditys.php')
             .then(res => res.json())
             .then(data => {
                 const select = document.getElementById('serv_commodity');
@@ -1355,7 +1355,7 @@ if (isset($_SESSION['rol'])) {
             });
 
         // === Cargar Medios de Transporte ===
-        fetch('api/get_medios_transporte.php')
+        fetch('/api/get_medios_transporte.php')
             .then(res => res.json())
             .then(data => {
                 const select = document.getElementById('serv_medio_transporte');
@@ -1381,7 +1381,7 @@ if (isset($_SESSION['rol'])) {
                             selectDestino.innerHTML = '<option value="">Seleccionar</option>';
                             return;
                         }
-                        fetch(`api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
+                        fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
                             .then(res => res.json())
                             .then(data => {
                                 const options = '<option value="">Seleccionar</option>' + 
@@ -1421,7 +1421,7 @@ if (isset($_SESSION['rol'])) {
             });
 
         // === Cargar Agentes ===
-        fetch('api/get_agentes.php')
+        fetch('/api/get_agentes.php')
             .then(res => res.json())
             .then(data => {
                 const select = document.getElementById('serv_agente');
@@ -1438,7 +1438,7 @@ if (isset($_SESSION['rol'])) {
             });
 
         // === Cargar Proveedores Nacionales ===
-        fetch('api/get_proveedores_pnac.php')
+        fetch('/api/get_proveedores_pnac.php')
             .then(res => res.json())
             .then(data => {
                 const select = document.getElementById('serv_proveedor_nac');
@@ -1455,7 +1455,6 @@ if (isset($_SESSION['rol'])) {
             });
     }
 
-    // === Guardar Servicio (con costos internacionales + gastos locales separados) ===
     // === Guardar Servicio (con costos internacionales + gastos locales separados) ===
     function guardarServicio() {
         const servicio = document.getElementById('serv_servicio').value.trim();
@@ -1582,7 +1581,7 @@ if (isset($_SESSION['rol'])) {
             selectGasto.innerHTML = '<option value="">Seleccione tipo primero</option>';
             return;
         }
-        fetch(`api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+        fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
             .then(res => res.json())
             .then(data => {
                 selectGasto.innerHTML = '<option value="">Seleccionar gasto</option>';
@@ -1743,7 +1742,7 @@ if (isset($_SESSION['rol'])) {
             idComercial.addEventListener('blur', function () {
                 const id = this.value.trim();
                 if (!id) return;
-                fetch(`api/get_comercial.php?id=${id}`)
+                fetch(`/api/get_comercial.php?id=${id}`)
                     .then(r => r.json())
                     .then(data => {
                         if (data.comercial) {
@@ -2019,6 +2018,11 @@ if (isset($_SESSION['rol'])) {
             });
         }
 
+        const btn = document.getElementById('btn-save-all');
+        if (btn && !btn.textContent.trim()) {
+            btn.textContent = 'Grabar Todo';
+        }
+
     });
 
     // =========  FIN DEL DOMContentLoaded  =======================================================================
@@ -2069,7 +2073,7 @@ if (isset($_SESSION['rol'])) {
             if (!term) return;
 
             try {
-                const response = await fetch(`/api/buscar_inteligente.php?term=...`);
+                const response = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
                 const data = await response.json();
 
                 resultadosDiv.innerHTML = '';
@@ -2121,7 +2125,7 @@ if (isset($_SESSION['rol'])) {
             const selectOperacion = document.getElementById('operacion');
             const selectTipoOper = document.getElementById('tipo_oper');
             if (!selectOperacion || !selectTipoOper) return;
-            fetch('api/get_operaciones.php')
+            fetch('/api/get_operaciones.php')
                 .then(res => res.json())
                 .then(data => {
                     if (Array.isArray(data.operaciones)) {
@@ -2143,7 +2147,7 @@ if (isset($_SESSION['rol'])) {
                     selectTipoOper.innerHTML = '<option value="">Seleccionar operación</option>';
                     return;
                 }
-                fetch(`api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(operacion)}`)
+                fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(operacion)}`)
                     .then(res => res.json())
                     .then(data => {
                         selectTipoOper.innerHTML = '<option value="">Seleccionar</option>';
@@ -2371,7 +2375,7 @@ if (isset($_SESSION['rol'])) {
         }
 
         // Cargar operaciones
-        fetch('api/get_operaciones.php')
+        fetch('/api/get_operaciones.php')
             .then(res => res.json())
             .then(data => {
                 const selectOper = document.getElementById('operacion');
@@ -2402,7 +2406,7 @@ if (isset($_SESSION['rol'])) {
                         return;
                     }
 
-                    fetch(`api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(operacion)}`)
+                    fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(operacion)}`)
                         .then(res => res.json())
                         .then(data => {
                             selectTipoOper.innerHTML = '<option value="">Seleccionar</option>';
@@ -2461,7 +2465,7 @@ if (isset($_SESSION['rol'])) {
         const resultadosDiv = document.getElementById('resultados-busqueda');
         if (resultadosDiv) resultadosDiv.style.display = 'none';
 
-        fetch('api/get_prospecto.php?id=' + id)
+        fetch('/api/get_prospecto.php?id=' + id)
             .then(res => res.json())
             .then(data => {
                 if (!data.success || !data.prospecto) {
@@ -2728,7 +2732,7 @@ if (isset($_SESSION['rol'])) {
             selectGasto.innerHTML = '<option value="">Seleccione tipo primero</option>';
             return;
         }
-        fetch(`api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+        fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
             .then(res => res.json())
             .then(data => {
                 selectGasto.innerHTML = '<option value="">Seleccionar gasto</option>';
