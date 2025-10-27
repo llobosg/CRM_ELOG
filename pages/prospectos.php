@@ -516,6 +516,7 @@
             resultadosDiv.style.display = 'none';
         }
     });
+
     // ==== Cargar Operaciones y Tipos =====
     function cargarOperacionesYTipos() {
         // Vincular eventos para actualizar concatenado
@@ -569,6 +570,46 @@
     const selectTipoOper = document.getElementById('tipo_oper');
     if (selectTipoOper) {
         selectTipoOper.addEventListener('change', calcularConcatenado);
+    }
+
+    // Tabla de servicios
+    function actualizarTabla() {
+        const tbody = document.getElementById('servicios-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        let total_costo = 0, total_venta = 0, total_costogasto = 0, total_ventagasto = 0;
+        servicios.forEach((s, index) => {
+            const costo = parseFloat(s.costo) || 0;
+            const venta = parseFloat(s.venta) || 0;
+            const costogasto = parseFloat(s.costogastoslocalesdestino) || 0;
+            const ventagasto = parseFloat(s.ventasgastoslocalesdestino) || 0;
+            const tarifa = parseFloat(s.tarifa) || 0;
+            total_costo += costo;
+            total_venta += venta;
+            total_costogasto += costogasto;
+            total_ventagasto += ventagasto;
+            const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding: 0.5rem; text-align: left; border-bottom: 1px solid #eee;">${s.servicio}</td>
+                    <td style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">${s.trafico}</td>
+                    <td style="padding: 0.5rem; text-align: right; border-bottom: 1px solid #eee;">${s.base_calculo || ''}</td>
+                    <td style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">${s.moneda}</td>
+                    <td style="padding: 0.5rem; text-align: right; border-bottom: 1px solid #eee;">${(parseFloat(s.tarifa) || 0).toFixed(2)}</td>
+                    <td style="padding: 0.5rem; text-align: right; border-bottom: 1px solid #eee;">${costo.toFixed(2)}</td>
+                    <td style="padding: 0.5rem; text-align: right; border-bottom: 1px solid #eee;">${venta.toFixed(2)}</td>
+                    <td style="padding: 0.5rem; text-align: right; border-bottom: 1px solid #eee;">${costogasto.toFixed(2)}</td>
+                    <td style="padding: 0.5rem; text-align: right; border-bottom: 1px solid #eee;">${ventagasto.toFixed(2)}</td>
+                    <td style="padding: 0.5rem; text-align: center; border-bottom: 1px solid #eee;">
+                        <button type="button" class="btn-edit" onclick="editarServicio(${index})" style="margin-right: 0.5rem;">✏️</button>
+                        <button type="button" class="btn-delete" onclick="eliminarServicio(${index})">🗑️</button>
+                    </td>
+                `;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('total-costo').textContent = total_costo.toFixed(2);
+        document.getElementById('total-venta').textContent = total_venta.toFixed(2);
+        document.getElementById('total-costogasto').textContent = total_costogasto.toFixed(2);
+        document.getElementById('total-ventagasto').textContent = total_ventagasto.toFixed(2);
     }
 
     // ✅ NUEVA FUNCIÓN: Recalcula los totales del prospecto basado en servicios.costos
@@ -860,74 +901,74 @@
     }
 
     function seleccionarProspecto(id) {
-    fetch('/api/get_prospecto.php?id=' + id)
-        .then(res => res.json())
-        .then(data => {
-            if (!data.success || !data.prospecto) {
-                error('❌ Prospecto no encontrado');
-                return;
-            }
-            const p = data.prospecto;
-
-            // === Asignar campos del prospecto ===
-            const fields = [
-                'razon_social', 'rut_empresa', 'fono_empresa', 'direccion',
-                'booking', 'incoterm', 'concatenado', 'fecha_alta', 'fecha_estado'
-            ];
-            fields.forEach(field => {
-                const el = document.querySelector(`[name="${field}"]`);
-                if (el) el.value = p[field] || '';
-            });
-
-            // === Comercial ===
-            document.getElementById('id_comercial').value = p.id_comercial || '';
-            document.getElementById('nombre').value = p.nombre || '';
-
-            // === Estado ===
-            document.getElementById('estado').value = p.estado || 'Pendiente';
-
-            // === Notas ===
-            const setNota = (name, value) => {
-                let input = document.querySelector(`input[name="${name}"]`);
-                if (!input) {
-                    input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = name;
-                    document.getElementById('form-prospecto').appendChild(input);
+        fetch('/api/get_prospecto.php?id=' + id)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success || !data.prospecto) {
+                    error('❌ Prospecto no encontrado');
+                    return;
                 }
-                input.value = value || '';
-                const modalInput = document.getElementById(`${name}_input`);
-                if (modalInput) modalInput.value = value || '';
-            };
-            setNota('notas_comerciales', p.notas_comerciales);
-            setNota('notas_operaciones', p.notas_operaciones);
+                const p = data.prospecto;
 
-            // === Servicios (CORREGIDO) ===
-            servicios = (data.servicios || []).map(s => ({
-                ...s,
-                costo: parseFloat(s.costo) || 0,
-                venta: parseFloat(s.venta) || 0,
-                costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0,
-                costos: s.costos || [],
-                gastos_locales: s.gastos_locales || []
-            }));
+                // === Asignar campos del prospecto ===
+                const fields = [
+                    'razon_social', 'rut_empresa', 'fono_empresa', 'direccion',
+                    'booking', 'incoterm', 'concatenado', 'fecha_alta', 'fecha_estado'
+                ];
+                fields.forEach(field => {
+                    const el = document.querySelector(`[name="${field}"]`);
+                    if (el) el.value = p[field] || '';
+                });
 
-            // === Campos ocultos ===
-            document.getElementById('id_ppl').value = p.id_ppl || '';
-            document.getElementById('id_prospect').value = p.id_prospect || '';
+                // === Comercial ===
+                document.getElementById('id_comercial').value = p.id_comercial || '';
+                document.getElementById('nombre').value = p.nombre || '';
 
-            // === Actualizar UI (CORREGIDO: llamar después de asignar servicios) ===
-            actualizarTabla();
-            habilitarBotonAgregar();
-            mostrarBotonVolver();
-            exito('✅ Prospecto cargado');
-        })
-        .catch(err => {
-            console.error('Error al cargar prospecto:', err);
-            error('❌ Error al cargar el prospecto');
-        });
-}
+                // === Estado ===
+                document.getElementById('estado').value = p.estado || 'Pendiente';
+
+                // === Notas ===
+                const setNota = (name, value) => {
+                    let input = document.querySelector(`input[name="${name}"]`);
+                    if (!input) {
+                        input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = name;
+                        document.getElementById('form-prospecto').appendChild(input);
+                    }
+                    input.value = value || '';
+                    const modalInput = document.getElementById(`${name}_input`);
+                    if (modalInput) modalInput.value = value || '';
+                };
+                setNota('notas_comerciales', p.notas_comerciales);
+                setNota('notas_operaciones', p.notas_operaciones);
+
+                // === Servicios (CORREGIDO) ===
+                servicios = (data.servicios || []).map(s => ({
+                    ...s,
+                    costo: parseFloat(s.costo) || 0,
+                    venta: parseFloat(s.venta) || 0,
+                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0,
+                    costos: s.costos || [],
+                    gastos_locales: s.gastos_locales || []
+                }));
+
+                // === Campos ocultos ===
+                document.getElementById('id_ppl').value = p.id_ppl || '';
+                document.getElementById('id_prospect').value = p.id_prospect || '';
+
+                // === Actualizar UI (CORREGIDO: llamar después de asignar servicios) ===
+                actualizarTabla();
+                habilitarBotonAgregar();
+                mostrarBotonVolver();
+                exito('✅ Prospecto cargado');
+            })
+            .catch(err => {
+                console.error('Error al cargar prospecto:', err);
+                error('❌ Error al cargar el prospecto');
+            });
+    }
 
     // Convertir operación a modo lectura
     function convertirOperacionAModoLectura(valor) {
