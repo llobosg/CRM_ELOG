@@ -468,18 +468,12 @@
             });
         }
 
-
-
         // Botón Grabar Todo
         const btn = document.getElementById('btn-save-all');
         if (btn && !btn.textContent.trim()) {
             btn.textContent = 'Grabar Todo';
         }
     });
-
-    // === Búsqueda inteligente (mejorada) ===
-    const busquedaInput = document.getElementById('busqueda-inteligente');
-    const resultadosDiv = document.getElementById('resultados-busqueda');
 
     // === MODAL DE CONFIRMACIÓN PERSONALIZADO ===
     function mostrarConfirmacion(mensaje, callbackSi, callbackNo = null) {
@@ -514,54 +508,6 @@
             limpiar();
             if (callbackNo) callbackNo();
         };
-    }
-
-    if (busquedaInput) {
-        busquedaInput.addEventListener('input', async function () {
-            const term = this.value.trim();
-            resultadosDiv.style.display = 'none';
-            if (!term) return;
-
-            try {
-                const response = await fetch(`/api/buscar_inteligente.php?term=...`);
-                const data = await response.json();
-
-                resultadosDiv.innerHTML = '';
-                if (data.length > 0) {
-                    data.forEach(p => {
-                        const div = document.createElement('div');
-                        div.style.padding = '0.8rem';
-                        div.style.borderBottom = '1px solid #eee';
-                        div.style.cursor = 'pointer';
-                        div.style.color = '#333';
-                        div.style.fontSize = '0.9rem';
-                        div.innerHTML = `
-                            <strong>${p.razon_social}</strong><br>
-                            <small>
-                                ID: ${p.concatenado} | 
-                                RUT: ${p.rut_empresa} | 
-                                Comercial: ${p.nombre_comercial || ''} ${p.apellido_comercial || ''}
-                            </small>
-                        `;
-                        div.onclick = () => {
-                            // ✅ Corregido: usar id_ppl para cargar
-                            seleccionarProspecto(p.id_ppl);
-                            resultadosDiv.style.display = 'none';
-                            busquedaInput.value = '';
-                        };
-                        resultadosDiv.appendChild(div);
-                    });
-                    resultadosDiv.style.display = 'block';
-                } else {
-                    resultadosDiv.innerHTML = '<div style="padding: 0.8rem; color: #666;">No se encontraron coincidencias</div>';
-                    resultadosDiv.style.display = 'block';
-                }
-            } catch (err) {
-                console.error('Error en búsqueda:', err);
-                resultadosDiv.innerHTML = '<div style="padding: 0.8rem; color: red;">Error al buscar</div>';
-                resultadosDiv.style.display = 'block';
-            }
-        });
     }
 
     // Cerrar resultados al hacer clic fuera
@@ -1225,43 +1171,43 @@
 
     // === Actualizar tabla y totales ===
     function actualizarTablaGastosLocales() {
-    const tbody = document.getElementById('gastos-locales-body');
-    if (!tbody) return;
+        const tbody = document.getElementById('gastos-locales-body');
+        if (!tbody) return;
 
-    tbody.innerHTML = '';
-    let totalVenta = 0, totalCosto = 0;
+        tbody.innerHTML = '';
+        let totalVenta = 0, totalCosto = 0;
 
-    gastosLocales.forEach((g, i) => {
-        // ✅ Conversión defensiva: si no es número, usa 0
-        const monto = typeof g.monto === 'number' ? g.monto : parseFloat(g.monto) || 0;
-        const iva = typeof g.iva === 'number' ? g.iva : parseFloat(g.iva) || 0;
+        gastosLocales.forEach((g, i) => {
+            // ✅ Conversión defensiva: si no es número, usa 0
+            const monto = typeof g.monto === 'number' ? g.monto : parseFloat(g.monto) || 0;
+            const iva = typeof g.iva === 'number' ? g.iva : parseFloat(g.iva) || 0;
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${g.tipo || ''}</td>
-            <td>${g.gasto || ''}</td>
-            <td>${g.moneda || 'CLP'}</td>
-            <td style="text-align: right;">${monto.toFixed(2)}</td>
-            <td>${g.afecto || 'SI'}</td>
-            <td style="text-align: right;">${iva.toFixed(2)}</td>
-            <td style="text-align: center;">
-                <button type="button" class="btn-delete" onclick="eliminarGastoLocal(${i})" style="padding: 0.2rem 0.4rem;">🗑️</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${g.tipo || ''}</td>
+                <td>${g.gasto || ''}</td>
+                <td>${g.moneda || 'CLP'}</td>
+                <td style="text-align: right;">${monto.toFixed(2)}</td>
+                <td>${g.afecto || 'SI'}</td>
+                <td style="text-align: right;">${iva.toFixed(2)}</td>
+                <td style="text-align: center;">
+                    <button type="button" class="btn-delete" onclick="eliminarGastoLocal(${i})" style="padding: 0.2rem 0.4rem;">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
 
-        if (g.tipo === 'Ventas') totalVenta += monto;
-        if (g.tipo === 'Costo') totalCosto += monto;
-    });
+            if (g.tipo === 'Ventas') totalVenta += monto;
+            if (g.tipo === 'Costo') totalCosto += monto;
+        });
 
-    // Actualizar totales
-    document.getElementById('total-venta-gastos').textContent = totalVenta.toFixed(2);
-    document.getElementById('total-costo-gastos').textContent = totalCosto.toFixed(2);
-    const profit = totalVenta - totalCosto;
-    const profitPct = totalVenta > 0 ? (profit / totalVenta) * 100 : 0;
-    document.getElementById('profit-local').textContent = profit.toFixed(2);
-    document.getElementById('profit-porcentaje').textContent = profitPct.toFixed(2) + ' %';
-}
+        // Actualizar totales
+        document.getElementById('total-venta-gastos').textContent = totalVenta.toFixed(2);
+        document.getElementById('total-costo-gastos').textContent = totalCosto.toFixed(2);
+        const profit = totalVenta - totalCosto;
+        const profitPct = totalVenta > 0 ? (profit / totalVenta) * 100 : 0;
+        document.getElementById('profit-local').textContent = profit.toFixed(2);
+        document.getElementById('profit-porcentaje').textContent = profitPct.toFixed(2) + ' %';
+    }
 
     // === Eliminar gasto local ===
     function eliminarGastoLocal(index) {
