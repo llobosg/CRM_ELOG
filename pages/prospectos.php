@@ -544,25 +544,42 @@ function eliminarServicio(index) {
     actualizarTabla();
 }
 function abrirModalServicio(index = null) {
-    const idPpl = document.getElementById('id_ppl').value;
-    const concatenado = document.getElementById('concatenado').value;
-    if (!idPpl || !concatenado) return error('Guarde el prospecto primero');
+    // Evita que se cierre por eventos externos
+    event?.stopPropagation();
+    
+    const idPpl = document.getElementById('id_ppl')?.value;
+    const concatenado = document.getElementById('concatenado')?.value;
+    if (!idPpl || !concatenado) {
+        error('❌ Guarde el prospecto primero para crear servicios.');
+        return;
+    }
+
+    // Reiniciar campos ocultos
     document.getElementById('id_prospect_serv').value = idPpl;
     document.getElementById('concatenado_serv').value = concatenado;
     document.getElementById('serv_titulo_concatenado').textContent = concatenado;
+
     if (index !== null) {
         servicioEnEdicion = index;
-        const s = servicios[index];
-        costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
-        gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
-        // Aquí iría la lógica para rellenar campos (por brevedad, se asume implementada)
+        // ... rellenar campos ...
     } else {
         servicioEnEdicion = null;
         costosServicio = [];
         gastosLocales = [];
     }
-    document.getElementById('modal-servicio').style.display = 'flex';
+
+    // Mostrar modal SIN permitir que window.onclick lo cierre
+    const modal = document.getElementById('modal-servicio');
+    modal.style.display = 'flex';
+
+    // Prevenir cierre accidental
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            e.stopPropagation();
+        }
+    });
 }
+
 function cerrarModalServicio() {
     document.getElementById('modal-servicio').style.display = 'none';
 }
