@@ -688,9 +688,6 @@
         const servicio = document.getElementById('serv_servicio').value.trim();
         if (!servicio) return error('Servicio es obligatorio');
 
-        const servicio = document.getElementById('serv_servicio').value.trim();
-        if (!servicio) return error('Servicio es obligatorio');
-
         const origen = document.getElementById('serv_origen').value;
         const destino = document.getElementById('serv_destino').value;
         if (origen && destino && origen === destino) {
