@@ -568,15 +568,24 @@
     });
 
     // === GRABAR TODO ===
-    document.getElementById('btn-save-all')?.addEventListener('click', function() {
+    document.getElementById('btn-save-all')?.addEventListener('click', function(e) {
+        e.preventDefault(); // ✅ Evitar submit inmediato
+
         const rut = document.querySelector('input[name="rut_empresa"]').value.trim();
         const razon = document.querySelector('input[name="razon_social"]').value.trim();
         if (!rut || !razon) return error('RUT y Razón Social son obligatorios');
         const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
         if (!validarRut(rutLimpio)) return error('RUT inválido');
 
+        // Validar que haya servicios si está en modo edición
+        if (tieneServiciosIniciales && servicios.length === 0) {
+            return error('Debe haber al menos un servicio');
+        }
+
         const form = document.getElementById('form-prospecto');
         const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
+
+        // Agregar campos ocultos
         let inp = form.querySelector('input[name="modo"]');
         if (!inp) {
             inp = document.createElement('input');
@@ -585,6 +594,7 @@
             form.appendChild(inp);
         }
         inp.value = modo;
+
         if (modo === 'servicios') {
             inp = form.querySelector('input[name="servicios_json"]');
             if (!inp) {
@@ -595,7 +605,29 @@
             }
             inp.value = JSON.stringify(servicios);
         }
-        form.submit();
+
+        // ✅ Enviar con fetch para mejor control
+        const formData = new FormData(form);
+        fetch('', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                exito(data.message || 'Datos guardados correctamente');
+                if (data.id_ppl) {
+                    // Opcional: recargar prospecto
+                    seleccionarProspecto(data.id_ppl);
+                }
+            } else {
+                error(data.message || 'Error al guardar');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            error('Error de conexión al guardar');
+        });
     });
 
     // === SERVICIOS ===
@@ -611,6 +643,20 @@
         const idPpl = document.getElementById('id_ppl')?.value;
         const concatenado = document.getElementById('concatenado')?.value;
         if (!idPpl || !concatenado) return error('Guarde el prospecto primero');
+
+        // ✅ LIMPIAR TODOS LOS CAMPOS DEL MODAL ANTES DE CARGAR
+        const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
+        modalInputs.forEach(el => {
+            if (el.type === 'number') {
+                el.value = '';
+            } else if (el.type === 'text' || el.tagName === 'TEXTAREA') {
+                el.value = '';
+            } else if (el.tagName === 'SELECT') {
+                el.selectedIndex = 0;
+            }
+        });
+        
+        // Restaurar valores fijos
         document.getElementById('id_prospect_serv').value = idPpl;
         document.getElementById('concatenado_serv').value = concatenado;
         document.getElementById('serv_titulo_concatenado').textContent = concatenado;
@@ -874,4 +920,22 @@
         });
     });
     // === FIN INICIALIZAR DOMContentLoaded =================================================================
+    
+    // === CARGAR PROSPECTO AUTOMÁTICAMENTE TRAS GUARDAR ===
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const idFromUrl = urlParams.get('id_ppl');
+        
+        if (idFromUrl && !isNaN(idFromUrl)) {
+            const id = parseInt(idFromUrl, 10);
+            // Limpiar parámetros de la URL sin recargar
+            const cleanUrl = window.location.pathname + '?page=prospectos';
+            history.replaceState({}, document.title, cleanUrl);
+            
+            // Cargar el prospecto
+            setTimeout(() => {
+                seleccionarProspecto(id);
+            }, 300); // Pequeño retraso para asegurar que el DOM esté listo
+        }
+    });
 </script>
