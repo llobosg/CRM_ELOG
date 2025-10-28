@@ -378,15 +378,33 @@ function seleccionarProspecto(id) {
                 }
             }
 
-            // Operación y tipo
+            // === Asignar OPERACIÓN y TIPO OPERACIÓN ===
             const opSel = document.getElementById('operacion');
             const tipoSel = document.getElementById('tipo_oper');
             if (opSel && p.operacion) {
+                // 1. Asignar operación
                 opSel.value = p.operacion;
-                opSel.dispatchEvent(new Event('change'));
-                setTimeout(() => {
-                    if (tipoSel && p.tipo_oper) tipoSel.value = p.tipo_oper;
-                }, 300);
+
+                // 2. Cargar tipos manualmente (sin depender del evento 'change')
+                fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                        (data.tipos || []).forEach(t => {
+                            const opt = document.createElement('option');
+                            opt.value = t;
+                            opt.textContent = t;
+                            tipoSel.appendChild(opt);
+                        });
+                        // 3. Ahora SÍ asignar tipo_oper (los <option> ya existen)
+                        if (p.tipo_oper) {
+                            tipoSel.value = p.tipo_oper;
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error al cargar tipos:', err);
+                        error('⚠️ No se pudieron cargar los tipos de operación');
+                    });
             }
 
             // Notas
