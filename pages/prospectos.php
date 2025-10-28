@@ -644,36 +644,42 @@
         const concatenado = document.getElementById('concatenado')?.value;
         if (!idPpl || !concatenado) return error('Guarde el prospecto primero');
 
-        // ✅ LIMPIAR TODOS LOS CAMPOS DEL MODAL ANTES DE CARGAR
+        // ✅ LIMPIAR MODAL
         const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
         modalInputs.forEach(el => {
-            if (el.type === 'number') {
-                el.value = '';
-            } else if (el.type === 'text' || el.tagName === 'TEXTAREA') {
-                el.value = '';
-            } else if (el.tagName === 'SELECT') {
-                el.selectedIndex = 0;
-            }
+            if (el.type === 'number') el.value = '';
+            else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
+            else if (el.tagName === 'SELECT') el.selectedIndex = 0;
         });
-        
-        // Restaurar valores fijos
+
         document.getElementById('id_prospect_serv').value = idPpl;
         document.getElementById('concatenado_serv').value = concatenado;
         document.getElementById('serv_titulo_concatenado').textContent = concatenado;
+
+        costosServicio = [];
+        gastosLocales = [];
+
         if (index !== null) {
+            // === EDICIÓN ===
             servicioEnEdicion = index;
             const s = servicios[index];
             costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
             gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
-            // Rellenar después de cargar datos
+
+            // Cargar datos base (medios, commodity, etc.)
             cargarDatosModalServicio(() => {
+                // ✅ SOLO AHORA rellenar campos
                 document.getElementById('serv_servicio').value = s.servicio || '';
                 document.getElementById('serv_medio_transporte').value = s.trafico || '';
                 document.getElementById('serv_commodity').value = s.commodity || '';
-                document.getElementById('serv_origen').value = s.origen || '';
-                document.getElementById('serv_pais_origen').value = s.pais_origen || '';
-                document.getElementById('serv_destino').value = s.destino || '';
-                document.getElementById('serv_pais_destino').value = s.pais_destino || '';
+                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
+                document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
+                document.getElementById('serv_aol').value = s.aol || '';
+                document.getElementById('serv_aod').value = s.aod || '';
+                document.getElementById('serv_agente').value = s.agente || '';
+                document.getElementById('serv_aerolinea').value = s.aerolinea || '';
+                document.getElementById('serv_terrestre').value = s.terrestre || '';
+                document.getElementById('serv_maritimo').value = s.naviera || '';
                 document.getElementById('serv_transito').value = s.transito || '';
                 document.getElementById('serv_frecuencia').value = s.frecuencia || '';
                 document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
@@ -686,40 +692,26 @@
                 document.getElementById('serv_moneda').value = s.moneda || 'CLP';
                 document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
                 document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
-                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
-                document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
-                document.getElementById('serv_aol').value = s.aol || '';
-                document.getElementById('serv_aod').value = s.aod || '';
-                document.getElementById('serv_agente').value = s.agente || '';
-                document.getElementById('serv_aerolinea').value = s.aerolinea || '';
-                document.getElementById('serv_terrestre').value = s.terrestre || '';
-                document.getElementById('serv_maritimo').value = s.naviera || '';
-            });
-            // Forzar carga de lugares si ya hay un medio seleccionado
-            // Ahora cargar lugares según el medio
-            const medio = s.trafico;
-            if (medio) {
-                cargarLugaresPorMedio(medio).then(() => {
-                    // Restaurar origen y destino
-                    document.getElementById('serv_origen').value = s.origen || '';
-                    document.getElementById('serv_destino').value = s.destino || '';
-                    // Forzar actualización de países
-                    document.getElementById('serv_origen').dispatchEvent(new Event('change'));
-                    document.getElementById('serv_destino').dispatchEvent(new Event('change'));
-                });
-            }
-        } else {
-            servicioEnEdicion = null;
-            costosServicio = [];
-            gastosLocales = [];
-            cargarDatosModalServicio(() => {
-                // Si ya hay un medio en el prospecto (poco probable), cargar lugares
-                const medio = document.getElementById('serv_medio_transporte')?.value;
+
+                // ✅ Cargar lugares según el medio de transporte
+                const medio = s.trafico;
                 if (medio) {
-                    cargarLugaresPorMedio(medio);
+                    cargarLugaresPorMedio(medio, s.origen).then(() => {
+                        // ✅ Ahora sí, asignar origen y destino
+                        document.getElementById('serv_origen').value = s.origen || '';
+                        document.getElementById('serv_destino').value = s.destino || '';
+                        // Forzar actualización de países
+                        document.getElementById('serv_origen').dispatchEvent(new Event('change'));
+                        document.getElementById('serv_destino').dispatchEvent(new Event('change'));
+                    });
                 }
             });
+        } else {
+            // === NUEVO SERVICIO ===
+            servicioEnEdicion = null;
+            cargarDatosModalServicio();
         }
+
         document.getElementById('modal-servicio').style.display = 'flex';
     }
     function cerrarModalServicio() {
@@ -873,7 +865,7 @@
         cargarOperacionesYTipos();
         document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
         document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
-        document.getElementById('btn-save-all').textContent = 'Grabar Todo';
+        //document.getElementById('btn-save-all').textContent = 'Grabar Todo';
         document.getElementById('btn-agregar-servicio').addEventListener('click', () => abrirModalServicio());
 
         // Configurar una vez los listeners del modal de servicio
@@ -920,7 +912,7 @@
         });
     });
     // === FIN INICIALIZAR DOMContentLoaded =================================================================
-    
+
     // === CARGAR PROSPECTO AUTOMÁTICAMENTE TRAS GUARDAR ===
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
