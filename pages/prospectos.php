@@ -386,7 +386,21 @@
             const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
             tc += c; tv += v; tgc += gc; tgv += gv;
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${s.servicio}</td><td>${s.trafico}</td><td>${s.base_calculo || ''}</td><td>${s.moneda}</td><td>${(parseFloat(s.tarifa)||0).toFixed(2)}</td><td>${c.toFixed(2)}</td><td>${v.toFixed(2)}</td><td>${gc.toFixed(2)}</td><td>${gv.toFixed(2)}</td><td><button onclick="editarServicio(${servicios.indexOf(s)})">✏️</button> <button onclick="eliminarServicio(${servicios.indexOf(s)})">🗑️</button></td>`;
+            tr.innerHTML = `
+                <td>${s.servicio}</td>
+                <td>${s.trafico}</td>
+                <td>${s.base_calculo || ''}</td>
+                <td>${s.moneda}</td>
+                <td>${(parseFloat(s.tarifa)||0).toFixed(2)}</td>
+                <td>${c.toFixed(2)}</td>
+                <td>${v.toFixed(2)}</td>
+                <td>${gc.toFixed(2)}</td>
+                <td>${gv.toFixed(2)}</td>
+                <td>
+                    <button type="button" onclick="editarServicio(${servicios.indexOf(s)})">✏️</button>
+                    <button type="button" onclick="eliminarServicio(${servicios.indexOf(s)})">🗑️</button>
+                </td>
+            `;
             tbody.appendChild(tr);
         });
         document.getElementById('total-costo').textContent = tc.toFixed(2);
@@ -632,14 +646,27 @@
 
     // === SERVICIOS ===
     function editarServicio(index) {
-        servicioEnEdicion = index;
-        abrirModalServicio(index);
+        try {
+            if (index < 0 || index >= servicios.length) {
+                throw new Error('Índice de servicio inválido');
+            }
+            servicioEnEdicion = index;
+            abrirModalServicio(index);
+        } catch (e) {
+            console.error('Error al editar servicio:', e);
+            error('No se pudo abrir el servicio para edición. Verifique la consola.');
+        }
     }
     function eliminarServicio(index) {
         servicios.splice(index, 1);
         actualizarTabla();
     }
     function abrirModalServicio(index = null) {
+        const modal = document.getElementById('modal-servicio');
+        if (!modal) {
+            error('Error interno: modal de servicio no encontrado');
+            return;
+        }
         const idPpl = document.getElementById('id_ppl')?.value;
         const concatenado = document.getElementById('concatenado')?.value;
         if (!idPpl || !concatenado) return error('Guarde el prospecto primero');
