@@ -259,19 +259,53 @@ function actualizarTabla() {
 // === CARGAR PROSPECTO ===
 function seleccionarProspecto(id) {
     fetch(`/api/get_prospecto.php?id=${id}`)
-        .then(r => r.json())
+        .then(res => res.json())
         .then(data => {
             if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
             const p = data.prospecto;
-            ['razon_social','rut_empresa','fono_empresa','direccion','booking','incoterm','concatenado','fecha_alta','fecha_estado'].forEach(f => {
+
+            // Campos de texto
+            ['razon_social','rut_empresa','fono_empresa','direccion','booking','incoterm','concatenado','fecha_alta','fecha_estado']
+            .forEach(f => {
                 const el = document.querySelector(`[name="${f}"]`);
-                if (el) el.value = p[f] || '';
+                if (el && el.tagName === 'INPUT') el.value = p[f] || '';
             });
+
+            // Comercial
             document.getElementById('id_comercial').value = p.id_comercial || '';
             document.getElementById('nombre').value = p.nombre || '';
+
+            // Estado
             document.getElementById('estado').value = p.estado || 'Pendiente';
-            document.getElementById('id_ppl').value = p.id_ppl || '';
-            document.getElementById('id_prospect').value = p.id_prospect || '';
+
+            // País
+            const paisSel = document.getElementById('pais');
+            if (paisSel && p.pais) {
+                for (let opt of paisSel.options) {
+                    if (opt.value === p.pais) {
+                        opt.selected = true;
+                        break;
+                    }
+                }
+                if (!paisSel.value) {
+                    const opt = document.createElement('option');
+                    opt.value = p.pais;
+                    opt.textContent = p.pais;
+                    paisSel.appendChild(opt);
+                    paisSel.value = p.pais;
+                }
+            }
+
+            // Operación y tipo
+            const opSel = document.getElementById('operacion');
+            const tipoSel = document.getElementById('tipo_oper');
+            if (opSel && p.operacion) {
+                opSel.value = p.operacion;
+                opSel.dispatchEvent(new Event('change'));
+                setTimeout(() => {
+                    if (tipoSel && p.tipo_oper) tipoSel.value = p.tipo_oper;
+                }, 300);
+            }
 
             // Notas
             const setNota = (name, val) => {
@@ -283,7 +317,8 @@ function seleccionarProspecto(id) {
                     document.getElementById('form-prospecto').appendChild(inp);
                 }
                 inp.value = val || '';
-                document.getElementById(`${name}_input`).value = val || '';
+                const modalInp = document.getElementById(`${name}_input`);
+                if (modalInp) modalInp.value = val || '';
             };
             setNota('notas_comerciales', p.notas_comerciales);
             setNota('notas_operaciones', p.notas_operaciones);
@@ -297,8 +332,14 @@ function seleccionarProspecto(id) {
                 ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
             }));
             actualizarTabla();
-            document.getElementById('btn-agregar-servicio').disabled = false;
-        });
+
+            // Campos ocultos
+            document.getElementById('id_ppl').value = p.id_ppl || '';
+            document.getElementById('id_prospect').value = p.id_prospect || '';
+
+            exito('✅ Prospecto cargado');
+        })
+        .catch(err => error('Error al cargar prospecto'));
 }
 
 // === MODALES ===
