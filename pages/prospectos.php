@@ -687,18 +687,14 @@
         gastosLocales = [];
 
         if (index !== null) {
-            // === EDICIÓN ===
             servicioEnEdicion = index;
             const s = servicios[index];
             costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
             gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
 
-            // Cargar datos base (medios, commodity, etc.)
             cargarDatosModalServicio(() => {
-                // ✅ SOLO AHORA rellenar campos
+                // ✅ 1. Asignar campos que NO dependen de lugares
                 document.getElementById('serv_servicio').value = s.servicio || '';
-                document.getElementById('serv_medio_transporte').value = s.trafico || '';
-                document.getElementById('serv_commodity').value = s.commodity || '';
                 document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
                 document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
                 document.getElementById('serv_aol').value = s.aol || '';
@@ -720,16 +716,63 @@
                 document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
                 document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
 
-                // ✅ Cargar lugares según el medio de transporte
-                const medio = s.trafico;
-                if (medio) {
-                    cargarLugaresPorMedio(medio, s.origen).then(() => {
-                        // ✅ Ahora sí, asignar origen y destino
-                        document.getElementById('serv_origen').value = s.origen || '';
-                        document.getElementById('serv_destino').value = s.destino || '';
-                        // Forzar actualización de países
-                        document.getElementById('serv_origen').dispatchEvent(new Event('change'));
-                        document.getElementById('serv_destino').dispatchEvent(new Event('change'));
+                // ✅ 2. Asignar medio_transporte y commodity (ahora los selects están llenos)
+                const medioGuardado = (s.trafico || '').trim();
+                const commodityGuardado = (s.commodity || '').trim();
+
+                const medioSel = document.getElementById('serv_medio_transporte');
+                const commoditySel = document.getElementById('serv_commodity');
+
+                // Buscar coincidencia insensible a espacios y acentos (básico)
+                if (medioSel) {
+                    for (let opt of medioSel.options) {
+                        if (opt.value.trim() === medioGuardado) {
+                            opt.selected = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (commoditySel) {
+                    for (let opt of commoditySel.options) {
+                        if (opt.value.trim() === commodityGuardado) {
+                            opt.selected = true;
+                            break;
+                        }
+                    }
+                }
+
+                // ✅ 3. Cargar lugares según el medio
+                if (medioGuardado) {
+                    cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
+                        // ✅ 4. Asignar origen y destino
+                        const origenSel = document.getElementById('serv_origen');
+                        const destinoSel = document.getElementById('serv_destino');
+
+                        const origenGuardado = (s.origen || '').trim();
+                        const destinoGuardado = (s.destino || '').trim();
+
+                        if (origenSel) {
+                            for (let opt of origenSel.options) {
+                                if (opt.value.trim() === origenGuardado) {
+                                    opt.selected = true;
+                                    break;
+                                }
+                            }
+                            // Actualizar país origen
+                            origenSel.dispatchEvent(new Event('change'));
+                        }
+
+                        if (destinoSel) {
+                            for (let opt of destinoSel.options) {
+                                if (opt.value.trim() === destinoGuardado) {
+                                    opt.selected = true;
+                                    break;
+                                }
+                            }
+                            // Actualizar país destino
+                            destinoSel.dispatchEvent(new Event('change'));
+                        }
                     });
                 }
             });
@@ -936,6 +979,16 @@
                     document.getElementById('serv_pais_destino').value = '';
                 }
             }
+        });
+        // Submodales de servicio
+        document.getElementById('btn-costos-servicio')?.addEventListener('click', function() {
+            alert('Submodal de Costos - Ventas (pendiente de implementar)');
+            // Aquí irá tu lógica futura
+        });
+
+        document.getElementById('btn-gastos-locales')?.addEventListener('click', function() {
+            alert('Submodal de Gastos Locales (pendiente de implementar)');
+            // Aquí irá tu lógica futura
         });
     });
     // === FIN INICIALIZAR DOMContentLoaded =================================================================
