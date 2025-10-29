@@ -129,6 +129,10 @@ main {
     transition: background 0.3s;
 }
 
+.btn-primary:hover {
+    background: #007a52;
+}
+
 .btn-secondary {
     background: #6c757d;
     color: white;
@@ -141,8 +145,8 @@ main {
     transition: background 0.3s;
 }
 
-.btn-primary:hover {
-    background: #007a52;
+.btn-secondary:hover {
+    background: #5a6268;
 }
 
 .btn-add {

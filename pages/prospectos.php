@@ -75,6 +75,7 @@
                 <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
                 <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
             </div>
+            <button type="button" class="btn-secondary" id="btn-volver">Volver</button>
             <button type="button" class="btn-primary" id="btn-save-all">Grabar Todo</button>
         </div>
 
@@ -1009,5 +1010,39 @@
                 seleccionarProspecto(id);
             }, 300); // Pequeño retraso para asegurar que el DOM esté listo
         }
+    });
+    // === BOTÓN VOLVER CON CONFIRMACIÓN ===
+    document.getElementById('btn-volver')?.addEventListener('click', function() {
+        const tieneCambios = 
+            document.querySelector('input[name="razon_social"]')?.value.trim() !== '' ||
+            servicios.length > 0;
+
+        if (tieneCambios) {
+            if (!confirm('¿Desea salir sin guardar los cambios?\n\nSi ha modificado datos, se perderán.')) {
+                return;
+            }
+        }
+
+        // Limpiar el formulario
+        document.getElementById('form-prospecto').reset();
+        servicios = [];
+        actualizarTabla();
+
+        // Limpiar campos ocultos
+        document.getElementById('id_ppl').value = '';
+        document.getElementById('id_prospect').value = '';
+
+        // Restablecer estado editable
+        const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
+        const selects = document.querySelectorAll('select');
+        inputs.forEach(input => {
+            input.readOnly = false;
+            input.style.backgroundColor = '';
+        });
+        selects.forEach(select => {
+            select.disabled = false;
+        });
+
+        document.getElementById('btn-agregar-servicio').disabled = false;
     });
 </script>
