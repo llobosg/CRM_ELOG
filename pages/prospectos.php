@@ -1252,9 +1252,16 @@ document.addEventListener('DOMContentLoaded', () => {
         error('Abra un servicio primero para gestionar gastos');
     });
 
-    // Submodales desde dentro del modal de servicio
-    document.getElementById('btn-costos-servicio-dentro')?.addEventListener('click', abrirSubmodalCostos);
-    document.getElementById('btn-gastos-locales-dentro')?.addEventListener('click', abrirSubmodalGastosLocales);
+    // Submodales desde dentro del modal de servicio (con verificación segura)
+    const btnCostosDentro = document.getElementById('btn-costos-servicio-dentro');
+    const btnGastosDentro = document.getElementById('btn-gastos-locales-dentro');
+
+    if (btnCostosDentro) {
+        btnCostosDentro.addEventListener('click', abrirSubmodalCostos);
+    }
+    if (btnGastosDentro) {
+        btnGastosDentro.addEventListener('click', abrirSubmodalGastosLocales);
+    }
 
     // Búsqueda inteligente
     document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
