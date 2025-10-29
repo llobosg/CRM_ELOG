@@ -313,6 +313,7 @@ let gastosLocales = [];
 let servicioEnEdicion = null;
 let tieneServiciosIniciales = false;
 let estadoProspecto = 'Pendiente';
+window.editarServicio = editarServicio;
 
 // ===================================================================
 // === 2. FUNCIONES AUXILIARES ===
@@ -359,7 +360,7 @@ function actualizarTabla() {
     if (!tbody) return;
     tbody.innerHTML = '';
     let tc = 0, tv = 0, tgc = 0, tgv = 0;
-    servicios.forEach(s => {
+    servicios.forEach((s, index) => {
         const c = parseFloat(s.costo) || 0;
         const v = parseFloat(s.venta) || 0;
         const gc = parseFloat(s.costogastoslocalesdestino) || 0;
@@ -377,8 +378,8 @@ function actualizarTabla() {
             <td>${gc.toFixed(2)}</td>
             <td>${gv.toFixed(2)}</td>
             <td>
-                <button type="button" class="btn-edit-servicio" data-index="${servicios.indexOf(s)}">✏️</button>
-                <button type="button" class="btn-delete-servicio" data-index="${servicios.indexOf(s)}">🗑️</button>
+                <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
+                <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
             </td>
         `;
         tbody.appendChild(tr);
@@ -387,14 +388,14 @@ function actualizarTabla() {
     document.getElementById('total-venta').textContent = tv.toFixed(2);
     document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
     document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
-    // Agregar listeners a los nuevos botones
+
+    // === Agregar listeners a los botones ===
     document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
         btn.addEventListener('click', function() {
             const index = parseInt(this.getAttribute('data-index'));
             editarServicio(index);
         });
     });
-
     document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
         btn.addEventListener('click', function() {
             const index = parseInt(this.getAttribute('data-index'));
@@ -1196,9 +1197,30 @@ function cerrarSubmodalGastosLocales() {
     document.getElementById('submodal-gastos-locales').style.display = 'none';
 }
 
-// ===================================================================
-// === 9. INICIALIZACIÓN ===
-// ===================================================================
+// === FUNCIONES DE SERVICIOS ===
+function editarServicio(index) {
+    try {
+        if (index < 0 || index >= servicios.length) {
+            throw new Error('Índice de servicio inválido');
+        }
+        abrirModalServicio(index);
+    } catch (e) {
+        console.error('Error al editar servicio:', e);
+        error('No se pudo abrir el servicio para edición');
+    }
+}
+
+function eliminarServicio(index) {
+    if (confirm('¿Eliminar este servicio?')) {
+        servicios.splice(index, 1);
+        actualizarTabla();
+        exito('Servicio eliminado');
+    }
+}
+
+// =================================================================================================================
+// === 9. INICIALIZACIÓN === DOMContentLoaded
+// =================================================================================================================
 document.addEventListener('DOMContentLoaded', () => {
     cargarPaises();
     cargarOperacionesYTipos();
@@ -1304,7 +1326,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
-    window.editarServicio = editarServicio;
     window.eliminarServicio = eliminarServicio; 
 });
 </script>
