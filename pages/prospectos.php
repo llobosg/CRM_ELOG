@@ -366,13 +366,41 @@ function actualizarTabla() {
         const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
         tc += c; tv += v; tgc += gc; tgv += gv;
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${s.servicio}</td><td>${s.trafico}</td><td>${s.base_calculo || ''}</td><td>${s.moneda}</td><td>${(parseFloat(s.tarifa)||0).toFixed(2)}</td><td>${c.toFixed(2)}</td><td>${v.toFixed(2)}</td><td>${gc.toFixed(2)}</td><td>${gv.toFixed(2)}</td><td><button type="button" onclick="editarServicio(${servicios.indexOf(s)})">✏️</button> <button type="button" onclick="eliminarServicio(${servicios.indexOf(s)})">🗑️</button></td>`;
+        tr.innerHTML = `
+            <td>${s.servicio}</td>
+            <td>${s.trafico}</td>
+            <td>${s.base_calculo || ''}</td>
+            <td>${s.moneda}</td>
+            <td>${(parseFloat(s.tarifa)||0).toFixed(2)}</td>
+            <td>${c.toFixed(2)}</td>
+            <td>${v.toFixed(2)}</td>
+            <td>${gc.toFixed(2)}</td>
+            <td>${gv.toFixed(2)}</td>
+            <td>
+                <button type="button" class="btn-edit-servicio" data-index="${servicios.indexOf(s)}">✏️</button>
+                <button type="button" class="btn-delete-servicio" data-index="${servicios.indexOf(s)}">🗑️</button>
+            </td>
+        `;
         tbody.appendChild(tr);
     });
     document.getElementById('total-costo').textContent = tc.toFixed(2);
     document.getElementById('total-venta').textContent = tv.toFixed(2);
     document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
     document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
+    // Agregar listeners a los nuevos botones
+    document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            editarServicio(index);
+        });
+    });
+
+    document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            eliminarServicio(index);
+        });
+    });
 }
 
 // ===================================================================
@@ -1274,5 +1302,9 @@ document.addEventListener('DOMContentLoaded', () => {
         history.replaceState({}, document.title, cleanUrl);
         setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
     }
+
+    // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
+    window.editarServicio = editarServicio;
+    window.eliminarServicio = eliminarServicio; 
 });
 </script>
