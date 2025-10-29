@@ -13,13 +13,63 @@
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
 
-    <!-- ... (sección Datos del Prospecto, sin cambios) ... -->
-    <!-- (Mantén todo el HTML de "Datos del Prospecto" exactamente como lo tenías) -->
+    <!-- ========== DATOS DEL PROSPECTO ========== -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3><i class="fas fa-user"></i> Datos del Prospecto</h3>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
+            <label>RUT Empresa *</label>
+            <input type="text" name="rut_empresa" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <label>Razón Social *</label>
+            <input type="text" name="razon_social" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <label>Teléfono</label>
+            <input type="tel" name="fono_empresa" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <label>Fecha</label>
+            <input type="date" name="fecha_alta" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" value="<?= date('Y-m-d') ?>" />
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
+            <label>País</label>
+            <select name="pais" id="pais" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+                <option value="">Seleccionar país</option>
+            </select>
+            <label>Dirección</label>
+            <input type="text" name="direccion" id="direccion" style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <label>Estado</label>
+            <select name="estado" id="estado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+                <option value="Pendiente">Pendiente</option>
+                <option value="Enviado">Enviado</option>
+                <option value="Devuelto_pendiente">Devuelto_pendiente</option>
+                <option value="CerradoOK">CerradoOK</option>
+                <option value="Rechazado">Rechazado</option>
+            </select>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
+            <label>Operación</label>
+            <select name="operacion" id="operacion" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
+                <option value="">Seleccionar</option>
+            </select>
+            <label>Tipo Operación</label>
+            <select name="tipo_oper" id="tipo_oper" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
+                <option value="">Seleccionar</option>
+            </select>
+            <label>Concatenado</label>
+            <input type="text" name="concatenado" id="concatenado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; box-sizing: border-box;" readonly />
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
+            <label>Booking</label>
+            <input type="text" name="booking" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <label>Comercial ID</label>
+            <input type="number" name="id_comercial" id="id_comercial" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <label>Nombre</label>
+            <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <label>Incoterm</label>
+            <input type="text" name="incoterm" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+        </div>
+    </div>
 
+    <!-- ========== SERVICIOS ASOCIADOS ========== -->
     <div class="card">
         <h3><i class="fas fa-truck"></i> Servicios Asociados</h3>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-            <!-- Izquierda: Submodales y modales -->
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-comment" id="btn-costos-servicio">
                     <i class="fas fa-calculator"></i> Costos - Ventas
@@ -30,8 +80,6 @@
                 <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
                 <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
             </div>
-            
-            <!-- Derecha: Solo Grabar Todo (fuera del modal) -->
             <button type="button" class="btn-primary" id="btn-save-all">Grabar Todo</button>
         </div>
 
@@ -61,28 +109,119 @@
     <input type="hidden" name="servicios_json" id="servicios_json" />
 </form>
 
-<!-- ========== MODALES PRINCIPALES ========== -->
+<!-- ========== MODALES ========== -->
 
-<!-- Modal Comercial, Operaciones: sin cambios -->
-<!-- (Mantén tus modales de Comerciales y Operaciones como estaban) -->
+<!-- Modal Comercial -->
+<div id="modal-comercial" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <h3><i class="fas fa-comments"></i> Notas Comerciales</h3>
+        <span class="close" onclick="cerrarModalComercial()">&times;</span>
+        <textarea id="notas_comerciales_input" rows="6" placeholder="..."></textarea>
+        <div class="modal-footer">
+            <button type="button" onclick="cerrarModalComercial()">Cerrar</button>
+            <button type="button" onclick="guardarNotasComerciales()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Operaciones -->
+<div id="modal-operaciones" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <h3><i class="fas fa-clipboard-list"></i> Notas Operaciones</h3>
+        <span class="close" onclick="cerrarModalOperaciones()">&times;</span>
+        <textarea id="notas_operaciones_input" rows="6" placeholder="..."></textarea>
+        <div class="modal-footer">
+            <button type="button" onclick="cerrarModalOperaciones()">Cerrar</button>
+            <button type="button" onclick="guardarNotasOperaciones()">Guardar</button>
+        </div>
+    </div>
+</div>
 
 <!-- Modal Servicio -->
 <div id="modal-servicio" class="modal" style="display:none;">
     <div class="modal-content" style="max-width: 1500px; width: 95%;">
         <h3><i class="fas fa-box"></i> Agregar Servicio para <span id="serv_titulo_concatenado">-</span></h3>
         <span class="close" onclick="cerrarModalServicio()">&times;</span>
-        
-        <!-- Campos del servicio (sin cambios) -->
-        <!-- (Mantén todo el HTML interno del modal exactamente como lo tenías) -->
-
+        <input type="hidden" id="id_prospect_serv" name="id_prospect_serv" />
+        <input type="hidden" id="concatenado_serv" name="concatenado_serv" />
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.8rem; margin-top: 1.2rem; align-items: center;">
+            <label>Servicio</label>
+            <input type="text" id="serv_servicio" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Medio Transporte</label>
+            <select id="serv_medio_transporte" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <option value="">Seleccionar</option>
+            </select>
+            <label>Commodity</label>
+            <select id="serv_commodity" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <option value="">Seleccionar</option>
+            </select>
+            <label>Origen</label>
+            <select id="serv_origen" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <option value="">Seleccionar</option>
+            </select>
+            <label>País Origen</label>
+            <input type="text" id="serv_pais_origen" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
+            <label>Destino</label>
+            <select id="serv_destino" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <option value="">Seleccionar</option>
+            </select>
+            <label>País Destino</label>
+            <input type="text" id="serv_pais_destino" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
+            <label>Tránsito</label>
+            <input type="text" id="serv_transito" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Frecuencia</label>
+            <input type="text" id="serv_frecuencia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Lugar Carga</label>
+            <input type="text" id="serv_lugar_carga" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Sector</label>
+            <input type="text" id="serv_sector" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Mercancía</label>
+            <input type="text" id="serv_mercancia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Bultos</label>
+            <input type="number" id="serv_bultos" min="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Peso (kg)</label>
+            <input type="number" id="serv_peso" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Volumen (m³)</label>
+            <input type="number" id="serv_volumen" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Dimensiones</label>
+            <input type="text" id="serv_dimensiones" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" placeholder="Ej: 120x80x90 cm" />
+            <label>Moneda</label>
+            <select id="serv_moneda" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="CLP">CLP</option>
+            </select>
+            <label>Tipo Cambio</label>
+            <input type="number" id="serv_tipo_cambio" step="0.01" min="0" value="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Proveedor Nac</label>
+            <select id="serv_proveedor_nac" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <option value="">Seleccionar</option>
+            </select>
+            <label>AOL</label>
+            <input type="text" id="serv_aol" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
+            <label>AOD</label>
+            <input type="text" id="serv_aod" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
+            <label>Desconsolidación</label>
+            <input type="text" id="serv_desconsolidacion" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Agente</label>
+            <select id="serv_agente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <option value="">Seleccionar</option>
+            </select>
+            <label>Aerolínea</label>
+            <input type="text" id="serv_aerolinea" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Terrestre</label>
+            <input type="text" id="serv_terrestre" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Marítimo</label>
+            <input type="text" id="serv_maritimo" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Ref. Cliente</label>
+            <input type="text" id="serv_ref_cliente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+        </div>
         <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-            <!-- Izquierda: Submodales dentro del modal -->
             <div>
-                <button type="button" class="btn-comment" id="btn-costos-servicio-modal"><i class="fas fa-calculator"></i> Costos - Ventas</button>
-                <button type="button" class="btn-comment" id="btn-gastos-locales-modal"><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</button>
+                <!-- Botones de submodales dentro del modal -->
+                <button type="button" class="btn-comment" id="btn-costos-servicio-dentro"><i class="fas fa-calculator"></i> Costos</button>
+                <button type="button" class="btn-comment" id="btn-gastos-locales-dentro"><i class="fas fa-file-invoice-dollar"></i> Gastos</button>
             </div>
-            
-            <!-- Derecha: Volver y Agregar Servicio -->
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-secondary" onclick="cerrarModalServicioConConfirmacion()">Volver</button>
                 <button type="button" class="btn-add" onclick="guardarServicio()">Agregar Servicio</button>
@@ -92,9 +231,135 @@
 </div>
 
 <!-- ========== SUBMODALES ========== -->
-<!-- (Pega aquí TODO el HTML de los submodales que ya tenías: submodal-costos y submodal-gastos-locales) -->
-<?= file_get_contents(__DIR__ . '/submodales_servicio.html') ?>
-<!-- O simplemente incluye el HTML que ya tienes -->
+
+<!-- Submodal: Costos/Ventas/Gastos -->
+<div id="submodal-costos" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
+    <div class="modal-content" style="max-width: 1400px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        <h3><i class="fas fa-calculator"></i> Costos, Ventas y Gastos</h3>
+        <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+
+        <!-- Formulario de entrada -->
+        <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+            <select id="costo_concepto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                <option value="">Seleccionar concepto</option>
+            </select>
+            <input type="text" id="costo_moneda" readonly style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center; width: 80px;" />
+            <input type="number" id="costo_qty" step="0.01" min="0" placeholder="Qty" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right; width: 80px;" />
+            <input type="number" id="costo_costo" step="0.01" min="0" placeholder="Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
+            <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
+            <input type="number" id="costo_tarifa" step="0.01" min="0" placeholder="Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
+            <input type="text" id="costo_total_tarifa" readonly placeholder="Total Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
+            <select id="costo_aplica" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                <option value="">Seleccionar aplica</option>
+            </select>
+            <button type="button" onclick="guardarCosto()" style="grid-column: span 1; background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
+                <i class="fas fa-plus"></i> Agregar
+            </button>
+        </div>
+
+        <!-- Tabla de costos -->
+        <div class="table-container" style="margin-top: 1.2rem; overflow-x: auto;">
+            <table id="tabla-costos" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
+                <thead>
+                    <tr style="background: #f1f3f5;">
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Concepto</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Moneda</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Qty</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Total Costo</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Total Tarifa</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Aplica</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="costos-body"></tbody>
+                <tfoot>
+                    <tr style="font-weight: normal; background: #f9fafcff;">
+                        <td colspan="4" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">TOTAL COSTO:</td>
+                        <td id="total-costo-costos" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd; background-color: #fff9db;">0.00</td>
+                        <td style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">TOTAL TARIFA:</td>
+                        <td id="total-tarifa-costos" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd; background-color: #e6f7ff;">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div style="text-align: right; margin-top: 1.5rem;">
+            <button type="button" onclick="cerrarSubmodalCostos()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Submodal: Gastos Locales -->
+<div id="submodal-gastos-locales" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
+    <div class="modal-content" style="max-width: 1400px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        <h3><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</h3>
+        <span class="close" onclick="cerrarSubmodalGastosLocales()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+        
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+            <select id="gasto_tipo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
+                <option value="">Tipo</option>
+                <option value="Costo">Costo</option>
+                <option value="Ventas">Ventas</option>
+            </select>
+            <select id="gasto_gasto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
+                <option value="">Gastos</option>
+            </select>
+            <select id="gasto_moneda" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
+                <option value="USD">USD</option>
+                <option value="CLP">CLP</option>
+                <option value="EUR">EUR</option>
+            </select>
+            <input type="number" id="gasto_monto" step="0.01" min="0" placeholder="Monto" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
+            <select id="gasto_afecto" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
+                <option value="SI">SI</option>
+                <option value="NO">NO</option>
+            </select>
+            <input type="number" id="gasto_iva" step="0.01" min="0" placeholder="IVA %" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
+            <button type="button" onclick="guardarGastoLocal()" style="grid-column: span 1; background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem;">
+                <i class="fas fa-plus"></i> Agregar
+            </button>
+        </div>
+
+        <div class="table-container" style="margin-top: 1.2rem; overflow-x: auto;">
+            <table id="tabla-gastos-locales" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
+                <thead>
+                    <tr style="background: #f1f3f5;">
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Tipo</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Gastos</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Moneda</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Monto</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Afecto</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">IVA %</th>
+                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="gastos-locales-body"></tbody>
+            </table>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, max-content); gap: 1.5rem 2rem; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px; justify-content: start; align-items: center;">
+            <div><strong>TOTAL VENTA:</strong></div>
+            <div id="total-venta-gastos" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
+            <div><strong>TOTAL COSTO:</strong></div>
+            <div id="total-costo-gastos" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
+            <div><strong>PROFIT LOCAL:</strong></div>
+            <div id="profit-local" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
+            <div><strong>PROFIT %:</strong></div>
+            <div id="profit-porcentaje" style="font-weight: bold; text-align: right; min-width: 80px;">0.00 %</div>
+        </div>
+
+        <div style="text-align: right; margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.8rem;">
+            <button type="button" onclick="cerrarSubmodalGastosLocales()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- Toast de notificaciones -->
 <div id="toast" class="toast" style="display:none;">
@@ -319,7 +584,6 @@ function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
             ).join('');
             destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
 
-            // Actualizar países
             const actualizarPais = (selectId, paisId) => {
                 const sel = document.getElementById(selectId);
                 const pais = document.getElementById(paisId);
@@ -352,7 +616,6 @@ function seleccionarProspecto(id) {
             if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
             const p = data.prospecto;
 
-            // Rellenar campos (sin cambios)
             ['razon_social','rut_empresa','fono_empresa','direccion','booking','incoterm','concatenado','fecha_alta','fecha_estado'].forEach(f => {
                 const el = document.querySelector(`[name="${f}"]`);
                 if (el && el.tagName === 'INPUT') el.value = p[f] || '';
@@ -362,7 +625,6 @@ function seleccionarProspecto(id) {
             document.getElementById('nombre').value = p.nombre || '';
             document.getElementById('estado').value = p.estado || 'Pendiente';
 
-            // País
             const paisSel = document.getElementById('pais');
             if (paisSel && p.pais) {
                 for (let opt of paisSel.options) {
@@ -380,7 +642,6 @@ function seleccionarProspecto(id) {
                 }
             }
 
-            // Operación y tipo
             const opSel = document.getElementById('operacion');
             const tipoSel = document.getElementById('tipo_oper');
             if (opSel && p.operacion) {
@@ -399,7 +660,6 @@ function seleccionarProspecto(id) {
                     });
             }
 
-            // Notas
             const setNota = (name, val) => {
                 let inp = document.querySelector(`input[name="${name}"]`);
                 if (!inp) {
@@ -414,7 +674,6 @@ function seleccionarProspecto(id) {
             setNota('notas_comerciales', p.notas_comerciales);
             setNota('notas_operaciones', p.notas_operaciones);
 
-            // Servicios
             servicios = (data.servicios || []).map(s => ({
                 ...s,
                 costo: parseFloat(s.costo) || 0,
@@ -425,14 +684,19 @@ function seleccionarProspecto(id) {
             tieneServiciosIniciales = servicios.length > 0;
             actualizarTabla();
 
-            // Campos ocultos
             document.getElementById('id_ppl').value = p.id_ppl || '';
             document.getElementById('id_prospect').value = p.id_prospect || '';
 
-            // ✅ ELIMINADO: regla de negocio de edición
-            // Los campos SIEMPRE son editables
-
-            // ✅ Botón Agregar Servicio SIEMPRE habilitado
+            // ✅ SIEMPRE editable
+            const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
+            const selects = document.querySelectorAll('select');
+            inputs.forEach(input => {
+                input.readOnly = false;
+                input.style.backgroundColor = '';
+            });
+            selects.forEach(select => {
+                select.disabled = false;
+            });
             document.getElementById('btn-agregar-servicio').disabled = false;
         });
 }
@@ -482,7 +746,6 @@ function abrirModalServicio(index = null) {
     const concatenado = document.getElementById('concatenado')?.value;
     if (!idPpl || !concatenado) return error('Guarde el prospecto primero');
 
-    // Limpiar modal
     const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
     modalInputs.forEach(el => {
         if (el.type === 'number') el.value = '';
@@ -504,7 +767,6 @@ function abrirModalServicio(index = null) {
         gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
 
         cargarDatosModalServicio(() => {
-            // Rellenar campos básicos
             document.getElementById('serv_servicio').value = s.servicio || '';
             document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
             document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
@@ -527,7 +789,6 @@ function abrirModalServicio(index = null) {
             document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
             document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
 
-            // Asignar medio y commodity
             const medioGuardado = (s.trafico || '').trim();
             const commodityGuardado = (s.commodity || '').trim();
 
@@ -551,7 +812,6 @@ function abrirModalServicio(index = null) {
                 }
             }
 
-            // Cargar lugares
             if (medioGuardado) {
                 cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
                     const origenSel = document.getElementById('serv_origen');
@@ -658,12 +918,319 @@ function guardarServicio() {
 // ===================================================================
 // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
 // ===================================================================
-// (Pega aquí TODO el código JS de los submodales que ya tenías)
-// Incluyendo: abrirSubmodalCostos, guardarCosto, etc.
-// Y también las funciones de Gastos Locales
+function abrirSubmodalCostos() {
+    const modalServicio = document.getElementById('modal-servicio');
+    if (!modalServicio || modalServicio.style.display === 'none') {
+        error('Abra primero el modal de Servicio');
+        return;
+    }
+    
+    if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+        costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) 
+            ? [...servicios[servicioEnEdicion].costos] 
+            : [];
+    } else {
+        costosServicio = [];
+    }
+    
+    const monedaServicio = document.getElementById('serv_moneda')?.value || 'USD';
+    document.getElementById('costo_moneda').value = monedaServicio;
+    cargarConceptosCostos();
+    const medioTransporte = document.getElementById('serv_medio_transporte')?.value || '';
+    cargarAplicacionesCostos(medioTransporte);
+    
+    actualizarTablaCostos();
+    document.getElementById('submodal-costos').style.display = 'block';
+}
 
-// Por brevedad, asumimos que ya están definidas aquí
-// (Puedes copiar y pegar tu código existente en este bloque)
+function cargarConceptosCostos() {
+    fetch('/api/get_conceptos_costos.php')
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('costo_concepto');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Seleccionar concepto</option>';
+            (data.conceptos || data || []).forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.concepto || c;
+                opt.textContent = c.concepto || c;
+                sel.appendChild(opt);
+            });
+        })
+        .catch(err => {
+            console.error('Error al cargar conceptos:', err);
+            error('No se pudieron cargar los conceptos de costo');
+        });
+}
+
+function cargarAplicacionesCostos(medio) {
+    fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('costo_aplica');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Seleccionar aplica</option>';
+            const opciones = Array.isArray(data) ? data : (data.aplicaciones || []);
+            opciones.forEach(item => {
+                const valor = typeof item === 'string' ? item : item.aplica;
+                if (valor) {
+                    const opt = document.createElement('option');
+                    opt.value = valor;
+                    opt.textContent = valor;
+                    sel.appendChild(opt);
+                }
+            });
+        })
+        .catch(err => {
+            console.error('Error al cargar aplicaciones:', err);
+            error('No se pudieron cargar las opciones de "Aplica"');
+        });
+}
+
+['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calcularTotalesCostos);
+});
+
+function calcularTotalesCostos() {
+    const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+    const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+    const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+    
+    document.getElementById('costo_total_costo').value = (qty * costo).toFixed(2);
+    document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
+}
+
+function guardarCosto() {
+    const concepto = document.getElementById('costo_concepto').value;
+    const aplica = document.getElementById('costo_aplica').value;
+    const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+    const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+    const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+    const moneda = document.getElementById('costo_moneda').value || 'CLP';
+
+    if (!concepto || !aplica) {
+        error('Concepto y Aplica son obligatorios');
+        return;
+    }
+
+    const nuevoCosto = {
+        concepto,
+        moneda,
+        qty,
+        costo,
+        total_costo: qty * costo,
+        tarifa,
+        total_tarifa: qty * tarifa,
+        aplica
+    };
+
+    if (window.indiceCostoEdicion !== undefined) {
+        costosServicio[window.indiceCostoEdicion] = nuevoCosto;
+        delete window.indiceCostoEdicion;
+    } else {
+        costosServicio.push(nuevoCosto);
+    }
+
+    actualizarTablaCostos();
+    limpiarFormularioCostos();
+    exito('Costo guardado');
+}
+
+function actualizarTablaCostos() {
+    const tbody = document.getElementById('costos-body');
+    const totalCostoEl = document.getElementById('total-costo-costos');
+    const totalTarifaEl = document.getElementById('total-tarifa-costos');
+    
+    if (!tbody || !totalCostoEl || !totalTarifaEl) return;
+
+    tbody.innerHTML = '';
+    let totalCosto = 0, totalTarifa = 0;
+
+    costosServicio.forEach((c, i) => {
+        const costo = parseFloat(c.costo) || 0;
+        const tarifa = parseFloat(c.tarifa) || 0;
+        const qty = parseFloat(c.qty) || 0;
+        const totalCostoItem = costo * qty;
+        const totalTarifaItem = tarifa * qty;
+
+        totalCosto += totalCostoItem;
+        totalTarifa += totalTarifaItem;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${c.concepto}</td>
+            <td>${c.moneda}</td>
+            <td style="text-align: right;">${qty.toFixed(2)}</td>
+            <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
+            <td style="text-align: right; background-color: #fff9db;">${totalCostoItem.toFixed(2)}</td>
+            <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
+            <td style="text-align: right; background-color: #e6f7ff;">${totalTarifaItem.toFixed(2)}</td>
+            <td>${c.aplica}</td>
+            <td style="text-align: center;">
+                <button type="button" class="btn-edit" onclick="editarCosto(${i})" style="margin-right: 0.3rem; padding: 0.2rem 0.4rem;">✏️</button>
+                <button type="button" class="btn-delete" onclick="eliminarCosto(${i})" style="padding: 0.2rem 0.4rem;">🗑️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    totalCostoEl.textContent = totalCosto.toFixed(2);
+    totalTarifaEl.textContent = totalTarifa.toFixed(2);
+}
+
+function editarCosto(index) {
+    const c = costosServicio[index];
+    if (!c) return;
+
+    document.getElementById('costo_concepto').value = c.concepto || '';
+    document.getElementById('costo_qty').value = (c.qty !== undefined) ? c.qty : '';
+    document.getElementById('costo_costo').value = (c.costo !== undefined) ? c.costo : '';
+    document.getElementById('costo_tarifa').value = (c.tarifa !== undefined) ? c.tarifa : '';
+    document.getElementById('costo_aplica').value = c.aplica || '';
+    document.getElementById('costo_total_costo').value = (c.total_costo !== undefined) ? c.total_costo.toFixed(2) : '0.00';
+    document.getElementById('costo_total_tarifa').value = (c.total_tarifa !== undefined) ? c.total_tarifa.toFixed(2) : '0.00';
+
+    window.indiceCostoEdicion = index;
+}
+
+function eliminarCosto(index) {
+    if (confirm('¿Eliminar costo?')) {
+        costosServicio.splice(index, 1);
+        actualizarTablaCostos();
+        exito('Costo eliminado');
+    }
+}
+
+function limpiarFormularioCostos() {
+    document.getElementById('costo_concepto').selectedIndex = 0;
+    document.getElementById('costo_qty').value = '';
+    document.getElementById('costo_costo').value = '';
+    document.getElementById('costo_tarifa').value = '';
+    document.getElementById('costo_aplica').selectedIndex = 0;
+    document.getElementById('costo_total_costo').value = '0.00';
+    document.getElementById('costo_total_tarifa').value = '0.00';
+}
+
+function cerrarSubmodalCostos() {
+    document.getElementById('submodal-costos').style.display = 'none';
+}
+
+// --- Gastos Locales ---
+function abrirSubmodalGastosLocales() {
+    const modalServicio = document.getElementById('modal-servicio');
+    if (!modalServicio || modalServicio.style.display === 'none') {
+        error('Abra primero el modal de Servicio');
+        return;
+    }
+    
+    if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+        gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) 
+            ? [...servicios[servicioEnEdicion].gastos_locales] 
+            : [];
+    } else {
+        gastosLocales = [];
+    }
+    
+    cargarGastosPorTipo();
+    actualizarTablaGastosLocales();
+    document.getElementById('submodal-gastos-locales').style.display = 'block';
+}
+
+document.getElementById('gasto_tipo')?.addEventListener('change', cargarGastosPorTipo);
+
+function cargarGastosPorTipo() {
+    const tipo = document.getElementById('gasto_tipo')?.value;
+    if (!tipo) {
+        document.getElementById('gasto_gasto').innerHTML = '<option value="">Gastos</option>';
+        return;
+    }
+    fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('gasto_gasto');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Gastos</option>';
+            (data.gastos || []).forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g;
+                opt.textContent = g;
+                sel.appendChild(opt);
+            });
+        });
+}
+
+function guardarGastoLocal() {
+    const tipo = document.getElementById('gasto_tipo').value;
+    const gasto = document.getElementById('gasto_gasto').value;
+    const moneda = document.getElementById('gasto_moneda').value;
+    const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
+    const afecto = document.getElementById('gasto_afecto').value;
+    const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
+
+    if (!tipo || !gasto) {
+        return error('Tipo y Gasto son obligatorios');
+    }
+
+    const nuevoGasto = { tipo, gasto, moneda, monto, afecto, iva };
+    gastosLocales.push(nuevoGasto);
+    actualizarTablaGastosLocales();
+    limpiarFormularioGastos();
+    exito('Gasto local agregado');
+}
+
+function actualizarTablaGastosLocales() {
+    const tbody = document.getElementById('gastos-locales-body');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    let totalVenta = 0, totalCosto = 0;
+    
+    gastosLocales.forEach((g, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${g.tipo}</td>
+            <td>${g.gasto}</td>
+            <td>${g.moneda}</td>
+            <td style="text-align:right;">${g.monto.toFixed(2)}</td>
+            <td>${g.afecto}</td>
+            <td style="text-align:right;">${g.iva.toFixed(2)}</td>
+            <td style="text-align:center;">
+                <button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        
+        if (g.tipo === 'Ventas') totalVenta += g.monto;
+        if (g.tipo === 'Costo') totalCosto += g.monto;
+    });
+    
+    document.getElementById('total-venta-gastos').textContent = totalVenta.toFixed(2);
+    document.getElementById('total-costo-gastos').textContent = totalCosto.toFixed(2);
+    document.getElementById('profit-local').textContent = (totalVenta - totalCosto).toFixed(2);
+    const profitPct = totalVenta > 0 ? ((totalVenta - totalCosto) / totalVenta * 100) : 0;
+    document.getElementById('profit-porcentaje').textContent = profitPct.toFixed(2) + ' %';
+}
+
+function eliminarGastoLocal(index) {
+    if (confirm('¿Eliminar este gasto?')) {
+        gastosLocales.splice(index, 1);
+        actualizarTablaGastosLocales();
+        exito('Gasto eliminado');
+    }
+}
+
+function limpiarFormularioGastos() {
+    document.getElementById('gasto_tipo').selectedIndex = 0;
+    document.getElementById('gasto_gasto').selectedIndex = 0;
+    document.getElementById('gasto_moneda').value = 'USD';
+    document.getElementById('gasto_monto').value = '';
+    document.getElementById('gasto_afecto').value = 'SI';
+    document.getElementById('gasto_iva').value = '';
+}
+
+function cerrarSubmodalGastosLocales() {
+    document.getElementById('submodal-gastos-locales').style.display = 'none';
+}
 
 // ===================================================================
 // === 9. INICIALIZACIÓN ===
@@ -674,11 +1241,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
     document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
 
-    // Listeners principales
     document.getElementById('btn-save-all').textContent = 'Grabar Todo';
     document.getElementById('btn-agregar-servicio').addEventListener('click', () => abrirModalServicio());
 
-    // Listeners de submodales (fuera del modal)
+    // Submodales desde la sección principal (con validación)
     document.getElementById('btn-costos-servicio')?.addEventListener('click', () => {
         error('Abra un servicio primero para gestionar costos');
     });
@@ -686,9 +1252,9 @@ document.addEventListener('DOMContentLoaded', () => {
         error('Abra un servicio primero para gestionar gastos');
     });
 
-    // Listeners dentro del modal de servicio
-    document.getElementById('btn-costos-servicio-modal')?.addEventListener('click', abrirSubmodalCostos);
-    document.getElementById('btn-gastos-locales-modal')?.addEventListener('click', abrirSubmodalGastosLocales);
+    // Submodales desde dentro del modal de servicio
+    document.getElementById('btn-costos-servicio-dentro')?.addEventListener('click', abrirSubmodalCostos);
+    document.getElementById('btn-gastos-locales-dentro')?.addEventListener('click', abrirSubmodalGastosLocales);
 
     // Búsqueda inteligente
     document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
@@ -718,37 +1284,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             error('Error en búsqueda');
         }
-    });
-
-    // Botón Volver (en sección principal)
-    document.getElementById('btn-volver')?.addEventListener('click', function() {
-        const tieneCambios = 
-            document.querySelector('input[name="razon_social"]')?.value.trim() !== '' ||
-            servicios.length > 0;
-
-        if (tieneCambios) {
-            if (!confirm('¿Desea salir sin guardar los cambios?\n\nSi ha modificado datos, se perderán.')) {
-                return;
-            }
-        }
-
-        document.getElementById('form-prospecto').reset();
-        servicios = [];
-        actualizarTabla();
-        document.getElementById('id_ppl').value = '';
-        document.getElementById('id_prospect').value = '';
-
-        // Habilitar todo
-        const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
-        const selects = document.querySelectorAll('select');
-        inputs.forEach(input => {
-            input.readOnly = false;
-            input.style.backgroundColor = '';
-        });
-        selects.forEach(select => {
-            select.disabled = false;
-        });
-        document.getElementById('btn-agregar-servicio').disabled = false;
     });
 
     // Grabar Todo
@@ -783,25 +1318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.submit();
     });
 
-    // Editar y eliminar (con type="button" para evitar submit)
-    window.editarServicio = function(index) {
-        try {
-            if (index < 0 || index >= servicios.length) throw new Error('Índice inválido');
-            abrirModalServicio(index);
-        } catch (e) {
-            console.error('Error al editar:', e);
-            error('No se pudo abrir el servicio');
-        }
-    };
-    window.eliminarServicio = function(index) {
-        if (confirm('¿Eliminar este servicio?')) {
-            servicios.splice(index, 1);
-            actualizarTabla();
-            exito('Servicio eliminado');
-        }
-    };
-
-    // Cargar prospecto desde URL (tras guardar)
+    // Cargar prospecto desde URL
     const urlParams = new URLSearchParams(window.location.search);
     const idFromUrl = urlParams.get('id_ppl');
     if (idFromUrl && !isNaN(idFromUrl)) {
