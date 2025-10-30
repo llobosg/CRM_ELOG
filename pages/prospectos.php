@@ -747,7 +747,6 @@
                 document.getElementById('serv_agente').value = s.agente || '';
                 document.getElementById('serv_transportador').value = s.transportador || ''; // ✅ Cambiado
                 document.getElementById('serv_incoterm').value = s.incoterm || '';           // ✅ Cambiado
-                document.getElementById('serv_maritimo').value = s.naviera || '';           // ✅ Se mantiene para compatibilidad
                 document.getElementById('serv_transito').value = s.transito || '';
                 document.getElementById('serv_frecuencia').value = s.frecuencia || '';
                 document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
@@ -853,7 +852,6 @@
             aol: document.getElementById('serv_aol').value,
             aod: document.getElementById('serv_aod').value,
             agente: document.getElementById('serv_agente').value,
-            naviera: document.getElementById('serv_maritimo').value, // ✅ Para compatibilidad
             transportador: document.getElementById('serv_transportador').value, // ✅ Nuevo campo
             incoterm: document.getElementById('serv_incoterm').value,           // ✅ Nuevo campo
             ref_cliente: document.getElementById('serv_ref_cliente').value,     // ✅ Nuevo campo
