@@ -100,6 +100,11 @@
         </div>
     </div>
     <input type="hidden" name="servicios_json" id="servicios_json" />
+    <div style="text-align: right; margin-top: 1rem;">
+        <button type="button" class="btn-delete" id="btn-eliminar-prospecto" style="display: none;">
+            <i class="fas fa-trash"></i> Eliminar Prospecto
+        </button>
+    </div>
 </form>
 <!-- ========== MODALES ========== -->
 <!-- Modal Comercial -->
@@ -360,6 +365,17 @@
     // ===================================================================
     // === 2. FUNCIONES AUXILIARES ===
     // ===================================================================
+    // Mostrar notificación si viene en la URL
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const exito = urlParams.get('exito');
+        const error = urlParams.get('error');
+        if (exito) {
+            exito(decodeURIComponent(exito));
+        } else if (error) {
+            error(decodeURIComponent(error));
+        }
+    });
     function validarRut(rut) {
         if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
         const cuerpo = rut.slice(0, -1);
@@ -440,6 +456,11 @@
                 eliminarServicio(index);
             });
         });
+        // Mostrar/ocultar botón de eliminar prospecto
+        const btnEliminar = document.getElementById('btn-eliminar-prospecto');
+        if (btnEliminar) {
+            btnEliminar.style.display = (servicios.length === 0) ? 'inline-block' : 'none';
+        }
     }
     // ===================================================================
     // === 3. CARGA DE DATOS (API) ===
@@ -1177,6 +1198,17 @@
         }
     }
     function eliminarServicio(index) {
+        if (index < 0 || index >= servicios.length) return;
+
+        const servicio = servicios[index];
+        const tieneCostos = Array.isArray(servicio.costos) && servicio.costos.length > 0;
+        const tieneGastos = Array.isArray(servicio.gastos_locales) && servicio.gastos_locales.length > 0;
+
+        if (tieneCostos || tieneGastos) {
+            error('No se puede eliminar el servicio porque tiene costos o gastos asociados. Elimine primero los elementos inferiores.');
+            return;
+        }
+
         if (confirm('¿Eliminar este servicio?')) {
             servicios.splice(index, 1);
             actualizarTabla();
@@ -1191,6 +1223,14 @@
         cargarOperacionesYTipos();
         document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
         document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
+        document.getElementById('btn-agregar-servicio')?.addEventListener('click', () => {
+            const idPpl = document.getElementById('id_ppl')?.value;
+            if (!idPpl || idPpl === '0') {
+                error('Guarde el prospecto primero antes de agregar servicios.');
+                return;
+            }
+            abrirModalServicio(); // sin índice → nuevo servicio
+        });
         // Botón "Grabar Todo" (siempre presente)
         const btnSaveAll = document.getElementById('btn-save-all');
         if (btnSaveAll) {
@@ -1204,6 +1244,44 @@
         document.getElementById('btn-gastos-locales')?.addEventListener('click', () => {
             error('Abra un servicio primero para gestionar gastos');
         });
+        document.getElementById('btn-eliminar-prospecto')?.addEventListener('click', function() {
+        const idPpl = document.getElementById('id_ppl')?.value;
+        if (!idPpl || idPpl === '0') {
+            error('No hay prospecto seleccionado para eliminar.');
+            return;
+        }
+        if (servicios.length > 0) {
+            error('No se puede eliminar el prospecto porque tiene servicios asociados.');
+            return;
+        }
+        if (confirm('¿Está seguro de eliminar este prospecto? Esta acción no se puede deshacer.')) {
+            fetch('/api/eliminar_prospecto.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_ppl: idPpl })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    exito('Prospecto eliminado correctamente');
+                    // Limpiar formulario
+                    document.getElementById('form-prospecto').reset();
+                    servicios = [];
+                    actualizarTabla();
+                    // Opcional: redirigir
+                    setTimeout(() => {
+                        window.location.href = '?page=prospectos';
+                    }, 1500);
+                } else {
+                    error(data.message || 'Error al eliminar el prospecto');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                error('Error de conexión al eliminar el prospecto');
+            });
+        }
+    });
         // Submodales desde dentro del modal de servicio (con verificación segura)
         const btnCostosDentro = document.getElementById('btn-costos-servicio-dentro');
         const btnGastosDentro = document.getElementById('btn-gastos-locales-dentro');
