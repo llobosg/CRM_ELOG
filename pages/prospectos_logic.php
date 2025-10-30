@@ -1,13 +1,10 @@
 <?php
-if (function_exists('opcache_reset')) {
-    opcache_reset();
-}
 // pages/prospectos_logic.php
 // Lógica de guardado para prospectos (ejecutada antes de cualquier salida HTML)
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
     require_once __DIR__ . '/../config.php';
-    require_once __DIR__ . '/../includes/auth_check.php;
+    require_once __DIR__ . '/../includes/auth_check.php';
 
     try {
         $pdo->beginTransaction();
@@ -85,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             'estado' => $_POST['estado'] ?? 'Pendiente',
             'concatenado' => $concatenado,
             'booking' => $_POST['booking'] ?? '',
-            'incoterm' => $_POST['incoterm'] ?? '', // Campo nuevo en prospectos (opcional)
+            'incoterm' => $_POST['incoterm'] ?? '',
             'id_comercial' => $id_comercial,
             'nombre' => $_POST['nombre'] ?? '',
             'notas_comerciales' => $_POST['notas_comerciales'] ?? '',
@@ -133,7 +130,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                 }
 
                 if (!empty($servicios_data)) {
-                    // Preparar statement para insertar servicios
                     $stmt_serv = $pdo->prepare("
                         INSERT INTO servicios (
                             id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
@@ -152,14 +148,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $costogasto = (float)($s['costogastoslocalesdestino'] ?? 0);
                         $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
 
-                        // Generar id_srvc único
                         $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
                         $stmt_last->execute([$id_ppl]);
                         $last = $stmt_last->fetch();
                         $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
                         $id_srvc = "{$concatenado}-{$correlativo_srvc}";
 
-                        // Ejecutar inserción de servicio
                         $stmt_serv->execute([
                             $id_srvc,
                             $id_ppl,
@@ -195,9 +189,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['agente'] ?? '',
                             $s['aol'] ?? '',
                             $s['aod'] ?? '',
-                            $s['transportador'] ?? '', // ✅ Nuevo campo
-                            $s['incoterm'] ?? '',       // ✅ Nuevo campo
-                            $s['ref_cliente'] ?? '',     // ✅ Nuevo campo
+                            $s['transportador'] ?? '',
+                            $s['incoterm'] ?? '',
+                            $s['ref_cliente'] ?? '',
                             $s['proveedor_nac'] ?? '',
                             (float)($s['tipo_cambio'] ?? 1),
                             $s['ciudad'] ?? '',
@@ -266,16 +260,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         $pdo->commit();
 
-        // Redirección sin salida previa
-        $mensaje_exito = $modo_update 
-        ? 'Prospecto y servicios actualizados correctamente' 
-        : 'Prospecto creado correctamente';
+        $mensaje_exito = $modo_update
+            ? 'Prospecto y servicios actualizados correctamente'
+            : 'Prospecto creado correctamente';
 
         header("Location: " . $_SERVER['PHP_SELF'] . "?page=prospectos&exito=" . urlencode($mensaje_exito) . "&id_ppl=" . $id_ppl);
         exit;
 
     } catch (Exception $e) {
-        try { $pdo->rollback(); } catch (Exception $ex) {}
+        try {
+            $pdo->rollback();
+        } catch (Exception $ex) {
+            // Silencioso
+        }
         $mensajeUsuario = "Error al guardar el prospecto.";
         if (defined('DEVELOPMENT') && DEVELOPMENT) {
             $mensajeUsuario = $e->getMessage();
