@@ -109,7 +109,7 @@
 <!-- ========== MODALES ========== -->
 <!-- Modal Comercial -->
 <div id="modal-comercial" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
         <h3><i class="fas fa-comments"></i> Notas Comerciales</h3>
         <span class="close" onclick="cerrarModalComercial()">&times;</span>
         <textarea id="notas_comerciales_input" rows="6" placeholder="..."></textarea>
@@ -119,9 +119,10 @@
         </div>
     </div>
 </div>
+
 <!-- Modal Operaciones -->
 <div id="modal-operaciones" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
         <h3><i class="fas fa-clipboard-list"></i> Notas Operaciones</h3>
         <span class="close" onclick="cerrarModalOperaciones()">&times;</span>
         <textarea id="notas_operaciones_input" rows="6" placeholder="..."></textarea>
