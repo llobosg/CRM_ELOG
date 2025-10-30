@@ -1,4 +1,7 @@
 <?php
+if (function_exists('opcache_reset')) {
+    opcache_reset();
+}
 // pages/prospectos_logic.php
 // Lógica de guardado para prospectos (ejecutada antes de cualquier salida HTML)
 
