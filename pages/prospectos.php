@@ -739,14 +739,14 @@
             costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
             gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
             cargarDatosModalServicio(() => {
-                document.getElementById('serv_servicio').value = s.servicio || '';
-                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
+                document.getElementById('serv_servicio').value = s.servicio || ''; 
                 document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
                 document.getElementById('serv_aol').value = s.aol || '';
                 document.getElementById('serv_aod').value = s.aod || '';
                 document.getElementById('serv_agente').value = s.agente || '';
                 document.getElementById('serv_transportador').value = s.transportador || ''; // ✅ Cambiado
                 document.getElementById('serv_incoterm').value = s.incoterm || '';           // ✅ Cambiado
+                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
                 document.getElementById('serv_transito').value = s.transito || '';
                 document.getElementById('serv_frecuencia').value = s.frecuencia || '';
                 document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
