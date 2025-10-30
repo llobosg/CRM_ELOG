@@ -1,10 +1,3 @@
-<?php
-require_once __DIR__ . '/../includes/auth_check.php';
-if ($_SESSION['rol'] !== 'admin_finanzas') {
-    header('Location: ?page=dashboard');
-    exit;
-}
-?>
 <!-- FICHA CLIENTE -->
 <div style="margin: 1rem;">
     <h2><i class="fas fa-id-card"></i> Ficha Cliente</h2>

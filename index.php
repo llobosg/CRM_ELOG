@@ -24,7 +24,19 @@ $validPages = [
     'ficha_cliente'
 ];
 
+// En index.php, antes de: include "pages/$page.php";
 $page = $_GET['page'] ?? 'dashboard';
+
+// === Protección de páginas por rol ===
+$paginas_admin_finanzas = ['ficha_cliente'];
+
+if (in_array($page, $paginas_admin_finanzas)) {
+    require_once __DIR__ . '/includes/auth_check.php';
+    if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin_finanzas') {
+        header('Location: ?page=dashboard');
+        exit;
+    }
+}
 $safePage = in_array($page, $validPages) ? $page : 'dashboard';
 
 // === 3. LISTA DE MANTENEDORES CON LÓGICA (CRUD) ===
