@@ -881,13 +881,15 @@
             error('Abra primero el modal de Servicio');
             return;
         }
-        // ✅ Sincronizar con el servicio en edición
+
+        // Si estamos editando un servicio existente, cargar sus costos
         if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
             costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) 
                 ? [...servicios[servicioEnEdicion].costos] 
                 : [];
         }
-        // Si es nuevo servicio, costosServicio ya está en memoria
+        // Si es un nuevo servicio, costosServicio ya contiene los datos actuales
+
         const monedaServicio = document.getElementById('serv_moneda')?.value || 'USD';
         document.getElementById('costo_moneda').value = monedaServicio;
         cargarConceptosCostos();
@@ -903,13 +905,15 @@
             error('Abra primero el modal de Servicio');
             return;
         }
-        // ✅ Sincronizar con el servicio en edición
+
+        // Si estamos editando un servicio existente, cargar sus gastos
         if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
             gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) 
                 ? [...servicios[servicioEnEdicion].gastos_locales] 
                 : [];
         }
-        // Si es nuevo servicio, gastosLocales ya está en memoria
+        // Si es un nuevo servicio, gastosLocales ya contiene los datos actuales
+
         cargarGastosPorTipo();
         actualizarTablaGastosLocales();
         document.getElementById('submodal-gastos-locales').style.display = 'block';
@@ -1067,6 +1071,10 @@
         document.getElementById('costo_total_tarifa').value = '0.00';
     }
     function cerrarSubmodalCostos() {
+        // Guardar costos en el servicio actual (si hay uno en edición)
+        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+            servicios[servicioEnEdicion].costos = [...costosServicio];
+        }
         document.getElementById('submodal-costos').style.display = 'none';
     }
     document.getElementById('gasto_tipo')?.addEventListener('change', cargarGastosPorTipo);
@@ -1150,6 +1158,10 @@
         document.getElementById('gasto_iva').value = '';
     }
     function cerrarSubmodalGastosLocales() {
+        // Guardar gastos en el servicio actual (si hay uno en edición)
+        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+            servicios[servicioEnEdicion].gastos_locales = [...gastosLocales];
+        }
         document.getElementById('submodal-gastos-locales').style.display = 'none';
     }
     // === FUNCIONES DE SERVICIOS ===
