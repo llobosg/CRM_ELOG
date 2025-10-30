@@ -53,10 +53,10 @@
             </select>
             <label>Concatenado</label>
             <input type="text" name="concatenado" id="concatenado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; box-sizing: border-box;" readonly />
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Booking</label>
             <input type="text" name="booking" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Comercial ID</label>
             <input type="number" name="id_comercial" id="id_comercial" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Nombre</label>
@@ -966,13 +966,13 @@ function abrirSubmodalCostos() {
         return;
     }
     
+    // ✅ Sincronizar con el servicio en edición
     if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
         costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) 
             ? [...servicios[servicioEnEdicion].costos] 
             : [];
-    } else {
-        costosServicio = [];
     }
+    // Si es nuevo servicio, costosServicio ya está en memoria
     
     const monedaServicio = document.getElementById('serv_moneda')?.value || 'USD';
     document.getElementById('costo_moneda').value = monedaServicio;
@@ -982,6 +982,27 @@ function abrirSubmodalCostos() {
     
     actualizarTablaCostos();
     document.getElementById('submodal-costos').style.display = 'block';
+}
+
+// --- Gastos Locales ---
+function abrirSubmodalGastosLocales() {
+    const modalServicio = document.getElementById('modal-servicio');
+    if (!modalServicio || modalServicio.style.display === 'none') {
+        error('Abra primero el modal de Servicio');
+        return;
+    }
+    
+    // ✅ Sincronizar con el servicio en edición
+    if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+        gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) 
+            ? [...servicios[servicioEnEdicion].gastos_locales] 
+            : [];
+    }
+    // Si es nuevo servicio, gastosLocales ya está en memoria
+    
+    cargarGastosPorTipo();
+    actualizarTablaGastosLocales();
+    document.getElementById('submodal-gastos-locales').style.display = 'block';
 }
 
 function cargarConceptosCostos() {
@@ -1003,7 +1024,7 @@ function cargarConceptosCostos() {
             error('No se pudieron cargar los conceptos de costo');
         });
 }
-
+-
 function cargarAplicacionesCostos(medio) {
     fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
         .then(r => r.json())
@@ -1154,27 +1175,6 @@ function limpiarFormularioCostos() {
 
 function cerrarSubmodalCostos() {
     document.getElementById('submodal-costos').style.display = 'none';
-}
-
-// --- Gastos Locales ---
-function abrirSubmodalGastosLocales() {
-    const modalServicio = document.getElementById('modal-servicio');
-    if (!modalServicio || modalServicio.style.display === 'none') {
-        error('Abra primero el modal de Servicio');
-        return;
-    }
-    
-    if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-        gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) 
-            ? [...servicios[servicioEnEdicion].gastos_locales] 
-            : [];
-    } else {
-        gastosLocales = [];
-    }
-    
-    cargarGastosPorTipo();
-    actualizarTablaGastosLocales();
-    document.getElementById('submodal-gastos-locales').style.display = 'block';
 }
 
 document.getElementById('gasto_tipo')?.addEventListener('change', cargarGastosPorTipo);
