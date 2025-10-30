@@ -4,7 +4,7 @@
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
     require_once __DIR__ . '/../config.php';
-    require_once __DIR__ . '/../includes/auth_check.php';
+    require_once __DIR__ . '/../includes/auth_check.php;
 
     try {
         $pdo->beginTransaction();
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             'estado' => $_POST['estado'] ?? 'Pendiente',
             'concatenado' => $concatenado,
             'booking' => $_POST['booking'] ?? '',
-            'incoterm' => $_POST['incoterm'] ?? '',
+            'incoterm' => $_POST['incoterm'] ?? '', // Campo nuevo en prospectos (opcional)
             'id_comercial' => $id_comercial,
             'nombre' => $_POST['nombre'] ?? '',
             'notas_comerciales' => $_POST['notas_comerciales'] ?? '',
@@ -112,11 +112,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         // === Procesar servicios si el modo es 'servicios' ===
         if ($_POST['modo'] === 'servicios') {
+            // Eliminar servicios y sus costos/gastos asociados
             $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
             $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
             $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
 
-            // === Procesar servicios si se envían ===
             $servicios_json = $_POST['servicios_json'] ?? '';
             $total_costo = 0;
             $total_venta = 0;
@@ -124,26 +124,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             $total_ventagasto = 0;
 
             if ($servicios_json !== '') {
-                // Eliminar servicios existentes solo si se envían nuevos
-                $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
-                $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
-                $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
-
                 $servicios_data = json_decode($servicios_json, true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new Exception('Error al decodificar servicios JSON');
+                    throw new Exception('Error al decodificar servicios JSON: ' . json_last_error_msg());
                 }
 
                 if (!empty($servicios_data)) {
-                    $stmt_serv = $pdo->prepare("INSERT INTO servicios (
-                        id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
-                        base_calculo, moneda, tarifa, iva, estado, costo, venta,
-                        costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
-                        commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
-                        lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
-                        agente, aol, aod, aerolinea, naviera, terrestre, ref_cliente, proveedor_nac, tipo_cambio,
-                        ciudad, pais, direc_serv
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    // Preparar statement para insertar servicios
+                    $stmt_serv = $pdo->prepare("
+                        INSERT INTO servicios (
+                            id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
+                            base_calculo, moneda, tarifa, iva, estado, costo, venta,
+                            costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
+                            commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
+                            lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
+                            agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
+                            ciudad, pais, direc_serv
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
 
                     foreach ($servicios_data as $s) {
                         $costo = (float)($s['costo'] ?? 0);
@@ -151,12 +149,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $costogasto = (float)($s['costogastoslocalesdestino'] ?? 0);
                         $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
 
+                        // Generar id_srvc único
                         $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
                         $stmt_last->execute([$id_ppl]);
                         $last = $stmt_last->fetch();
                         $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
                         $id_srvc = "{$concatenado}-{$correlativo_srvc}";
 
+                        // Ejecutar inserción de servicio
                         $stmt_serv->execute([
                             $id_srvc,
                             $id_ppl,
@@ -192,10 +192,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['agente'] ?? '',
                             $s['aol'] ?? '',
                             $s['aod'] ?? '',
-                            $s['aerolinea'] ?? '',
-                            $s['naviera'] ?? '',
-                            $s['terrestre'] ?? '',
-                            $s['ref_cliente'] ?? '',
+                            $s['transportador'] ?? '', // ✅ Nuevo campo
+                            $s['incoterm'] ?? '',       // ✅ Nuevo campo
+                            $s['ref_cliente'] ?? '',     // ✅ Nuevo campo
                             $s['proveedor_nac'] ?? '',
                             (float)($s['tipo_cambio'] ?? 1),
                             $s['ciudad'] ?? '',

@@ -1,6 +1,5 @@
 <!-- Mini consola de depuración -->
 <div id="debug-trace" style="margin: 1rem; padding: 0.5rem; background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
-
 <!-- Búsqueda inteligente -->
 <div style="height: 4rem;"></div>
 <div style="margin: 1rem 0;">
@@ -8,11 +7,9 @@
     <input type="text" id="busqueda-inteligente" placeholder="Buscar por Concatenado, Razón Social, RUT..." style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px;" />
     <div id="resultados-busqueda" style="position: absolute; background: white; border: 1px solid #ddd; border-radius: 8px; max-height: 300px; overflow-y: auto; width: 95%; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none;"></div>
 </div>
-
 <form method="POST" id="form-prospecto" action="">
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
-
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem;">
         <h3><i class="fas fa-user"></i> Datos del Prospecto</h3>
@@ -61,11 +58,8 @@
             <input type="number" name="id_comercial" id="id_comercial" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Nombre</label>
             <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
-            <label>Incoterm</label>
-            <input type="text" name="incoterm" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
     </div>
-
     <!-- ========== SERVICIOS ASOCIADOS ========== -->
     <div class="card">
         <h3><i class="fas fa-truck"></i> Servicios Asociados</h3>
@@ -75,7 +69,6 @@
                 <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
                 <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
             </div>
-            
             <!-- Derecha: Agregar Servicio + Grabar Todo -->
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-add" id="btn-agregar-servicio">
@@ -84,7 +77,6 @@
                 <button type="button" class="btn-primary" id="btn-save-all">Grabar Todo</button>
             </div>
         </div>
-
         <div class="table-container">
             <table id="tabla-servicios">
                 <thead>
@@ -107,12 +99,9 @@
             </table>
         </div>
     </div>
-
     <input type="hidden" name="servicios_json" id="servicios_json" />
 </form>
-
 <!-- ========== MODALES ========== -->
-
 <!-- Modal Comercial -->
 <div id="modal-comercial" class="modal" style="display:none;">
     <div class="modal-content" style="max-width: 500px;">
@@ -125,7 +114,6 @@
         </div>
     </div>
 </div>
-
 <!-- Modal Operaciones -->
 <div id="modal-operaciones" class="modal" style="display:none;">
     <div class="modal-content" style="max-width: 500px;">
@@ -138,7 +126,6 @@
         </div>
     </div>
 </div>
-
 <!-- Modal Servicio -->
 <div id="modal-servicio" class="modal" style="display:none;">
     <div class="modal-content" style="max-width: 1500px; width: 95%;">
@@ -146,7 +133,6 @@
         <span class="close" onclick="cerrarModalServicio()">&times;</span>
         <input type="hidden" id="id_prospect_serv" name="id_prospect_serv" />
         <input type="hidden" id="concatenado_serv" name="concatenado_serv" />
-        
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.8rem; margin-top: 1.2rem; align-items: center;">
             <!-- Fila 1 -->
             <label>Servicio</label>
@@ -159,7 +145,6 @@
             <select id="serv_commodity" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                 <option value="">Seleccionar</option>
             </select>
-
             <!-- Fila 2 -->
             <label>Origen</label>
             <select id="serv_origen" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
@@ -177,7 +162,6 @@
             <input type="text" id="serv_transito" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
             <label>Frecuencia</label>
             <input type="text" id="serv_frecuencia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-
             <!-- Fila 3 -->
             <label>Lugar Carga</label>
             <input type="text" id="serv_lugar_carga" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
@@ -193,7 +177,6 @@
             <input type="number" id="serv_volumen" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
             <label>Dimensiones</label>
             <input type="text" id="serv_dimensiones" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" placeholder="Ej: 120x80x90 cm" />
-
             <!-- Fila 4 -->
             <label>Moneda</label>
             <select id="serv_moneda" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
@@ -217,18 +200,14 @@
             <select id="serv_agente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                 <option value="">Seleccionar</option>
             </select>
-
             <!-- Fila 5 -->
-            <label>Aerolínea</label>
-            <input type="text" id="serv_aerolinea" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Terrestre</label>
-            <input type="text" id="serv_terrestre" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Marítimo</label>
-            <input type="text" id="serv_maritimo" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Transportador</label>
+            <input type="text" id="serv_transportador" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            <label>Incoterm</label>
+            <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
             <label>Ref. Cliente</label>
             <input type="text" id="serv_ref_cliente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
         </div>
-
         <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <button type="button" class="btn-comment" id="btn-costos-servicio-dentro"><i class="fas fa-calculator"></i> Costos - Ventas</button>
@@ -241,15 +220,12 @@
         </div>
     </div>
 </div>
-
 <!-- ========== SUBMODALES ========== -->
-
 <!-- Submodal: Costos/Ventas/Gastos -->
 <div id="submodal-costos" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
     <div class="modal-content" style="max-width: 1400px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
         <h3><i class="fas fa-calculator"></i> Costos, Ventas y Gastos</h3>
         <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
-
         <!-- Formulario de entrada -->
         <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
             <select id="costo_concepto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
@@ -268,7 +244,6 @@
                 <i class="fas fa-plus"></i> Agregar
             </button>
         </div>
-
         <!-- Tabla de costos -->
         <div class="table-container" style="margin-top: 1.2rem; overflow-x: auto;">
             <table id="tabla-costos" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
@@ -297,7 +272,6 @@
                 </tfoot>
             </table>
         </div>
-
         <div style="text-align: right; margin-top: 1.5rem;">
             <button type="button" onclick="cerrarSubmodalCostos()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
                 <i class="fas fa-arrow-left"></i> Volver
@@ -305,13 +279,11 @@
         </div>
     </div>
 </div>
-
 <!-- Submodal: Gastos Locales -->
 <div id="submodal-gastos-locales" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
     <div class="modal-content" style="max-width: 1400px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
         <h3><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</h3>
         <span class="close" onclick="cerrarSubmodalGastosLocales()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
-        
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
             <select id="gasto_tipo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
                 <option value="">Tipo</option>
@@ -336,7 +308,6 @@
                 <i class="fas fa-plus"></i> Agregar
             </button>
         </div>
-
         <div class="table-container" style="margin-top: 1.2rem; overflow-x: auto;">
             <table id="tabla-gastos-locales" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
                 <thead>
@@ -353,7 +324,6 @@
                 <tbody id="gastos-locales-body"></tbody>
             </table>
         </div>
-
         <div style="display: grid; grid-template-columns: repeat(4, max-content); gap: 1.5rem 2rem; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px; justify-content: start; align-items: center;">
             <div><strong>TOTAL VENTA:</strong></div>
             <div id="total-venta-gastos" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
@@ -364,7 +334,6 @@
             <div><strong>PROFIT %:</strong></div>
             <div id="profit-porcentaje" style="font-weight: bold; text-align: right; min-width: 80px;">0.00 %</div>
         </div>
-
         <div style="text-align: right; margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.8rem;">
             <button type="button" onclick="cerrarSubmodalGastosLocales()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
                 <i class="fas fa-arrow-left"></i> Volver
@@ -372,13 +341,11 @@
         </div>
     </div>
 </div>
-
 <!-- Toast de notificaciones -->
 <div id="toast" class="toast" style="display:none;">
     <i class="fas fa-info-circle"></i> 
     <span id="toast-message">Mensaje</span>
 </div>
-
 <script>
 // ===================================================================
 // === 1. VARIABLES GLOBALES ===
@@ -390,7 +357,6 @@ let servicioEnEdicion = null;
 let tieneServiciosIniciales = false;
 let estadoProspecto = 'Pendiente';
 window.editarServicio = editarServicio;
-
 // ===================================================================
 // === 2. FUNCIONES AUXILIARES ===
 // ===================================================================
@@ -407,7 +373,6 @@ function validarRut(rut) {
     const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
     return dv === dvCalculado;
 }
-
 function cargarPaises() {
     const paises = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
     const select = document.getElementById('pais');
@@ -420,7 +385,6 @@ function cargarPaises() {
         select.appendChild(opt);
     });
 }
-
 function calcularConcatenado() {
     const op = document.getElementById('operacion')?.value || '';
     const tipo = document.getElementById('tipo_oper')?.value || '';
@@ -430,7 +394,6 @@ function calcularConcatenado() {
     const id = (parseInt(document.getElementById('id_prospect')?.value || '0') + 1).toString().padStart(2, '0');
     document.getElementById('concatenado').value = `${op}${tipo}${fecha}-${id}`;
 }
-
 function actualizarTabla() {
     const tbody = document.getElementById('servicios-body');
     if (!tbody) return;
@@ -464,7 +427,6 @@ function actualizarTabla() {
     document.getElementById('total-venta').textContent = tv.toFixed(2);
     document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
     document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
-
     // === Agregar listeners a los botones ===
     document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -479,7 +441,6 @@ function actualizarTabla() {
         });
     });
 }
-
 // ===================================================================
 // === 3. CARGA DE DATOS (API) ===
 // ===================================================================
@@ -514,16 +475,13 @@ function cargarOperacionesYTipos() {
             });
     });
 }
-
 function cargarDatosModalServicio(callback = null) {
     let cargas = 0;
     const total = 4;
-
     const check = () => {
         cargas++;
         if (cargas === total && callback) callback();
     };
-
     // Commodity
     fetch('/api/get_commoditys.php')
         .then(r => r.json())
@@ -540,7 +498,6 @@ function cargarDatosModalServicio(callback = null) {
             }
             check();
         });
-
     // Medios de transporte
     fetch('/api/get_medios_transporte.php')
         .then(r => r.json())
@@ -557,7 +514,6 @@ function cargarDatosModalServicio(callback = null) {
             }
             check();
         });
-
     // Agentes
     fetch('/api/get_agentes.php')
         .then(r => r.json())
@@ -574,7 +530,6 @@ function cargarDatosModalServicio(callback = null) {
             }
             check();
         });
-
     // Proveedores nacionales
     fetch('/api/get_proveedores_pnac.php')
         .then(r => r.json())
@@ -592,7 +547,6 @@ function cargarDatosModalServicio(callback = null) {
             check();
         });
 }
-
 // ===================================================================
 // === 4. CARGA DE LUGARES (Origen/Destino) ===
 // ===================================================================
@@ -600,13 +554,11 @@ function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
     const origenSel = document.getElementById('serv_origen');
     const destinoSel = document.getElementById('serv_destino');
     if (!origenSel || !destinoSel) return Promise.resolve();
-
     if (!medio) {
         origenSel.innerHTML = '<option value="">Seleccionar</option>';
         destinoSel.innerHTML = '<option value="">Seleccionar</option>';
         return Promise.resolve();
     }
-
     return fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
         .then(r => r.json())
         .then(data => {
@@ -614,9 +566,7 @@ function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
             const optionsHtml = lugares.map(l => 
                 `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
             ).join('');
-
             origenSel.innerHTML = '<option value="">Seleccionar</option>' + optionsHtml;
-
             const destinosFiltrados = origenSeleccionado
                 ? lugares.filter(l => l.lugar !== origenSeleccionado)
                 : lugares;
@@ -624,7 +574,6 @@ function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
                 `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
             ).join('');
             destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
-
             const actualizarPais = (selectId, paisId) => {
                 const sel = document.getElementById(selectId);
                 const pais = document.getElementById(paisId);
@@ -636,7 +585,6 @@ function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
                 sel.removeEventListener('change', handler);
                 sel.addEventListener('change', handler);
             };
-
             actualizarPais('serv_origen', 'serv_pais_origen');
             actualizarPais('serv_destino', 'serv_pais_destino');
         })
@@ -646,7 +594,6 @@ function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
             return Promise.resolve();
         });
 }
-
 // ===================================================================
 // === 5. MANEJO DE PROSPECTOS ===
 // ===================================================================
@@ -656,16 +603,13 @@ function seleccionarProspecto(id) {
         .then(data => {
             if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
             const p = data.prospecto;
-
             ['razon_social','rut_empresa','fono_empresa','direccion','booking','incoterm','concatenado','fecha_alta','fecha_estado'].forEach(f => {
                 const el = document.querySelector(`[name="${f}"]`);
                 if (el && el.tagName === 'INPUT') el.value = p[f] || '';
             });
-
             document.getElementById('id_comercial').value = p.id_comercial || '';
             document.getElementById('nombre').value = p.nombre || '';
             document.getElementById('estado').value = p.estado || 'Pendiente';
-
             const paisSel = document.getElementById('pais');
             if (paisSel && p.pais) {
                 for (let opt of paisSel.options) {
@@ -682,7 +626,6 @@ function seleccionarProspecto(id) {
                     paisSel.value = p.pais;
                 }
             }
-
             const opSel = document.getElementById('operacion');
             const tipoSel = document.getElementById('tipo_oper');
             if (opSel && p.operacion) {
@@ -700,7 +643,6 @@ function seleccionarProspecto(id) {
                         if (p.tipo_oper) tipoSel.value = p.tipo_oper;
                     });
             }
-
             const setNota = (name, val) => {
                 let inp = document.querySelector(`input[name="${name}"]`);
                 if (!inp) {
@@ -714,7 +656,6 @@ function seleccionarProspecto(id) {
             };
             setNota('notas_comerciales', p.notas_comerciales);
             setNota('notas_operaciones', p.notas_operaciones);
-
             servicios = (data.servicios || []).map(s => ({
                 ...s,
                 costo: parseFloat(s.costo) || 0,
@@ -724,10 +665,8 @@ function seleccionarProspecto(id) {
             }));
             tieneServiciosIniciales = servicios.length > 0;
             actualizarTabla();
-
             document.getElementById('id_ppl').value = p.id_ppl || '';
             document.getElementById('id_prospect').value = p.id_prospect || '';
-
             // ✅ SIEMPRE editable
             const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
             const selects = document.querySelectorAll('select');
@@ -741,7 +680,6 @@ function seleccionarProspecto(id) {
             document.getElementById('btn-agregar-servicio').disabled = false;
         });
 }
-
 // ===================================================================
 // === 6. MODALES PRINCIPALES ===
 // ===================================================================
@@ -749,7 +687,6 @@ function abrirModalComercial() { document.getElementById('modal-comercial').styl
 function cerrarModalComercial() { document.getElementById('modal-comercial').style.display = 'none'; }
 function abrirModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'block'; }
 function cerrarModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'none'; }
-
 function guardarNotasComerciales() {
     const id = document.getElementById('id_ppl')?.value;
     if (!id || id === '0') return error('Prospecto no válido');
@@ -778,7 +715,6 @@ function guardarNotasOperaciones() {
         cerrarModalOperaciones();
     });
 }
-
 // ===================================================================
 // === 7. MODAL DE SERVICIO ===
 // ===================================================================
@@ -786,27 +722,22 @@ function abrirModalServicio(index = null) {
     const idPpl = document.getElementById('id_ppl')?.value;
     const concatenado = document.getElementById('concatenado')?.value;
     if (!idPpl || !concatenado) return error('Guarde el prospecto primero');
-
     const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
     modalInputs.forEach(el => {
         if (el.type === 'number') el.value = '';
         else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
         else if (el.tagName === 'SELECT') el.selectedIndex = 0;
     });
-
     document.getElementById('id_prospect_serv').value = idPpl;
     document.getElementById('concatenado_serv').value = concatenado;
     document.getElementById('serv_titulo_concatenado').textContent = concatenado;
-
     costosServicio = [];
     gastosLocales = [];
-
     if (index !== null) {
         servicioEnEdicion = index;
         const s = servicios[index];
         costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
         gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
-
         cargarDatosModalServicio(() => {
             document.getElementById('serv_servicio').value = s.servicio || '';
             document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
@@ -814,9 +745,9 @@ function abrirModalServicio(index = null) {
             document.getElementById('serv_aol').value = s.aol || '';
             document.getElementById('serv_aod').value = s.aod || '';
             document.getElementById('serv_agente').value = s.agente || '';
-            document.getElementById('serv_aerolinea').value = s.aerolinea || '';
-            document.getElementById('serv_terrestre').value = s.terrestre || '';
-            document.getElementById('serv_maritimo').value = s.naviera || '';
+            document.getElementById('serv_transportador').value = s.transportador || ''; // ✅ Cambiado
+            document.getElementById('serv_incoterm').value = s.incoterm || '';           // ✅ Cambiado
+            document.getElementById('serv_maritimo').value = s.naviera || '';           // ✅ Se mantiene para compatibilidad
             document.getElementById('serv_transito').value = s.transito || '';
             document.getElementById('serv_frecuencia').value = s.frecuencia || '';
             document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
@@ -829,13 +760,10 @@ function abrirModalServicio(index = null) {
             document.getElementById('serv_moneda').value = s.moneda || 'CLP';
             document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
             document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
-
             const medioGuardado = (s.trafico || '').trim();
             const commodityGuardado = (s.commodity || '').trim();
-
             const medioSel = document.getElementById('serv_medio_transporte');
             const commoditySel = document.getElementById('serv_commodity');
-
             if (medioSel) {
                 for (let opt of medioSel.options) {
                     if (opt.value.trim() === medioGuardado) {
@@ -852,12 +780,10 @@ function abrirModalServicio(index = null) {
                     }
                 }
             }
-
             if (medioGuardado) {
                 cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
                     const origenSel = document.getElementById('serv_origen');
                     const destinoSel = document.getElementById('serv_destino');
-
                     if (origenSel && s.origen) {
                         for (let opt of origenSel.options) {
                             if (opt.value === s.origen) {
@@ -867,7 +793,6 @@ function abrirModalServicio(index = null) {
                         }
                         origenSel.dispatchEvent(new Event('change'));
                     }
-
                     if (destinoSel && s.destino) {
                         for (let opt of destinoSel.options) {
                             if (opt.value === s.destino) {
@@ -884,10 +809,8 @@ function abrirModalServicio(index = null) {
         servicioEnEdicion = null;
         cargarDatosModalServicio();
     }
-
     document.getElementById('modal-servicio').style.display = 'flex';
 }
-
 function cerrarModalServicio() {
     document.getElementById('modal-servicio').style.display = 'none';
 }
@@ -896,17 +819,14 @@ function cerrarModalServicioConConfirmacion() {
         cerrarModalServicio();
     }
 }
-
 function guardarServicio() {
     const servicio = document.getElementById('serv_servicio').value.trim();
     if (!servicio) return error('Servicio es obligatorio');
-
     const origen = document.getElementById('serv_origen').value;
     const destino = document.getElementById('serv_destino').value;
     if (origen && destino && origen === destino) {
         return error('Origen y Destino no pueden ser el mismo lugar');
     }
-
     const nuevo = {
         id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
         id_prospect: document.getElementById('id_prospect_serv').value,
@@ -933,10 +853,10 @@ function guardarServicio() {
         aol: document.getElementById('serv_aol').value,
         aod: document.getElementById('serv_aod').value,
         agente: document.getElementById('serv_agente').value,
-        aerolinea: document.getElementById('serv_aerolinea').value,
-        terrestre: document.getElementById('serv_terrestre').value,
-        naviera: document.getElementById('serv_maritimo').value,
-        ref_cliente: document.getElementById('serv_ref_cliente').value,
+        naviera: document.getElementById('serv_maritimo').value, // ✅ Para compatibilidad
+        transportador: document.getElementById('serv_transportador').value, // ✅ Nuevo campo
+        incoterm: document.getElementById('serv_incoterm').value,           // ✅ Nuevo campo
+        ref_cliente: document.getElementById('serv_ref_cliente').value,     // ✅ Nuevo campo
         costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
         venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
         costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
@@ -944,7 +864,6 @@ function guardarServicio() {
         costos: [...costosServicio],
         gastos_locales: [...gastosLocales]
     };
-
     if (servicioEnEdicion !== null) {
         servicios[servicioEnEdicion] = nuevo;
         exito('Servicio actualizado correctamente');
@@ -955,7 +874,6 @@ function guardarServicio() {
     actualizarTabla();
     cerrarModalServicio();
 }
-
 // ===================================================================
 // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
 // ===================================================================
@@ -965,7 +883,6 @@ function abrirSubmodalCostos() {
         error('Abra primero el modal de Servicio');
         return;
     }
-    
     // ✅ Sincronizar con el servicio en edición
     if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
         costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) 
@@ -973,17 +890,14 @@ function abrirSubmodalCostos() {
             : [];
     }
     // Si es nuevo servicio, costosServicio ya está en memoria
-    
     const monedaServicio = document.getElementById('serv_moneda')?.value || 'USD';
     document.getElementById('costo_moneda').value = monedaServicio;
     cargarConceptosCostos();
     const medioTransporte = document.getElementById('serv_medio_transporte')?.value || '';
     cargarAplicacionesCostos(medioTransporte);
-    
     actualizarTablaCostos();
     document.getElementById('submodal-costos').style.display = 'block';
 }
-
 // --- Gastos Locales ---
 function abrirSubmodalGastosLocales() {
     const modalServicio = document.getElementById('modal-servicio');
@@ -991,7 +905,6 @@ function abrirSubmodalGastosLocales() {
         error('Abra primero el modal de Servicio');
         return;
     }
-    
     // ✅ Sincronizar con el servicio en edición
     if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
         gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) 
@@ -999,12 +912,10 @@ function abrirSubmodalGastosLocales() {
             : [];
     }
     // Si es nuevo servicio, gastosLocales ya está en memoria
-    
     cargarGastosPorTipo();
     actualizarTablaGastosLocales();
     document.getElementById('submodal-gastos-locales').style.display = 'block';
 }
-
 function cargarConceptosCostos() {
     fetch('/api/get_conceptos_costos.php')
         .then(r => r.json())
@@ -1048,20 +959,16 @@ function cargarAplicacionesCostos(medio) {
             error('No se pudieron cargar las opciones de "Aplica"');
         });
 }
-
 ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
     document.getElementById(id).addEventListener('input', calcularTotalesCostos);
 });
-
 function calcularTotalesCostos() {
     const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
     const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
     const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-    
     document.getElementById('costo_total_costo').value = (qty * costo).toFixed(2);
     document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
 }
-
 function guardarCosto() {
     const concepto = document.getElementById('costo_concepto').value;
     const aplica = document.getElementById('costo_aplica').value;
@@ -1069,12 +976,10 @@ function guardarCosto() {
     const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
     const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
     const moneda = document.getElementById('costo_moneda').value || 'CLP';
-
     if (!concepto || !aplica) {
         error('Concepto y Aplica son obligatorios');
         return;
     }
-
     const nuevoCosto = {
         concepto,
         moneda,
@@ -1085,39 +990,31 @@ function guardarCosto() {
         total_tarifa: qty * tarifa,
         aplica
     };
-
     if (window.indiceCostoEdicion !== undefined) {
         costosServicio[window.indiceCostoEdicion] = nuevoCosto;
         delete window.indiceCostoEdicion;
     } else {
         costosServicio.push(nuevoCosto);
     }
-
     actualizarTablaCostos();
     limpiarFormularioCostos();
     exito('Costo guardado');
 }
-
 function actualizarTablaCostos() {
     const tbody = document.getElementById('costos-body');
     const totalCostoEl = document.getElementById('total-costo-costos');
     const totalTarifaEl = document.getElementById('total-tarifa-costos');
-    
     if (!tbody || !totalCostoEl || !totalTarifaEl) return;
-
     tbody.innerHTML = '';
     let totalCosto = 0, totalTarifa = 0;
-
     costosServicio.forEach((c, i) => {
         const costo = parseFloat(c.costo) || 0;
         const tarifa = parseFloat(c.tarifa) || 0;
         const qty = parseFloat(c.qty) || 0;
         const totalCostoItem = costo * qty;
         const totalTarifaItem = tarifa * qty;
-
         totalCosto += totalCostoItem;
         totalTarifa += totalTarifaItem;
-
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${c.concepto}</td>
@@ -1135,15 +1032,12 @@ function actualizarTablaCostos() {
         `;
         tbody.appendChild(tr);
     });
-
     totalCostoEl.textContent = totalCosto.toFixed(2);
     totalTarifaEl.textContent = totalTarifa.toFixed(2);
 }
-
 function editarCosto(index) {
     const c = costosServicio[index];
     if (!c) return;
-
     document.getElementById('costo_concepto').value = c.concepto || '';
     document.getElementById('costo_qty').value = (c.qty !== undefined) ? c.qty : '';
     document.getElementById('costo_costo').value = (c.costo !== undefined) ? c.costo : '';
@@ -1151,10 +1045,8 @@ function editarCosto(index) {
     document.getElementById('costo_aplica').value = c.aplica || '';
     document.getElementById('costo_total_costo').value = (c.total_costo !== undefined) ? c.total_costo.toFixed(2) : '0.00';
     document.getElementById('costo_total_tarifa').value = (c.total_tarifa !== undefined) ? c.total_tarifa.toFixed(2) : '0.00';
-
     window.indiceCostoEdicion = index;
 }
-
 function eliminarCosto(index) {
     if (confirm('¿Eliminar costo?')) {
         costosServicio.splice(index, 1);
@@ -1162,7 +1054,6 @@ function eliminarCosto(index) {
         exito('Costo eliminado');
     }
 }
-
 function limpiarFormularioCostos() {
     document.getElementById('costo_concepto').selectedIndex = 0;
     document.getElementById('costo_qty').value = '';
@@ -1172,13 +1063,10 @@ function limpiarFormularioCostos() {
     document.getElementById('costo_total_costo').value = '0.00';
     document.getElementById('costo_total_tarifa').value = '0.00';
 }
-
 function cerrarSubmodalCostos() {
     document.getElementById('submodal-costos').style.display = 'none';
 }
-
 document.getElementById('gasto_tipo')?.addEventListener('change', cargarGastosPorTipo);
-
 function cargarGastosPorTipo() {
     const tipo = document.getElementById('gasto_tipo')?.value;
     if (!tipo) {
@@ -1199,7 +1087,6 @@ function cargarGastosPorTipo() {
             });
         });
 }
-
 function guardarGastoLocal() {
     const tipo = document.getElementById('gasto_tipo').value;
     const gasto = document.getElementById('gasto_gasto').value;
@@ -1207,25 +1094,20 @@ function guardarGastoLocal() {
     const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
     const afecto = document.getElementById('gasto_afecto').value;
     const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
-
     if (!tipo || !gasto) {
         return error('Tipo y Gasto son obligatorios');
     }
-
     const nuevoGasto = { tipo, gasto, moneda, monto, afecto, iva };
     gastosLocales.push(nuevoGasto);
     actualizarTablaGastosLocales();
     limpiarFormularioGastos();
     exito('Gasto local agregado');
 }
-
 function actualizarTablaGastosLocales() {
     const tbody = document.getElementById('gastos-locales-body');
     if (!tbody) return;
-    
     tbody.innerHTML = '';
     let totalVenta = 0, totalCosto = 0;
-    
     gastosLocales.forEach((g, i) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -1240,18 +1122,15 @@ function actualizarTablaGastosLocales() {
             </td>
         `;
         tbody.appendChild(tr);
-        
         if (g.tipo === 'Ventas') totalVenta += g.monto;
         if (g.tipo === 'Costo') totalCosto += g.monto;
     });
-    
     document.getElementById('total-venta-gastos').textContent = totalVenta.toFixed(2);
     document.getElementById('total-costo-gastos').textContent = totalCosto.toFixed(2);
     document.getElementById('profit-local').textContent = (totalVenta - totalCosto).toFixed(2);
     const profitPct = totalVenta > 0 ? ((totalVenta - totalCosto) / totalVenta * 100) : 0;
     document.getElementById('profit-porcentaje').textContent = profitPct.toFixed(2) + ' %';
 }
-
 function eliminarGastoLocal(index) {
     if (confirm('¿Eliminar este gasto?')) {
         gastosLocales.splice(index, 1);
@@ -1259,7 +1138,6 @@ function eliminarGastoLocal(index) {
         exito('Gasto eliminado');
     }
 }
-
 function limpiarFormularioGastos() {
     document.getElementById('gasto_tipo').selectedIndex = 0;
     document.getElementById('gasto_gasto').selectedIndex = 0;
@@ -1268,11 +1146,9 @@ function limpiarFormularioGastos() {
     document.getElementById('gasto_afecto').value = 'SI';
     document.getElementById('gasto_iva').value = '';
 }
-
 function cerrarSubmodalGastosLocales() {
     document.getElementById('submodal-gastos-locales').style.display = 'none';
 }
-
 // === FUNCIONES DE SERVICIOS ===
 function editarServicio(index) {
     try {
@@ -1285,7 +1161,6 @@ function editarServicio(index) {
         error('No se pudo abrir el servicio para edición');
     }
 }
-
 function eliminarServicio(index) {
     if (confirm('¿Eliminar este servicio?')) {
         servicios.splice(index, 1);
@@ -1293,7 +1168,6 @@ function eliminarServicio(index) {
         exito('Servicio eliminado');
     }
 }
-
 // =================================================================================================================
 // === 9. INICIALIZACIÓN === DOMContentLoaded
 // =================================================================================================================
@@ -1302,15 +1176,12 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarOperacionesYTipos();
     document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
     document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
-
     // Botón "Grabar Todo" (siempre presente)
     const btnSaveAll = document.getElementById('btn-save-all');
     if (btnSaveAll) {
         btnSaveAll.textContent = 'Grabar Todo';
     }
-
     // El botón "Agregar Servicio" está dentro del modal, no aquí
-
     // Submodales desde la sección principal (con validación)
     document.getElementById('btn-costos-servicio')?.addEventListener('click', () => {
         error('Abra un servicio primero para gestionar costos');
@@ -1318,18 +1189,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-gastos-locales')?.addEventListener('click', () => {
         error('Abra un servicio primero para gestionar gastos');
     });
-
     // Submodales desde dentro del modal de servicio (con verificación segura)
     const btnCostosDentro = document.getElementById('btn-costos-servicio-dentro');
     const btnGastosDentro = document.getElementById('btn-gastos-locales-dentro');
-
     if (btnCostosDentro) {
         btnCostosDentro.addEventListener('click', abrirSubmodalCostos);
     }
     if (btnGastosDentro) {
         btnGastosDentro.addEventListener('click', abrirSubmodalGastosLocales);
     }
-
     // Búsqueda inteligente
     document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
         const term = this.value.trim();
@@ -1359,7 +1227,6 @@ document.addEventListener('DOMContentLoaded', () => {
             error('Error en búsqueda');
         }
     });
-
     // Grabar Todo
     document.getElementById('btn-save-all')?.addEventListener('click', function(e) {
         e.preventDefault();
@@ -1368,7 +1235,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!rut || !razon) return error('RUT y Razón Social son obligatorios');
         const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
         if (!validarRut(rutLimpio)) return error('RUT inválido');
-
         const form = document.getElementById('form-prospecto');
         const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
         let inp = form.querySelector('input[name="modo"]');
@@ -1391,7 +1257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         form.submit();
     });
-
     // Cargar prospecto desde URL
     const urlParams = new URLSearchParams(window.location.search);
     const idFromUrl = urlParams.get('id_ppl');
@@ -1400,7 +1265,6 @@ document.addEventListener('DOMContentLoaded', () => {
         history.replaceState({}, document.title, cleanUrl);
         setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
     }
-
     // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
     window.eliminarServicio = eliminarServicio; 
 });
