@@ -347,914 +347,930 @@
     <span id="toast-message">Mensaje</span>
 </div>
 <script>
-// ===================================================================
-// === 1. VARIABLES GLOBALES ===
-// ===================================================================
-let servicios = [];
-let costosServicio = [];
-let gastosLocales = [];
-let servicioEnEdicion = null;
-let tieneServiciosIniciales = false;
-let estadoProspecto = 'Pendiente';
-window.editarServicio = editarServicio;
-// ===================================================================
-// === 2. FUNCIONES AUXILIARES ===
-// ===================================================================
-function validarRut(rut) {
-    if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
-    const cuerpo = rut.slice(0, -1);
-    const dv = rut.slice(-1).toUpperCase();
-    let suma = 0, multiplo = 2;
-    for (let i = cuerpo.length - 1; i >= 0; i--) {
-        suma += parseInt(cuerpo[i]) * multiplo;
-        multiplo = multiplo < 7 ? multiplo + 1 : 2;
+    // ===================================================================
+    // === 1. VARIABLES GLOBALES ===
+    // ===================================================================
+    let servicios = [];
+    let costosServicio = [];
+    let gastosLocales = [];
+    let servicioEnEdicion = null;
+    let tieneServiciosIniciales = false;
+    let estadoProspecto = 'Pendiente';
+    window.editarServicio = editarServicio;
+    // ===================================================================
+    // === 2. FUNCIONES AUXILIARES ===
+    // ===================================================================
+    function validarRut(rut) {
+        if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
+        const cuerpo = rut.slice(0, -1);
+        const dv = rut.slice(-1).toUpperCase();
+        let suma = 0, multiplo = 2;
+        for (let i = cuerpo.length - 1; i >= 0; i--) {
+            suma += parseInt(cuerpo[i]) * multiplo;
+            multiplo = multiplo < 7 ? multiplo + 1 : 2;
+        }
+        const dvEsperado = (11 - (suma % 11)).toString();
+        const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
+        return dv === dvCalculado;
     }
-    const dvEsperado = (11 - (suma % 11)).toString();
-    const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
-    return dv === dvCalculado;
-}
-
-function calcularConcatenado() {
-    const op = document.getElementById('operacion')?.value || '';
-    const tipo = document.getElementById('tipo_oper')?.value || '';
-    if (!op || !tipo) return;
-    const hoy = new Date();
-    const fecha = hoy.toISOString().slice(2, 10).replace(/-/g, '');
-    const id = (parseInt(document.getElementById('id_prospect')?.value || '0') + 1).toString().padStart(2, '0');
-    document.getElementById('concatenado').value = `${op}${tipo}${fecha}-${id}`;
-}
-function actualizarTabla() {
-    const tbody = document.getElementById('servicios-body');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    let tc = 0, tv = 0, tgc = 0, tgv = 0;
-    servicios.forEach((s, index) => {
-        const c = parseFloat(s.costo) || 0;
-        const v = parseFloat(s.venta) || 0;
-        const gc = parseFloat(s.costogastoslocalesdestino) || 0;
-        const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
-        tc += c; tv += v; tgc += gc; tgv += gv;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${s.servicio}</td>
-            <td>${s.trafico}</td>
-            <td>${s.base_calculo || ''}</td>
-            <td>${s.moneda}</td>
-            <td>${(parseFloat(s.tarifa)||0).toFixed(2)}</td>
-            <td>${c.toFixed(2)}</td>
-            <td>${v.toFixed(2)}</td>
-            <td>${gc.toFixed(2)}</td>
-            <td>${gv.toFixed(2)}</td>
-            <td>
-                <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
-                <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-    document.getElementById('total-costo').textContent = tc.toFixed(2);
-    document.getElementById('total-venta').textContent = tv.toFixed(2);
-    document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
-    document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
-    // === Agregar listeners a los botones ===
-    document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const index = parseInt(this.getAttribute('data-index'));
-            editarServicio(index);
+    function cargarPaises() {
+        const paises = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
+        const select = document.getElementById('pais');
+        if (!select) return;
+        select.innerHTML = '<option value="">Seleccionar país</option>';
+        paises.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            select.appendChild(opt);
         });
-    });
-    document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const index = parseInt(this.getAttribute('data-index'));
-            eliminarServicio(index);
+    }
+    function calcularConcatenado() {
+        const op = document.getElementById('operacion')?.value || '';
+        const tipo = document.getElementById('tipo_oper')?.value || '';
+        if (!op || !tipo) return;
+        const hoy = new Date();
+        const fecha = hoy.toISOString().slice(2, 10).replace(/-/g, '');
+        const id = (parseInt(document.getElementById('id_prospect')?.value || '0') + 1).toString().padStart(2, '0');
+        document.getElementById('concatenado').value = `${op}${tipo}${fecha}-${id}`;
+    }
+    function actualizarTabla() {
+        const tbody = document.getElementById('servicios-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        let tc = 0, tv = 0, tgc = 0, tgv = 0;
+        servicios.forEach((s, index) => {
+            const c = parseFloat(s.costo) || 0;
+            const v = parseFloat(s.venta) || 0;
+            const gc = parseFloat(s.costogastoslocalesdestino) || 0;
+            const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
+            tc += c; tv += v; tgc += gc; tgv += gv;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${s.servicio}</td>
+                <td>${s.trafico}</td>
+                <td>${s.base_calculo || ''}</td>
+                <td>${s.moneda}</td>
+                <td>${(parseFloat(s.tarifa)||0).toFixed(2)}</td>
+                <td>${c.toFixed(2)}</td>
+                <td>${v.toFixed(2)}</td>
+                <td>${gc.toFixed(2)}</td>
+                <td>${gv.toFixed(2)}</td>
+                <td>
+                    <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
+                    <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
-    });
-}
-// ===================================================================
-// === 3. CARGA DE DATOS (API) ===
-// ===================================================================
-function cargarOperacionesYTipos() {
-    fetch('/api/get_operaciones.php')
-        .then(r => r.json())
-        .then(data => {
-            const sel = document.getElementById('operacion');
-            if (!sel) return;
-            sel.innerHTML = '<option value="">Seleccionar</option>';
-            (data.operaciones || []).forEach(op => {
-                const opt = document.createElement('option');
-                opt.value = op;
-                opt.textContent = op;
-                sel.appendChild(opt);
+        document.getElementById('total-costo').textContent = tc.toFixed(2);
+        document.getElementById('total-venta').textContent = tv.toFixed(2);
+        document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
+        document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
+        // === Agregar listeners a los botones ===
+        document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                editarServicio(index);
             });
         });
-    document.getElementById('operacion')?.addEventListener('change', function() {
-        const op = this.value;
-        const tipoSel = document.getElementById('tipo_oper');
-        if (!op || !tipoSel) return;
-        fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(op)}`)
+        document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                eliminarServicio(index);
+            });
+        });
+    }
+    // ===================================================================
+    // === 3. CARGA DE DATOS (API) ===
+    // ===================================================================
+    function cargarOperacionesYTipos() {
+        fetch('/api/get_operaciones.php')
             .then(r => r.json())
             .then(data => {
-                tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.tipos || []).forEach(t => {
+                const sel = document.getElementById('operacion');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Seleccionar</option>';
+                (data.operaciones || []).forEach(op => {
                     const opt = document.createElement('option');
-                    opt.value = t;
-                    opt.textContent = t;
-                    tipoSel.appendChild(opt);
+                    opt.value = op;
+                    opt.textContent = op;
+                    sel.appendChild(opt);
                 });
             });
-    });
-}
-function cargarDatosModalServicio(callback = null) {
-    let cargas = 0;
-    const total = 4;
-    const check = () => {
-        cargas++;
-        if (cargas === total && callback) callback();
-    };
-    // Commodity
-    fetch('/api/get_commoditys.php')
-        .then(r => r.json())
-        .then(data => {
-            const sel = document.getElementById('serv_commodity');
-            if (sel) {
-                sel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.commoditys || []).forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.commodity || c;
-                    opt.textContent = c.commodity || c;
-                    sel.appendChild(opt);
-                });
-            }
-            check();
-        });
-    // Medios de transporte
-    fetch('/api/get_medios_transporte.php')
-        .then(r => r.json())
-        .then(data => {
-            const sel = document.getElementById('serv_medio_transporte');
-            if (sel) {
-                sel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.medios_transporte || []).forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m;
-                    opt.textContent = m;
-                    sel.appendChild(opt);
-                });
-            }
-            check();
-        });
-    // Agentes
-    fetch('/api/get_agentes.php')
-        .then(r => r.json())
-        .then(data => {
-            const sel = document.getElementById('serv_agente');
-            if (sel) {
-                sel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.agentes || []).forEach(a => {
-                    const opt = document.createElement('option');
-                    opt.value = a;
-                    opt.textContent = a;
-                    sel.appendChild(opt);
-                });
-            }
-            check();
-        });
-    // Proveedores nacionales
-    fetch('/api/get_proveedores_pnac.php')
-        .then(r => r.json())
-        .then(data => {
-            const sel = document.getElementById('serv_proveedor_nac');
-            if (sel) {
-                sel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.proveedores || []).forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p;
-                    opt.textContent = p;
-                    sel.appendChild(opt);
-                });
-            }
-            check();
-        });
-}
-// ===================================================================
-// === 4. CARGA DE LUGARES (Origen/Destino) ===
-// ===================================================================
-function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
-    const origenSel = document.getElementById('serv_origen');
-    const destinoSel = document.getElementById('serv_destino');
-    if (!origenSel || !destinoSel) return Promise.resolve();
-    if (!medio) {
-        origenSel.innerHTML = '<option value="">Seleccionar</option>';
-        destinoSel.innerHTML = '<option value="">Seleccionar</option>';
-        return Promise.resolve();
-    }
-    return fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
-        .then(r => r.json())
-        .then(data => {
-            const lugares = data.lugares || [];
-            const optionsHtml = lugares.map(l => 
-                `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
-            ).join('');
-            origenSel.innerHTML = '<option value="">Seleccionar</option>' + optionsHtml;
-            const destinosFiltrados = origenSeleccionado
-                ? lugares.filter(l => l.lugar !== origenSeleccionado)
-                : lugares;
-            const destinoHtml = destinosFiltrados.map(l => 
-                `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
-            ).join('');
-            destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
-            const actualizarPais = (selectId, paisId) => {
-                const sel = document.getElementById(selectId);
-                const pais = document.getElementById(paisId);
-                if (!sel || !pais) return;
-                const handler = () => {
-                    const opt = sel.options[sel.selectedIndex];
-                    pais.value = opt ? opt.getAttribute('data-pais') || '' : '';
-                };
-                sel.removeEventListener('change', handler);
-                sel.addEventListener('change', handler);
-            };
-            actualizarPais('serv_origen', 'serv_pais_origen');
-            actualizarPais('serv_destino', 'serv_pais_destino');
-        })
-        .catch(err => {
-            console.error('Error al cargar lugares:', err);
-            error('No se pudieron cargar los lugares para este medio');
-            return Promise.resolve();
-        });
-}
-// ===================================================================
-// === 5. MANEJO DE PROSPECTOS ===
-// ===================================================================
-function seleccionarProspecto(id) {
-    fetch(`/api/get_prospecto.php?id=${id}`)
-        .then(r => r.json())
-        .then(data => {
-            if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
-            const p = data.prospecto;
-            ['razon_social','rut_empresa','fono_empresa','direccion','booking','incoterm','concatenado','fecha_alta','fecha_estado'].forEach(f => {
-                const el = document.querySelector(`[name="${f}"]`);
-                if (el && el.tagName === 'INPUT') el.value = p[f] || '';
-            });
-            document.getElementById('id_comercial').value = p.id_comercial || '';
-            document.getElementById('nombre').value = p.nombre || '';
-            document.getElementById('estado').value = p.estado || 'Pendiente';
-            const paisSel = document.getElementById('pais');
-            if (paisSel && p.pais) {
-                for (let opt of paisSel.options) {
-                    if (opt.value === p.pais) {
-                        opt.selected = true;
-                        break;
-                    }
-                }
-                if (!paisSel.value) {
-                    const opt = document.createElement('option');
-                    opt.value = p.pais;
-                    opt.textContent = p.pais;
-                    paisSel.appendChild(opt);
-                    paisSel.value = p.pais;
-                }
-            }
-            const opSel = document.getElementById('operacion');
+        document.getElementById('operacion')?.addEventListener('change', function() {
+            const op = this.value;
             const tipoSel = document.getElementById('tipo_oper');
-            if (opSel && p.operacion) {
-                opSel.value = p.operacion;
-                fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                        (data.tipos || []).forEach(t => {
-                            const opt = document.createElement('option');
-                            opt.value = t;
-                            opt.textContent = t;
-                            tipoSel.appendChild(opt);
-                        });
-                        if (p.tipo_oper) tipoSel.value = p.tipo_oper;
+            if (!op || !tipoSel) return;
+            fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(op)}`)
+                .then(r => r.json())
+                .then(data => {
+                    tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.tipos || []).forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t;
+                        opt.textContent = t;
+                        tipoSel.appendChild(opt);
                     });
-            }
-            const setNota = (name, val) => {
-                let inp = document.querySelector(`input[name="${name}"]`);
-                if (!inp) {
-                    inp = document.createElement('input');
-                    inp.type = 'hidden';
-                    inp.name = name;
-                    document.getElementById('form-prospecto').appendChild(inp);
-                }
-                inp.value = val || '';
-                document.getElementById(`${name}_input`).value = val || '';
-            };
-            setNota('notas_comerciales', p.notas_comerciales);
-            setNota('notas_operaciones', p.notas_operaciones);
-            servicios = (data.servicios || []).map(s => ({
-                ...s,
-                costo: parseFloat(s.costo) || 0,
-                venta: parseFloat(s.venta) || 0,
-                costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
-            }));
-            tieneServiciosIniciales = servicios.length > 0;
-            actualizarTabla();
-            document.getElementById('id_ppl').value = p.id_ppl || '';
-            document.getElementById('id_prospect').value = p.id_prospect || '';
-            // ✅ SIEMPRE editable
-            const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
-            const selects = document.querySelectorAll('select');
-            inputs.forEach(input => {
-                input.readOnly = false;
-                input.style.backgroundColor = '';
-            });
-            selects.forEach(select => {
-                select.disabled = false;
-            });
-            document.getElementById('btn-agregar-servicio').disabled = false;
-        });
-}
-// ===================================================================
-// === 6. MODALES PRINCIPALES ===
-// ===================================================================
-function abrirModalComercial() { document.getElementById('modal-comercial').style.display = 'block'; }
-function cerrarModalComercial() { document.getElementById('modal-comercial').style.display = 'none'; }
-function abrirModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'block'; }
-function cerrarModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'none'; }
-function guardarNotasComerciales() {
-    const id = document.getElementById('id_ppl')?.value;
-    if (!id || id === '0') return error('Prospecto no válido');
-    const val = document.getElementById('notas_comerciales_input').value.trim();
-    fetch('/api/guardar_nota.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({id_ppl: id, campo: 'notas_comerciales', valor: val})
-    }).then(r => r.json()).then(d => {
-        if (d.success) exito('Notas guardadas');
-        else error(d.message || 'Error');
-        cerrarModalComercial();
-    });
-}
-function guardarNotasOperaciones() {
-    const id = document.getElementById('id_ppl')?.value;
-    if (!id || id === '0') return error('Prospecto no válido');
-    const val = document.getElementById('notas_operaciones_input').value.trim();
-    fetch('/api/guardar_nota.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({id_ppl: id, campo: 'notas_operaciones', valor: val})
-    }).then(r => r.json()).then(d => {
-        if (d.success) exito('Notas guardadas');
-        else error(d.message || 'Error');
-        cerrarModalOperaciones();
-    });
-}
-// ===================================================================
-// === 7. MODAL DE SERVICIO ===
-// ===================================================================
-function abrirModalServicio(index = null) {
-    const idPpl = document.getElementById('id_ppl')?.value;
-    const concatenado = document.getElementById('concatenado')?.value;
-    if (!idPpl || !concatenado) return error('Guarde el prospecto primero');
-    const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
-    modalInputs.forEach(el => {
-        if (el.type === 'number') el.value = '';
-        else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
-        else if (el.tagName === 'SELECT') el.selectedIndex = 0;
-    });
-    document.getElementById('id_prospect_serv').value = idPpl;
-    document.getElementById('concatenado_serv').value = concatenado;
-    document.getElementById('serv_titulo_concatenado').textContent = concatenado;
-    costosServicio = [];
-    gastosLocales = [];
-    if (index !== null) {
-        servicioEnEdicion = index;
-        const s = servicios[index];
-        costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
-        gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
-        cargarDatosModalServicio(() => {
-            document.getElementById('serv_servicio').value = s.servicio || '';
-            document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
-            document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
-            document.getElementById('serv_aol').value = s.aol || '';
-            document.getElementById('serv_aod').value = s.aod || '';
-            document.getElementById('serv_agente').value = s.agente || '';
-            document.getElementById('serv_transportador').value = s.transportador || ''; // ✅ Cambiado
-            document.getElementById('serv_incoterm').value = s.incoterm || '';           // ✅ Cambiado
-            document.getElementById('serv_maritimo').value = s.naviera || '';           // ✅ Se mantiene para compatibilidad
-            document.getElementById('serv_transito').value = s.transito || '';
-            document.getElementById('serv_frecuencia').value = s.frecuencia || '';
-            document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
-            document.getElementById('serv_sector').value = s.sector || '';
-            document.getElementById('serv_mercancia').value = s.mercancia || '';
-            document.getElementById('serv_bultos').value = s.bultos || '';
-            document.getElementById('serv_peso').value = s.peso || '';
-            document.getElementById('serv_volumen').value = s.volumen || '';
-            document.getElementById('serv_dimensiones').value = s.dimensiones || '';
-            document.getElementById('serv_moneda').value = s.moneda || 'CLP';
-            document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
-            document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
-            const medioGuardado = (s.trafico || '').trim();
-            const commodityGuardado = (s.commodity || '').trim();
-            const medioSel = document.getElementById('serv_medio_transporte');
-            const commoditySel = document.getElementById('serv_commodity');
-            if (medioSel) {
-                for (let opt of medioSel.options) {
-                    if (opt.value.trim() === medioGuardado) {
-                        opt.selected = true;
-                        break;
-                    }
-                }
-            }
-            if (commoditySel) {
-                for (let opt of commoditySel.options) {
-                    if (opt.value.trim() === commodityGuardado) {
-                        opt.selected = true;
-                        break;
-                    }
-                }
-            }
-            if (medioGuardado) {
-                cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
-                    const origenSel = document.getElementById('serv_origen');
-                    const destinoSel = document.getElementById('serv_destino');
-                    if (origenSel && s.origen) {
-                        for (let opt of origenSel.options) {
-                            if (opt.value === s.origen) {
-                                opt.selected = true;
-                                break;
-                            }
-                        }
-                        origenSel.dispatchEvent(new Event('change'));
-                    }
-                    if (destinoSel && s.destino) {
-                        for (let opt of destinoSel.options) {
-                            if (opt.value === s.destino) {
-                                opt.selected = true;
-                                break;
-                            }
-                        }
-                        destinoSel.dispatchEvent(new Event('change'));
-                    }
                 });
-            }
         });
-    } else {
-        servicioEnEdicion = null;
-        cargarDatosModalServicio();
     }
-    document.getElementById('modal-servicio').style.display = 'flex';
-}
-function cerrarModalServicio() {
-    document.getElementById('modal-servicio').style.display = 'none';
-}
-function cerrarModalServicioConConfirmacion() {
-    if (confirm('¿Desea cancelar sin guardar los cambios?')) {
+    function cargarDatosModalServicio(callback = null) {
+        let cargas = 0;
+        const total = 4;
+        const check = () => {
+            cargas++;
+            if (cargas === total && callback) callback();
+        };
+        // Commodity
+        fetch('/api/get_commoditys.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('serv_commodity');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.commoditys || []).forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.commodity || c;
+                        opt.textContent = c.commodity || c;
+                        sel.appendChild(opt);
+                    });
+                }
+                check();
+            });
+        // Medios de transporte
+        fetch('/api/get_medios_transporte.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('serv_medio_transporte');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.medios_transporte || []).forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m;
+                        opt.textContent = m;
+                        sel.appendChild(opt);
+                    });
+                }
+                check();
+            });
+        // Agentes
+        fetch('/api/get_agentes.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('serv_agente');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.agentes || []).forEach(a => {
+                        const opt = document.createElement('option');
+                        opt.value = a;
+                        opt.textContent = a;
+                        sel.appendChild(opt);
+                    });
+                }
+                check();
+            });
+        // Proveedores nacionales
+        fetch('/api/get_proveedores_pnac.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('serv_proveedor_nac');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.proveedores || []).forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.textContent = p;
+                        sel.appendChild(opt);
+                    });
+                }
+                check();
+            });
+    }
+    // ===================================================================
+    // === 4. CARGA DE LUGARES (Origen/Destino) ===
+    // ===================================================================
+    function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
+        const origenSel = document.getElementById('serv_origen');
+        const destinoSel = document.getElementById('serv_destino');
+        if (!origenSel || !destinoSel) return Promise.resolve();
+        if (!medio) {
+            origenSel.innerHTML = '<option value="">Seleccionar</option>';
+            destinoSel.innerHTML = '<option value="">Seleccionar</option>';
+            return Promise.resolve();
+        }
+        return fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
+            .then(r => r.json())
+            .then(data => {
+                const lugares = data.lugares || [];
+                const optionsHtml = lugares.map(l => 
+                    `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                ).join('');
+                origenSel.innerHTML = '<option value="">Seleccionar</option>' + optionsHtml;
+                const destinosFiltrados = origenSeleccionado
+                    ? lugares.filter(l => l.lugar !== origenSeleccionado)
+                    : lugares;
+                const destinoHtml = destinosFiltrados.map(l => 
+                    `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                ).join('');
+                destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
+                const actualizarPais = (selectId, paisId) => {
+                    const sel = document.getElementById(selectId);
+                    const pais = document.getElementById(paisId);
+                    if (!sel || !pais) return;
+                    const handler = () => {
+                        const opt = sel.options[sel.selectedIndex];
+                        pais.value = opt ? opt.getAttribute('data-pais') || '' : '';
+                    };
+                    sel.removeEventListener('change', handler);
+                    sel.addEventListener('change', handler);
+                };
+                actualizarPais('serv_origen', 'serv_pais_origen');
+                actualizarPais('serv_destino', 'serv_pais_destino');
+            })
+            .catch(err => {
+                console.error('Error al cargar lugares:', err);
+                error('No se pudieron cargar los lugares para este medio');
+                return Promise.resolve();
+            });
+    }
+    // ===================================================================
+    // === 5. MANEJO DE PROSPECTOS ===
+    // ===================================================================
+    function seleccionarProspecto(id) {
+        fetch(`/api/get_prospecto.php?id=${id}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
+                const p = data.prospecto;
+                ['razon_social','rut_empresa','fono_empresa','direccion','booking','incoterm','concatenado','fecha_alta','fecha_estado'].forEach(f => {
+                    const el = document.querySelector(`[name="${f}"]`);
+                    if (el && el.tagName === 'INPUT') el.value = p[f] || '';
+                });
+                document.getElementById('id_comercial').value = p.id_comercial || '';
+                document.getElementById('nombre').value = p.nombre || '';
+                document.getElementById('estado').value = p.estado || 'Pendiente';
+                const paisSel = document.getElementById('pais');
+                if (paisSel && p.pais) {
+                    for (let opt of paisSel.options) {
+                        if (opt.value === p.pais) {
+                            opt.selected = true;
+                            break;
+                        }
+                    }
+                    if (!paisSel.value) {
+                        const opt = document.createElement('option');
+                        opt.value = p.pais;
+                        opt.textContent = p.pais;
+                        paisSel.appendChild(opt);
+                        paisSel.value = p.pais;
+                    }
+                }
+                const opSel = document.getElementById('operacion');
+                const tipoSel = document.getElementById('tipo_oper');
+                if (opSel && p.operacion) {
+                    opSel.value = p.operacion;
+                    fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                            (data.tipos || []).forEach(t => {
+                                const opt = document.createElement('option');
+                                opt.value = t;
+                                opt.textContent = t;
+                                tipoSel.appendChild(opt);
+                            });
+                            if (p.tipo_oper) tipoSel.value = p.tipo_oper;
+                        });
+                }
+                const setNota = (name, val) => {
+                    let inp = document.querySelector(`input[name="${name}"]`);
+                    if (!inp) {
+                        inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = name;
+                        document.getElementById('form-prospecto').appendChild(inp);
+                    }
+                    inp.value = val || '';
+                    document.getElementById(`${name}_input`).value = val || '';
+                };
+                setNota('notas_comerciales', p.notas_comerciales);
+                setNota('notas_operaciones', p.notas_operaciones);
+                servicios = (data.servicios || []).map(s => ({
+                    ...s,
+                    costo: parseFloat(s.costo) || 0,
+                    venta: parseFloat(s.venta) || 0,
+                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
+                }));
+                tieneServiciosIniciales = servicios.length > 0;
+                actualizarTabla();
+                document.getElementById('id_ppl').value = p.id_ppl || '';
+                document.getElementById('id_prospect').value = p.id_prospect || '';
+                // ✅ SIEMPRE editable
+                const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
+                const selects = document.querySelectorAll('select');
+                inputs.forEach(input => {
+                    input.readOnly = false;
+                    input.style.backgroundColor = '';
+                });
+                selects.forEach(select => {
+                    select.disabled = false;
+                });
+                document.getElementById('btn-agregar-servicio').disabled = false;
+            });
+    }
+    // ===================================================================
+    // === 6. MODALES PRINCIPALES ===
+    // ===================================================================
+    function abrirModalComercial() { document.getElementById('modal-comercial').style.display = 'block'; }
+    function cerrarModalComercial() { document.getElementById('modal-comercial').style.display = 'none'; }
+    function abrirModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'block'; }
+    function cerrarModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'none'; }
+    function guardarNotasComerciales() {
+        const id = document.getElementById('id_ppl')?.value;
+        if (!id || id === '0') return error('Prospecto no válido');
+        const val = document.getElementById('notas_comerciales_input').value.trim();
+        fetch('/api/guardar_nota.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id_ppl: id, campo: 'notas_comerciales', valor: val})
+        }).then(r => r.json()).then(d => {
+            if (d.success) exito('Notas guardadas');
+            else error(d.message || 'Error');
+            cerrarModalComercial();
+        });
+    }
+    function guardarNotasOperaciones() {
+        const id = document.getElementById('id_ppl')?.value;
+        if (!id || id === '0') return error('Prospecto no válido');
+        const val = document.getElementById('notas_operaciones_input').value.trim();
+        fetch('/api/guardar_nota.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id_ppl: id, campo: 'notas_operaciones', valor: val})
+        }).then(r => r.json()).then(d => {
+            if (d.success) exito('Notas guardadas');
+            else error(d.message || 'Error');
+            cerrarModalOperaciones();
+        });
+    }
+    // ===================================================================
+    // === 7. MODAL DE SERVICIO ===
+    // ===================================================================
+    function abrirModalServicio(index = null) {
+        const idPpl = document.getElementById('id_ppl')?.value;
+        const concatenado = document.getElementById('concatenado')?.value;
+        if (!idPpl || !concatenado) return error('Guarde el prospecto primero');
+        const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
+        modalInputs.forEach(el => {
+            if (el.type === 'number') el.value = '';
+            else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
+            else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        });
+        document.getElementById('id_prospect_serv').value = idPpl;
+        document.getElementById('concatenado_serv').value = concatenado;
+        document.getElementById('serv_titulo_concatenado').textContent = concatenado;
+        costosServicio = [];
+        gastosLocales = [];
+        if (index !== null) {
+            servicioEnEdicion = index;
+            const s = servicios[index];
+            costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
+            gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
+            cargarDatosModalServicio(() => {
+                document.getElementById('serv_servicio').value = s.servicio || '';
+                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
+                document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
+                document.getElementById('serv_aol').value = s.aol || '';
+                document.getElementById('serv_aod').value = s.aod || '';
+                document.getElementById('serv_agente').value = s.agente || '';
+                document.getElementById('serv_transportador').value = s.transportador || ''; // ✅ Cambiado
+                document.getElementById('serv_incoterm').value = s.incoterm || '';           // ✅ Cambiado
+                document.getElementById('serv_maritimo').value = s.naviera || '';           // ✅ Se mantiene para compatibilidad
+                document.getElementById('serv_transito').value = s.transito || '';
+                document.getElementById('serv_frecuencia').value = s.frecuencia || '';
+                document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
+                document.getElementById('serv_sector').value = s.sector || '';
+                document.getElementById('serv_mercancia').value = s.mercancia || '';
+                document.getElementById('serv_bultos').value = s.bultos || '';
+                document.getElementById('serv_peso').value = s.peso || '';
+                document.getElementById('serv_volumen').value = s.volumen || '';
+                document.getElementById('serv_dimensiones').value = s.dimensiones || '';
+                document.getElementById('serv_moneda').value = s.moneda || 'CLP';
+                document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
+                document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
+                const medioGuardado = (s.trafico || '').trim();
+                const commodityGuardado = (s.commodity || '').trim();
+                const medioSel = document.getElementById('serv_medio_transporte');
+                const commoditySel = document.getElementById('serv_commodity');
+                if (medioSel) {
+                    for (let opt of medioSel.options) {
+                        if (opt.value.trim() === medioGuardado) {
+                            opt.selected = true;
+                            break;
+                        }
+                    }
+                }
+                if (commoditySel) {
+                    for (let opt of commoditySel.options) {
+                        if (opt.value.trim() === commodityGuardado) {
+                            opt.selected = true;
+                            break;
+                        }
+                    }
+                }
+                if (medioGuardado) {
+                    cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
+                        const origenSel = document.getElementById('serv_origen');
+                        const destinoSel = document.getElementById('serv_destino');
+                        if (origenSel && s.origen) {
+                            for (let opt of origenSel.options) {
+                                if (opt.value === s.origen) {
+                                    opt.selected = true;
+                                    break;
+                                }
+                            }
+                            origenSel.dispatchEvent(new Event('change'));
+                        }
+                        if (destinoSel && s.destino) {
+                            for (let opt of destinoSel.options) {
+                                if (opt.value === s.destino) {
+                                    opt.selected = true;
+                                    break;
+                                }
+                            }
+                            destinoSel.dispatchEvent(new Event('change'));
+                        }
+                    });
+                }
+            });
+        } else {
+            servicioEnEdicion = null;
+            cargarDatosModalServicio();
+        }
+        document.getElementById('modal-servicio').style.display = 'flex';
+    }
+    function cerrarModalServicio() {
+        document.getElementById('modal-servicio').style.display = 'none';
+    }
+    function cerrarModalServicioConConfirmacion() {
+        if (confirm('¿Desea cancelar sin guardar los cambios?')) {
+            cerrarModalServicio();
+        }
+    }
+    function guardarServicio() {
+        const servicio = document.getElementById('serv_servicio').value.trim();
+        if (!servicio) return error('Servicio es obligatorio');
+        const origen = document.getElementById('serv_origen').value;
+        const destino = document.getElementById('serv_destino').value;
+        if (origen && destino && origen === destino) {
+            return error('Origen y Destino no pueden ser el mismo lugar');
+        }
+        const nuevo = {
+            id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
+            id_prospect: document.getElementById('id_prospect_serv').value,
+            servicio: servicio,
+            trafico: document.getElementById('serv_medio_transporte').value,
+            commodity: document.getElementById('serv_commodity').value,
+            origen: document.getElementById('serv_origen').value,
+            pais_origen: document.getElementById('serv_pais_origen').value,
+            destino: document.getElementById('serv_destino').value,
+            pais_destino: document.getElementById('serv_pais_destino').value,
+            transito: document.getElementById('serv_transito').value,
+            frecuencia: document.getElementById('serv_frecuencia').value,
+            lugar_carga: document.getElementById('serv_lugar_carga').value,
+            sector: document.getElementById('serv_sector').value,
+            mercancia: document.getElementById('serv_mercancia').value,
+            bultos: document.getElementById('serv_bultos').value,
+            peso: document.getElementById('serv_peso').value,
+            volumen: document.getElementById('serv_volumen').value,
+            dimensiones: document.getElementById('serv_dimensiones').value,
+            moneda: document.getElementById('serv_moneda').value,
+            tipo_cambio: document.getElementById('serv_tipo_cambio').value,
+            proveedor_nac: document.getElementById('serv_proveedor_nac').value,
+            desconsolidac: document.getElementById('serv_desconsolidacion').value,
+            aol: document.getElementById('serv_aol').value,
+            aod: document.getElementById('serv_aod').value,
+            agente: document.getElementById('serv_agente').value,
+            naviera: document.getElementById('serv_maritimo').value, // ✅ Para compatibilidad
+            transportador: document.getElementById('serv_transportador').value, // ✅ Nuevo campo
+            incoterm: document.getElementById('serv_incoterm').value,           // ✅ Nuevo campo
+            ref_cliente: document.getElementById('serv_ref_cliente').value,     // ✅ Nuevo campo
+            costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
+            venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
+            costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
+            ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
+            costos: [...costosServicio],
+            gastos_locales: [...gastosLocales]
+        };
+        if (servicioEnEdicion !== null) {
+            servicios[servicioEnEdicion] = nuevo;
+            exito('Servicio actualizado correctamente');
+        } else {
+            servicios.push(nuevo);
+            exito('Servicio agregado correctamente');
+        }
+        actualizarTabla();
         cerrarModalServicio();
     }
-}
-function guardarServicio() {
-    const servicio = document.getElementById('serv_servicio').value.trim();
-    if (!servicio) return error('Servicio es obligatorio');
-    const origen = document.getElementById('serv_origen').value;
-    const destino = document.getElementById('serv_destino').value;
-    if (origen && destino && origen === destino) {
-        return error('Origen y Destino no pueden ser el mismo lugar');
-    }
-    const nuevo = {
-        id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
-        id_prospect: document.getElementById('id_prospect_serv').value,
-        servicio: servicio,
-        trafico: document.getElementById('serv_medio_transporte').value,
-        commodity: document.getElementById('serv_commodity').value,
-        origen: document.getElementById('serv_origen').value,
-        pais_origen: document.getElementById('serv_pais_origen').value,
-        destino: document.getElementById('serv_destino').value,
-        pais_destino: document.getElementById('serv_pais_destino').value,
-        transito: document.getElementById('serv_transito').value,
-        frecuencia: document.getElementById('serv_frecuencia').value,
-        lugar_carga: document.getElementById('serv_lugar_carga').value,
-        sector: document.getElementById('serv_sector').value,
-        mercancia: document.getElementById('serv_mercancia').value,
-        bultos: document.getElementById('serv_bultos').value,
-        peso: document.getElementById('serv_peso').value,
-        volumen: document.getElementById('serv_volumen').value,
-        dimensiones: document.getElementById('serv_dimensiones').value,
-        moneda: document.getElementById('serv_moneda').value,
-        tipo_cambio: document.getElementById('serv_tipo_cambio').value,
-        proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-        desconsolidac: document.getElementById('serv_desconsolidacion').value,
-        aol: document.getElementById('serv_aol').value,
-        aod: document.getElementById('serv_aod').value,
-        agente: document.getElementById('serv_agente').value,
-        naviera: document.getElementById('serv_maritimo').value, // ✅ Para compatibilidad
-        transportador: document.getElementById('serv_transportador').value, // ✅ Nuevo campo
-        incoterm: document.getElementById('serv_incoterm').value,           // ✅ Nuevo campo
-        ref_cliente: document.getElementById('serv_ref_cliente').value,     // ✅ Nuevo campo
-        costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
-        venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
-        costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
-        ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
-        costos: [...costosServicio],
-        gastos_locales: [...gastosLocales]
-    };
-    if (servicioEnEdicion !== null) {
-        servicios[servicioEnEdicion] = nuevo;
-        exito('Servicio actualizado correctamente');
-    } else {
-        servicios.push(nuevo);
-        exito('Servicio agregado correctamente');
-    }
-    actualizarTabla();
-    cerrarModalServicio();
-}
-// ===================================================================
-// === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
-// ===================================================================
-function abrirSubmodalCostos() {
-    const modalServicio = document.getElementById('modal-servicio');
-    if (!modalServicio || modalServicio.style.display === 'none') {
-        error('Abra primero el modal de Servicio');
-        return;
-    }
-    // ✅ Sincronizar con el servicio en edición
-    if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-        costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) 
-            ? [...servicios[servicioEnEdicion].costos] 
-            : [];
-    }
-    // Si es nuevo servicio, costosServicio ya está en memoria
-    const monedaServicio = document.getElementById('serv_moneda')?.value || 'USD';
-    document.getElementById('costo_moneda').value = monedaServicio;
-    cargarConceptosCostos();
-    const medioTransporte = document.getElementById('serv_medio_transporte')?.value || '';
-    cargarAplicacionesCostos(medioTransporte);
-    actualizarTablaCostos();
-    document.getElementById('submodal-costos').style.display = 'block';
-}
-// --- Gastos Locales ---
-function abrirSubmodalGastosLocales() {
-    const modalServicio = document.getElementById('modal-servicio');
-    if (!modalServicio || modalServicio.style.display === 'none') {
-        error('Abra primero el modal de Servicio');
-        return;
-    }
-    // ✅ Sincronizar con el servicio en edición
-    if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-        gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) 
-            ? [...servicios[servicioEnEdicion].gastos_locales] 
-            : [];
-    }
-    // Si es nuevo servicio, gastosLocales ya está en memoria
-    cargarGastosPorTipo();
-    actualizarTablaGastosLocales();
-    document.getElementById('submodal-gastos-locales').style.display = 'block';
-}
-function cargarConceptosCostos() {
-    fetch('/api/get_conceptos_costos.php')
-        .then(r => r.json())
-        .then(data => {
-            const sel = document.getElementById('costo_concepto');
-            if (!sel) return;
-            sel.innerHTML = '<option value="">Seleccionar concepto</option>';
-            (data.conceptos || data || []).forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.concepto || c;
-                opt.textContent = c.concepto || c;
-                sel.appendChild(opt);
-            });
-        })
-        .catch(err => {
-            console.error('Error al cargar conceptos:', err);
-            error('No se pudieron cargar los conceptos de costo');
-        });
-}
--
-function cargarAplicacionesCostos(medio) {
-    fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
-        .then(r => r.json())
-        .then(data => {
-            const sel = document.getElementById('costo_aplica');
-            if (!sel) return;
-            sel.innerHTML = '<option value="">Seleccionar aplica</option>';
-            const opciones = Array.isArray(data) ? data : (data.aplicaciones || []);
-            opciones.forEach(item => {
-                const valor = typeof item === 'string' ? item : item.aplica;
-                if (valor) {
-                    const opt = document.createElement('option');
-                    opt.value = valor;
-                    opt.textContent = valor;
-                    sel.appendChild(opt);
-                }
-            });
-        })
-        .catch(err => {
-            console.error('Error al cargar aplicaciones:', err);
-            error('No se pudieron cargar las opciones de "Aplica"');
-        });
-}
-['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
-    document.getElementById(id).addEventListener('input', calcularTotalesCostos);
-});
-function calcularTotalesCostos() {
-    const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
-    const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
-    const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-    document.getElementById('costo_total_costo').value = (qty * costo).toFixed(2);
-    document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
-}
-function guardarCosto() {
-    const concepto = document.getElementById('costo_concepto').value;
-    const aplica = document.getElementById('costo_aplica').value;
-    const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
-    const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
-    const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-    const moneda = document.getElementById('costo_moneda').value || 'CLP';
-    if (!concepto || !aplica) {
-        error('Concepto y Aplica son obligatorios');
-        return;
-    }
-    const nuevoCosto = {
-        concepto,
-        moneda,
-        qty,
-        costo,
-        total_costo: qty * costo,
-        tarifa,
-        total_tarifa: qty * tarifa,
-        aplica
-    };
-    if (window.indiceCostoEdicion !== undefined) {
-        costosServicio[window.indiceCostoEdicion] = nuevoCosto;
-        delete window.indiceCostoEdicion;
-    } else {
-        costosServicio.push(nuevoCosto);
-    }
-    actualizarTablaCostos();
-    limpiarFormularioCostos();
-    exito('Costo guardado');
-}
-function actualizarTablaCostos() {
-    const tbody = document.getElementById('costos-body');
-    const totalCostoEl = document.getElementById('total-costo-costos');
-    const totalTarifaEl = document.getElementById('total-tarifa-costos');
-    if (!tbody || !totalCostoEl || !totalTarifaEl) return;
-    tbody.innerHTML = '';
-    let totalCosto = 0, totalTarifa = 0;
-    costosServicio.forEach((c, i) => {
-        const costo = parseFloat(c.costo) || 0;
-        const tarifa = parseFloat(c.tarifa) || 0;
-        const qty = parseFloat(c.qty) || 0;
-        const totalCostoItem = costo * qty;
-        const totalTarifaItem = tarifa * qty;
-        totalCosto += totalCostoItem;
-        totalTarifa += totalTarifaItem;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${c.concepto}</td>
-            <td>${c.moneda}</td>
-            <td style="text-align: right;">${qty.toFixed(2)}</td>
-            <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
-            <td style="text-align: right; background-color: #fff9db;">${totalCostoItem.toFixed(2)}</td>
-            <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
-            <td style="text-align: right; background-color: #e6f7ff;">${totalTarifaItem.toFixed(2)}</td>
-            <td>${c.aplica}</td>
-            <td style="text-align: center;">
-                <button type="button" class="btn-edit" onclick="editarCosto(${i})" style="margin-right: 0.3rem; padding: 0.2rem 0.4rem;">✏️</button>
-                <button type="button" class="btn-delete" onclick="eliminarCosto(${i})" style="padding: 0.2rem 0.4rem;">🗑️</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-    totalCostoEl.textContent = totalCosto.toFixed(2);
-    totalTarifaEl.textContent = totalTarifa.toFixed(2);
-}
-function editarCosto(index) {
-    const c = costosServicio[index];
-    if (!c) return;
-    document.getElementById('costo_concepto').value = c.concepto || '';
-    document.getElementById('costo_qty').value = (c.qty !== undefined) ? c.qty : '';
-    document.getElementById('costo_costo').value = (c.costo !== undefined) ? c.costo : '';
-    document.getElementById('costo_tarifa').value = (c.tarifa !== undefined) ? c.tarifa : '';
-    document.getElementById('costo_aplica').value = c.aplica || '';
-    document.getElementById('costo_total_costo').value = (c.total_costo !== undefined) ? c.total_costo.toFixed(2) : '0.00';
-    document.getElementById('costo_total_tarifa').value = (c.total_tarifa !== undefined) ? c.total_tarifa.toFixed(2) : '0.00';
-    window.indiceCostoEdicion = index;
-}
-function eliminarCosto(index) {
-    if (confirm('¿Eliminar costo?')) {
-        costosServicio.splice(index, 1);
+    // ===================================================================
+    // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
+    // ===================================================================
+    function abrirSubmodalCostos() {
+        const modalServicio = document.getElementById('modal-servicio');
+        if (!modalServicio || modalServicio.style.display === 'none') {
+            error('Abra primero el modal de Servicio');
+            return;
+        }
+        // ✅ Sincronizar con el servicio en edición
+        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+            costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) 
+                ? [...servicios[servicioEnEdicion].costos] 
+                : [];
+        }
+        // Si es nuevo servicio, costosServicio ya está en memoria
+        const monedaServicio = document.getElementById('serv_moneda')?.value || 'USD';
+        document.getElementById('costo_moneda').value = monedaServicio;
+        cargarConceptosCostos();
+        const medioTransporte = document.getElementById('serv_medio_transporte')?.value || '';
+        cargarAplicacionesCostos(medioTransporte);
         actualizarTablaCostos();
-        exito('Costo eliminado');
+        document.getElementById('submodal-costos').style.display = 'block';
     }
-}
-function limpiarFormularioCostos() {
-    document.getElementById('costo_concepto').selectedIndex = 0;
-    document.getElementById('costo_qty').value = '';
-    document.getElementById('costo_costo').value = '';
-    document.getElementById('costo_tarifa').value = '';
-    document.getElementById('costo_aplica').selectedIndex = 0;
-    document.getElementById('costo_total_costo').value = '0.00';
-    document.getElementById('costo_total_tarifa').value = '0.00';
-}
-function cerrarSubmodalCostos() {
-    document.getElementById('submodal-costos').style.display = 'none';
-}
-document.getElementById('gasto_tipo')?.addEventListener('change', cargarGastosPorTipo);
-function cargarGastosPorTipo() {
-    const tipo = document.getElementById('gasto_tipo')?.value;
-    if (!tipo) {
-        document.getElementById('gasto_gasto').innerHTML = '<option value="">Gastos</option>';
-        return;
-    }
-    fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
-        .then(r => r.json())
-        .then(data => {
-            const sel = document.getElementById('gasto_gasto');
-            if (!sel) return;
-            sel.innerHTML = '<option value="">Gastos</option>';
-            (data.gastos || []).forEach(g => {
-                const opt = document.createElement('option');
-                opt.value = g;
-                opt.textContent = g;
-                sel.appendChild(opt);
-            });
-        });
-}
-function guardarGastoLocal() {
-    const tipo = document.getElementById('gasto_tipo').value;
-    const gasto = document.getElementById('gasto_gasto').value;
-    const moneda = document.getElementById('gasto_moneda').value;
-    const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
-    const afecto = document.getElementById('gasto_afecto').value;
-    const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
-    if (!tipo || !gasto) {
-        return error('Tipo y Gasto son obligatorios');
-    }
-    const nuevoGasto = { tipo, gasto, moneda, monto, afecto, iva };
-    gastosLocales.push(nuevoGasto);
-    actualizarTablaGastosLocales();
-    limpiarFormularioGastos();
-    exito('Gasto local agregado');
-}
-function actualizarTablaGastosLocales() {
-    const tbody = document.getElementById('gastos-locales-body');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    let totalVenta = 0, totalCosto = 0;
-    gastosLocales.forEach((g, i) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${g.tipo}</td>
-            <td>${g.gasto}</td>
-            <td>${g.moneda}</td>
-            <td style="text-align:right;">${g.monto.toFixed(2)}</td>
-            <td>${g.afecto}</td>
-            <td style="text-align:right;">${g.iva.toFixed(2)}</td>
-            <td style="text-align:center;">
-                <button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-        if (g.tipo === 'Ventas') totalVenta += g.monto;
-        if (g.tipo === 'Costo') totalCosto += g.monto;
-    });
-    document.getElementById('total-venta-gastos').textContent = totalVenta.toFixed(2);
-    document.getElementById('total-costo-gastos').textContent = totalCosto.toFixed(2);
-    document.getElementById('profit-local').textContent = (totalVenta - totalCosto).toFixed(2);
-    const profitPct = totalVenta > 0 ? ((totalVenta - totalCosto) / totalVenta * 100) : 0;
-    document.getElementById('profit-porcentaje').textContent = profitPct.toFixed(2) + ' %';
-}
-function eliminarGastoLocal(index) {
-    if (confirm('¿Eliminar este gasto?')) {
-        gastosLocales.splice(index, 1);
+    // --- Gastos Locales ---
+    function abrirSubmodalGastosLocales() {
+        const modalServicio = document.getElementById('modal-servicio');
+        if (!modalServicio || modalServicio.style.display === 'none') {
+            error('Abra primero el modal de Servicio');
+            return;
+        }
+        // ✅ Sincronizar con el servicio en edición
+        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+            gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) 
+                ? [...servicios[servicioEnEdicion].gastos_locales] 
+                : [];
+        }
+        // Si es nuevo servicio, gastosLocales ya está en memoria
+        cargarGastosPorTipo();
         actualizarTablaGastosLocales();
-        exito('Gasto eliminado');
+        document.getElementById('submodal-gastos-locales').style.display = 'block';
     }
-}
-function limpiarFormularioGastos() {
-    document.getElementById('gasto_tipo').selectedIndex = 0;
-    document.getElementById('gasto_gasto').selectedIndex = 0;
-    document.getElementById('gasto_moneda').value = 'USD';
-    document.getElementById('gasto_monto').value = '';
-    document.getElementById('gasto_afecto').value = 'SI';
-    document.getElementById('gasto_iva').value = '';
-}
-function cerrarSubmodalGastosLocales() {
-    document.getElementById('submodal-gastos-locales').style.display = 'none';
-}
-// === FUNCIONES DE SERVICIOS ===
-function editarServicio(index) {
-    try {
-        if (index < 0 || index >= servicios.length) {
-            throw new Error('Índice de servicio inválido');
-        }
-        abrirModalServicio(index);
-    } catch (e) {
-        console.error('Error al editar servicio:', e);
-        error('No se pudo abrir el servicio para edición');
-    }
-}
-function eliminarServicio(index) {
-    if (confirm('¿Eliminar este servicio?')) {
-        servicios.splice(index, 1);
-        actualizarTabla();
-        exito('Servicio eliminado');
-    }
-}
-// =================================================================================================================
-// === 9. INICIALIZACIÓN === DOMContentLoaded
-// =================================================================================================================
-document.addEventListener('DOMContentLoaded', () => {
-    cargarPaises();
-    cargarOperacionesYTipos();
-    document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
-    document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
-    // Botón "Grabar Todo" (siempre presente)
-    const btnSaveAll = document.getElementById('btn-save-all');
-    if (btnSaveAll) {
-        btnSaveAll.textContent = 'Grabar Todo';
-    }
-    // El botón "Agregar Servicio" está dentro del modal, no aquí
-    // Submodales desde la sección principal (con validación)
-    document.getElementById('btn-costos-servicio')?.addEventListener('click', () => {
-        error('Abra un servicio primero para gestionar costos');
-    });
-    document.getElementById('btn-gastos-locales')?.addEventListener('click', () => {
-        error('Abra un servicio primero para gestionar gastos');
-    });
-    // Submodales desde dentro del modal de servicio (con verificación segura)
-    const btnCostosDentro = document.getElementById('btn-costos-servicio-dentro');
-    const btnGastosDentro = document.getElementById('btn-gastos-locales-dentro');
-    if (btnCostosDentro) {
-        btnCostosDentro.addEventListener('click', abrirSubmodalCostos);
-    }
-    if (btnGastosDentro) {
-        btnGastosDentro.addEventListener('click', abrirSubmodalGastosLocales);
-    }
-    // Búsqueda inteligente
-    document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
-        const term = this.value.trim();
-        const div = document.getElementById('resultados-busqueda');
-        div.style.display = 'none';
-        if (!term) return;
-        try {
-            const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
-            const data = await res.json();
-            div.innerHTML = '';
-            if (data.length > 0) {
-                data.forEach(p => {
-                    const d = document.createElement('div');
-                    d.style.padding = '0.8rem';
-                    d.style.cursor = 'pointer';
-                    d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
-                    d.onclick = () => {
-                        seleccionarProspecto(p.id_ppl);
-                        div.style.display = 'none';
-                        this.value = '';
-                    };
-                    div.appendChild(d);
+    function cargarConceptosCostos() {
+        fetch('/api/get_conceptos_costos.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('costo_concepto');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Seleccionar concepto</option>';
+                (data.conceptos || data || []).forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.concepto || c;
+                    opt.textContent = c.concepto || c;
+                    sel.appendChild(opt);
                 });
-                div.style.display = 'block';
-            }
-        } catch (e) {
-            error('Error en búsqueda');
+            })
+            .catch(err => {
+                console.error('Error al cargar conceptos:', err);
+                error('No se pudieron cargar los conceptos de costo');
+            });
+    }
+
+    function cargarAplicacionesCostos(medio) {
+        fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('costo_aplica');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Seleccionar aplica</option>';
+                const opciones = Array.isArray(data) ? data : (data.aplicaciones || []);
+                opciones.forEach(item => {
+                    const valor = typeof item === 'string' ? item : item.aplica;
+                    if (valor) {
+                        const opt = document.createElement('option');
+                        opt.value = valor;
+                        opt.textContent = valor;
+                        sel.appendChild(opt);
+                    }
+                });
+            })
+            .catch(err => {
+                console.error('Error al cargar aplicaciones:', err);
+                error('No se pudieron cargar las opciones de "Aplica"');
+            });
+    }
+
+    ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', calcularTotalesCostos);
         }
     });
-    // Grabar Todo
-    document.getElementById('btn-save-all')?.addEventListener('click', function(e) {
-        e.preventDefault();
-        const rut = document.querySelector('input[name="rut_empresa"]').value.trim();
-        const razon = document.querySelector('input[name="razon_social"]').value.trim();
-        if (!rut || !razon) return error('RUT y Razón Social son obligatorios');
-        const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
-        if (!validarRut(rutLimpio)) return error('RUT inválido');
-        const form = document.getElementById('form-prospecto');
-        const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
-        let inp = form.querySelector('input[name="modo"]');
-        if (!inp) {
-            inp = document.createElement('input');
-            inp.type = 'hidden';
-            inp.name = 'modo';
-            form.appendChild(inp);
+
+    function calcularTotalesCostos() {
+        const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+        const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+        const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+        document.getElementById('costo_total_costo').value = (qty * costo).toFixed(2);
+        document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
+    }
+    function guardarCosto() {
+        const concepto = document.getElementById('costo_concepto').value;
+        const aplica = document.getElementById('costo_aplica').value;
+        const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+        const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+        const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+        const moneda = document.getElementById('costo_moneda').value || 'CLP';
+        if (!concepto || !aplica) {
+            error('Concepto y Aplica son obligatorios');
+            return;
         }
-        inp.value = modo;
-        if (modo === 'servicios') {
-            inp = form.querySelector('input[name="servicios_json"]');
+        const nuevoCosto = {
+            concepto,
+            moneda,
+            qty,
+            costo,
+            total_costo: qty * costo,
+            tarifa,
+            total_tarifa: qty * tarifa,
+            aplica
+        };
+        if (window.indiceCostoEdicion !== undefined) {
+            costosServicio[window.indiceCostoEdicion] = nuevoCosto;
+            delete window.indiceCostoEdicion;
+        } else {
+            costosServicio.push(nuevoCosto);
+        }
+        actualizarTablaCostos();
+        limpiarFormularioCostos();
+        exito('Costo guardado');
+    }
+    function actualizarTablaCostos() {
+        const tbody = document.getElementById('costos-body');
+        const totalCostoEl = document.getElementById('total-costo-costos');
+        const totalTarifaEl = document.getElementById('total-tarifa-costos');
+        if (!tbody || !totalCostoEl || !totalTarifaEl) return;
+        tbody.innerHTML = '';
+        let totalCosto = 0, totalTarifa = 0;
+        costosServicio.forEach((c, i) => {
+            const costo = parseFloat(c.costo) || 0;
+            const tarifa = parseFloat(c.tarifa) || 0;
+            const qty = parseFloat(c.qty) || 0;
+            const totalCostoItem = costo * qty;
+            const totalTarifaItem = tarifa * qty;
+            totalCosto += totalCostoItem;
+            totalTarifa += totalTarifaItem;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${c.concepto}</td>
+                <td>${c.moneda}</td>
+                <td style="text-align: right;">${qty.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #fff9db;">${totalCostoItem.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #e6f7ff;">${totalTarifaItem.toFixed(2)}</td>
+                <td>${c.aplica}</td>
+                <td style="text-align: center;">
+                    <button type="button" class="btn-edit" onclick="editarCosto(${i})" style="margin-right: 0.3rem; padding: 0.2rem 0.4rem;">✏️</button>
+                    <button type="button" class="btn-delete" onclick="eliminarCosto(${i})" style="padding: 0.2rem 0.4rem;">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        totalCostoEl.textContent = totalCosto.toFixed(2);
+        totalTarifaEl.textContent = totalTarifa.toFixed(2);
+    }
+    function editarCosto(index) {
+        const c = costosServicio[index];
+        if (!c) return;
+        document.getElementById('costo_concepto').value = c.concepto || '';
+        document.getElementById('costo_qty').value = (c.qty !== undefined) ? c.qty : '';
+        document.getElementById('costo_costo').value = (c.costo !== undefined) ? c.costo : '';
+        document.getElementById('costo_tarifa').value = (c.tarifa !== undefined) ? c.tarifa : '';
+        document.getElementById('costo_aplica').value = c.aplica || '';
+        document.getElementById('costo_total_costo').value = (c.total_costo !== undefined) ? c.total_costo.toFixed(2) : '0.00';
+        document.getElementById('costo_total_tarifa').value = (c.total_tarifa !== undefined) ? c.total_tarifa.toFixed(2) : '0.00';
+        window.indiceCostoEdicion = index;
+    }
+    function eliminarCosto(index) {
+        if (confirm('¿Eliminar costo?')) {
+            costosServicio.splice(index, 1);
+            actualizarTablaCostos();
+            exito('Costo eliminado');
+        }
+    }
+    function limpiarFormularioCostos() {
+        document.getElementById('costo_concepto').selectedIndex = 0;
+        document.getElementById('costo_qty').value = '';
+        document.getElementById('costo_costo').value = '';
+        document.getElementById('costo_tarifa').value = '';
+        document.getElementById('costo_aplica').selectedIndex = 0;
+        document.getElementById('costo_total_costo').value = '0.00';
+        document.getElementById('costo_total_tarifa').value = '0.00';
+    }
+    function cerrarSubmodalCostos() {
+        document.getElementById('submodal-costos').style.display = 'none';
+    }
+    document.getElementById('gasto_tipo')?.addEventListener('change', cargarGastosPorTipo);
+    function cargarGastosPorTipo() {
+        const tipo = document.getElementById('gasto_tipo')?.value;
+        if (!tipo) {
+            document.getElementById('gasto_gasto').innerHTML = '<option value="">Gastos</option>';
+            return;
+        }
+        fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('gasto_gasto');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Gastos</option>';
+                (data.gastos || []).forEach(g => {
+                    const opt = document.createElement('option');
+                    opt.value = g;
+                    opt.textContent = g;
+                    sel.appendChild(opt);
+                });
+            });
+    }
+    function guardarGastoLocal() {
+        const tipo = document.getElementById('gasto_tipo').value;
+        const gasto = document.getElementById('gasto_gasto').value;
+        const moneda = document.getElementById('gasto_moneda').value;
+        const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
+        const afecto = document.getElementById('gasto_afecto').value;
+        const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
+        if (!tipo || !gasto) {
+            return error('Tipo y Gasto son obligatorios');
+        }
+        const nuevoGasto = { tipo, gasto, moneda, monto, afecto, iva };
+        gastosLocales.push(nuevoGasto);
+        actualizarTablaGastosLocales();
+        limpiarFormularioGastos();
+        exito('Gasto local agregado');
+    }
+    function actualizarTablaGastosLocales() {
+        const tbody = document.getElementById('gastos-locales-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        let totalVenta = 0, totalCosto = 0;
+        gastosLocales.forEach((g, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${g.tipo}</td>
+                <td>${g.gasto}</td>
+                <td>${g.moneda}</td>
+                <td style="text-align:right;">${g.monto.toFixed(2)}</td>
+                <td>${g.afecto}</td>
+                <td style="text-align:right;">${g.iva.toFixed(2)}</td>
+                <td style="text-align:center;">
+                    <button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            if (g.tipo === 'Ventas') totalVenta += g.monto;
+            if (g.tipo === 'Costo') totalCosto += g.monto;
+        });
+        document.getElementById('total-venta-gastos').textContent = totalVenta.toFixed(2);
+        document.getElementById('total-costo-gastos').textContent = totalCosto.toFixed(2);
+        document.getElementById('profit-local').textContent = (totalVenta - totalCosto).toFixed(2);
+        const profitPct = totalVenta > 0 ? ((totalVenta - totalCosto) / totalVenta * 100) : 0;
+        document.getElementById('profit-porcentaje').textContent = profitPct.toFixed(2) + ' %';
+    }
+    function eliminarGastoLocal(index) {
+        if (confirm('¿Eliminar este gasto?')) {
+            gastosLocales.splice(index, 1);
+            actualizarTablaGastosLocales();
+            exito('Gasto eliminado');
+        }
+    }
+    function limpiarFormularioGastos() {
+        document.getElementById('gasto_tipo').selectedIndex = 0;
+        document.getElementById('gasto_gasto').selectedIndex = 0;
+        document.getElementById('gasto_moneda').value = 'USD';
+        document.getElementById('gasto_monto').value = '';
+        document.getElementById('gasto_afecto').value = 'SI';
+        document.getElementById('gasto_iva').value = '';
+    }
+    function cerrarSubmodalGastosLocales() {
+        document.getElementById('submodal-gastos-locales').style.display = 'none';
+    }
+    // === FUNCIONES DE SERVICIOS ===
+    function editarServicio(index) {
+        try {
+            if (index < 0 || index >= servicios.length) {
+                throw new Error('Índice de servicio inválido');
+            }
+            abrirModalServicio(index);
+        } catch (e) {
+            console.error('Error al editar servicio:', e);
+            error('No se pudo abrir el servicio para edición');
+        }
+    }
+    function eliminarServicio(index) {
+        if (confirm('¿Eliminar este servicio?')) {
+            servicios.splice(index, 1);
+            actualizarTabla();
+            exito('Servicio eliminado');
+        }
+    }
+    // =================================================================================================================
+    // === 9. INICIALIZACIÓN === DOMContentLoaded
+    // =================================================================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarPaises();
+        cargarOperacionesYTipos();
+        document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
+        document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
+        // Botón "Grabar Todo" (siempre presente)
+        const btnSaveAll = document.getElementById('btn-save-all');
+        if (btnSaveAll) {
+            btnSaveAll.textContent = 'Grabar Todo';
+        }
+        // El botón "Agregar Servicio" está dentro del modal, no aquí
+        // Submodales desde la sección principal (con validación)
+        document.getElementById('btn-costos-servicio')?.addEventListener('click', () => {
+            error('Abra un servicio primero para gestionar costos');
+        });
+        document.getElementById('btn-gastos-locales')?.addEventListener('click', () => {
+            error('Abra un servicio primero para gestionar gastos');
+        });
+        // Submodales desde dentro del modal de servicio (con verificación segura)
+        const btnCostosDentro = document.getElementById('btn-costos-servicio-dentro');
+        const btnGastosDentro = document.getElementById('btn-gastos-locales-dentro');
+        if (btnCostosDentro) {
+            btnCostosDentro.addEventListener('click', abrirSubmodalCostos);
+        }
+        if (btnGastosDentro) {
+            btnGastosDentro.addEventListener('click', abrirSubmodalGastosLocales);
+        }
+        // Búsqueda inteligente
+        document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
+            const term = this.value.trim();
+            const div = document.getElementById('resultados-busqueda');
+            div.style.display = 'none';
+            if (!term) return;
+            try {
+                const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
+                const data = await res.json();
+                div.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(p => {
+                        const d = document.createElement('div');
+                        d.style.padding = '0.8rem';
+                        d.style.cursor = 'pointer';
+                        d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
+                        d.onclick = () => {
+                            seleccionarProspecto(p.id_ppl);
+                            div.style.display = 'none';
+                            this.value = '';
+                        };
+                        div.appendChild(d);
+                    });
+                    div.style.display = 'block';
+                }
+            } catch (e) {
+                error('Error en búsqueda');
+            }
+        });
+        // Grabar Todo
+        document.getElementById('btn-save-all')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            const rut = document.querySelector('input[name="rut_empresa"]').value.trim();
+            const razon = document.querySelector('input[name="razon_social"]').value.trim();
+            if (!rut || !razon) return error('RUT y Razón Social son obligatorios');
+            const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
+            if (!validarRut(rutLimpio)) return error('RUT inválido');
+            const form = document.getElementById('form-prospecto');
+            const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
+            let inp = form.querySelector('input[name="modo"]');
             if (!inp) {
                 inp = document.createElement('input');
                 inp.type = 'hidden';
-                inp.name = 'servicios_json';
+                inp.name = 'modo';
                 form.appendChild(inp);
             }
-            inp.value = JSON.stringify(servicios);
+            inp.value = modo;
+            if (modo === 'servicios') {
+                inp = form.querySelector('input[name="servicios_json"]');
+                if (!inp) {
+                    inp = document.createElement('input');
+                    inp.type = 'hidden';
+                    inp.name = 'servicios_json';
+                    form.appendChild(inp);
+                }
+                inp.value = JSON.stringify(servicios);
+            }
+            form.submit();
+        });
+        // Cargar prospecto desde URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const idFromUrl = urlParams.get('id_ppl');
+        if (idFromUrl && !isNaN(idFromUrl)) {
+            const cleanUrl = window.location.pathname + '?page=prospectos';
+            history.replaceState({}, document.title, cleanUrl);
+            setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
         }
-        form.submit();
+        // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
+        window.eliminarServicio = eliminarServicio; 
     });
-    // Cargar prospecto desde URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const idFromUrl = urlParams.get('id_ppl');
-    if (idFromUrl && !isNaN(idFromUrl)) {
-        const cleanUrl = window.location.pathname + '?page=prospectos';
-        history.replaceState({}, document.title, cleanUrl);
-        setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
-    }
-    // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
-    window.eliminarServicio = eliminarServicio; 
-});
 </script>
