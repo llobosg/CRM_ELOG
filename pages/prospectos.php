@@ -373,18 +373,7 @@ function validarRut(rut) {
     const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
     return dv === dvCalculado;
 }
-function cargarPaises() {
-    const paises = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
-    const select = document.getElementById('pais');
-    if (!select) return;
-    select.innerHTML = '<option value="">Seleccionar país</option>';
-    paises.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        select.appendChild(opt);
-    });
-}
+
 function calcularConcatenado() {
     const op = document.getElementById('operacion')?.value || '';
     const tipo = document.getElementById('tipo_oper')?.value || '';
@@ -1199,7 +1188,34 @@ document.addEventListener('DOMContentLoaded', () => {
         btnGastosDentro.addEventListener('click', abrirSubmodalGastosLocales);
     }
     // Búsqueda inteligente
-    
+    document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
+        const term = this.value.trim();
+        const div = document.getElementById('resultados-busqueda');
+        div.style.display = 'none';
+        if (!term) return;
+        try {
+            const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
+            const data = await res.json();
+            div.innerHTML = '';
+            if (data.length > 0) {
+                data.forEach(p => {
+                    const d = document.createElement('div');
+                    d.style.padding = '0.8rem';
+                    d.style.cursor = 'pointer';
+                    d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
+                    d.onclick = () => {
+                        seleccionarProspecto(p.id_ppl);
+                        div.style.display = 'none';
+                        this.value = '';
+                    };
+                    div.appendChild(d);
+                });
+                div.style.display = 'block';
+            }
+        } catch (e) {
+            error('Error en búsqueda');
+        }
+    });
     // Grabar Todo
     document.getElementById('btn-save-all')?.addEventListener('click', function(e) {
         e.preventDefault();
