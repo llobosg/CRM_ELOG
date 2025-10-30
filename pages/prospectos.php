@@ -365,17 +365,20 @@
     // ===================================================================
     // === 2. FUNCIONES AUXILIARES ===
     // ===================================================================
-    // Mostrar notificación si viene en la URL
-    document.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const exito = urlParams.get('exito');
-        const error = urlParams.get('error');
-        if (exito) {
-            exito(decodeURIComponent(exito));
-        } else if (error) {
-            error(decodeURIComponent(error));
-        }
-    });
+    // === NOTIFICACIONES ===
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+        const toast = document.getElementById('toast');
+        const msg = document.getElementById('toast-message');
+        if (!toast || !msg) return;
+        msg.textContent = mensaje;
+        toast.className = 'toast ' + tipo;
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 5000);
+    }
+    const exito = (msg) => mostrarNotificacion(msg, 'exito');
+    const error = (msg) => mostrarNotificacion(msg, 'error');
+
+
     function validarRut(rut) {
         if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
         const cuerpo = rut.slice(0, -1);
