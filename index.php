@@ -20,7 +20,8 @@ $validPages = [
     'tservicios',
     'trafico',
     'dashboard',
-    'prospectos'
+    'prospectos',
+    'ficha_cliente'
 ];
 
 $page = $_GET['page'] ?? 'dashboard';
