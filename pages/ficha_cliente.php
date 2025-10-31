@@ -232,52 +232,83 @@
     }
 
     function cargarCliente(cliente) {
+        console.log('📥 Iniciando carga de cliente:', cliente);
+
+        // Formatear RUT
         const rutFormateado = formatearRutParaMostrar(cliente.rut) || cliente.rut;
+        console.log('🆔 RUT formateado:', rutFormateado);
+
+        // Asignar RUT
+        const rutEl = document.getElementById('cliente_rut');
+        if (rutEl) {
+            rutEl.value = rutFormateado;
+            console.log('✅ RUT asignado al campo');
+        } else {
+            console.warn('⚠️ Elemento #cliente_rut no encontrado');
+        }
+
+        // Lista de campos a asignar: [id_del_elemento, clave_en_cliente]
+        const campos = [
+            ['cliente_razon_social', 'razon_social'],
+            ['cliente_nacional_extranjero', 'nacional_extranjero'],
+            ['cliente_pais', 'pais'],
+            ['cliente_direccion', 'direccion'],
+            ['cliente_comuna', 'comuna'],
+            ['cliente_ciudad', 'ciudad'],
+            ['cliente_giro', 'giro'],
+            ['cliente_fecha_creacion', 'fecha_creacion'],
+            ['cliente_tipo_vida', 'tipo_vida'],
+            ['cliente_fecha_vida', 'fecha_vida'],
+            ['cliente_rubro', 'rubro'],
+            ['cliente_potencial_usd', 'potencial_usd'],
+            ['credito_fecha_alta', 'fecha_alta_credito'],
+            ['credito_plazo_dias', 'plazo_dias'],
+            ['credito_estado', 'estado_credito'],
+            ['credito_monto', 'monto_credito'],
+            ['credito_usado', 'usado_credito'],
+            ['credito_saldo', 'saldo_credito']
+        ];
+
+        campos.forEach(([id, key]) => {
+            const el = document.getElementById(id);
+            const valor = cliente[key] ?? '';
+            if (el) {
+                el.value = valor;
+                console.log(`✅ Campo ${id} = "${valor}" (clave: ${key})`);
+            } else {
+                console.warn(`⚠️ Elemento #${id} no encontrado`);
+            }
+        });
+
+        // Cargar comercial asignado
         const comercialSel = document.getElementById('cliente_nombre_comercial');
         if (comercialSel && cliente.nombre_comercial) {
+            console.log('👥 Comercial asignado:', cliente.nombre_comercial);
+            let optionFound = false;
             for (let opt of comercialSel.options) {
                 if (opt.value === cliente.nombre_comercial) {
                     opt.selected = true;
+                    optionFound = true;
                     break;
                 }
             }
-            // Si no existe, añadirlo como opción personalizada
-            if (!comercialSel.value) {
+            if (!optionFound) {
                 const opt = document.createElement('option');
                 opt.value = cliente.nombre_comercial;
                 opt.textContent = cliente.nombre_comercial;
                 comercialSel.appendChild(opt);
                 comercialSel.value = cliente.nombre_comercial;
+                console.log('➕ Comercial añadido como opción personalizada');
             }
         }
-        // Datos del Cliente
-        document.getElementById('cliente_rut').value = cliente.rut || '';
-        document.getElementById('cliente_razon_social').value = cliente.razon_social || '';
-        document.getElementById('cliente_nacional_extranjero').value = cliente.nacional_extranjero || 'Nacional';
-        document.getElementById('cliente_pais').value = cliente.pais || '';
-        document.getElementById('cliente_direccion').value = cliente.direccion || '';
-        document.getElementById('cliente_comuna').value = cliente.comuna || '';
-        document.getElementById('cliente_ciudad').value = cliente.ciudad || '';
-        document.getElementById('cliente_giro').value = cliente.giro || '';
-        document.getElementById('cliente_fecha_creacion').value = cliente.fecha_creacion || '';
-        document.getElementById('cliente_nombre_comercial').value = cliente.nombre_comercial || '';
-        document.getElementById('cliente_tipo_vida').value = cliente.tipo_vida || 'lead';
-        document.getElementById('cliente_fecha_vida').value = cliente.fecha_vida || '';
-        document.getElementById('cliente_rubro').value = cliente.rubro || '';
-        document.getElementById('cliente_potencial_usd').value = cliente.potencial_usd || '';
-
-        // Línea de Crédito
-        document.getElementById('credito_fecha_alta').value = cliente.fecha_alta_credito || '';
-        document.getElementById('credito_plazo_dias').value = cliente.plazo_dias || '30';
-        document.getElementById('credito_estado').value = cliente.estado_credito || 'vigente';
-        document.getElementById('credito_monto').value = cliente.monto_credito || '';
-        document.getElementById('credito_usado').value = cliente.usado_credito || '';
-        document.getElementById('credito_saldo').value = cliente.saldo_credito || '';
 
         // Cargar contactos
         if (cliente.rut) {
+            console.log('📞 Cargando contactos para RUT:', cliente.rut);
             cargarContactos(cliente.rut);
         }
+
+        console.log('✅ Carga de cliente completada');
     }
 
     function cargarComerciales() {
@@ -493,34 +524,47 @@
         });
 
         // 2. Inicializar búsqueda inteligente
+        // Búsqueda inteligente con logs detallados
         document.getElementById('busqueda-cliente')?.addEventListener('input', async function() {
             const term = this.value.trim();
             const div = document.getElementById('resultados-busqueda-cliente');
             div.style.display = 'none';
             if (!term) return;
+
+            console.log('🔍 Buscando cliente con término:', term);
+
             try {
                 const res = await fetch(`/api/buscar_cliente_inteligente.php?term=${encodeURIComponent(term)}`);
+                console.log('📡 Respuesta HTTP:', res.status, res.statusText);
+
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+
                 const data = await res.json();
+                console.log('📦 JSON recibido de la API:', data);
+
                 div.innerHTML = '';
                 if (data.length > 0) {
                     data.forEach(c => {
-                        const rutFormateado = formatearRutParaMostrar(c.rut) || c.rut;
                         const d = document.createElement('div');
                         d.style.padding = '0.8rem';
                         d.style.cursor = 'pointer';
-                        d.innerHTML = `<strong>${c.razon_social}</strong><br><small>RUT: ${rutFormateado} | Giro: ${c.giro || ''}</small>`;
+                        d.innerHTML = `<strong>${c.razon_social || 'Sin razón social'}</strong><br><small>RUT: ${c.rut || 'N/A'} | Giro: ${c.giro || ''}</small>`;
                         d.onclick = () => {
-                            const rutFormateado = formatearRutParaMostrar(c.rut) || c.rut;
-                            document.getElementById('cliente_rut').value = rutFormateado;
-                            // ... cargar otros campos ...
-                            document.getElementById('resultados-busqueda-cliente').style.display = 'none';
-                            document.getElementById('busqueda-cliente').value = '';
+                            console.log('✅ Cliente seleccionado:', c);
+                            cargarCliente(c);
+                            div.style.display = 'none';
+                            this.value = '';
                         };
                         div.appendChild(d);
                     });
                     div.style.display = 'block';
+                } else {
+                    console.log('ℹ️ No se encontraron clientes para el término:', term);
                 }
             } catch (e) {
+                console.error('❌ Error en búsqueda inteligente:', e);
                 error('Error al buscar cliente');
             }
         });
