@@ -328,7 +328,7 @@
             ciudad: document.getElementById('cliente_ciudad').value,
             giro: document.getElementById('cliente_giro').value,
             fecha_creacion: document.getElementById('cliente_fecha_creacion').value,
-            id_comercial: document.getElementById('cliente_id_comercial').value,
+            //id_comercial: document.getElementById('cliente_id_comercial').value,
             nombre_comercial: document.getElementById('cliente_nombre_comercial').value,
             tipo_vida: document.getElementById('cliente_tipo_vida').value,
             fecha_vida: document.getElementById('cliente_fecha_vida').value,
