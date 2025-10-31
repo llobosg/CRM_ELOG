@@ -43,6 +43,7 @@ try {
     $pdo->beginTransaction();
 
     // === Preparar datos del cliente ===
+    // === Preparar datos del cliente ===
     $data_cliente = [
         'rut' => $input['rut'],
         'razon_social' => $input['razon_social'] ?? '',
@@ -53,8 +54,7 @@ try {
         'ciudad' => $input['ciudad'] ?? '',
         'giro' => $input['giro'] ?? '',
         'fecha_creacion' => $input['fecha_creacion'] ?? null,
-        'id_comercial' => !empty($input['id_comercial']) ? (int)$input['id_comercial'] : null,
-        'nombre_comercial' => $input['nombre_comercial'] ?? '',
+        'nombre_comercial' => $input['nombre_comercial'] ?? '', // ← Solo el nombre
         'tipo_vida' => $input['tipo_vida'] ?? 'lead',
         'fecha_vida' => $input['fecha_vida'] ?? null,
         'rubro' => $input['rubro'] ?? '',
@@ -63,7 +63,6 @@ try {
         'plazo_dias' => $input['plazo_dias'] ?? '30',
         'estado_credito' => $input['estado_credito'] ?? 'vigente',
         'monto_credito' => isset($input['monto_credito']) ? (float)$input['monto_credito'] : 0.00,
-        // usado_credito se actualiza desde prospectos, no desde aquí
     ];
 
     // === Verificar si existe ===

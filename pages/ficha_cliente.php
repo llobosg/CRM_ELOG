@@ -234,6 +234,23 @@
 
     function cargarCliente(cliente) {
         const rutFormateado = formatearRutParaMostrar(cliente.rut) || cliente.rut;
+        const comercialSel = document.getElementById('cliente_nombre_comercial');
+        if (comercialSel && cliente.nombre_comercial) {
+            for (let opt of comercialSel.options) {
+                if (opt.value === cliente.nombre_comercial) {
+                    opt.selected = true;
+                    break;
+                }
+            }
+            // Si no existe, añadirlo como opción personalizada
+            if (!comercialSel.value) {
+                const opt = document.createElement('option');
+                opt.value = cliente.nombre_comercial;
+                opt.textContent = cliente.nombre_comercial;
+                comercialSel.appendChild(opt);
+                comercialSel.value = cliente.nombre_comercial;
+            }
+        }
         document.getElementById('cliente_rut').value = rutFormateado;
         document.getElementById('cliente_razon_social').value = cliente.razon_social;
         document.getElementById('cliente_nacional_extranjero').value = cliente.nacional_extranjero;
@@ -243,8 +260,7 @@
         document.getElementById('cliente_ciudad').value = cliente.ciudad || '';
         document.getElementById('cliente_giro').value = cliente.giro || '';
         document.getElementById('cliente_fecha_creacion').value = cliente.fecha_creacion || '';
-        //document.getElementById('cliente_id_comercial').value = cliente.id_comercial || '';
-        document.getElementById('cliente_nombre_comercial').value = cliente.nombre_comercial || '';
+        //document.getElementById('cliente_nombre_comercial').value = cliente.nombre_comercial || '';
         document.getElementById('cliente_tipo_vida').value = cliente.tipo_vida;
         document.getElementById('cliente_fecha_vida').value = cliente.fecha_vida || '';
         document.getElementById('cliente_rubro').value = cliente.rubro || '';
@@ -259,18 +275,22 @@
     }
 
     function cargarComerciales() {
-        fetch('/api/get_comerciales.php')
+        fetch('/api/get_comercial.php')
             .then(r => r.json())
             .then(data => {
                 const sel = document.getElementById('cliente_nombre_comercial');
                 if (!sel) return;
-                sel.innerHTML = '<option value="">Seleccionar</option>';
+                sel.innerHTML = '<option value="">Seleccionar comercial</option>';
                 (data.comerciales || []).forEach(c => {
                     const opt = document.createElement('option');
-                    opt.value = c.id_comercial;
-                    opt.textContent = `${c.id_comercial} - ${c.nombre}`;
+                    opt.value = c.nombre; // Solo el nombre
+                    opt.textContent = c.nombre;
                     sel.appendChild(opt);
                 });
+            })
+            .catch(err => {
+                console.error('Error al cargar comerciales:', err);
+                error('No se pudieron cargar los comerciales');
             });
     }
 
@@ -332,7 +352,6 @@
             ciudad: document.getElementById('cliente_ciudad').value,
             giro: document.getElementById('cliente_giro').value,
             fecha_creacion: document.getElementById('cliente_fecha_creacion').value,
-            //id_comercial: document.getElementById('cliente_id_comercial').value,
             nombre_comercial: document.getElementById('cliente_nombre_comercial').value,
             tipo_vida: document.getElementById('cliente_tipo_vida').value,
             fecha_vida: document.getElementById('cliente_fecha_vida').value,
@@ -365,6 +384,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Cargar listas iniciales
         cargarPaises();
+        cargarComerciales();
 
         // Formatear RUT al perder foco
         document.getElementById('cliente_rut')?.addEventListener('blur', function() {
@@ -429,7 +449,7 @@
             const campos = [
                 'cliente_razon_social', 'cliente_nacional_extranjero', 'cliente_pais',
                 'cliente_direccion', 'cliente_comuna', 'cliente_ciudad', 'cliente_giro',
-                'cliente_fecha_creacion', 'cliente_id_comercial', 'cliente_nombre_comercial',
+                'cliente_fecha_creacion', 'cliente_nombre_comercial',
                 'cliente_tipo_vida', 'cliente_fecha_vida', 'cliente_rubro', 'cliente_potencial_usd',
                 'credito_fecha_alta', 'credito_plazo_dias', 'credito_estado',
                 'credito_monto', 'credito_usado', 'credito_saldo'
