@@ -130,7 +130,7 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3><i class="fas fa-address-book"></i> Contactos</h3>
-                <button type="button" class="btn-add" onclick="abrirModalContacto()">
+                <button type="button" id="btn-agregar-contacto" class="btn-add">
                     <i class="fas fa-plus"></i> Agregar Contacto
                 </button>
             </div>
@@ -500,7 +500,25 @@
                 </td>
             `;
             tbody.appendChild(tr);
-        });
+        });ce
+    }
+
+    function abrirModalContacto() {
+        const rut = document.getElementById('cliente_rut').value.trim();
+        if (!rut) {
+            error('Debe seleccionar o crear un cliente primero para agregar contactos.');
+            return;
+        }
+        // Reiniciar formulario del modal
+        document.getElementById('contacto_id').value = '';
+        document.getElementById('contacto_nombre').value = '';
+        document.getElementById('contacto_rol').value = 'comercial';
+        document.getElementById('contacto_primario').value = 'N';
+        document.getElementById('contacto_fono').value = '';
+        document.getElementById('contacto_email').value = '';
+        document.getElementById('titulo-modal-contacto').textContent = 'Agregar Contacto';
+        contactoEnEdicion = null;
+        document.getElementById('modal-contacto').style.display = 'block';
     }
 
     // ===================================================================
@@ -613,6 +631,7 @@
             abrirModalContacto();
         });
 
+        document.getElementById('btn-agregar-contacto')?.addEventListener('click', abrirModalContacto);
         document.getElementById('btn-guardar-ficha')?.addEventListener('click', guardarCliente);
 
         function cargarContactos(rut) {
