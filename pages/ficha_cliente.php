@@ -15,55 +15,47 @@
         <!-- ========== DATOS DEL CLIENTE ========== -->
         <div class="card" style="margin-bottom: 2rem;">
             <h3><i class="fas fa-user"></i> Datos del Cliente</h3>
-            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center;">
-                <label>RUT *</label>
-                <input type="text" id="cliente_rut" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa;" />
-                <label>Razón Social *</label>
-                <input type="text" id="cliente_razon_social" required style="width: 100%; padding: 0.5rem;" />
-                <label>Nacional/Extranjero</label>
+            
+            <!-- Fila 1 -->
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                <label>Nacional/Extranjero *</label>
                 <select id="cliente_nacional_extranjero" style="width: 100%; padding: 0.5rem;">
                     <option value="Nacional">Nacional</option>
                     <option value="Extranjero">Extranjero</option>
                 </select>
-                <label>País</label>
+                <label>País *</label>
                 <select id="cliente_pais" style="width: 100%; padding: 0.5rem;">
                     <option value="">Seleccionar</option>
-                    <?php
-                    $paises = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
-                    foreach ($paises as $p) echo "<option value=\"$p\">$p</option>";
-                    ?>
+                    <!-- Se llenará con JS -->
                 </select>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center; margin-top: 1rem;">
+
+            <!-- Fila 2 -->
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                <label>RUT *</label>
+                <input type="text" id="cliente_rut" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa;" />
+                <label>Razón Social *</label>
+                <input type="text" id="cliente_razon_social" style="grid-column: span 3; width: 100%; padding: 0.5rem;" />
+                <label>Giro</label>
+                <input type="text" id="cliente_giro" style="width: 100%; padding: 0.5rem;" />
+            </div>
+
+            <!-- Fila 3 -->
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center; margin-bottom: 1rem;">
                 <label>Dirección</label>
-                <input type="text" id="cliente_direccion" style="grid-column: span 3; width: 100%; padding: 0.5rem;" />
+                <input type="text" id="cliente_direccion" style="grid-column: span 4; width: 100%; padding: 0.5rem;" />
                 <label>Comuna</label>
                 <input type="text" id="cliente_comuna" style="width: 100%; padding: 0.5rem;" />
                 <label>Ciudad</label>
                 <input type="text" id="cliente_ciudad" style="width: 100%; padding: 0.5rem;" />
-                <label>Giro</label>
-                <input type="text" id="cliente_giro" style="width: 100%; padding: 0.5rem;" />
             </div>
-            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center; margin-top: 1rem;">
-                <label>Fecha Creación</label>
-                <input type="date" id="cliente_fecha_creacion" style="width: 100%; padding: 0.5rem;" value="<?= date('Y-m-d') ?>" />
-                <label>Comercial Asignado</label>
-                <input type="number" id="cliente_id_comercial" min="1" style="width: 100%; padding: 0.5rem;" />
-                <label>Nombre Comercial</label>
-                <input type="text" id="cliente_nombre_comercial" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa;" />
-                <label>Tipo Vida</label>
-                <select id="cliente_tipo_vida" style="width: 100%; padding: 0.5rem;">
-                    <option value="lead">Lead</option>
-                    <option value="prospecto">Prospecto</option>
-                    <option value="cotizando">Cotizando</option>
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
-                    <option value="perdido">Perdido</option>
-                </select>
+
+            <!-- Fila 4 -->
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center;">
                 <label>Fecha Vida</label>
                 <input type="date" id="cliente_fecha_vida" style="width: 100%; padding: 0.5rem;" value="<?= date('Y-m-d') ?>" />
                 <label>Rubro</label>
-                <select id="cliente_rubro" style="width: 100%; padding: 0.5rem;">
+                <select id="cliente_rubro" style="grid-column: span 3; width: 100%; padding: 0.5rem;">
                     <option value="industrial">Industrial</option>
                     <option value="minero">Minero</option>
                     <option value="servicios">Servicios</option>
@@ -79,7 +71,9 @@
         <!-- ========== LÍNEA DE CRÉDITO ========== -->
         <div class="card" style="margin-bottom: 2rem;">
             <h3><i class="fas fa-hand-holding-usd"></i> Línea de Crédito USD</h3>
-            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center;">
+            
+            <!-- Fila 1 -->
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center; margin-bottom: 1rem;">
                 <label>Fecha Alta</label>
                 <input type="date" id="credito_fecha_alta" style="width: 100%; padding: 0.5rem;" value="<?= date('Y-m-d') ?>" />
                 <label>Plazo (días)</label>
@@ -94,12 +88,21 @@
                     <option value="vigente">Vigente</option>
                     <option value="suspendido">Suspendido</option>
                 </select>
+            </div>
+
+            <!-- Fila 2 -->
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center;">
                 <label>Monto</label>
                 <input type="number" id="credito_monto" step="0.01" style="width: 100%; padding: 0.5rem;" />
                 <label>Usado</label>
                 <input type="number" id="credito_usado" step="0.01" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa;" />
                 <label>Saldo</label>
                 <input type="number" id="credito_saldo" step="0.01" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa;" />
+                <div style="grid-column: span 2; text-align: right;">
+                    <button type="button" class="btn-primary" onclick="guardarCliente()" style="padding: 0.6rem 1.2rem;">
+                        Guardar Ficha Cliente
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -138,13 +141,13 @@
             <input type="text" id="contacto_nombre" style="grid-column: span 2;" required />
             <label>Rol *</label>
             <select id="contacto_rol" style="grid-column: span 2;" required>
-                <option value="comercial">Comercial</option>
-                <option value="operaciones">Operaciones</option>
-                <option value="finanzas">Finanzas</option>
+                <option value="Comercial">Comercial</option>
+                <option value="Operaciones">Operaciones</option>
+                <option value="Finanzas">Finanzas</option>
                 <option value="GG">GG</option>
-                <option value="dueño">Dueño</option>
-                <option value="admin y finanzas">Admin y Finanzas</option>
-                <option value="encargado comex">Encargado Comex</option>
+                <option value="Dueño">Dueño</option>
+                <option value="Admin y Finanzas">Admin y Finanzas</option>
+                <option value="Encargado Comex">Encargado Comex</option>
             </select>
             <label>Primario</label>
             <select id="contacto_primario" style="width: 100%;">
@@ -213,6 +216,38 @@ function cargarCliente(cliente) {
     document.getElementById('credito_saldo').value = cliente.saldo_credito || 0;
 }
 
+function cargarComerciales() {
+    fetch('/api/get_comerciales.php')
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('cliente_id_comercial');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Seleccionar</option>';
+            (data.comerciales || []).forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id_comercial;
+                opt.textContent = `${c.id_comercial} - ${c.nombre}`;
+                sel.appendChild(opt);
+            });
+        });
+}
+
+// Listener para cargar nombre_comercial al seleccionar comercial
+document.getElementById('cliente_id_comercial')?.addEventListener('change', function() {
+    const id = this.value;
+    if (!id) {
+        document.getElementById('cliente_nombre_comercial').value = '';
+        return;
+    }
+    fetch(`/api/get_comercial.php?id=${id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.nombre) {
+                document.getElementById('cliente_nombre_comercial').value = data.nombre;
+            }
+        });
+});
+
 function limpiarFormulario() {
     const campos = [
         'cliente_razon_social', 'cliente_nacional_extranjero', 'cliente_pais',
@@ -258,6 +293,11 @@ function actualizarTablaContactos() {
 }
 
 function abrirModalContacto(index = null) {
+    const rut = document.getElementById('cliente_rut').value;
+    if (!rut) {
+        error('Debe guardar el cliente primero para agregar contactos.');
+        return;
+    }
     contactoEnEdicion = index;
     if (index !== null) {
         const c = contactos[index];
