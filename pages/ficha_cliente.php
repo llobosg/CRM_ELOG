@@ -244,7 +244,7 @@
             rutEl.value = rutFormateado;
             console.log('✅ RUT asignado al campo');
         } else {
-            console.warn('⚠️ Elemento #cliente_rut no encontrado');
+            warning('⚠️ Elemento #cliente_rut no encontrado');
         }
 
         // Lista de campos a asignar: [id_del_elemento, clave_en_cliente]
@@ -363,7 +363,7 @@
                 });
             })
             .catch(err => {
-                console.error('Error al cargar países:', err);
+                error('Error al cargar países:', err);
                 // Fallback mínimo
                 const fallback = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
                 selectPais.innerHTML = '<option value="">Seleccionar país</option>';
@@ -468,6 +468,20 @@
         actualizarTablaContactos();
     }
 
+    function cargarContactos(rut) {
+        if (!rut) return;
+        fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
+            .then(r => r.json())
+            .then(data => {
+                contactos = data.contactos || [];
+                actualizarTablaContactos();
+            })
+            .catch(err => {
+                console.error('Error al cargar contactos:', err);
+                error('No se pudieron cargar los contactos');
+            });
+    }
+
     // ===================================================================
     // === INICIALIZACIÓN AL CARGAR LA PÁGINA ===
     // ===================================================================
@@ -553,19 +567,18 @@
                         d.innerHTML = `<strong>${c.razon_social || 'Sin razón social'}</strong><br><small>RUT: ${c.rut || 'N/A'} | Giro: ${c.giro || ''}</small>`;
                         d.onclick = () => {
                             console.log('✅ Cliente seleccionado:', c);
-                            cargarCliente(c);
-                            div.style.display = 'none';
+                            div.style.display = 'none'; // ←←← Cerrar primero
                             this.value = '';
+                            cargarCliente(c); // ←←← Luego cargar
                         };
                         div.appendChild(d);
                     });
                     div.style.display = 'block';
                 } else {
-                    console.log('ℹ️ No se encontraron clientes para el término:', term);
+                    error('ℹ️ No se encontraron clientes para el término:', term);
                 }
             } catch (e) {
-                console.error('❌ Error en búsqueda inteligente:', e);
-                error('Error al buscar cliente');
+                error('❌ Error en búsqueda inteligente:', e);
             }
         });
 
