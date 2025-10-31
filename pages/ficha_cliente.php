@@ -188,10 +188,14 @@
     let contactos = [];
     let contactoEnEdicion = null;
 
-    function validarRut(rut) {
-        if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
-        const cuerpo = rut.slice(0, -1);
-        const dv = rut.slice(-1).toUpperCase();
+    function formatearRut(rut) {
+        // Eliminar puntos y guión
+        let rutLimpio = rut.replace(/\./g, '').replace('-', '');
+        // Validar estructura básica
+        if (!/^(\d{7,8})([0-9Kk])$/.test(rutLimpio)) return null;
+        const cuerpo = rutLimpio.slice(0, -1);
+        const dv = rutLimpio.slice(-1).toUpperCase();
+        // Validar dígito verificador
         let suma = 0, multiplo = 2;
         for (let i = cuerpo.length - 1; i >= 0; i--) {
             suma += parseInt(cuerpo[i]) * multiplo;
@@ -199,7 +203,9 @@
         }
         const dvEsperado = (11 - (suma % 11)).toString();
         const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
-        return dv === dvCalculado;
+        if (dv !== dvCalculado) return null;
+        // Formatear con puntos y guión
+        return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
     }
 
     function buscarCliente() {
@@ -223,8 +229,8 @@
     }
 
     function cargarCliente(cliente) {
-        document.getElementById('rut_cliente').value = cliente.rut;
-        document.getElementById('cliente_rut').value = cliente.rut;
+        const rutFormateado = formatearRut(cliente.rut);
+        document.getElementById('cliente_rut').value = rutFormateado || cliente.rut;
         document.getElementById('cliente_razon_social').value = cliente.razon_social;
         document.getElementById('cliente_nacional_extranjero').value = cliente.nacional_extranjero;
         document.getElementById('cliente_pais').value = cliente.pais || '';
@@ -252,7 +258,7 @@
         fetch('/api/get_comerciales.php')
             .then(r => r.json())
             .then(data => {
-                const sel = document.getElementById('cliente_id_comercial');
+                const sel = document.getElementById('cliente_nombre_comercial');
                 if (!sel) return;
                 sel.innerHTML = '<option value="">Seleccionar</option>';
                 (data.comerciales || []).forEach(c => {
@@ -265,7 +271,7 @@
     }
 
     // Listener para cargar nombre_comercial al seleccionar comercial
-    document.getElementById('cliente_id_comercial')?.addEventListener('change', function() {
+    document.getElementById('cliente_nombre_comercial')?.addEventListener('change', function() {
         const id = this.value;
         if (!id) {
             document.getElementById('cliente_nombre_comercial').value = '';
@@ -312,8 +318,6 @@
     function guardarCliente() {
         const rut = document.getElementById('cliente_rut').value;
         if (!rut) return error('RUT es obligatorio');
-        const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
-        if (!validarRut(rutLimpio)) return error('RUT inválido');
             const cliente = {
             rut: rut,
             razon_social: document.getElementById('cliente_razon_social').value,
@@ -358,6 +362,19 @@
         // 1. Cargar listas iniciales
         cargarPaises();
 
+        // Formatear RUT al perder foco
+        document.getElementById('cliente_rut')?.addEventListener('blur', function() {
+            const rutIngresado = this.value.trim();
+            if (!rutIngresado) return;
+            const rutFormateado = formatearRut(rutIngresado);
+            if (rutFormateado) {
+                this.value = rutFormateado;
+            } else {
+                error('RUT inválido');
+                this.value = '';
+            }
+        });
+
         // 2. Inicializar búsqueda inteligente
         document.getElementById('busqueda-cliente')?.addEventListener('input', async function() {
             const term = this.value.trim();
@@ -373,7 +390,7 @@
                         const d = document.createElement('div');
                         d.style.padding = '0.8rem';
                         d.style.cursor = 'pointer';
-                        d.innerHTML = `<strong>${c.razon_social}</strong><br><small>RUT: ${c.rut} | Giro: ${c.giro || ''}</small>`;
+                        d.innerHTML = `<strong>${c.razon_social}</strong><br><small>RUT: ${formatearRut(c.rut) || c.rut} | ...</small>`;
                         d.onclick = () => {
                             cargarCliente(c);
                             div.style.display = 'none';

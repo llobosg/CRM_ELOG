@@ -12,6 +12,19 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin_finanzas') {
     exit;
 }
 
+function validarRutPHP($rut) {
+    if (!preg_match('/^(\d{7,8})([0-9K])$/', $rut, $matches)) return false;
+    list(, $cuerpo, $dv) = $matches;
+    $suma = 0; $multiplo = 2;
+    for ($i = strlen($cuerpo) - 1; $i >= 0; $i--) {
+        $suma += $multiplo * intval($cuerpo[$i]);
+        $multiplo = $multiplo < 7 ? $multiplo + 1 : 2;
+    }
+    $dvEsperado = 11 - ($suma % 11);
+    $dvEsperado = $dvEsperado == 11 ? 0 : ($dvEsperado == 10 ? 'K' : strval($dvEsperado));
+    return strtoupper($dv) === $dvEsperado;
+}
+
 try {
     $input = json_decode(file_get_contents('php://input'), true);
     if (!$input || !isset($input['rut'])) {
@@ -19,10 +32,13 @@ try {
     }
 
     // Validar RUT (simple, puedes reutilizar tu función si la tienes en un helper)
-    $rut = preg_replace('/[^0-9Kk]/', '', $input['rut']);
-    if (strlen($rut) < 8) {
+    // Al recibir el RUT desde el frontend
+    $rut = $_POST['rut'] ?? '';
+    $rutLimpio = preg_replace('/[^0-9Kk]/', '', strtoupper($rut));
+    if (!validarRutPHP($rutLimpio)) {
         throw new Exception('RUT inválido');
     }
+    // Guardar $rutLimpio en la BD
 
     $pdo->beginTransaction();
 
