@@ -12,7 +12,12 @@ try {
     }
     $search = "%{$term}%";
     $stmt = $pdo->prepare("
-        SELECT rut, razon_social, giro, nombre_comercial
+        SELECT
+            rut, razon_social, nacional_extranjero, pais, direccion, comuna, ciudad,
+            giro, fecha_creacion, nombre_comercial, tipo_vida, fecha_vida,
+            rubro, potencial_usd,
+            fecha_alta_credito, plazo_dias, estado_credito,
+            monto_credito, usado_credito, saldo_credito
         FROM clientes
         WHERE 
             rut LIKE ? OR
