@@ -12,12 +12,27 @@ try {
     }
     $search = "%{$term}%";
     $stmt = $pdo->prepare("
-        SELECT
-            rut, razon_social, nacional_extranjero, pais, direccion, comuna, ciudad,
-            giro, fecha_creacion, nombre_comercial, tipo_vida, fecha_vida,
-            rubro, potencial_usd,
-            fecha_alta_credito, plazo_dias, estado_credito,
-            monto_credito, usado_credito, saldo_credito
+        SELECT 
+            rut,
+            razon_social,
+            nacional_extranjero,
+            pais,
+            direccion,
+            comuna,
+            ciudad,
+            giro,
+            fecha_creacion,
+            nombre_comercial,
+            tipo_vida,
+            fecha_vida,
+            rubro,
+            potencial_usd,
+            fecha_alta_credito,
+            plazo_dias,
+            estado_credito,
+            monto_credito,
+            usado_credito,
+            saldo_credito
         FROM clientes
         WHERE 
             rut LIKE ? OR
@@ -28,9 +43,9 @@ try {
         LIMIT 10
     ");
     $stmt->execute([$search, $search, $search, $search]);
-    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC), JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
-    http_response_code(500);
+    error_log("Error en buscar_cliente_inteligente: " . $e->getMessage());
     echo json_encode([]);
 }
 ?>
