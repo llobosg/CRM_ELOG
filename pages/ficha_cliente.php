@@ -239,7 +239,7 @@
         document.getElementById('cliente_ciudad').value = cliente.ciudad || '';
         document.getElementById('cliente_giro').value = cliente.giro || '';
         document.getElementById('cliente_fecha_creacion').value = cliente.fecha_creacion || '';
-        document.getElementById('cliente_id_comercial').value = cliente.id_comercial || '';
+        //document.getElementById('cliente_id_comercial').value = cliente.id_comercial || '';
         document.getElementById('cliente_nombre_comercial').value = cliente.nombre_comercial || '';
         document.getElementById('cliente_tipo_vida').value = cliente.tipo_vida;
         document.getElementById('cliente_fecha_vida').value = cliente.fecha_vida || '';
