@@ -1,5 +1,5 @@
 <!-- FICHA CLIENTE -->
-<div style="margin: 1rem;">
+<div style="margin: 0;">
     <h2><i class="fas fa-id-card"></i> Ficha Cliente</h2>
 
     <!-- Búsqueda inteligente: RUT, Razón Social, Giro, Nombre Comercial -->
@@ -223,7 +223,7 @@
                     cargarContactos(rut);
                 } else {
                     // Nuevo cliente
-                    limpiarFormulario();
+                    limpiarFormularioCliente();
                     document.getElementById('rut').value = rut;
                     contactos = [];
                     actualizarTablaContactos();
@@ -250,27 +250,34 @@
                 comercialSel.value = cliente.nombre_comercial;
             }
         }
-        document.getElementById('cliente_rut').value = rutFormateado;
-        document.getElementById('cliente_razon_social').value = cliente.razon_social;
-        document.getElementById('cliente_nacional_extranjero').value = cliente.nacional_extranjero;
+        // Datos del Cliente
+        document.getElementById('cliente_rut').value = cliente.rut || '';
+        document.getElementById('cliente_razon_social').value = cliente.razon_social || '';
+        document.getElementById('cliente_nacional_extranjero').value = cliente.nacional_extranjero || 'Nacional';
         document.getElementById('cliente_pais').value = cliente.pais || '';
         document.getElementById('cliente_direccion').value = cliente.direccion || '';
         document.getElementById('cliente_comuna').value = cliente.comuna || '';
         document.getElementById('cliente_ciudad').value = cliente.ciudad || '';
         document.getElementById('cliente_giro').value = cliente.giro || '';
         document.getElementById('cliente_fecha_creacion').value = cliente.fecha_creacion || '';
-        //document.getElementById('cliente_nombre_comercial').value = cliente.nombre_comercial || '';
-        document.getElementById('cliente_tipo_vida').value = cliente.tipo_vida;
+        document.getElementById('cliente_nombre_comercial').value = cliente.nombre_comercial || '';
+        document.getElementById('cliente_tipo_vida').value = cliente.tipo_vida || 'lead';
         document.getElementById('cliente_fecha_vida').value = cliente.fecha_vida || '';
         document.getElementById('cliente_rubro').value = cliente.rubro || '';
         document.getElementById('cliente_potencial_usd').value = cliente.potencial_usd || '';
 
+        // Línea de Crédito
         document.getElementById('credito_fecha_alta').value = cliente.fecha_alta_credito || '';
         document.getElementById('credito_plazo_dias').value = cliente.plazo_dias || '30';
         document.getElementById('credito_estado').value = cliente.estado_credito || 'vigente';
-        document.getElementById('credito_monto').value = cliente.monto_credito || 0;
-        document.getElementById('credito_usado').value = cliente.usado_credito || 0;
-        document.getElementById('credito_saldo').value = cliente.saldo_credito || 0;
+        document.getElementById('credito_monto').value = cliente.monto_credito || '';
+        document.getElementById('credito_usado').value = cliente.usado_credito || '';
+        document.getElementById('credito_saldo').value = cliente.saldo_credito || '';
+
+        // Cargar contactos
+        if (cliente.rut) {
+            cargarContactos(cliente.rut);
+        }
     }
 
     function cargarComerciales() {
@@ -400,6 +407,36 @@
         });
     }
 
+    function limpiarFormularioCliente() {
+        // Datos del Cliente
+        document.getElementById('cliente_rut').value = '';
+        document.getElementById('cliente_razon_social').value = '';
+        document.getElementById('cliente_nacional_extranjero').value = 'Nacional';
+        document.getElementById('cliente_pais').value = '';
+        document.getElementById('cliente_direccion').value = '';
+        document.getElementById('cliente_comuna').value = '';
+        document.getElementById('cliente_ciudad').value = '';
+        document.getElementById('cliente_giro').value = '';
+        document.getElementById('cliente_fecha_creacion').value = '';
+        document.getElementById('cliente_nombre_comercial').value = '';
+        document.getElementById('cliente_tipo_vida').value = 'lead';
+        document.getElementById('cliente_fecha_vida').value = '';
+        document.getElementById('cliente_rubro').value = '';
+        document.getElementById('cliente_potencial_usd').value = '';
+
+        // Línea de Crédito
+        document.getElementById('credito_fecha_alta').value = '';
+        document.getElementById('credito_plazo_dias').value = '30';
+        document.getElementById('credito_estado').value = 'vigente';
+        document.getElementById('credito_monto').value = '';
+        document.getElementById('credito_usado').value = '';
+        document.getElementById('credito_saldo').value = '';
+
+        // Limpiar contactos
+        contactos = [];
+        actualizarTablaContactos();
+    }
+
     // ===================================================================
     // === INICIALIZACIÓN AL CARGAR LA PÁGINA ===
     // ===================================================================
@@ -407,6 +444,17 @@
         // 1. Cargar listas iniciales
         cargarPaises();
         cargarComerciales();
+
+        // Mostrar notificación y limpiar formulario si fue exitoso
+        const urlParams = new URLSearchParams(window.location.search);
+        const exito = urlParams.get('exito');
+        if (exito) {
+            exito(decodeURIComponent(exito));
+            // Limpiar formulario
+            limpiarFormularioCliente();
+            // Opcional: actualizar URL sin parámetros
+            history.replaceState({}, document.title, '?page=ficha_cliente');
+        }
 
         // Formatear RUT al perder foco
         document.getElementById('cliente_rut')?.addEventListener('blur', function() {
@@ -488,21 +536,6 @@
         });
 
         document.getElementById('btn-guardar-ficha')?.addEventListener('click', guardarCliente);
-
-        function limpiarFormulario() {
-            const campos = [
-                'cliente_razon_social', 'cliente_nacional_extranjero', 'cliente_pais',
-                'cliente_direccion', 'cliente_comuna', 'cliente_ciudad', 'cliente_giro',
-                'cliente_fecha_creacion', 'cliente_nombre_comercial',
-                'cliente_tipo_vida', 'cliente_fecha_vida', 'cliente_rubro', 'cliente_potencial_usd',
-                'credito_fecha_alta', 'credito_plazo_dias', 'credito_estado',
-                'credito_monto', 'credito_usado', 'credito_saldo'
-            ];
-            campos.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = el.type === 'date' ? '<?= date("Y-m-d") ?>' : '';
-            });
-        }
 
         function cargarContactos(rut) {
             fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
