@@ -119,7 +119,7 @@
                 <label>Saldo</label>
                 <input type="number" id="credito_saldo" step="0.01" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa;" />
                 <div style="grid-column: span 2; text-align: right;">
-                    <button type="button" class="btn-primary" onclick="guardarCliente()" style="padding: 0.6rem 1.2rem;">
+                    <button type="button" id="btn-guardar-ficha" class="btn-primary" style="padding: 0.6rem 1.2rem;">
                         Guardar Ficha Cliente
                     </button>
                 </div>
@@ -181,7 +181,9 @@
         </div>
     </div>
 </div>
-
+<!-- =================================================================== --->
+<!-- === INICIALIZACIÓN AL CARGAR LA PÁGINA === -->
+<!-- =================================================================== -->
 <script>
     let contactos = [];
     let contactoEnEdicion = null;
@@ -293,6 +295,46 @@
             });
     }
 
+    function guardarCliente() {
+        const rut = document.getElementById('rut_cliente').value;
+        if (!rut) return alert('RUT es obligatorio');
+            const cliente = {
+            rut: rut,
+            razon_social: document.getElementById('cliente_razon_social').value,
+            nacional_extranjero: document.getElementById('cliente_nacional_extranjero').value,
+            pais: document.getElementById('cliente_pais').value,
+            direccion: document.getElementById('cliente_direccion').value,
+            comuna: document.getElementById('cliente_comuna').value,
+            ciudad: document.getElementById('cliente_ciudad').value,
+            giro: document.getElementById('cliente_giro').value,
+            fecha_creacion: document.getElementById('cliente_fecha_creacion').value,
+            id_comercial: document.getElementById('cliente_id_comercial').value,
+            nombre_comercial: document.getElementById('cliente_nombre_comercial').value,
+            tipo_vida: document.getElementById('cliente_tipo_vida').value,
+            fecha_vida: document.getElementById('cliente_fecha_vida').value,
+            rubro: document.getElementById('cliente_rubro').value,
+            potencial_usd: document.getElementById('cliente_potencial_usd').value,
+            fecha_alta_credito: document.getElementById('credito_fecha_alta').value,
+            plazo_dias: document.getElementById('credito_plazo_dias').value,
+            estado_credito: document.getElementById('credito_estado').value,
+            monto_credito: document.getElementById('credito_monto').value,
+            contactos: contactos
+        };
+        fetch('/pages/ficha_cliente_logic.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(cliente)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('Ficha cliente guardada correctamente');
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    }
+
     // ===================================================================
     // === INICIALIZACIÓN AL CARGAR LA PÁGINA ===
     // ===================================================================
@@ -339,6 +381,8 @@
             }
             abrirModalContacto();
         });
+
+        document.getElementById('btn-guardar-ficha')?.addEventListener('click', guardarCliente);
 
         function limpiarFormulario() {
             const campos = [
@@ -446,46 +490,6 @@
                 contactos.splice(index, 1);
                 actualizarTablaContactos();
             }
-        }
-
-        function guardarCliente() {
-            const rut = document.getElementById('rut_cliente').value;
-            if (!rut) return alert('RUT es obligatorio');
-            const cliente = {
-                rut: rut,
-                razon_social: document.getElementById('cliente_razon_social').value,
-                nacional_extranjero: document.getElementById('cliente_nacional_extranjero').value,
-                pais: document.getElementById('cliente_pais').value,
-                direccion: document.getElementById('cliente_direccion').value,
-                comuna: document.getElementById('cliente_comuna').value,
-                ciudad: document.getElementById('cliente_ciudad').value,
-                giro: document.getElementById('cliente_giro').value,
-                fecha_creacion: document.getElementById('cliente_fecha_creacion').value,
-                id_comercial: document.getElementById('cliente_id_comercial').value,
-                nombre_comercial: document.getElementById('cliente_nombre_comercial').value,
-                tipo_vida: document.getElementById('cliente_tipo_vida').value,
-                fecha_vida: document.getElementById('cliente_fecha_vida').value,
-                rubro: document.getElementById('cliente_rubro').value,
-                potencial_usd: document.getElementById('cliente_potencial_usd').value,
-                fecha_alta_credito: document.getElementById('credito_fecha_alta').value,
-                plazo_dias: document.getElementById('credito_plazo_dias').value,
-                estado_credito: document.getElementById('credito_estado').value,
-                monto_credito: document.getElementById('credito_monto').value,
-                contactos: contactos
-            };
-            fetch('/pages/ficha_cliente_logic.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(cliente)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Ficha cliente guardada correctamente');
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            });
         }
     });
 </script>
