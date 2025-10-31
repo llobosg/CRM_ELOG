@@ -340,10 +340,23 @@
     }
 
     function guardarCliente() {
-        const rut = document.getElementById('cliente_rut').value;
-        if (!rut) return error('RUT es obligatorio');
-            const cliente = {
-            rut: rut,
+        const rutMostrado = document.getElementById('cliente_rut').value.trim();
+        if (!rutMostrado) {
+            error('RUT es obligatorio');
+            return;
+        }
+
+        // Limpiar el RUT para enviar al backend
+        const rutLimpio = rutMostrado.replace(/\./g, '').replace('-', '').toUpperCase();
+
+        // Validar nuevamente (por seguridad)
+        if (!/^(\d{7,8})([0-9K])$/.test(rutLimpio)) {
+            error('RUT inválido');
+            return;
+        }
+
+        const cliente = {
+            rut: rutLimpio, // ←←← ENVÍA EL RUT LIMPIO
             razon_social: document.getElementById('cliente_razon_social').value,
             nacional_extranjero: document.getElementById('cliente_nacional_extranjero').value,
             pais: document.getElementById('cliente_pais').value,
@@ -363,18 +376,23 @@
             monto_credito: document.getElementById('credito_monto').value,
             contactos: contactos
         };
+
         fetch('/pages/ficha_cliente_logic.php', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(cliente)
         })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                alert('Ficha cliente guardada correctamente');
+                exito('Ficha cliente guardada correctamente');
             } else {
-                alert('Error: ' + data.message);
+                error(data.message || 'Error al guardar');
             }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            error('Error de conexión con el servidor');
         });
     }
 
@@ -388,15 +406,38 @@
 
         // Formatear RUT al perder foco
         document.getElementById('cliente_rut')?.addEventListener('blur', function() {
-            const valor = this.value.trim();
-            if (!valor) return;
-            const rutFormateado = formatearRutParaMostrar(valor);
-            if (rutFormateado) {
-                this.value = rutFormateado;
-            } else {
-                error('RUT inválido');
+            let rut = this.value.trim().toUpperCase();
+            if (!rut) return;
+
+            // Limpiar formato previo
+            rut = rut.replace(/\./g, '').replace('-', '');
+
+            // Validar estructura básica
+            if (!/^(\d{7,8})([0-9K])$/.test(rut)) {
+                error('RUT inválido: formato incorrecto');
                 this.value = '';
+                return;
             }
+
+            // Validar dígito verificador
+            const cuerpo = rut.slice(0, -1);
+            const dv = rut.slice(-1);
+            let suma = 0, multiplo = 2;
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                suma += parseInt(cuerpo[i]) * multiplo;
+                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            }
+            const dvEsperado = (11 - (suma % 11)).toString();
+            const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
+
+            if (dv !== dvCalculado) {
+                error('RUT inválido: dígito verificador incorrecto');
+                this.value = '';
+                return;
+            }
+
+            // Formatear para mostrar
+            this.value = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
         });
 
         // 2. Inicializar búsqueda inteligente
