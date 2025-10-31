@@ -13,7 +13,7 @@
     </div>
 
     <form id="form-cliente">
-        <input type="hidden" id="rut_cliente" name="rut" />
+        <input type="hidden" id="rut" name="rut" />
 
         <!-- ========== DATOS DEL CLIENTE ========== -->
         <div class="card" style="margin-bottom: 2rem;">
@@ -224,8 +224,7 @@
                 } else {
                     // Nuevo cliente
                     limpiarFormulario();
-                    document.getElementById('rut_cliente').value = rut;
-                    document.getElementById('cliente_rut').value = rut;
+                    document.getElementById('rut').value = rut;
                     contactos = [];
                     actualizarTablaContactos();
                 }
@@ -571,7 +570,7 @@
             if (!nombre) return alert('Nombre es obligatorio');
             const nuevo = {
                 id_contacto: document.getElementById('contacto_id').value || null,
-                rut_cliente: document.getElementById('rut_cliente').value,
+                rut_cliente: document.getElementById('rut').value,
                 nombre: nombre,
                 rol: document.getElementById('contacto_rol').value,
                 primario: document.getElementById('contacto_primario').value,
