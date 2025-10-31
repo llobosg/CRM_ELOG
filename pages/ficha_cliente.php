@@ -482,6 +482,27 @@
             });
     }
 
+    function actualizarTablaContactos() {
+        const tbody = document.getElementById('contactos-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        contactos.forEach((c, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${c.nombre || ''}</td>
+                <td>${c.rol || ''}</td>
+                <td>${c.primario === 'S' ? '✅' : ''}</td>
+                <td>${c.fono || ''}</td>
+                <td>${c.email || ''}</td>
+                <td>
+                    <button type="button" onclick="editarContacto(${i})">✏️</button>
+                    <button type="button" onclick="eliminarContacto(${i})">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
     // ===================================================================
     // === INICIALIZACIÓN AL CARGAR LA PÁGINA ===
     // ===================================================================
@@ -601,26 +622,6 @@
                     contactos = data.contactos || [];
                     actualizarTablaContactos();
                 });
-        }
-
-        function actualizarTablaContactos() {
-            const tbody = document.getElementById('contactos-body');
-            tbody.innerHTML = '';
-            contactos.forEach((c, i) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${c.nombre}</td>
-                    <td>${c.rol}</td>
-                    <td>${c.primario === 'S' ? '✅' : ''}</td>
-                    <td>${c.fono || ''}</td>
-                    <td>${c.email || ''}</td>
-                    <td>
-                        <button type="button" onclick="editarContacto(${i})">✏️</button>
-                        <button type="button" onclick="eliminarContacto(${i})">🗑️</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
         }
 
         function abrirModalContacto(index = null) {
