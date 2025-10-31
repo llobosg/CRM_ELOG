@@ -93,16 +93,16 @@ try {
     }
 
     // === Sincronizar contactos ===
-    $pdo->prepare("DELETE FROM contactos WHERE rut = ?")->execute([$input['rut']]);
+    $pdo->prepare("DELETE FROM contactos WHERE rut_cliente = ?")->execute([$input['rut']]);
 
     if (!empty($input['contactos'])) {
         $stmt_contacto = $pdo->prepare("
-            INSERT INTO contactos (rut, nombre, rol, primario, fono, email)
+            INSERT INTO contactos (rut_cliente, nombre, rol, primario, fono, email)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
         foreach ($input['contactos'] as $c) {
             $stmt_contacto->execute([
-                $input['rut'],
+                $input['rut'], // ← este valor se guarda en rut_cliente
                 $c['nombre'] ?? '',
                 $c['rol'] ?? 'comercial',
                 $c['primario'] ?? 'N',
