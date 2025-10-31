@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/../includes/auth_check.php';
+?>
 <!-- Mini consola de depuración -->
 <div id="debug-trace" style="margin: 1rem; padding: 0.5rem; background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
 <!-- Búsqueda inteligente -->
@@ -15,7 +18,9 @@
         <h3><i class="fas fa-user"></i> Datos del Prospecto</h3>
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>RUT Empresa *</label>
-            <input type="text" name="rut_empresa" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <select name="rut_empresa" id="rut_empresa" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+                <option value="">Seleccionar cliente</option>
+            </select>
             <label>Razón Social *</label>
             <input type="text" name="razon_social" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Teléfono</label>
@@ -100,12 +105,8 @@
         </div>
     </div>
     <input type="hidden" name="servicios_json" id="servicios_json" />
-    <div style="text-align: right; margin-top: 1rem;">
-        <button type="button" class="btn-delete" id="btn-eliminar-prospecto" style="display: none;">
-            <i class="fas fa-trash"></i> Eliminar Prospecto
-        </button>
-    </div>
 </form>
+
 <!-- ========== MODALES ========== -->
 <!-- Modal Comercial -->
 <div id="modal-comercial" class="modal" style="display:none;">
@@ -352,6 +353,7 @@
     <i class="fas fa-info-circle"></i> 
     <span id="toast-message">Mensaje</span>
 </div>
+
 <script>
     // ===================================================================
     // === 1. VARIABLES GLOBALES ===
@@ -363,6 +365,25 @@
     let tieneServiciosIniciales = false;
     let estadoProspecto = 'Pendiente';
     window.editarServicio = editarServicio;
+    // ===================================================================
+    // === FUNCIONES ADICIONALES PARA FICHA CLIENTE ===
+    // ===================================================================
+    function cargarClientesEnSelect() {
+        fetch('/api/get_todos_clientes.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('rut_empresa');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Seleccionar cliente</option>';
+                (data.clientes || []).forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.rut;
+                    opt.textContent = `${c.rut} - ${c.razon_social}`;
+                    sel.appendChild(opt);
+                });
+            });
+    }
+
     // ===================================================================
     // === 2. FUNCIONES AUXILIARES ===
     // ===================================================================
@@ -394,16 +415,32 @@
         return dv === dvCalculado;
     }
     function cargarPaises() {
-        const paises = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
-        const select = document.getElementById('pais');
-        if (!select) return;
-        select.innerHTML = '<option value="">Seleccionar país</option>';
-        paises.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p;
-            opt.textContent = p;
-            select.appendChild(opt);
-        });
+        const selectPais = document.getElementById('pais') || document.getElementById('cliente_pais');
+        if (!selectPais) return;
+
+        fetch('/api/get_paises.php')
+            .then(r => r.json())
+            .then(data => {
+                selectPais.innerHTML = '<option value="">Seleccionar país</option>';
+                (data.paises || []).forEach(pais => {
+                    const opt = document.createElement('option');
+                    opt.value = pais;
+                    opt.textContent = pais;
+                    selectPais.appendChild(opt);
+                });
+            })
+            .catch(err => {
+                console.error('Error al cargar países:', err);
+                // Fallback opcional: lista mínima
+                const fallback = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
+                selectPais.innerHTML = '<option value="">Seleccionar país</option>';
+                fallback.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    opt.textContent = p;
+                    selectPais.appendChild(opt);
+                });
+            });
     }
     function calcularConcatenado() {
         const op = document.getElementById('operacion')?.value || '';
@@ -628,10 +665,15 @@
             .then(data => {
                 if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
                 const p = data.prospecto;
-                ['razon_social','rut_empresa','fono_empresa','direccion','booking','incoterm','concatenado','fecha_alta','fecha_estado'].forEach(f => {
+                ['razon_social','fono_empresa','direccion','booking','incoterm','concatenado','fecha_alta','fecha_estado'].forEach(f => {
                     const el = document.querySelector(`[name="${f}"]`);
                     if (el && el.tagName === 'INPUT') el.value = p[f] || '';
                 });
+                // Cargar RUT en el select
+                const rutSel = document.getElementById('rut_empresa');
+                if (rutSel) {
+                    rutSel.value = p.rut_empresa || '';
+                }
                 document.getElementById('id_comercial').value = p.id_comercial || '';
                 document.getElementById('nombre').value = p.nombre || '';
                 document.getElementById('estado').value = p.estado || 'Pendiente';
@@ -1225,8 +1267,40 @@
     document.addEventListener('DOMContentLoaded', () => {
         cargarPaises();
         cargarOperacionesYTipos();
+        cargarClientesEnSelect(); // ←←← CARGAR CLIENTES AL INICIAR
+        // Listener para cargar datos del cliente al seleccionar RUT
+        document.getElementById('rut_empresa')?.addEventListener('change', function() {
+            const rut = this.value;
+            if (!rut) {
+                // Limpiar campos si se deselecciona
+                ['razon_social', 'direccion', 'fono_empresa', 'pais'].forEach(f => {
+                    const el = document.querySelector(`[name="${f}"]`);
+                    if (el) el.value = '';
+                });
+                return;
+            }
+            fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.existe) {
+                        const c = data.cliente;
+                        document.querySelector('[name="razon_social"]').value = c.razon_social || '';
+                        document.querySelector('[name="pais"]').value = c.pais || '';
+                        document.querySelector('[name="direccion"]').value = c.direccion || '';
+
+                        // Cargar teléfono del contacto primario
+                        fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
+                            .then(r2 => r2.json())
+                            .then(data2 => {
+                                const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
+                                document.querySelector('[name="fono_empresa"]').value = primario?.fono || '';
+                            });
+                    }
+                });
+        });
         document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
         document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
+        // Botón "Agregar Servicio"
         document.getElementById('btn-agregar-servicio')?.addEventListener('click', () => {
             const idPpl = document.getElementById('id_ppl')?.value;
             if (!idPpl || idPpl === '0') {
