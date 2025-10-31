@@ -188,6 +188,20 @@
     let contactos = [];
     let contactoEnEdicion = null;
 
+    function validarRut(rut) {
+        if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
+        const cuerpo = rut.slice(0, -1);
+        const dv = rut.slice(-1).toUpperCase();
+        let suma = 0, multiplo = 2;
+        for (let i = cuerpo.length - 1; i >= 0; i--) {
+            suma += parseInt(cuerpo[i]) * multiplo;
+            multiplo = multiplo < 7 ? multiplo + 1 : 2;
+        }
+        const dvEsperado = (11 - (suma % 11)).toString();
+        const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
+        return dv === dvCalculado;
+    }
+
     function buscarCliente() {
         const rut = document.getElementById('rut_cliente_buscar').value.trim();
         if (!rut) return alert('Ingrese un RUT válido');
@@ -296,8 +310,10 @@
     }
 
     function guardarCliente() {
-        const rut = document.getElementById('rut_cliente').value;
-        if (!rut) return alert('RUT es obligatorio');
+        const rut = document.querySelector('input[name="rut_cliente"]').value.trim();
+        if (!rut) return error('RUT es obligatorio');
+        const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
+        if (!validarRut(rutLimpio)) return error('RUT inválido');
             const cliente = {
             rut: rut,
             razon_social: document.getElementById('cliente_razon_social').value,
