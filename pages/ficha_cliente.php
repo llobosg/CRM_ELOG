@@ -188,14 +188,10 @@
     let contactos = [];
     let contactoEnEdicion = null;
 
-    function formatearRut(rut) {
-        // Eliminar puntos y guión
-        let rutLimpio = rut.replace(/\./g, '').replace('-', '');
-        // Validar estructura básica
-        if (!/^(\d{7,8})([0-9Kk])$/.test(rutLimpio)) return null;
-        const cuerpo = rutLimpio.slice(0, -1);
-        const dv = rutLimpio.slice(-1).toUpperCase();
-        // Validar dígito verificador
+   function validarRut(rut) {
+        if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
+        const cuerpo = rut.slice(0, -1);
+        const dv = rut.slice(-1).toUpperCase();
         let suma = 0, multiplo = 2;
         for (let i = cuerpo.length - 1; i >= 0; i--) {
             suma += parseInt(cuerpo[i]) * multiplo;
@@ -203,8 +199,16 @@
         }
         const dvEsperado = (11 - (suma % 11)).toString();
         const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
-        if (dv !== dvCalculado) return null;
-        // Formatear con puntos y guión
+        return dv === dvCalculado;
+    }
+
+    function formatearRutParaMostrar(rut) {
+        // Limpiar el RUT
+        let rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
+        if (!validarRut(rutLimpio)) return null;
+        // Insertar puntos y guión
+        const cuerpo = rutLimpio.slice(0, -1);
+        const dv = rutLimpio.slice(-1);
         return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
     }
 
@@ -229,8 +233,8 @@
     }
 
     function cargarCliente(cliente) {
-        const rutFormateado = formatearRut(cliente.rut);
-        document.getElementById('cliente_rut').value = rutFormateado || cliente.rut;
+        const rutFormateado = formatearRutParaMostrar(cliente.rut) || cliente.rut;
+        document.getElementById('cliente_rut').value = rutFormateado;
         document.getElementById('cliente_razon_social').value = cliente.razon_social;
         document.getElementById('cliente_nacional_extranjero').value = cliente.nacional_extranjero;
         document.getElementById('cliente_pais').value = cliente.pais || '';
@@ -364,9 +368,9 @@
 
         // Formatear RUT al perder foco
         document.getElementById('cliente_rut')?.addEventListener('blur', function() {
-            const rutIngresado = this.value.trim();
-            if (!rutIngresado) return;
-            const rutFormateado = formatearRut(rutIngresado);
+            const valor = this.value.trim();
+            if (!valor) return;
+            const rutFormateado = formatearRutParaMostrar(valor);
             if (rutFormateado) {
                 this.value = rutFormateado;
             } else {
@@ -387,14 +391,18 @@
                 div.innerHTML = '';
                 if (data.length > 0) {
                     data.forEach(c => {
+                        const rutFormateado = formatearRutParaMostrar(c.rut) || c.rut;
                         const d = document.createElement('div');
                         d.style.padding = '0.8rem';
                         d.style.cursor = 'pointer';
-                        d.innerHTML = `<strong>${c.razon_social}</strong><br><small>RUT: ${formatearRut(c.rut) || c.rut} | ...</small>`;
+                        d.innerHTML = `<strong>${c.razon_social}</strong><br><small>RUT: ${rutFormateado} | Giro: ${c.giro || ''}</small>`;
                         d.onclick = () => {
-                            cargarCliente(c);
-                            div.style.display = 'none';
-                            this.value = '';
+                            // Al seleccionar, también formatea el RUT en el campo
+                            const rutFinal = formatearRutParaMostrar(c.rut) || c.rut;
+                            document.getElementById('cliente_rut').value = rutFinal;
+                            // ... cargar otros campos ...
+                            document.getElementById('resultados-busqueda-cliente').style.display = 'none';
+                            document.getElementById('busqueda-cliente').value = '';
                         };
                         div.appendChild(d);
                     });
