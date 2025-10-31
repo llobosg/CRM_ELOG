@@ -348,6 +348,11 @@
 
         // Limpiar el RUT para enviar al backend
         const rutLimpio = rutMostrado.replace(/\./g, '').replace('-', '').toUpperCase();
+        // Validar longitud mínima
+        if (rutLimpio.length < 8) {
+            error('RUT demasiado corto');
+            return;
+        }
 
         // Validar nuevamente (por seguridad)
         if (!/^(\d{7,8})([0-9K])$/.test(rutLimpio)) {
@@ -376,7 +381,7 @@
             monto_credito: document.getElementById('credito_monto').value,
             contactos: contactos
         };
-
+        console.log('RUT a enviar:', rutLimpio);
         fetch('/pages/ficha_cliente_logic.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -458,9 +463,8 @@
                         d.style.cursor = 'pointer';
                         d.innerHTML = `<strong>${c.razon_social}</strong><br><small>RUT: ${rutFormateado} | Giro: ${c.giro || ''}</small>`;
                         d.onclick = () => {
-                            // Al seleccionar, también formatea el RUT en el campo
-                            const rutFinal = formatearRutParaMostrar(c.rut) || c.rut;
-                            document.getElementById('cliente_rut').value = rutFinal;
+                            const rutFormateado = formatearRutParaMostrar(c.rut) || c.rut;
+                            document.getElementById('cliente_rut').value = rutFormateado;
                             // ... cargar otros campos ...
                             document.getElementById('resultados-busqueda-cliente').style.display = 'none';
                             document.getElementById('busqueda-cliente').value = '';

@@ -33,8 +33,11 @@ try {
 
     // Validar RUT (simple, puedes reutilizar tu función si la tienes en un helper)
     // Al recibir el RUT desde el frontend
-    $rut = $_POST['rut'] ?? '';
+    //$rut = $_POST['rut'] ?? '';
+    error_log("RUT recibido: " . print_r($input['rut'] ?? 'NO RECIBIDO', true));
+    $rut = $input['rut'] ?? '';
     $rutLimpio = preg_replace('/[^0-9Kk]/', '', strtoupper($rut));
+    error_log("RUT limpio: '$rutLimpio'");
     if (!validarRutPHP($rutLimpio)) {
         throw new Exception('RUT inválido');
     }
