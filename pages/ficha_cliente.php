@@ -310,7 +310,7 @@
     }
 
     function guardarCliente() {
-        const rut = document.querySelector('input[name="cliente_rut"]').value.trim();
+        const rut = document.getElementById('cliente_rut').value;
         if (!rut) return error('RUT es obligatorio');
         const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
         if (!validarRut(rutLimpio)) return error('RUT inválido');
