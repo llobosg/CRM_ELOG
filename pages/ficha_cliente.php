@@ -485,15 +485,6 @@
         actualizarTablaContactos();
     }
 
-    // Limpiar formulario si hay éxito
-    //const urlParams = new URLSearchParams(window.location.search);
-    if (mensajeExito) {
-        exito(decodeURIComponent(mensajeExito));
-        limpiarFormularioCliente();
-        // Opcional: limpiar URL
-        history.replaceState({}, document.title, '?page=ficha_cliente');
-    }
-
     function cargarContactos(rut) {
         if (!rut) return;
         fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
