@@ -258,6 +258,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             }
         }
 
+        // Si el prospecto pasa a CerradoOK, actualizar crédito del cliente
+        if ($_POST['estado'] === 'CerradoOK' && $estado_anterior !== 'CerradoOK') {
+            // Obtener total_venta del prospecto
+            $stmt_venta = $pdo->prepare("SELECT total_venta FROM prospectos WHERE id_ppl = ?");
+            $stmt_venta->execute([$id_ppl]);
+            $total_venta = (float)$stmt_venta->fetchColumn();
+
+            // Obtener RUT del prospecto
+            $stmt_rut = $pdo->prepare("SELECT rut_empresa FROM prospectos WHERE id_ppl = ?");
+            $stmt_rut->execute([$id_ppl]);
+            $rut_empresa = $stmt_rut->fetchColumn();
+
+            if ($rut_empresa && $total_venta > 0) {
+                // Actualizar usado_credito en clientes
+                $stmt_update_credito = $pdo->prepare("
+                    UPDATE clientes 
+                    SET usado_credito = usado_credito + ? 
+                    WHERE rut = ?
+                ");
+                $stmt_update_credito->execute([$total_venta, $rut_empresa]);
+            }
+        }
+
         $pdo->commit();
 
         $mensaje_exito = $modo_update

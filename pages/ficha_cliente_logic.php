@@ -73,6 +73,11 @@ try {
     $stmt_check->execute([$input['rut']]);
     $cliente_existe = $stmt_check->fetch();
 
+    // === Verificar duplicado en ficha_cliente si es nuevo ===
+    if ($stmt_check->fetch()) {
+        throw new Exception('El RUT ya está registrado en Ficha Cliente');
+    }
+
     if ($cliente_existe) {
         // Actualizar
         $set = [];
