@@ -435,6 +435,7 @@
             contactos: contactos
         };
 
+        console.log('Cliente a enviar:', cliente);
         fetch('?page=ficha_cliente', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -529,7 +530,8 @@
     }
 
     function abrirModalContacto(index = null) {
-        contactoEnEdicion = index;
+        // ✅ Forzar null para nuevos contactos
+        contactoEnEdicion = (index === null || index === undefined) ? null : index;
 
         // Reiniciar campos
         const nomContacto = document.getElementById('nom_contacto');
@@ -566,6 +568,10 @@
     }
 
     function guardarContacto() {
+        console.log('🔍 contactoEnEdicion:', contactoEnEdicion);
+        console.log('🔍 Tipo:', typeof contactoEnEdicion);
+        console.log('🔍 Es null?', contactoEnEdicion === null);
+
         const nombre = document.getElementById('nom_contacto').value.trim();
         if (!nombre) return error('Nombre es obligatorio');
 
@@ -581,19 +587,17 @@
             primario: document.getElementById('primario').value
         };
 
-        if (contactoEnEdicion !== null) {
-            // ✅ Actualizar contacto existente
+        if (contactoEnEdicion !== null && contactoEnEdicion !== undefined) {
             contactos[contactoEnEdicion] = contacto;
+            window.exito('Contacto actualizado ✅ ');
         } else {
-            // ✅ Agregar nuevo contacto
             contactos.push(contacto);
+            window.exito('Contacto agregado ✅ ');
         }
 
-        // ✅ ACTUALIZAR LA TABLA INMEDIATAMENTE
         actualizarTablaContactos();
-
         cerrarModalContacto();
-        exito(contactoEnEdicion !== null ? 'Contacto actualizado' : 'Contacto agregado');
+        
     }
 
     function editarContacto(index) {
@@ -728,15 +732,5 @@
         document.getElementById('btn-agregar-contacto')?.addEventListener('click', abrirModalContacto);
         document.getElementById('btn-guardar-ficha')?.addEventListener('click', guardarCliente);
 
-        // 9. Función para cargar contactos (si es necesaria aquí)
-        function cargarContactos(rut) {
-            fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
-                .then(r => r.json())
-                .then(data => {
-                    contactos = data.contactos || [];
-                    actualizarTablaContactos();
-                })
-                .catch(err => error('Error al cargar contactos'));
-        }
     });
 </script>
