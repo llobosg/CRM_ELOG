@@ -674,31 +674,31 @@
             history.replaceState({}, document.title, '?page=ficha_cliente');
         }
 
-        // 6. Validación de RUT en blur
-        document.getElementById('cliente_rut')?.addEventListener('blur', function() {
-            let rut = this.value.trim().toUpperCase();
+        // Validar RUT duplicado al salir del campo
+        document.getElementById('cliente_rut')?.addEventListener('blur', async function() {
+            const rut = this.value.trim();
             if (!rut) return;
-            rut = rut.replace(/\./g, '').replace('-', '');
-            if (!/^(\d{7,8})([0-9K])$/.test(rut)) {
-                window.error('RUT inválido: formato incorrecto');
+
+            // Formatear y validar RUT localmente primero
+            const rutFormateado = formatearRutParaMostrar(rut);
+            if (!rutFormateado) {
+                error('RUT inválido');
                 this.value = '';
                 return;
             }
-            const cuerpo = rut.slice(0, -1);
-            const dv = rut.slice(-1);
-            let suma = 0, multiplo = 2;
-            for (let i = cuerpo.length - 1; i >= 0; i--) {
-                suma += parseInt(cuerpo[i]) * multiplo;
-                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            this.value = rutFormateado;
+
+            // Verificar duplicado en la BD
+            try {
+                const res = await fetch(`/api/validar_rut_cliente.php?rut=${encodeURIComponent(rutFormateado)}`);
+                const data = await res.json();
+                if (data.existe) {
+                    error('El RUT ya está registrado en Ficha Cliente');
+                    this.value = '';
+                }
+            } catch (e) {
+                console.error('Error al validar RUT:', e);
             }
-            const dvEsperado = (11 - (suma % 11)).toString();
-            const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
-            if (dv !== dvCalculado) {
-                window.error('RUT inválido: dígito verificador incorrecto');
-                this.value = '';
-                return;
-            }
-            this.value = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
         });
 
         // 7. Búsqueda inteligente
