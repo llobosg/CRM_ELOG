@@ -531,6 +531,10 @@
 
     function abrirModalContacto(index = null) {
         // ✅ Forzar null para nuevos contactos
+        // ✅ Si index es un evento (ej: PointerEvent), forzar null
+        if (typeof index === 'object' && index !== null && index.type) {
+            index = null;
+        }
         contactoEnEdicion = (index === null || index === undefined) ? null : index;
 
         // Reiniciar campos
@@ -587,12 +591,12 @@
             primario: document.getElementById('primario').value
         };
 
-        if (contactoEnEdicion !== null && contactoEnEdicion !== undefined) {
+        if (contactoEnEdicion !== null && typeof contactoEnEdicion === 'number') {
             contactos[contactoEnEdicion] = contacto;
-            window.exito('Contacto actualizado ✅ ');
+            window.exito('Contacto actualizado');
         } else {
             contactos.push(contacto);
-            window.exito('Contacto agregado ✅ ');
+            window.exito('Contacto agregado');
         }
 
         actualizarTablaContactos();
@@ -729,7 +733,9 @@
         });
 
         // 8. Listeners de botones
-        document.getElementById('btn-agregar-contacto')?.addEventListener('click', abrirModalContacto);
+        document.getElementById('btn-agregar-contacto')?.addEventListener('click', function() {
+            abrirModalContacto();
+        });
         document.getElementById('btn-guardar-ficha')?.addEventListener('click', guardarCliente);
 
     });
