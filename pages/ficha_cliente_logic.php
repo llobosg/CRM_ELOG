@@ -46,7 +46,6 @@ try {
     $pdo->beginTransaction();
 
     // === Preparar datos del cliente ===
-    // === Preparar datos del cliente ===
     $data_cliente = [
         'rut' => $input['rut'],
         'razon_social' => $input['razon_social'] ?? '',
@@ -113,14 +112,14 @@ try {
         }
     }
 
-    $pdo->commit();
-    // Redirección con mensaje de éxito
-    header("Location: " . $_SERVER['PHP_SELF'] . "?page=ficha_cliente&exito=" . urlencode('Ficha cliente guardada correctamente'));
+        $pdo->commit();
+    echo json_encode(['success' => true, 'message' => 'Ficha cliente guardada ✅']);
     exit;
 
-} catch (Exception $e) {
-    try { $pdo->rollback(); } catch (Exception $ex) {}
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-}
+    } catch (Exception $e) {
+        try { $pdo->rollback(); } catch (Exception $ex) {}
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        exit;
+    }
 ?>
