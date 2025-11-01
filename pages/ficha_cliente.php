@@ -530,11 +530,11 @@
         // Si es edición
         if (index !== null && Array.isArray(contactos) && contactos[index]) {
             const c = contactos[index];
-            document.getElementById('nom_contacto')?.value = c.nom_contacto || '';
-            document.getElementById('fono_contacto')?.value = c.fono_contacto || '';
-            document.getElementById('email')?.value = c.email || '';
-            document.getElementById('rol')?.value = c.rol || 'comercial';
-            document.getElementById('primario')?.value = c.primario || 'N';
+            if (nomContacto) nomContacto.value = c.nom_contacto || '';
+            if (fonoContacto) fonoContacto.value = c.fono_contacto || '';
+            if (email) email.value = c.email || '';
+            if (rol) rol.value = c.rol || 'comercial';
+            if (primario) primario.value = c.primario || 'N';
             document.getElementById('titulo-modal-contacto').textContent = 'Editar Contacto';
         }
 
