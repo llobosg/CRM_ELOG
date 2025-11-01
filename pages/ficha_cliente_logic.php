@@ -114,7 +114,9 @@ try {
     }
 
     $pdo->commit();
-    echo json_encode(['success' => true, 'message' => 'Ficha cliente guardada correctamente']);
+    // Redirección con mensaje de éxito
+    header("Location: " . $_SERVER['PHP_SELF'] . "?page=ficha_cliente&exito=" . urlencode('Ficha cliente guardada correctamente'));
+    exit;
 
 } catch (Exception $e) {
     try { $pdo->rollback(); } catch (Exception $ex) {}

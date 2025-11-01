@@ -148,7 +148,7 @@
 
 <!-- Modal Contacto -->
 <div id="modal-contacto" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 880px; margin: 2rem auto;"> <!-- +10% -->
+    <div class="modal-content" style="max-width: 920px; margin: 2rem auto;"> <!-- +10% -->
         <h3><i class="fas fa-user-plus"></i> <span id="titulo-modal-contacto">Agregar Contacto</span></h3>
         <span class="close" onclick="cerrarModalContacto()">&times;</span>
         <input type="hidden" id="contacto_id" />
@@ -191,7 +191,7 @@
     let contactos = [];
     let contactoEnEdicion = null;
 
-   function validarRut(rut) {
+    function validarRut(rut) {
         if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
         const cuerpo = rut.slice(0, -1);
         const dv = rut.slice(-1).toUpperCase();
@@ -471,6 +471,16 @@
         actualizarTablaContactos();
     }
 
+    // Limpiar formulario si hay éxito
+    const urlParams = new URLSearchParams(window.location.search);
+    const exito = urlParams.get('exito');
+    if (exito) {
+        exito(decodeURIComponent(exito));
+        limpiarFormularioCliente();
+        // Opcional: limpiar URL
+        history.replaceState({}, document.title, '?page=ficha_cliente');
+    }
+
     function cargarContactos(rut) {
         if (!rut) return;
         fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
@@ -505,14 +515,8 @@
         });
     }
 
-    // Modal Contacto
     function abrirModalContacto(index = null) {
-        // Verificar que el modal exista
-        const modal = document.getElementById('modal-contacto');
-        if (!modal) {
-            console.error('Modal de contacto no encontrado');
-            return;
-        }
+        contactoEnEdicion = index;
 
         // Reiniciar campos
         const nomContacto = document.getElementById('nom_contacto');
@@ -520,26 +524,32 @@
         const email = document.getElementById('email');
         const rol = document.getElementById('rol');
         const primario = document.getElementById('primario');
+        const btnGuardar = document.querySelector('#modal-contacto button:last-child');
+        const titulo = document.getElementById('titulo-modal-contacto');
 
         if (nomContacto) nomContacto.value = '';
         if (fonoContacto) fonoContacto.value = '';
         if (email) email.value = '';
         if (rol) rol.value = 'comercial';
         if (primario) primario.value = 'N';
-        document.getElementById('titulo-modal-contacto').textContent = 'Agregar Contacto';
 
-        // Si es edición
-        if (index !== null && Array.isArray(contactos) && contactos[index]) {
+        if (index !== null && contactos[index]) {
+            // ✅ Modo edición
             const c = contactos[index];
             if (nomContacto) nomContacto.value = c.nom_contacto || '';
             if (fonoContacto) fonoContacto.value = c.fono_contacto || '';
             if (email) email.value = c.email || '';
             if (rol) rol.value = c.rol || 'comercial';
             if (primario) primario.value = c.primario || 'N';
-            document.getElementById('titulo-modal-contacto').textContent = 'Editar Contacto';
+            if (btnGuardar) btnGuardar.textContent = 'Editar Contacto';
+            if (titulo) titulo.textContent = 'Editar Contacto';
+        } else {
+            // ✅ Modo creación
+            if (btnGuardar) btnGuardar.textContent = 'Agregar Contacto';
+            if (titulo) titulo.textContent = 'Agregar Contacto';
         }
 
-        modal.style.display = 'block';
+        document.getElementById('modal-contacto').style.display = 'block';
     }
 
     function guardarContacto() {
@@ -549,20 +559,24 @@
         const rutCliente = document.getElementById('cliente_rut').value.trim();
         if (!rutCliente) return error('RUT del cliente no disponible');
 
-        const nuevo = {
+        const contacto = {
             id_contacto: document.getElementById('contacto_id').value || null,
-            rut_cliente: rutCliente, // ←←← ¡Clave!
+            rut_cliente: rutCliente,
             nom_contacto: nombre,
             fono_contacto: document.getElementById('fono_contacto').value,
             email: document.getElementById('email').value,
-            rol: document.getElementById('rol').value,       // ← debe coincidir con BD
-            primario: document.getElementById('primario').value // ← debe coincidir con BD
+            rol: document.getElementById('rol').value,
+            primario: document.getElementById('primario').value
         };
 
         if (contactoEnEdicion !== null) {
-            contactos[contactoEnEdicion] = nuevo;
+            // ✅ UPDATE: reemplazar el contacto existente
+            contactos[contactoEnEdicion] = contacto;
+            exito('Contacto actualizado correctamente');
         } else {
-            contactos.push(nuevo);
+            // ✅ INSERT: agregar nuevo contacto
+            contactos.push(contacto);
+            exito('Contacto agregado correctamente');
         }
 
         actualizarTablaContactos();
