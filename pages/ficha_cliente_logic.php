@@ -27,6 +27,7 @@ function validarRutPHP($rut) {
 
 try {
     $input = json_decode(file_get_contents('php://input'), true);
+    error_log("INPUT RECIBIDO: " . print_r($input, true)); // ←←← LOG DE DEPURACIÓN
     if (!$input || !isset($input['rut'])) {
         throw new Exception('Datos inválidos');
     }
@@ -112,7 +113,7 @@ try {
         }
     }
 
-        $pdo->commit();
+    $pdo->commit();
     echo json_encode(['success' => true, 'message' => 'Ficha cliente guardada ✅']);
     exit;
 
