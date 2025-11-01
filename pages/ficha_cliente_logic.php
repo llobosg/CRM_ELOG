@@ -73,25 +73,19 @@ try {
     $stmt_check->execute([$input['rut']]);
     $cliente_existe = $stmt_check->fetch();
 
-    
-
     if ($cliente_existe) {
         // Actualizar
-        $set = [];
+        $setParts = [];
         $values = [];
         foreach ($data_cliente as $key => $value) {
-            $set[] = "$key = ?";
+            $setParts[] = "$key = ?";
             $values[] = $value;
         }
         $values[] = $input['rut'];
-        $sql = "UPDATE clientes SET " . implode(', ', $set) . " WHERE rut = ?";
+        $sql = "UPDATE clientes SET " . implode(', ', $setParts) . " WHERE rut = ?";
         $pdo->prepare($sql)->execute($values);
     } else {
         // Insertar
-        // === Verificar duplicado en ficha_cliente si es nuevo ===
-        if ($stmt_check->fetch()) {
-            throw new Exception('El RUT ya está registrado en Ficha Cliente');
-        }
         $campos = implode(', ', array_keys($data_cliente));
         $placeholders = str_repeat('?,', count($data_cliente) - 1) . '?';
         $sql = "INSERT INTO clientes ($campos) VALUES ($placeholders)";
