@@ -148,7 +148,7 @@
 
 <!-- Modal Contacto -->
 <div id="modal-contacto" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 800px; margin: 2rem auto;">
+    <div class="modal-content" style="max-width: 880px; margin: 2rem auto;"> <!-- +10% -->
         <h3><i class="fas fa-user-plus"></i> <span id="titulo-modal-contacto">Agregar Contacto</span></h3>
         <span class="close" onclick="cerrarModalContacto()">&times;</span>
         <input type="hidden" id="contacto_id" />
@@ -159,7 +159,7 @@
             <label>Fono</label>
             <input type="text" id="fono_contacto" style="grid-column: span 1;" />
             <label>Email</label>
-            <input type="email" id="email" style="grid-column: span 1;" />
+            <input type="email" id="email" style="grid-column: span 2; width: 100%;" placeholder="ejemplo@dominio.com" />
             
             <!-- Fila 2 -->
             <label>Rol</label>
@@ -545,21 +545,28 @@
     function guardarContacto() {
         const nombre = document.getElementById('nom_contacto').value.trim();
         if (!nombre) return error('Nombre es obligatorio');
+
+        const rutCliente = document.getElementById('cliente_rut').value.trim();
+        if (!rutCliente) return error('RUT del cliente no disponible');
+
         const nuevo = {
-            rut_cliente: document.getElementById('cliente_rut').value,
+            id_contacto: document.getElementById('contacto_id').value || null,
+            rut_cliente: rutCliente, // ←←← ¡Clave!
             nom_contacto: nombre,
             fono_contacto: document.getElementById('fono_contacto').value,
             email: document.getElementById('email').value,
-            rol: document.getElementById('rol').value,
-            primario: document.getElementById('primario').value
-            actualizarTablaContactos();
-            cerrarModalContacto();
+            rol: document.getElementById('rol').value,       // ← debe coincidir con BD
+            primario: document.getElementById('primario').value // ← debe coincidir con BD
         };
+
         if (contactoEnEdicion !== null) {
             contactos[contactoEnEdicion] = nuevo;
         } else {
             contactos.push(nuevo);
         }
+
+        actualizarTablaContactos();
+        cerrarModalContacto();
     }
 
     function editarContacto(index) {
