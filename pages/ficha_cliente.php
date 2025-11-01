@@ -323,8 +323,8 @@
                 sel.innerHTML = '<option value="">Seleccionar comercial</option>';
                 (data.comerciales || []).forEach(c => {
                     const opt = document.createElement('option');
-                    opt.value = c.nombre; // Solo el nombre
-                    opt.textContent = c.nombre;
+                    opt.value = c.nom_contacto; // Solo el nombre
+                    opt.textContent = c.nom_contacto;
                     sel.appendChild(opt);
                 });
             })
@@ -688,7 +688,7 @@
             contactoEnEdicion = index;
             if (index !== null) {
                 const c = contactos[index];
-                document.getElementById('contacto_nombre').value = c.nombre;
+                document.getElementById('contacto_nombre').value = c.nom_contacto;
                 document.getElementById('contacto_rol').value = c.rol;
                 document.getElementById('contacto_primario').value = c.primario;
                 document.getElementById('contacto_fono').value = c.fono || '';
