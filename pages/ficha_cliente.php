@@ -406,22 +406,15 @@
             return;
         }
 
-        // Limpiar el RUT para enviar al backend
+        // Limpiar RUT para enviar al backend
         const rutLimpio = rutMostrado.replace(/\./g, '').replace('-', '').toUpperCase();
-        // Validar longitud mínima
-        if (rutLimpio.length < 8) {
-            error('RUT demasiado corto');
-            return;
-        }
-
-        // Validar nuevamente (por seguridad)
         if (!/^(\d{7,8})([0-9K])$/.test(rutLimpio)) {
             error('RUT inválido');
             return;
         }
 
         const cliente = {
-            rut: rutLimpio, // ←←← ENVÍA EL RUT LIMPIO
+            rut: rutLimpio,
             razon_social: document.getElementById('cliente_razon_social').value,
             nacional_extranjero: document.getElementById('cliente_nacional_extranjero').value,
             pais: document.getElementById('cliente_pais').value,
@@ -441,8 +434,8 @@
             monto_credito: document.getElementById('credito_monto').value,
             contactos: contactos
         };
-        console.log('RUT a enviar:', rutLimpio);
-        fetch('/pages/ficha_cliente_logic.php', {
+
+        fetch('?page=ficha_cliente', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(cliente)
@@ -450,7 +443,10 @@
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                window.exito('Ficha cliente guardada correctamente');
+                exito('Ficha cliente guardada correctamente');
+                limpiarFormularioCliente();
+                // Opcional: redirigir para limpiar parámetros
+                // window.location.href = '?page=ficha_cliente';
             } else {
                 error(data.message || 'Error al guardar');
             }
@@ -577,7 +573,6 @@
         if (!rutCliente) return error('RUT del cliente no disponible');
 
         const contacto = {
-            id_contacto: document.getElementById('contacto_id').value || null,
             rut_cliente: rutCliente,
             nom_contacto: nombre,
             fono_contacto: document.getElementById('fono_contacto').value,
@@ -587,17 +582,18 @@
         };
 
         if (contactoEnEdicion !== null) {
-            // ✅ UPDATE: reemplazar el contacto existente
+            // ✅ Actualizar contacto existente
             contactos[contactoEnEdicion] = contacto;
-            window.exito('Contacto actualizado correctamente, recuerde Guardar Ficha Cliente para aplicar los cambios');
         } else {
-            // ✅ INSERT: agregar nuevo contacto
+            // ✅ Agregar nuevo contacto
             contactos.push(contacto);
-            window.exito('Contacto agregado correctamente, recuerde Guardar Ficha Cliente para aplicar los cambios');
         }
 
+        // ✅ ACTUALIZAR LA TABLA INMEDIATAMENTE
         actualizarTablaContactos();
+
         cerrarModalContacto();
+        exito(contactoEnEdicion !== null ? 'Contacto actualizado' : 'Contacto agregado');
     }
 
     function editarContacto(index) {

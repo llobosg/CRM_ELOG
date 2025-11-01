@@ -71,6 +71,12 @@ if ($safePage === 'prospectos' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/pages/prospectos_logic.php';
     // prospectos_logic.php hace header() + exit → no sigue
 }
+
+// === 6. PROCESAR LÓGICA DE FICHA CLIENTE ===
+if ($safePage === 'ficha_cliente' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/pages/ficha_cliente_logic.php';
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
