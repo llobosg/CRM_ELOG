@@ -64,7 +64,10 @@
                 <label>Fecha Creación</label>
                 <input type="date" id="cliente_fecha_creacion" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;" value="<?= date('Y-m-d') ?>" />
                 <label>Comercial Asignado</label>
-                <input type="text" id="cliente_nombre_comercial" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px;" />
+                <select id="cliente_nombre_comercial" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+                    <option value="">Seleccionar comercial</option>
+                    <!-- Se llenará con JS -->
+                </select>
                 <label>Tipo Vida</label>
                 <select id="cliente_tipo_vida" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
                     <option value="lead">Lead</option>
@@ -335,16 +338,17 @@
     }
 
     function cargarComerciales() {
-        fetch('/api/get_comercial.php')
+        fetch('/api/get_comerciales.php')
             .then(r => r.json())
             .then(data => {
                 const sel = document.getElementById('cliente_nombre_comercial');
                 if (!sel) return;
+                // Incluir opción vacía para "no asignado"
                 sel.innerHTML = '<option value="">Seleccionar comercial</option>';
-                (data.comerciales || []).forEach(c => {
+                (data.comerciales || []).forEach(nombre => {
                     const opt = document.createElement('option');
-                    opt.value = c.nom_contacto; // Solo el nombre
-                    opt.textContent = c.nom_contacto;
+                    opt.value = nombre;
+                    opt.textContent = nombre;
                     sel.appendChild(opt);
                 });
             })
