@@ -685,32 +685,6 @@
                 });
         }
 
-        function abrirModalContacto(index = null) {
-            const rut = document.getElementById('cliente_rut').value;
-            if (!rut) {
-                error('Debe guardar el cliente primero para agregar contactos.');
-                return;
-            }
-            contactoEnEdicion = index;
-            if (index !== null) {
-                const c = contactos[index];
-                document.getElementById('contacto_nombre').value = c.nom_contacto;
-                document.getElementById('contacto_rol').value = c.rol;
-                document.getElementById('contacto_primario').value = c.primario;
-                document.getElementById('contacto_fono').value = c.fono || '';
-                document.getElementById('contacto_email').value = c.email || '';
-                document.getElementById('titulo-modal-contacto').textContent = 'Editar Contacto';
-            } else {
-                document.getElementById('contacto_nombre').value = '';
-                document.getElementById('contacto_rol').value = 'comercial';
-                document.getElementById('contacto_primario').value = 'N';
-                document.getElementById('contacto_fono').value = '';
-                document.getElementById('contacto_email').value = '';
-                document.getElementById('titulo-modal-contacto').textContent = 'Agregar Contacto';
-            }
-            document.getElementById('modal-contacto').style.display = 'block';
-        }
-
         function cerrarModalContacto() {
             document.getElementById('modal-contacto').style.display = 'none';
         }
