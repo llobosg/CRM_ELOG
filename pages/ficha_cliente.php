@@ -196,6 +196,15 @@
     let contactos = [];
     let contactoEnEdicion = null;
 
+    // Funciones globales
+    function cargarPaises() { /* ... */ }
+    function cargarComerciales() { /* ... */ }
+    function abrirModalContacto(index = null) { /* ... */ }
+    function guardarContacto() { /* ... */ }
+    function cargarCliente(cliente) { /* ... */ }
+    function actualizarTablaContactos() { /* ... */ }
+    function limpiarFormularioCliente() { /* ... */ }
+
     function validarRut(rut) {
         if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
         const cuerpo = rut.slice(0, -1);
@@ -435,7 +444,7 @@
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                exito('Ficha cliente guardada correctamente');
+                window.exito('Ficha cliente guardada correctamente');
             } else {
                 error(data.message || 'Error al guardar');
             }
@@ -477,8 +486,7 @@
     }
 
     // Limpiar formulario si hay éxito
-    const urlParams = new URLSearchParams(window.location.search);
-    const exito = urlParams.get('exito');
+    //const urlParams = new URLSearchParams(window.location.search);
     if (exito) {
         exito(decodeURIComponent(exito));
         limpiarFormularioCliente();
@@ -577,11 +585,11 @@
         if (contactoEnEdicion !== null) {
             // ✅ UPDATE: reemplazar el contacto existente
             contactos[contactoEnEdicion] = contacto;
-            exito('Contacto actualizado correctamente');
+            window.exito('Contacto actualizado correctamente');
         } else {
             // ✅ INSERT: agregar nuevo contacto
             contactos.push(contacto);
-            exito('Contacto agregado correctamente');
+            window.exito('Contacto agregado correctamente');
         }
 
         actualizarTablaContactos();
@@ -643,17 +651,17 @@
             setTimeout(() => toast.classList.remove('show'), 5000);
         }
 
-        // 4. Exponer funciones globalmente (¡fuera del conflicto de nombres!)
+        // 4. Exponer funciones globalmente
         window.exito = (msg) => mostrarNotificacion(msg, 'exito');
         window.error = (msg) => mostrarNotificacion(msg, 'error');
         window.warning = (msg) => mostrarNotificacion(msg, 'warning');
         window.info = (msg) => mostrarNotificacion(msg, 'info');
 
-        // 5. Manejar éxito en URL (¡usar nombre de variable diferente!)
+        // 5. Manejar éxito en URL (¡nombre de variable único!)
         const urlParams = new URLSearchParams(window.location.search);
-        const mensajeExito = urlParams.get('exito'); // ✅ Nombre único
+        const mensajeExito = urlParams.get('exito');
         if (mensajeExito) {
-            exito(decodeURIComponent(mensajeExito)); // ✅ Ahora llama a window.exito
+            exito(decodeURIComponent(mensajeExito));
             limpiarFormularioCliente();
             history.replaceState({}, document.title, '?page=ficha_cliente');
         }
