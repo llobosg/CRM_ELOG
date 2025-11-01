@@ -97,17 +97,18 @@ try {
 
     if (!empty($input['contactos'])) {
         $stmt_contacto = $pdo->prepare("
-            INSERT INTO contactos (rut_cliente, nombre, rol, primario, fono, email)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO contactos (
+                rut_cliente, nom_contacto, fono_contacto, email, rol, primario
+            ) VALUES (?, ?, ?, ?, ?, ?)
         ");
         foreach ($input['contactos'] as $c) {
             $stmt_contacto->execute([
-                $input['rut'], // ← este valor se guarda en rut_cliente
-                $c['nombre'] ?? '',
+                $input['rut'],
+                $c['nom_contacto'] ?? '',
+                $c['fono_contacto'] ?? '',
+                $c['email'] ?? '',
                 $c['rol'] ?? 'comercial',
-                $c['primario'] ?? 'N',
-                $c['fono'] ?? '',
-                $c['email'] ?? ''
+                $c['primario'] ?? 'N'
             ]);
         }
     }

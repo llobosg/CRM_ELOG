@@ -148,32 +148,35 @@
 
 <!-- Modal Contacto -->
 <div id="modal-contacto" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 700px; margin: 2rem auto;">
+    <div class="modal-content" style="max-width: 800px; margin: 2rem auto;">
         <h3><i class="fas fa-user-plus"></i> <span id="titulo-modal-contacto">Agregar Contacto</span></h3>
         <span class="close" onclick="cerrarModalContacto()">&times;</span>
         <input type="hidden" id="contacto_id" />
         <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.8rem; margin-top: 1rem;">
+            <!-- Fila 1 -->
             <label>Nombre *</label>
-            <input type="text" id="contacto_nombre" style="grid-column: span 2;" required />
-            <label>Rol *</label>
-            <select id="contacto_rol" style="grid-column: span 2;" required>
-                <option value="Comercial">Comercial</option>
-                <option value="Operaciones">Operaciones</option>
-                <option value="Finanzas">Finanzas</option>
+            <input type="text" id="nom_contacto" style="grid-column: span 1;" required />
+            <label>Fono</label>
+            <input type="text" id="fono_contacto" style="grid-column: span 1;" />
+            <label>Email</label>
+            <input type="email" id="email" style="grid-column: span 1;" />
+            
+            <!-- Fila 2 -->
+            <label>Rol</label>
+            <select id="rol" style="grid-column: span 1;">
+                <option value="comercial">Comercial</option>
+                <option value="operaciones">Operaciones</option>
+                <option value="finanzas">Finanzas</option>
                 <option value="GG">GG</option>
-                <option value="Dueño">Dueño</option>
-                <option value="Admin y Finanzas">Admin y Finanzas</option>
-                <option value="Encargado Comex">Encargado Comex</option>
+                <option value="dueño">Dueño</option>
+                <option value="admin y finanzas">Admin y Finanzas</option>
+                <option value="encargado comex">Encargado Comex</option>
             </select>
             <label>Primario</label>
-            <select id="contacto_primario" style="width: 100%;">
+            <select id="primario" style="grid-column: span 1;">
                 <option value="N">No</option>
                 <option value="S">Sí</option>
             </select>
-            <label>Fono</label>
-            <input type="text" id="contacto_fono" style="width: 100%;" />
-            <label>Email</label>
-            <input type="email" id="contacto_email" style="grid-column: span 2;" />
         </div>
         <div style="text-align: right; margin-top: 1.5rem;">
             <button type="button" class="btn-secondary" onclick="cerrarModalContacto()">Volver</button>
@@ -484,15 +487,14 @@
 
     function actualizarTablaContactos() {
         const tbody = document.getElementById('contactos-body');
-        if (!tbody) return;
         tbody.innerHTML = '';
         contactos.forEach((c, i) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${c.nombre || ''}</td>
-                <td>${c.rol || ''}</td>
+                <td>${c.nom_contacto}</td>
+                <td>${c.rol}</td>
                 <td>${c.primario === 'S' ? '✅' : ''}</td>
-                <td>${c.fono || ''}</td>
+                <td>${c.fono_contacto || ''}</td>
                 <td>${c.email || ''}</td>
                 <td>
                     <button type="button" onclick="editarContacto(${i})">✏️</button>
@@ -500,25 +502,62 @@
                 </td>
             `;
             tbody.appendChild(tr);
-        });ce
+        });
     }
 
-    function abrirModalContacto() {
-        const rut = document.getElementById('cliente_rut').value.trim();
-        if (!rut) {
-            error('Debe seleccionar o crear un cliente primero para agregar contactos.');
-            return;
+    function abrirModalContacto(index = null) {
+        contactoEnEdicion = index;
+        if (index !== null) {
+            const c = contactos[index];
+            document.getElementById('contacto_id').value = c.id_contacto || '';
+            document.getElementById('nom_contacto').value = c.nom_contacto || '';
+            document.getElementById('fono_contacto').value = c.fono_contacto || '';
+            document.getElementById('email').value = c.email || '';
+            document.getElementById('rol').value = c.rol || 'comercial';
+            document.getElementById('primario').value = c.primario || 'N';
+            document.getElementById('titulo-modal-contacto').textContent = 'Editar Contacto';
+        } else {
+            document.getElementById('contacto_id').value = '';
+            document.getElementById('nom_contacto').value = '';
+            document.getElementById('fono_contacto').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('rol').value = 'comercial';
+            document.getElementById('primario').value = 'N';
+            document.getElementById('titulo-modal-contacto').textContent = 'Agregar Contacto';
         }
-        // Reiniciar formulario del modal
-        document.getElementById('contacto_id').value = '';
-        document.getElementById('contacto_nombre').value = '';
-        document.getElementById('contacto_rol').value = 'comercial';
-        document.getElementById('contacto_primario').value = 'N';
-        document.getElementById('contacto_fono').value = '';
-        document.getElementById('contacto_email').value = '';
-        document.getElementById('titulo-modal-contacto').textContent = 'Agregar Contacto';
-        contactoEnEdicion = null;
         document.getElementById('modal-contacto').style.display = 'block';
+    }
+
+    function guardarContacto() {
+        const nombre = document.getElementById('nom_contacto').value.trim();
+        if (!nombre) return error('Nombre es obligatorio');
+        const nuevo = {
+            id_contacto: document.getElementById('contacto_id').value || null,
+            rut_cliente: document.getElementById('cliente_rut').value,
+            nom_contacto: nombre,
+            fono_contacto: document.getElementById('fono_contacto').value,
+            email: document.getElementById('email').value,
+            rol: document.getElementById('rol').value,
+            primario: document.getElementById('primario').value
+        };
+        if (contactoEnEdicion !== null) {
+            contactos[contactoEnEdicion] = nuevo;
+        } else {
+            contactos.push(nuevo);
+        }
+        actualizarTablaContactos();
+        cerrarModalContacto();
+    }
+
+    function editarContacto(index) {
+        abrirModalContacto(index);
+    }
+
+    function eliminarContacto(index) {
+        if (confirm('¿Eliminar contacto?')) {
+                contactos.splice(index, 1);
+                actualizarTablaContactos();
+        }
     }
 
     // ===================================================================
@@ -673,38 +712,6 @@
 
         function cerrarModalContacto() {
             document.getElementById('modal-contacto').style.display = 'none';
-        }
-
-        function guardarContacto() {
-            const nombre = document.getElementById('contacto_nombre').value.trim();
-            if (!nombre) return alert('Nombre es obligatorio');
-            const nuevo = {
-                id_contacto: document.getElementById('contacto_id').value || null,
-                rut_cliente: document.getElementById('rut').value,
-                nombre: nombre,
-                rol: document.getElementById('contacto_rol').value,
-                primario: document.getElementById('contacto_primario').value,
-                fono: document.getElementById('contacto_fono').value,
-                email: document.getElementById('contacto_email').value
-            };
-            if (contactoEnEdicion !== null) {
-                contactos[contactoEnEdicion] = nuevo;
-            } else {
-                contactos.push(nuevo);
-            }
-            actualizarTablaContactos();
-            cerrarModalContacto();
-        }
-
-        function editarContacto(index) {
-            abrirModalContacto(index);
-        }
-
-        function eliminarContacto(index) {
-            if (confirm('¿Eliminar contacto?')) {
-                contactos.splice(index, 1);
-                actualizarTablaContactos();
-            }
         }
     });
 </script>
