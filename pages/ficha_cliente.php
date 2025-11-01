@@ -185,7 +185,7 @@
     </div>
 </div>
 <!-- =================================================================== --->
-<!-- === INICIALIZACIÓN AL CARGAR LA PÁGINA === -->
+<!-- ============== INICIALIZACIÓN AL CARGAR LA PÁGINA ================= -->
 <!-- =================================================================== -->
 <script>
     let contactos = [];
@@ -505,6 +505,7 @@
         });
     }
 
+    // Modal Contacto
     function abrirModalContacto(index = null) {
         // Verificar que el modal exista
         const modal = document.getElementById('modal-contacto');
