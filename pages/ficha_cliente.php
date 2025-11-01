@@ -159,7 +159,7 @@
             <label>Fono</label>
             <input type="text" id="fono_contacto" style="grid-column: span 1;" />
             <label>Email</label>
-            <input type="email" id="email" style="grid-column: span 2; width: 100%;" placeholder="ejemplo@dominio.com" />
+            <input type="email" id="email" style="grid-column: span 2; width: 80%;" placeholder="ejemplo@dominio.com" />
             
             <!-- Fila 2 -->
             <label>Rol</label>
@@ -602,21 +602,21 @@
     // === INICIALIZACIÓN AL CARGAR LA PÁGINA ===
     // ===================================================================
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Cargar listas iniciales
         cargarPaises();
         cargarComerciales();
 
         const toast = document.getElementById('toast');
         const msgElement = document.getElementById('toast-message');
 
+        document.getElementById('btn-agregar-contacto')?.addEventListener('click', abrirModalContacto);
+        document.getElementById('btn-guardar-ficha')?.addEventListener('click', guardarCliente);
+
         // Mostrar notificación y limpiar formulario si fue exitoso
         const urlParams = new URLSearchParams(window.location.search);
-        const exito = urlParams.get('exito');
-        if (exito) {
-            exito(decodeURIComponent(exito));
-            // Limpiar formulario
+        const mensajeExito = urlParams.get('exito'); // ✅ Nombre único
+        if (mensajeExito) {
+            exito(decodeURIComponent(mensajeExito)); // ✅ Ahora llama a la función global
             limpiarFormularioCliente();
-            // Opcional: actualizar URL sin parámetros
             history.replaceState({}, document.title, '?page=ficha_cliente');
         }
 
@@ -656,7 +656,6 @@
             this.value = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
         });
 
-        // 2. Inicializar búsqueda inteligente
         // Búsqueda inteligente con logs detallados
         document.getElementById('busqueda-cliente')?.addEventListener('input', async function() {
             const term = this.value.trim();
@@ -700,9 +699,6 @@
                 error('❌ Error en búsqueda inteligente:', e);
             }
         });
-
-        document.getElementById('btn-agregar-contacto')?.addEventListener('click', abrirModalContacto);
-        document.getElementById('btn-guardar-ficha')?.addEventListener('click', guardarCliente);
 
         function cargarContactos(rut) {
             fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
