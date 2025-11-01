@@ -148,7 +148,7 @@
 
 <!-- Modal Contacto -->
 <div id="modal-contacto" class="modal" style="display:none;">
-  <div class="modal-content" style="max-width: 980px; margin: 2rem auto;"> <!-- + ancho -->
+  <div class="modal-content" style="max-width: 1200px; margin: 2rem auto;"> <!-- + ancho -->
     <h3><i class="fas fa-user-plus"></i> <span id="titulo-modal-contacto">Agregar Contacto</span></h3>
     <span class="close" onclick="cerrarModalContacto()">&times;</span>
     <input type="hidden" id="contacto_id" />
@@ -487,8 +487,8 @@
 
     // Limpiar formulario si hay éxito
     //const urlParams = new URLSearchParams(window.location.search);
-    if (exito) {
-        exito(decodeURIComponent(exito));
+    if (mensajeExito) {
+        exito(decodeURIComponent(mensajeExito));
         limpiarFormularioCliente();
         // Opcional: limpiar URL
         history.replaceState({}, document.title, '?page=ficha_cliente');
