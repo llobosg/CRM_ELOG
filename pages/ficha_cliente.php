@@ -17,7 +17,13 @@
 
         <!-- ========== DATOS DEL CLIENTE ========== -->
         <div class="card" style="margin-bottom: 2rem;">
-            <h3><i class="fas fa-user"></i> Datos del Cliente</h3>
+            <h3>
+                <i class="fas fa-user"></i> Datos del Cliente
+                <button type="button" onclick="confirmarLimpiarFormulario()" 
+                        style="float: right; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
+                    &times;
+                </button>
+            </h3>
 
             <!-- Fila 1 -->
             <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; align-items: center; margin-bottom: 1rem;">
@@ -119,7 +125,7 @@
                 <label>Saldo</label>
                 <input type="number" id="credito_saldo" step="0.01" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa;" />
                 <div style="grid-column: span 2; text-align: right;">
-                    <button type="button" id="btn-guardar-ficha" class="btn-primary" style="padding: 0.6rem 1.2rem;">
+                    <button type="button" class="btn-primary" onclick="guardarCliente()">
                         Guardar Ficha Cliente
                     </button>
                 </div>
@@ -485,6 +491,13 @@
         actualizarTablaContactos();
     }
 
+    function confirmarLimpiarFormulario() {
+        if (confirm('¿Desea limpiar todos los datos del formulario? Se perderán los cambios no guardados.')) {
+            limpiarFormularioCliente();
+            exito('Formulario limpiado');
+        }
+    }
+
     function cargarContactos(rut) {
         if (!rut) return;
         fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
@@ -545,8 +558,8 @@
             if (email) email.value = c.email || '';
             if (rol) rol.value = c.rol || 'comercial';
             if (primario) primario.value = c.primario || 'N';
-            if (btnGuardar) btnGuardar.textContent = 'Editar Contacto';
-            if (titulo) titulo.textContent = 'Editar Contacto';
+            if (btnGuardar) btnGuardar.textContent = 'Actualizar Contacto';
+            if (titulo) titulo.textContent = 'Actualizar Contacto';
         } else {
             // ✅ Modo creación
             if (btnGuardar) btnGuardar.textContent = 'Agregar Contacto';
@@ -576,11 +589,11 @@
         if (contactoEnEdicion !== null) {
             // ✅ UPDATE: reemplazar el contacto existente
             contactos[contactoEnEdicion] = contacto;
-            window.exito('Contacto actualizado correctamente');
+            window.exito('Contacto actualizado correctamente, recuerde Guardar Ficha Cliente para aplicar los cambios');
         } else {
             // ✅ INSERT: agregar nuevo contacto
             contactos.push(contacto);
-            window.exito('Contacto agregado correctamente');
+            window.exito('Contacto agregado correctamente, recuerde Guardar Ficha Cliente para aplicar los cambios');
         }
 
         actualizarTablaContactos();
@@ -663,7 +676,7 @@
             if (!rut) return;
             rut = rut.replace(/\./g, '').replace('-', '');
             if (!/^(\d{7,8})([0-9K])$/.test(rut)) {
-                error('RUT inválido: formato incorrecto');
+                window.error('RUT inválido: formato incorrecto');
                 this.value = '';
                 return;
             }
@@ -677,7 +690,7 @@
             const dvEsperado = (11 - (suma % 11)).toString();
             const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
             if (dv !== dvCalculado) {
-                error('RUT inválido: dígito verificador incorrecto');
+                window.error('RUT inválido: dígito verificador incorrecto');
                 this.value = '';
                 return;
             }
@@ -711,7 +724,7 @@
                     div.style.display = 'block';
                 }
             } catch (e) {
-                error('Error en búsqueda inteligente');
+                window.error('Error en búsqueda inteligente');
             }
         });
 
