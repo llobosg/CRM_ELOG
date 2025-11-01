@@ -506,24 +506,33 @@
     }
 
     function abrirModalContacto(index = null) {
-        contactoEnEdicion = index;
-        if (index !== null) {
-            const c = contactos[index];
-            document.getElementById('nom_contacto').value = c.nom_contacto || '';
-            document.getElementById('fono_contacto').value = c.fono_contacto || '';
-            document.getElementById('email').value = c.email || '';
-            document.getElementById('rol').value = c.rol || 'comercial';
-            document.getElementById('primario').value = c.primario || 'N';
-            document.getElementById('titulo-modal-contacto').textContent = 'Editar Contacto';
-        } else {
-            document.getElementById('nom_contacto').value = '';
-            document.getElementById('fono_contacto').value = '';
-            document.getElementById('email').value = '';
-            document.getElementById('rol').value = 'comercial';
-            document.getElementById('primario').value = 'N';
-            document.getElementById('titulo-modal-contacto').textContent = 'Agregar Contacto';
+        // Verificar que el modal exista
+        const modal = document.getElementById('modal-contacto');
+        if (!modal) {
+            console.error('Modal de contacto no encontrado');
+            return;
         }
-        document.getElementById('modal-contacto').style.display = 'block';
+
+        // Reiniciar campos
+        document.getElementById('nom_contacto')?.value = '';
+        document.getElementById('fono_contacto')?.value = '';
+        document.getElementById('email')?.value = '';
+        document.getElementById('rol')?.value = 'comercial';
+        document.getElementById('primario')?.value = 'N';
+        document.getElementById('titulo-modal-contacto').textContent = 'Agregar Contacto';
+
+        // Si es edición
+        if (index !== null && Array.isArray(contactos) && contactos[index]) {
+            const c = contactos[index];
+            document.getElementById('nom_contacto')?.value = c.nom_contacto || '';
+            document.getElementById('fono_contacto')?.value = c.fono_contacto || '';
+            document.getElementById('email')?.value = c.email || '';
+            document.getElementById('rol')?.value = c.rol || 'comercial';
+            document.getElementById('primario')?.value = c.primario || 'N';
+            document.getElementById('titulo-modal-contacto').textContent = 'Editar Contacto';
+        }
+
+        modal.style.display = 'block';
     }
 
     function guardarContacto() {
@@ -655,16 +664,6 @@
             } catch (e) {
                 error('❌ Error en búsqueda inteligente:', e);
             }
-        });
-
-        // 3. Listeners de botones
-        document.getElementById('btn-agregar-contacto')?.addEventListener('click', function() {
-            const rut = document.getElementById('cliente_rut').value;
-            if (!rut) {
-                error('Debe seleccionar o crear un cliente primero.');
-                return;
-            }
-            abrirModalContacto();
         });
 
         document.getElementById('btn-agregar-contacto')?.addEventListener('click', abrirModalContacto);
