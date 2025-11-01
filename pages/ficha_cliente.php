@@ -148,41 +148,46 @@
 
 <!-- Modal Contacto -->
 <div id="modal-contacto" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 920px; margin: 2rem auto;"> <!-- +10% -->
-        <h3><i class="fas fa-user-plus"></i> <span id="titulo-modal-contacto">Agregar Contacto</span></h3>
-        <span class="close" onclick="cerrarModalContacto()">&times;</span>
-        <input type="hidden" id="contacto_id" />
-        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.8rem; margin-top: 1rem;">
-            <!-- Fila 1 -->
-            <label>Nombre *</label>
-            <input type="text" id="nom_contacto" style="grid-column: span 1;" required />
-            <label>Fono</label>
-            <input type="text" id="fono_contacto" style="grid-column: span 1;" />
-            <label>Email</label>
-            <input type="email" id="email" style="grid-column: span 2; width: 80%;" placeholder="ejemplo@dominio.com" />
-            
-            <!-- Fila 2 -->
-            <label>Rol</label>
-            <select id="rol" style="grid-column: span 1;">
-                <option value="comercial">Comercial</option>
-                <option value="operaciones">Operaciones</option>
-                <option value="finanzas">Finanzas</option>
-                <option value="GG">GG</option>
-                <option value="dueño">Dueño</option>
-                <option value="admin y finanzas">Admin y Finanzas</option>
-                <option value="encargado comex">Encargado Comex</option>
-            </select>
-            <label>Primario</label>
-            <select id="primario" style="grid-column: span 1;">
-                <option value="N">No</option>
-                <option value="S">Sí</option>
-            </select>
-        </div>
-        <div style="text-align: right; margin-top: 1.5rem;">
-            <button type="button" class="btn-secondary" onclick="cerrarModalContacto()">Volver</button>
-            <button type="button" class="btn-add" onclick="guardarContacto()">Agregar Contacto</button>
-        </div>
+  <div class="modal-content" style="max-width: 980px; margin: 2rem auto;"> <!-- + ancho -->
+    <h3><i class="fas fa-user-plus"></i> <span id="titulo-modal-contacto">Agregar Contacto</span></h3>
+    <span class="close" onclick="cerrarModalContacto()">&times;</span>
+    <input type="hidden" id="contacto_id" />
+
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.8rem; margin-top: 1rem;">
+      <!-- Fila 1 -->
+      <label>Nombre *</label>
+      <input type="text" id="nom_contacto" style="grid-column: span 1;" required />
+
+      <label>Fono</label>
+      <input type="text" id="fono_contacto" style="grid-column: span 1;" />
+
+      <label>Email</label>
+      <input type="email" id="email" style="grid-column: span 2;" placeholder="ejemplo@dominio.com" />
+
+      <!-- Fila 2 -->
+      <label>Rol</label>
+      <select id="rol" style="grid-column: span 1;">
+        <option value="comercial">Comercial</option>
+        <option value="operaciones">Operaciones</option>
+        <option value="finanzas">Finanzas</option>
+        <option value="GG">GG</option>
+        <option value="dueño">Dueño</option>
+        <option value="admin y finanzas">Admin y Finanzas</option>
+        <option value="encargado comex">Encargado Comex</option>
+      </select>
+
+      <label>Primario</label>
+      <select id="primario" style="grid-column: span 1;">
+        <option value="N">No</option>
+        <option value="S">Sí</option>
+      </select>
     </div>
+
+    <div style="text-align: right; margin-top: 1.5rem;">
+      <button type="button" class="btn-secondary" onclick="cerrarModalContacto()">Volver</button>
+      <button type="button" class="btn-add" onclick="guardarContacto()">Agregar Contacto</button>
+    </div>
+  </div>
 </div>
 <!-- =================================================================== --->
 <!-- ============== INICIALIZACIÓN AL CARGAR LA PÁGINA ================= -->
@@ -602,40 +607,67 @@
     // === INICIALIZACIÓN AL CARGAR LA PÁGINA ===
     // ===================================================================
     document.addEventListener('DOMContentLoaded', function() {
+        // 1. Cargar listas iniciales
         cargarPaises();
         cargarComerciales();
 
+        // 2. Referencias a elementos de notificación
         const toast = document.getElementById('toast');
         const msgElement = document.getElementById('toast-message');
 
-        document.getElementById('btn-agregar-contacto')?.addEventListener('click', abrirModalContacto);
-        document.getElementById('btn-guardar-ficha')?.addEventListener('click', guardarCliente);
+        // 3. Función local para mostrar notificaciones
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            if (!toast || !msgElement) return;
+            msgElement.textContent = mensaje;
+            toast.className = 'toast';
+            let icono = 'fa-info-circle';
+            switch (tipo) {
+                case 'exito': 
+                    toast.classList.add('success'); 
+                    icono = 'fa-check-circle'; 
+                    break;
+                case 'error': 
+                    toast.classList.add('error'); 
+                    icono = 'fa-times-circle'; 
+                    break;
+                case 'warning': 
+                    toast.classList.add('warning'); 
+                    icono = 'fa-exclamation-triangle'; 
+                    break;
+                default: 
+                    toast.classList.add('info');
+            }
+            const iconElement = toast.querySelector('i');
+            if (iconElement) iconElement.className = `fas ${icono}`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 5000);
+        }
 
-        // Mostrar notificación y limpiar formulario si fue exitoso
+        // 4. Exponer funciones globalmente (¡fuera del conflicto de nombres!)
+        window.exito = (msg) => mostrarNotificacion(msg, 'exito');
+        window.error = (msg) => mostrarNotificacion(msg, 'error');
+        window.warning = (msg) => mostrarNotificacion(msg, 'warning');
+        window.info = (msg) => mostrarNotificacion(msg, 'info');
+
+        // 5. Manejar éxito en URL (¡usar nombre de variable diferente!)
         const urlParams = new URLSearchParams(window.location.search);
         const mensajeExito = urlParams.get('exito'); // ✅ Nombre único
         if (mensajeExito) {
-            exito(decodeURIComponent(mensajeExito)); // ✅ Ahora llama a la función global
+            exito(decodeURIComponent(mensajeExito)); // ✅ Ahora llama a window.exito
             limpiarFormularioCliente();
             history.replaceState({}, document.title, '?page=ficha_cliente');
         }
 
-        // Formatear RUT al perder foco
+        // 6. Validación de RUT en blur
         document.getElementById('cliente_rut')?.addEventListener('blur', function() {
             let rut = this.value.trim().toUpperCase();
             if (!rut) return;
-
-            // Limpiar formato previo
             rut = rut.replace(/\./g, '').replace('-', '');
-
-            // Validar estructura básica
             if (!/^(\d{7,8})([0-9K])$/.test(rut)) {
                 error('RUT inválido: formato incorrecto');
                 this.value = '';
                 return;
             }
-
-            // Validar dígito verificador
             const cuerpo = rut.slice(0, -1);
             const dv = rut.slice(-1);
             let suma = 0, multiplo = 2;
@@ -645,37 +677,24 @@
             }
             const dvEsperado = (11 - (suma % 11)).toString();
             const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
-
             if (dv !== dvCalculado) {
                 error('RUT inválido: dígito verificador incorrecto');
                 this.value = '';
                 return;
             }
-
-            // Formatear para mostrar
             this.value = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
         });
 
-        // Búsqueda inteligente con logs detallados
+        // 7. Búsqueda inteligente
         document.getElementById('busqueda-cliente')?.addEventListener('input', async function() {
             const term = this.value.trim();
             const div = document.getElementById('resultados-busqueda-cliente');
             div.style.display = 'none';
             if (!term) return;
-
-            console.log('🔍 Buscando cliente con término:', term);
-
             try {
                 const res = await fetch(`/api/buscar_cliente_inteligente.php?term=${encodeURIComponent(term)}`);
-                console.log('📡 Respuesta HTTP:', res.status, res.statusText);
-
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 const data = await res.json();
-                console.log('📦 JSON recibido de la API:', data);
-
                 div.innerHTML = '';
                 if (data.length > 0) {
                     data.forEach(c => {
@@ -684,62 +703,32 @@
                         d.style.cursor = 'pointer';
                         d.innerHTML = `<strong>${c.razon_social || 'Sin razón social'}</strong><br><small>RUT: ${c.rut || 'N/A'} | Giro: ${c.giro || ''}</small>`;
                         d.onclick = () => {
-                            console.log('✅ Cliente seleccionado:', c);
-                            div.style.display = 'none'; // ←←← Cerrar primero
+                            div.style.display = 'none';
                             this.value = '';
-                            cargarCliente(c); // ←←← Luego cargar
+                            cargarCliente(c);
                         };
                         div.appendChild(d);
                     });
                     div.style.display = 'block';
-                } else {
-                    error('ℹ️ No se encontraron clientes para el término:', term);
                 }
             } catch (e) {
-                error('❌ Error en búsqueda inteligente:', e);
+                error('Error en búsqueda inteligente');
             }
         });
 
+        // 8. Listeners de botones
+        document.getElementById('btn-agregar-contacto')?.addEventListener('click', abrirModalContacto);
+        document.getElementById('btn-guardar-ficha')?.addEventListener('click', guardarCliente);
+
+        // 9. Función para cargar contactos (si es necesaria aquí)
         function cargarContactos(rut) {
             fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
                 .then(r => r.json())
                 .then(data => {
                     contactos = data.contactos || [];
                     actualizarTablaContactos();
-                });
+                })
+                .catch(err => error('Error al cargar contactos'));
         }
-
-        function mostrarNotificacion(mensaje, tipo = 'info') {
-        if (!toast || !msgElement) return;
-        msgElement.textContent = mensaje;
-        toast.className = 'toast';
-        let icono = 'fa-info-circle';
-        switch (tipo) {
-            case 'exito': 
-                toast.classList.add('success'); 
-                icono = 'fa-check-circle'; 
-                break;
-            case 'error': 
-                toast.classList.add('error'); 
-                icono = 'fa-times-circle'; 
-                break;
-            case 'warning': 
-                toast.classList.add('warning'); 
-                icono = 'fa-exclamation-triangle'; 
-                break;
-            default: 
-                toast.classList.add('info');
-        }
-        const iconElement = toast.querySelector('i');
-        if (iconElement) iconElement.className = `fas ${icono}`;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 5000);
-    }
-
-    // Exponer funciones globalmente
-    window.exito = (msg) => mostrarNotificacion(msg, 'exito');
-    window.error = (msg) => mostrarNotificacion(msg, 'error');
-    window.warning = (msg) => mostrarNotificacion(msg, 'warning');
-    window.info = (msg) => mostrarNotificacion(msg, 'info');
     });
 </script>
