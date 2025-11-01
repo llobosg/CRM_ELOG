@@ -552,19 +552,23 @@
             email: document.getElementById('email').value,
             rol: document.getElementById('rol').value,
             primario: document.getElementById('primario').value
+            actualizarTablaContactos();
+            cerrarModalContacto();
         };
         if (contactoEnEdicion !== null) {
             contactos[contactoEnEdicion] = nuevo;
         } else {
             contactos.push(nuevo);
         }
-        actualizarTablaContactos();
-        cerrarModalContacto();
     }
 
     function editarContacto(index) {
         abrirModalContacto(index);
     }
+
+    function cerrarModalContacto() {
+            document.getElementById('modal-contacto').style.display = 'none';
+        }
 
     function eliminarContacto(index) {
         if (confirm('¿Eliminar contacto?')) {
@@ -683,10 +687,6 @@
                     contactos = data.contactos || [];
                     actualizarTablaContactos();
                 });
-        }
-
-        function cerrarModalContacto() {
-            document.getElementById('modal-contacto').style.display = 'none';
         }
     });
 </script>
