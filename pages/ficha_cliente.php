@@ -509,7 +509,6 @@
         contactoEnEdicion = index;
         if (index !== null) {
             const c = contactos[index];
-            document.getElementById('contacto_id').value = c.id_contacto || '';
             document.getElementById('nom_contacto').value = c.nom_contacto || '';
             document.getElementById('fono_contacto').value = c.fono_contacto || '';
             document.getElementById('email').value = c.email || '';
@@ -517,7 +516,6 @@
             document.getElementById('primario').value = c.primario || 'N';
             document.getElementById('titulo-modal-contacto').textContent = 'Editar Contacto';
         } else {
-            document.getElementById('contacto_id').value = '';
             document.getElementById('nom_contacto').value = '';
             document.getElementById('fono_contacto').value = '';
             document.getElementById('email').value = '';
@@ -532,7 +530,6 @@
         const nombre = document.getElementById('nom_contacto').value.trim();
         if (!nombre) return error('Nombre es obligatorio');
         const nuevo = {
-            id_contacto: document.getElementById('contacto_id').value || null,
             rut_cliente: document.getElementById('cliente_rut').value,
             nom_contacto: nombre,
             fono_contacto: document.getElementById('fono_contacto').value,
@@ -691,7 +688,6 @@
             contactoEnEdicion = index;
             if (index !== null) {
                 const c = contactos[index];
-                document.getElementById('contacto_id').value = c.id_contacto || '';
                 document.getElementById('contacto_nombre').value = c.nombre;
                 document.getElementById('contacto_rol').value = c.rol;
                 document.getElementById('contacto_primario').value = c.primario;
@@ -699,7 +695,6 @@
                 document.getElementById('contacto_email').value = c.email || '';
                 document.getElementById('titulo-modal-contacto').textContent = 'Editar Contacto';
             } else {
-                document.getElementById('contacto_id').value = '';
                 document.getElementById('contacto_nombre').value = '';
                 document.getElementById('contacto_rol').value = 'comercial';
                 document.getElementById('contacto_primario').value = 'N';
