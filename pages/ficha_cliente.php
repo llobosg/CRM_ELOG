@@ -514,11 +514,17 @@
         }
 
         // Reiniciar campos
-        document.getElementById('nom_contacto')?.value = '';
-        document.getElementById('fono_contacto')?.value = '';
-        document.getElementById('email')?.value = '';
-        document.getElementById('rol')?.value = 'comercial';
-        document.getElementById('primario')?.value = 'N';
+        const nomContacto = document.getElementById('nom_contacto');
+        const fonoContacto = document.getElementById('fono_contacto');
+        const email = document.getElementById('email');
+        const rol = document.getElementById('rol');
+        const primario = document.getElementById('primario');
+
+        if (nomContacto) nomContacto.value = '';
+        if (fonoContacto) fonoContacto.value = '';
+        if (email) email.value = '';
+        if (rol) rol.value = 'comercial';
+        if (primario) primario.value = 'N';
         document.getElementById('titulo-modal-contacto').textContent = 'Agregar Contacto';
 
         // Si es edición
