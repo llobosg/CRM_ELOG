@@ -606,6 +606,9 @@
         cargarPaises();
         cargarComerciales();
 
+        const toast = document.getElementById('toast');
+        const msgElement = document.getElementById('toast-message');
+
         // Mostrar notificación y limpiar formulario si fue exitoso
         const urlParams = new URLSearchParams(window.location.search);
         const exito = urlParams.get('exito');
@@ -709,5 +712,38 @@
                     actualizarTablaContactos();
                 });
         }
+
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+        if (!toast || !msgElement) return;
+        msgElement.textContent = mensaje;
+        toast.className = 'toast';
+        let icono = 'fa-info-circle';
+        switch (tipo) {
+            case 'exito': 
+                toast.classList.add('success'); 
+                icono = 'fa-check-circle'; 
+                break;
+            case 'error': 
+                toast.classList.add('error'); 
+                icono = 'fa-times-circle'; 
+                break;
+            case 'warning': 
+                toast.classList.add('warning'); 
+                icono = 'fa-exclamation-triangle'; 
+                break;
+            default: 
+                toast.classList.add('info');
+        }
+        const iconElement = toast.querySelector('i');
+        if (iconElement) iconElement.className = `fas ${icono}`;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 5000);
+    }
+
+    // Exponer funciones globalmente
+    window.exito = (msg) => mostrarNotificacion(msg, 'exito');
+    window.error = (msg) => mostrarNotificacion(msg, 'error');
+    window.warning = (msg) => mostrarNotificacion(msg, 'warning');
+    window.info = (msg) => mostrarNotificacion(msg, 'info');
     });
 </script>
