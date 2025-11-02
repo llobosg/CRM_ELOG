@@ -29,20 +29,20 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <select name="razon_social_select" id="razon_social_select" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
                 <option value="">Seleccionar cliente</option>
             </select>
-            <label>RUT Empresa</label>
+            <label>RUT Empresa *</label>
             <input type="text" name="rut_empresa" id="rut_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Teléfono</label>
             <input type="tel" name="fono_empresa" id="fono_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Fecha</label>
             <input type="date" name="fecha_alta" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" value="<?= date('Y-m-d') ?>" />
         </div>
+
+        <!-- Fila 2: País y Dirección (readonly) -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>País</label>
-            <select name="pais" id="pais" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
-                <option value="">Seleccionar país</option>
-            </select>
+            <input type="text" name="pais" id="pais" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Dirección</label>
-            <input type="text" name="direccion" id="direccion" style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="direccion" id="direccion" readonly style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Estado</label>
             <select name="estado" id="estado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
                 <option value="Pendiente">Pendiente</option>
@@ -67,8 +67,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <input type="text" name="booking" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
-            <label>Comercial ID</label>
-            <input type="number" name="id_comercial" id="id_comercial" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <!--<label>Comercial ID</label>-->
+            <!--<input type="number" name="id_comercial" id="id_comercial" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />  -->
             <label>Nombre</label>
             <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
         </div>
@@ -385,12 +385,47 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 sel.innerHTML = '<option value="">Seleccionar cliente</option>';
                 (data.clientes || []).forEach(c => {
                     const opt = document.createElement('option');
-                    opt.value = c.rut; // ← valor = RUT
-                    opt.textContent = c.razon_social; // ← texto = Razón Social
+                    opt.value = c.rut; // valor = RUT
+                    opt.textContent = c.razon_social; // texto = Razón Social
                     sel.appendChild(opt);
                 });
             });
     }
+
+    // Listener para cargar datos al seleccionar cliente
+    document.getElementById('razon_social_select')?.addEventListener('change', function() {
+        const rut = this.value;
+        if (!rut) {
+            // Limpiar todos los campos
+            document.getElementById('rut_empresa').value = '';
+            document.getElementById('fono_empresa').value = '';
+            document.getElementById('pais').value = '';
+            document.getElementById('direccion').value = '';
+            document.getElementById('nombre').value = '';
+            return;
+        }
+
+        // Cargar datos del cliente
+        fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.existe) {
+                    const c = data.cliente;
+                    document.getElementById('rut_empresa').value = c.rut || '';
+                    document.getElementById('pais').value = c.pais || '';
+                    document.getElementById('direccion').value = c.direccion || '';
+                    document.getElementById('nombre').value = c.nombre_comercial || ''; // comercial asignado
+
+                    // Cargar teléfono del contacto primario
+                    fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
+                        .then(r2 => r2.json())
+                        .then(data2 => {
+                            const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
+                            document.getElementById('fono_empresa').value = primario?.fono || '';
+                        });
+                }
+            });
+    });
 
     // ===================================================================
     // === 2. FUNCIONES AUXILIARES ===
@@ -1293,43 +1328,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
         cargarOperacionesYTipos();
         cargarClientesEnSelect(); // ←←← CARGAR CLIENTES AL INICIAR
 
-        // Listener para cargar datos del cliente al seleccionar Razón Social
-        document.getElementById('razon_social_select')?.addEventListener('change', function() {
-            const rut = this.value; // ← RUT del cliente seleccionado
-            if (!rut) {
-                // Limpiar campos si se deselecciona
-                document.getElementById('rut_empresa').value = '';
-                document.getElementById('fono_empresa').value = '';
-                document.querySelector('[name="razon_social"]').value = '';
-                document.querySelector('[name="pais"]').value = '';
-                document.querySelector('[name="direccion"]').value = '';
-                return;
-            }
-
-            // Cargar datos del cliente
-            fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.existe) {
-                        const c = data.cliente;
-                        // Campos NO editables
-                        document.getElementById('rut_empresa').value = c.rut || '';
-                        document.getElementById('fono_empresa').value = '';
-                        document.querySelector('[name="pais"]').value = c.pais || '';
-                        document.querySelector('[name="direccion"]').value = c.direccion || '';
-                        // Rellenar razón social en campo oculto (para envío)
-                        document.querySelector('[name="razon_social"]').value = c.razon_social || '';
-
-                        // Cargar teléfono del contacto primario
-                        fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
-                            .then(r2 => r2.json())
-                            .then(data2 => {
-                                const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
-                                document.getElementById('fono_empresa').value = primario?.fono || '';
-                            });
-                    }
-                });
-        });
         document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
         document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
         // Botón "Agregar Servicio"
