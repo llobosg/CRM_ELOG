@@ -48,6 +48,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <option value="Rechazado">Rechazado</option>
             </select>
         </div>
+
+        <!-- Fila 3: Operación (select) -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Operación</label>
             <select name="operacion" id="operacion" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
@@ -62,17 +64,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <label>Booking</label>
             <input type="text" name="booking" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
+
+        <!-- Fila 4: Comercial asignado y btn Grabar Todo a la derecha -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <!--<label>Comercial ID</label>-->
             <!--<input type="number" name="id_comercial" id="id_comercial" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />  -->
             <label>Comercial Asignado</label>
             <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
-            <!-- Botón Grabar Todo -->
-            <button type="button" class="btn-primary" id="btn-save-all" style="float: right;">Grabar Todo
-            </button>
-
-
-
         </div>
     </div>
     <!-- ========== SERVICIOS ASOCIADOS ========== -->
@@ -380,6 +378,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
     // === 2. FUNCIONES AUXILIARES ===
     // ===================================================================
     // === NOTIFICACIONES ===
+    // ===================================================================
     function mostrarNotificacion(mensaje, tipo = 'info') {
         const toast = document.getElementById('toast');
         const msg = document.getElementById('toast-message');
@@ -389,8 +388,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
         toast.style.display = 'block';
         setTimeout(() => toast.style.display = 'none', 5000);
     }
-    const exito = (msg) => mostrarNotificacion(msg, 'exito');
-    const error = (msg) => mostrarNotificacion(msg, 'error');
+    function exito(msg) { mostrarNotificacion(msg, 'exito'); }
+    function error(msg) { mostrarNotificacion(msg, 'error'); }
     // ===================================================================
     // === FUNCIONES ADICIONALES PARA FICHA CLIENTE ===
     // ===================================================================
@@ -1289,33 +1288,46 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // === BOTÓN: Agregar Servicio ===
         const btnAgregarServicio = document.getElementById('btn-agregar-servicio');
         if (btnAgregarServicio) {
-            btnAgregarServicio.addEventListener('click', function() {
+            console.log('🔍 Listener asignado a btn-agregar-servicio');
+            btnAgregarServicio.addEventListener('click', function(e) {
+                console.log('✅ Clic detectado en btn-agregar-servicio');
                 const idPpl = document.getElementById('id_ppl')?.value;
                 const concatenado = document.getElementById('concatenado')?.value;
+                console.log('📋 Valores al hacer clic:', { idPpl, concatenado });
                 if (!idPpl || idPpl === '0' || !concatenado) {
+                    console.log('⚠️ Validación fallida: prospecto no guardado');
                     error('Guarde el prospecto primero antes de agregar servicios.');
                     return;
                 }
+                console.log('🚀 Abriendo modal de servicio');
                 abrirModalServicio(); // sin índice → nuevo servicio
             });
+        } else {
+            console.error('❌ Elemento #btn-agregar-servicio NO ENCONTRADO');
         }
 
         // === BOTÓN: Grabar Todo ===
         const btnGrabarTodo = document.getElementById('btn-save-all');
         if (btnGrabarTodo) {
+            console.log('🔍 Listener asignado a btn-save-all');
             btnGrabarTodo.addEventListener('click', function(e) {
+                console.log('✅ Clic detectado en btn-save-all');
                 e.preventDefault();
                 const rut = document.querySelector('input[name="rut_empresa"]').value.trim();
                 const razon = document.querySelector('input[name="razon_social"]').value.trim();
+                console.log('📋 Valores al hacer clic:', { rut, razon });
                 if (!rut || !razon) {
+                    console.log('⚠️ Validación fallida: RUT o Razón Social vacíos');
                     error('RUT y Razón Social son obligatorios');
                     return;
                 }
                 const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
                 if (!validarRut(rutLimpio)) {
+                    console.log('⚠️ Validación fallida: RUT inválido');
                     error('RUT inválido');
                     return;
                 }
+                console.log('🚀 Preparando formulario para envío');
                 const form = document.getElementById('form-prospecto');
                 const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
                 let inp = form.querySelector('input[name="modo"]');
@@ -1336,11 +1348,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     }
                     inp.value = JSON.stringify(servicios);
                 }
+                console.log('📤 Enviando formulario');
                 form.submit();
             });
+        } else {
+            console.error('❌ Elemento #btn-save-all NO ENCONTRADO');
         }
-
-       
 
         // Submodales desde la sección principal (con validación)
         document.getElementById('btn-costos-servicio')?.addEventListener('click', () => {
