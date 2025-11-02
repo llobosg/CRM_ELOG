@@ -1374,35 +1374,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         if (btnGastosDentro) {
             btnGastosDentro.addEventListener('click', abrirSubmodalGastosLocales);
         }
-        // Búsqueda inteligente
-        document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
-            const term = this.value.trim();
-            const div = document.getElementById('resultados-busqueda');
-            div.style.display = 'none';
-            if (!term) return;
-            try {
-                const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
-                const data = await res.json();
-                div.innerHTML = '';
-                if (data.length > 0) {
-                    data.forEach(p => {
-                        const d = document.createElement('div');
-                        d.style.padding = '0.8rem';
-                        d.style.cursor = 'pointer';
-                        d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
-                        d.onclick = () => {
-                            seleccionarProspecto(p.id_ppl);
-                            div.style.display = 'none';
-                            this.value = '';
-                        };
-                        div.appendChild(d);
-                    });
-                    div.style.display = 'block';
-                }
-            } catch (e) {
-                error('Error en búsqueda');
-            }
-        });
+        
         // Grabar Todo
         document.getElementById('btn-save-all')?.addEventListener('click', function(e) {
             e.preventDefault();
@@ -1433,6 +1405,37 @@ require_once __DIR__ . '/../includes/auth_check.php';
             }
             form.submit();
         });
+
+        // Búsqueda inteligente
+        document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
+            const term = this.value.trim();
+            const div = document.getElementById('resultados-busqueda');
+            div.style.display = 'none';
+            if (!term) return;
+            try {
+                const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
+                const data = await res.json();
+                div.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(p => {
+                        const d = document.createElement('div');
+                        d.style.padding = '0.8rem';
+                        d.style.cursor = 'pointer';
+                        d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
+                        d.onclick = () => {
+                            seleccionarProspecto(p.id_ppl);
+                            div.style.display = 'none';
+                            this.value = '';
+                        };
+                        div.appendChild(d);
+                    });
+                    div.style.display = 'block';
+                }
+            } catch (e) {
+                error('Error en búsqueda');
+            }
+        });
+        
         // Cargar prospecto desde URL
         const urlParams = new URLSearchParams(window.location.search);
         const idFromUrl = urlParams.get('id_ppl');
