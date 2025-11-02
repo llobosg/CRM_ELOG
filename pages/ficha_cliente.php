@@ -338,12 +338,11 @@
     }
 
     function cargarComerciales() {
-        fetch('/api/get_comerciales.php')
+        fetch('/api/get_comercial.php')
             .then(r => r.json())
             .then(data => {
                 const sel = document.getElementById('cliente_nombre_comercial');
                 if (!sel) return;
-                // Incluir opción vacía para "no asignado"
                 sel.innerHTML = '<option value="">Seleccionar comercial</option>';
                 (data.comerciales || []).forEach(nombre => {
                     const opt = document.createElement('option');
@@ -357,22 +356,6 @@
                 error('No se pudieron cargar los comerciales');
             });
     }
-
-    // Listener para cargar nombre_comercial al seleccionar comercial
-    document.getElementById('cliente_nombre_comercial')?.addEventListener('change', function() {
-        const id = this.value;
-        if (!id) {
-            document.getElementById('cliente_nombre_comercial').value = '';
-            return;
-        }
-        fetch(`/api/get_comercial.php?id=${id}`)
-            .then(r => r.json())
-            .then(data => {
-                if (data && data.nombre) {
-                    document.getElementById('cliente_nombre_comercial').value = data.nombre;
-                }
-            });
-    });
 
     function cargarPaises() {
         const selectPais = document.getElementById('cliente_pais');
