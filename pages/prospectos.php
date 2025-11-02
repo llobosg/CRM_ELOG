@@ -1183,7 +1183,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             // Opcional: redirigir
             setTimeout(() => {
                 window.location.href = '?page=prospectos';
-            }, 1500);
+           }, 1500);
         }
     }
 
@@ -1344,7 +1344,20 @@ require_once __DIR__ . '/../includes/auth_check.php';
         if (btnSaveAll) {
             btnSaveAll.textContent = 'Grabar Todo';
         }
-        // El botón "Agregar Servicio" está dentro del modal, no aquí
+
+        // Botón "Agregar Servicio"
+        const btnAgregarServicio = document.getElementById('btn-agregar-servicio');
+        if (btnAgregarServicio) {
+            btnAgregarServicio.addEventListener('click', function() {
+                const idPpl = document.getElementById('id_ppl')?.value;
+                if (!idPpl || idPpl === '0') {
+                    error('Guarde el prospecto primero antes de agregar servicios.');
+                    return;
+                }
+                abrirModalServicio(); // sin índice → nuevo servicio
+            });
+        }
+        
         // Submodales desde la sección principal (con validación)
         document.getElementById('btn-costos-servicio')?.addEventListener('click', () => {
             error('Abra un servicio primero para gestionar costos');
