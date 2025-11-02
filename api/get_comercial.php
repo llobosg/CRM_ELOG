@@ -1,7 +1,5 @@
 <?php
 // api/get_comercial.php
-<?php
-// api/get_comerciales.php
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config.php';
 
