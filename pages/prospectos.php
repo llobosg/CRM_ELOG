@@ -377,8 +377,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 sel.innerHTML = '<option value="">Seleccionar cliente</option>';
                 (data.clientes || []).forEach(c => {
                     const opt = document.createElement('option');
-                    opt.value = c.rut;
-                    opt.textContent = `${c.rut} - ${c.razon_social}`;
+                    opt.value = c.rut; // ←←← Solo el RUT como valor
+                    opt.textContent = `${c.rut} - ${c.razon_social}`; // ←←← Mostrar RUT + Razón Social
                     sel.appendChild(opt);
                 });
             });
@@ -1268,17 +1268,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
         cargarPaises();
         cargarOperacionesYTipos();
         cargarClientesEnSelect(); // ←←← CARGAR CLIENTES AL INICIAR
+
         // Listener para cargar datos del cliente al seleccionar RUT
         document.getElementById('rut_empresa')?.addEventListener('change', function() {
-            const rut = this.value;
+            const rut = this.value; // ←←← Ahora es solo el RUT
             if (!rut) {
                 // Limpiar campos si se deselecciona
                 ['razon_social', 'direccion', 'fono_empresa', 'pais'].forEach(f => {
                     const el = document.querySelector(`[name="${f}"]`);
                     if (el) el.value = '';
                 });
+                document.getElementById('nombre').value = ''; // comercial asignado (nombre)
                 return;
             }
+
+            // Cargar datos del cliente
             fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
                 .then(r => r.json())
                 .then(data => {
@@ -1287,6 +1291,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         document.querySelector('[name="razon_social"]').value = c.razon_social || '';
                         document.querySelector('[name="pais"]').value = c.pais || '';
                         document.querySelector('[name="direccion"]').value = c.direccion || '';
+                        document.getElementById('nombre').value = c.nombre_comercial || ''; // comercial asignado
 
                         // Cargar teléfono del contacto primario
                         fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
