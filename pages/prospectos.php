@@ -13,18 +13,26 @@ require_once __DIR__ . '/../includes/auth_check.php';
 <form method="POST" id="form-prospecto" action="">
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
+    <input type="hidden" name="razon_social" />
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem;">
-        <h3><i class="fas fa-user"></i> Datos del Prospecto</h3>
+        <h3>
+            <i class="fas fa-user"></i> Datos del Prospecto
+            <button type="button" onclick="confirmarLimpiarFormulario()" 
+                    style="float: right; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
+                &times;
+            </button>
+        </h3>
+        <!-- Fila 1: Razón Social (select) + RUT (readonly) -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
-            <label>RUT Empresa *</label>
-            <select name="rut_empresa" id="rut_empresa" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            <label>Razón Social *</label>
+            <select name="razon_social_select" id="razon_social_select" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
                 <option value="">Seleccionar cliente</option>
             </select>
-            <label>Razón Social *</label>
-            <input type="text" name="razon_social" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <label>RUT Empresa</label>
+            <input type="text" name="rut_empresa" id="rut_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Teléfono</label>
-            <input type="tel" name="fono_empresa" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="tel" name="fono_empresa" id="fono_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Fecha</label>
             <input type="date" name="fecha_alta" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" value="<?= date('Y-m-d') ?>" />
         </div>
@@ -372,13 +380,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
         fetch('/api/get_todos_clientes.php')
             .then(r => r.json())
             .then(data => {
-                const sel = document.getElementById('rut_empresa');
+                const sel = document.getElementById('razon_social_select');
                 if (!sel) return;
                 sel.innerHTML = '<option value="">Seleccionar cliente</option>';
                 (data.clientes || []).forEach(c => {
                     const opt = document.createElement('option');
-                    opt.value = c.rut; // ←←← Solo el RUT como valor
-                    opt.textContent = `${c.rut} - ${c.razon_social}`; // ←←← Mostrar RUT + Razón Social
+                    opt.value = c.rut; // ← valor = RUT
+                    opt.textContent = c.razon_social; // ← texto = Razón Social
                     sel.appendChild(opt);
                 });
             });
@@ -1128,6 +1136,22 @@ require_once __DIR__ . '/../includes/auth_check.php';
             exito('Costo eliminado');
         }
     }
+
+    function confirmarLimpiarFormulario() {
+        if (confirm('¿Desea limpiar todos los datos del formulario? Se perderán los cambios no guardados.')) {
+            limpiarFormularioCostos();
+            limpiarFormularioGastos();
+            // Limpiar formulario
+            document.getElementById('form-prospecto').reset();
+            servicios = [];
+            actualizarTabla();
+            // Opcional: redirigir
+            setTimeout(() => {
+                window.location.href = '?page=prospectos';
+            }, 1500);
+        }
+    }
+
     function limpiarFormularioCostos() {
         document.getElementById('costo_concepto').selectedIndex = 0;
         document.getElementById('costo_qty').value = '';
@@ -1269,16 +1293,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
         cargarOperacionesYTipos();
         cargarClientesEnSelect(); // ←←← CARGAR CLIENTES AL INICIAR
 
-        // Listener para cargar datos del cliente al seleccionar RUT
-        document.getElementById('rut_empresa')?.addEventListener('change', function() {
-            const rut = this.value; // ←←← Ahora es solo el RUT
+        // Listener para cargar datos del cliente al seleccionar Razón Social
+        document.getElementById('razon_social_select')?.addEventListener('change', function() {
+            const rut = this.value; // ← RUT del cliente seleccionado
             if (!rut) {
                 // Limpiar campos si se deselecciona
-                ['razon_social', 'direccion', 'fono_empresa', 'pais'].forEach(f => {
-                    const el = document.querySelector(`[name="${f}"]`);
-                    if (el) el.value = '';
-                });
-                document.getElementById('nombre').value = ''; // comercial asignado (nombre)
+                document.getElementById('rut_empresa').value = '';
+                document.getElementById('fono_empresa').value = '';
+                document.querySelector('[name="razon_social"]').value = '';
+                document.querySelector('[name="pais"]').value = '';
+                document.querySelector('[name="direccion"]').value = '';
                 return;
             }
 
@@ -1288,17 +1312,20 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 .then(data => {
                     if (data.existe) {
                         const c = data.cliente;
-                        document.querySelector('[name="razon_social"]').value = c.razon_social || '';
+                        // Campos NO editables
+                        document.getElementById('rut_empresa').value = c.rut || '';
+                        document.getElementById('fono_empresa').value = '';
                         document.querySelector('[name="pais"]').value = c.pais || '';
                         document.querySelector('[name="direccion"]').value = c.direccion || '';
-                        document.getElementById('nombre').value = c.nombre_comercial || ''; // comercial asignado
+                        // Rellenar razón social en campo oculto (para envío)
+                        document.querySelector('[name="razon_social"]').value = c.razon_social || '';
 
                         // Cargar teléfono del contacto primario
                         fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
                             .then(r2 => r2.json())
                             .then(data2 => {
                                 const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
-                                document.querySelector('[name="fono_empresa"]').value = primario?.fono || '';
+                                document.getElementById('fono_empresa').value = primario?.fono || '';
                             });
                     }
                 });
@@ -1435,7 +1462,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 error('Error en búsqueda');
             }
         });
-        
+
         // Cargar prospecto desde URL
         const urlParams = new URLSearchParams(window.location.search);
         const idFromUrl = urlParams.get('id_ppl');
