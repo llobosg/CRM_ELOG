@@ -69,7 +69,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <!--<label>Comercial ID</label>-->
             <!--<input type="number" name="id_comercial" id="id_comercial" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />  -->
-            <label>Nombre</label>
+            <label>Comercial Asignado</label>
             <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
         </div>
     </div>
@@ -1330,15 +1330,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
         document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
-        // Botón "Agregar Servicio"
-        document.getElementById('btn-agregar-servicio')?.addEventListener('click', () => {
-            const idPpl = document.getElementById('id_ppl')?.value;
-            if (!idPpl || idPpl === '0') {
-                error('Guarde el prospecto primero antes de agregar servicios.');
-                return;
-            }
-            abrirModalServicio(); // sin índice → nuevo servicio
-        });
+
         // Botón "Grabar Todo" (siempre presente)
         const btnSaveAll = document.getElementById('btn-save-all');
         if (btnSaveAll) {
@@ -1357,7 +1349,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 abrirModalServicio(); // sin índice → nuevo servicio
             });
         }
-        
+
         // Submodales desde la sección principal (con validación)
         document.getElementById('btn-costos-servicio')?.addEventListener('click', () => {
             error('Abra un servicio primero para gestionar costos');
