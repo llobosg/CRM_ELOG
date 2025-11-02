@@ -18,10 +18,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <div class="card" style="margin-bottom: 2rem;">
         <h3>
             <i class="fas fa-user"></i> Datos del Prospecto
-            <button type="button" onclick="confirmarLimpiarFormulario()" 
-                    style="float: right; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
-                &times;
-            </button>
         </h3>
         <!-- Fila 1: Razón Social (select) + RUT (readonly) -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
@@ -1172,21 +1168,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
     }
 
-    function confirmarLimpiarFormulario() {
-        if (confirm('¿Desea limpiar todos los datos del formulario? Se perderán los cambios no guardados.')) {
-            limpiarFormularioCostos();
-            limpiarFormularioGastos();
-            // Limpiar formulario
-            document.getElementById('form-prospecto').reset();
-            servicios = [];
-            actualizarTabla();
-            // Opcional: redirigir
-            setTimeout(() => {
-                window.location.href = '?page=prospectos';
-           }, 1500);
-        }
-    }
-
     function limpiarFormularioCostos() {
         document.getElementById('costo_concepto').selectedIndex = 0;
         document.getElementById('costo_qty').value = '';
@@ -1394,7 +1375,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         document.getElementById('btn-gastos-locales')?.addEventListener('click', () => {
             error('Abra un servicio primero para gestionar gastos');
         });
-        
+
         document.getElementById('btn-eliminar-prospecto')?.addEventListener('click', function() {
         const idPpl = document.getElementById('id_ppl')?.value;
         if (!idPpl || idPpl === '0') {
