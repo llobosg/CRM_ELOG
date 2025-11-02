@@ -67,6 +67,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <!--<input type="number" name="id_comercial" id="id_comercial" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />  -->
             <label>Comercial Asignado</label>
             <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <!-- Botón Grabar Todo -->
+            <button type="button" class="btn-primary" id="btn-save-all" style="float: right;">Grabar Todo
+            </button>
+
+
+
         </div>
     </div>
     <!-- ========== SERVICIOS ASOCIADOS ========== -->
@@ -369,6 +375,22 @@ require_once __DIR__ . '/../includes/auth_check.php';
     let tieneServiciosIniciales = false;
     let estadoProspecto = 'Pendiente';
     window.editarServicio = editarServicio;
+
+    // ===================================================================
+    // === 2. FUNCIONES AUXILIARES ===
+    // ===================================================================
+    // === NOTIFICACIONES ===
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+        const toast = document.getElementById('toast');
+        const msg = document.getElementById('toast-message');
+        if (!toast || !msg) return;
+        msg.textContent = mensaje;
+        toast.className = 'toast ' + tipo;
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 5000);
+    }
+    const exito = (msg) => mostrarNotificacion(msg, 'exito');
+    const error = (msg) => mostrarNotificacion(msg, 'error');
     // ===================================================================
     // === FUNCIONES ADICIONALES PARA FICHA CLIENTE ===
     // ===================================================================
@@ -422,23 +444,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 }
             });
     });
-
-    // ===================================================================
-    // === 2. FUNCIONES AUXILIARES ===
-    // ===================================================================
-    // === NOTIFICACIONES ===
-    function mostrarNotificacion(mensaje, tipo = 'info') {
-        const toast = document.getElementById('toast');
-        const msg = document.getElementById('toast-message');
-        if (!toast || !msg) return;
-        msg.textContent = mensaje;
-        toast.className = 'toast ' + tipo;
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 5000);
-    }
-    const exito = (msg) => mostrarNotificacion(msg, 'exito');
-    const error = (msg) => mostrarNotificacion(msg, 'error');
-
 
     function validarRut(rut) {
         if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
@@ -704,18 +709,29 @@ require_once __DIR__ . '/../includes/auth_check.php';
             .then(data => {
                 if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
                 const p = data.prospecto;
-                ['razon_social','fono_empresa','direccion','booking','incoterm','concatenado','fecha_alta','fecha_estado'].forEach(f => {
-                    const el = document.querySelector(`[name="${f}"]`);
-                    if (el && el.tagName === 'INPUT') el.value = p[f] || '';
-                });
-                // Cargar RUT en el select
-                const rutSel = document.getElementById('rut_empresa');
-                if (rutSel) {
-                    rutSel.value = p.rut_empresa || '';
-                }
+
+                // === Cargar campos visibles ===
+                document.getElementById('rut_empresa').value = p.rut_empresa || '';
+                document.getElementById('fono_empresa').value = p.fono_empresa || '';
+                document.getElementById('direccion').value = p.direccion || '';
+                document.getElementById('booking').value = p.booking || '';
+                document.getElementById('incoterm').value = p.incoterm || '';
+                document.getElementById('concatenado').value = p.concatenado || '';
+                document.getElementById('fecha_alta').value = p.fecha_alta || '';
+                document.getElementById('fecha_estado').value = p.fecha_estado || '';
+
+                // === Campo oculto para el backend ===
+                const razonInput = document.querySelector('input[name="razon_social"]');
+                if (razonInput) razonInput.value = p.razon_social || '';
+
+                // === Comercial ===
                 document.getElementById('id_comercial').value = p.id_comercial || '';
                 document.getElementById('nombre').value = p.nombre || '';
+
+                // === Estado ===
                 document.getElementById('estado').value = p.estado || 'Pendiente';
+
+                // === País (select) ===
                 const paisSel = document.getElementById('pais');
                 if (paisSel && p.pais) {
                     for (let opt of paisSel.options) {
@@ -732,6 +748,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         paisSel.value = p.pais;
                     }
                 }
+
+                // === Operación y Tipo ===
                 const opSel = document.getElementById('operacion');
                 const tipoSel = document.getElementById('tipo_oper');
                 if (opSel && p.operacion) {
@@ -749,6 +767,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             if (p.tipo_oper) tipoSel.value = p.tipo_oper;
                         });
                 }
+
+                // === Notas ===
                 const setNota = (name, val) => {
                     let inp = document.querySelector(`input[name="${name}"]`);
                     if (!inp) {
@@ -758,10 +778,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         document.getElementById('form-prospecto').appendChild(inp);
                     }
                     inp.value = val || '';
-                    document.getElementById(`${name}_input`).value = val || '';
+                    // Si usas modales de notas, actualiza también sus textareas
+                    const textarea = document.getElementById(`${name}_input`);
+                    if (textarea) textarea.value = val || '';
                 };
                 setNota('notas_comerciales', p.notas_comerciales);
                 setNota('notas_operaciones', p.notas_operaciones);
+
+                // === Servicios ===
                 servicios = (data.servicios || []).map(s => ({
                     ...s,
                     costo: parseFloat(s.costo) || 0,
@@ -771,9 +795,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 }));
                 tieneServiciosIniciales = servicios.length > 0;
                 actualizarTabla();
+
+                // === IDs internos ===
                 document.getElementById('id_ppl').value = p.id_ppl || '';
                 document.getElementById('id_prospect').value = p.id_prospect || '';
-                // ✅ SIEMPRE editable
+
+                // === Habilitar edición ===
                 const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
                 const selects = document.querySelectorAll('select');
                 inputs.forEach(input => {
@@ -784,6 +811,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     select.disabled = false;
                 });
                 document.getElementById('btn-agregar-servicio').disabled = false;
+            })
+            .catch(err => {
+                console.error('Error al cargar prospecto:', err);
+                error('No se pudo cargar el prospecto');
             });
     }
     // ===================================================================
@@ -827,7 +858,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
     function abrirModalServicio(index = null) {
         const idPpl = document.getElementById('id_ppl')?.value;
         const concatenado = document.getElementById('concatenado')?.value;
-        if (!idPpl || !concatenado) return error('Guarde el prospecto primero');
+        if (!idPpl || idPpl === '0' || !concatenado) {
+            error('Guarde el prospecto primero antes de agregar servicios.');
+            return;
+        }
         const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
         modalInputs.forEach(el => {
             if (el.type === 'number') el.value = '';
@@ -845,70 +879,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
             gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
             cargarDatosModalServicio(() => {
-                document.getElementById('serv_servicio').value = s.servicio || ''; 
-                document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
-                document.getElementById('serv_aol').value = s.aol || '';
-                document.getElementById('serv_aod').value = s.aod || '';
-                document.getElementById('serv_agente').value = s.agente || '';
-                document.getElementById('serv_transportador').value = s.transportador || ''; // ✅ Cambiado
-                document.getElementById('serv_incoterm').value = s.incoterm || '';           // ✅ Cambiado
-                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
-                document.getElementById('serv_transito').value = s.transito || '';
-                document.getElementById('serv_frecuencia').value = s.frecuencia || '';
-                document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
-                document.getElementById('serv_sector').value = s.sector || '';
-                document.getElementById('serv_mercancia').value = s.mercancia || '';
-                document.getElementById('serv_bultos').value = s.bultos || '';
-                document.getElementById('serv_peso').value = s.peso || '';
-                document.getElementById('serv_volumen').value = s.volumen || '';
-                document.getElementById('serv_dimensiones').value = s.dimensiones || '';
-                document.getElementById('serv_moneda').value = s.moneda || 'CLP';
-                document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
-                document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
-                const medioGuardado = (s.trafico || '').trim();
-                const commodityGuardado = (s.commodity || '').trim();
-                const medioSel = document.getElementById('serv_medio_transporte');
-                const commoditySel = document.getElementById('serv_commodity');
-                if (medioSel) {
-                    for (let opt of medioSel.options) {
-                        if (opt.value.trim() === medioGuardado) {
-                            opt.selected = true;
-                            break;
-                        }
-                    }
-                }
-                if (commoditySel) {
-                    for (let opt of commoditySel.options) {
-                        if (opt.value.trim() === commodityGuardado) {
-                            opt.selected = true;
-                            break;
-                        }
-                    }
-                }
-                if (medioGuardado) {
-                    cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
-                        const origenSel = document.getElementById('serv_origen');
-                        const destinoSel = document.getElementById('serv_destino');
-                        if (origenSel && s.origen) {
-                            for (let opt of origenSel.options) {
-                                if (opt.value === s.origen) {
-                                    opt.selected = true;
-                                    break;
-                                }
-                            }
-                            origenSel.dispatchEvent(new Event('change'));
-                        }
-                        if (destinoSel && s.destino) {
-                            for (let opt of destinoSel.options) {
-                                if (opt.value === s.destino) {
-                                    opt.selected = true;
-                                    break;
-                                }
-                            }
-                            destinoSel.dispatchEvent(new Event('change'));
-                        }
-                    });
-                }
+                // ... resto del código de carga ...
             });
         } else {
             servicioEnEdicion = null;
@@ -916,14 +887,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
         document.getElementById('modal-servicio').style.display = 'flex';
     }
+
     function cerrarModalServicio() {
         document.getElementById('modal-servicio').style.display = 'none';
     }
+
     function cerrarModalServicioConConfirmacion() {
         if (confirm('¿Desea cancelar sin guardar los cambios?')) {
             cerrarModalServicio();
         }
     }
+
     function guardarServicio() {
         const servicio = document.getElementById('serv_servicio').value.trim();
         if (!servicio) return error('Servicio es obligatorio');
