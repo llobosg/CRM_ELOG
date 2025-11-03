@@ -1037,6 +1037,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         actualizarTablaGastosLocales();
         document.getElementById('submodal-gastos-locales').style.display = 'block';
     }
+
     function cargarConceptosCostos() {
         fetch('/api/get_conceptos_costos.php')
             .then(r => r.json())
@@ -1180,7 +1181,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             exito('Costo eliminado');
         }
     }
-
     function limpiarFormularioCostos() {
         document.getElementById('costo_concepto').selectedIndex = 0;
         document.getElementById('costo_qty').value = '';
