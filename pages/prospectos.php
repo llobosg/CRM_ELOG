@@ -709,28 +709,46 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
                 const p = data.prospecto;
 
-                // === Cargar campos visibles ===
-                document.getElementById('rut_empresa').value = p.rut_empresa || '';
-                document.getElementById('fono_empresa').value = p.fono_empresa || '';
-                document.getElementById('direccion').value = p.direccion || '';
-                document.getElementById('booking').value = p.booking || '';
-                document.getElementById('incoterm').value = p.incoterm || '';
-                document.getElementById('concatenado').value = p.concatenado || '';
-                document.getElementById('fecha_alta').value = p.fecha_alta || '';
-                document.getElementById('fecha_estado').value = p.fecha_estado || '';
+                // === Cargar RUT en el select de razón social ===
+                const razonSelect = document.getElementById('razon_social_select');
+                if (razonSelect) {
+                    // Buscar opción que coincida con el RUT
+                    let optionFound = false;
+                    for (let opt of razonSelect.options) {
+                        if (opt.value === p.rut_empresa) {
+                            opt.selected = true;
+                            optionFound = true;
+                            break;
+                        }
+                    }
+                    // Si no existe, agregarla
+                    if (!optionFound && p.rut_empresa && p.razon_social) {
+                        const opt = document.createElement('option');
+                        opt.value = p.rut_empresa;
+                        opt.textContent = p.razon_social;
+                        razonSelect.appendChild(opt);
+                        razonSelect.value = p.rut_empresa;
+                    }
+                }
 
-                // === Campo oculto para el backend ===
-                const razonInput = document.querySelector('input[name="razon_social"]');
-                if (razonInput) razonInput.value = p.razon_social || '';
+                // === Cargar campos readonly ===
+                const fields = [
+                    { id: 'rut_empresa', value: p.rut_empresa },
+                    { id: 'fono_empresa', value: p.fono_empresa },
+                    { id: 'direccion', value: p.direccion },
+                    { id: 'booking', value: p.booking },
+                    { id: 'incoterm', value: p.incoterm },
+                    { id: 'concatenado', value: p.concatenado },
+                    { id: 'fecha_alta', value: p.fecha_alta },
+                    { id: 'fecha_estado', value: p.fecha_estado },
+                    { id: 'nombre', value: p.nombre } // comercial asignado
+                ];
+                fields.forEach(f => {
+                    const el = document.getElementById(f.id);
+                    if (el) el.value = f.value || '';
+                });
 
-                // === Comercial ===
-                document.getElementById('id_comercial').value = p.id_comercial || '';
-                document.getElementById('nombre').value = p.nombre || '';
-
-                // === Estado ===
-                document.getElementById('estado').value = p.estado || 'Pendiente';
-
-                // === País (select) ===
+                // === Cargar país ===
                 const paisSel = document.getElementById('pais');
                 if (paisSel && p.pais) {
                     for (let opt of paisSel.options) {
@@ -748,7 +766,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     }
                 }
 
-                // === Operación y Tipo ===
+                // === Cargar operación y tipo ===
                 const opSel = document.getElementById('operacion');
                 const tipoSel = document.getElementById('tipo_oper');
                 if (opSel && p.operacion) {
@@ -777,7 +795,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         document.getElementById('form-prospecto').appendChild(inp);
                     }
                     inp.value = val || '';
-                    // Si usas modales de notas, actualiza también sus textareas
                     const textarea = document.getElementById(`${name}_input`);
                     if (textarea) textarea.value = val || '';
                 };
@@ -1282,52 +1299,61 @@ require_once __DIR__ . '/../includes/auth_check.php';
         cargarOperacionesYTipos();
         cargarClientesEnSelect(); // ←←← CARGAR CLIENTES AL INICIAR
 
+        // Mostrar notificación de éxito si viene en la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const exitoMsg = urlParams.get('exito');
+        if (exitoMsg) {
+            exito(decodeURIComponent(exitoMsg));
+            history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
+        }
+
+        cargarPaises();
+        cargarOperacionesYTipos();
+        cargarClientesEnSelect();
+
         document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
         document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
 
         // === BOTÓN: Agregar Servicio ===
         const btnAgregarServicio = document.getElementById('btn-agregar-servicio');
         if (btnAgregarServicio) {
-            console.log('🔍 Listener asignado a btn-agregar-servicio');
-            btnAgregarServicio.addEventListener('click', function(e) {
-                console.log('✅ Clic detectado en btn-agregar-servicio');
+            btnAgregarServicio.addEventListener('click', function() {
                 const idPpl = document.getElementById('id_ppl')?.value;
                 const concatenado = document.getElementById('concatenado')?.value;
-                console.log('📋 Valores al hacer clic:', { idPpl, concatenado });
                 if (!idPpl || idPpl === '0' || !concatenado) {
-                    console.log('⚠️ Validación fallida: prospecto no guardado');
                     error('Guarde el prospecto primero antes de agregar servicios.');
                     return;
                 }
-                console.log('🚀 Abriendo modal de servicio');
-                abrirModalServicio(); // sin índice → nuevo servicio
+                abrirModalServicio();
             });
-        } else {
-            console.error('❌ Elemento #btn-agregar-servicio NO ENCONTRADO');
         }
 
         // === BOTÓN: Grabar Todo ===
         const btnGrabarTodo = document.getElementById('btn-save-all');
         if (btnGrabarTodo) {
-            console.log('🔍 Listener asignado a btn-save-all');
             btnGrabarTodo.addEventListener('click', function(e) {
-                console.log('✅ Clic detectado en btn-save-all');
                 e.preventDefault();
-                const rut = document.querySelector('input[name="rut_empresa"]').value.trim();
-                const razon = document.querySelector('input[name="razon_social"]').value.trim();
-                console.log('📋 Valores al hacer clic:', { rut, razon });
+                const rut = document.getElementById('rut_empresa')?.value.trim();
+                const razonSelect = document.getElementById('razon_social_select');
+                const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
+                const operacion = document.getElementById('operacion')?.value;
+                const tipoOper = document.getElementById('tipo_oper')?.value;
+                const concatenado = document.getElementById('concatenado')?.value;
+
                 if (!rut || !razon) {
-                    console.log('⚠️ Validación fallida: RUT o Razón Social vacíos');
                     error('RUT y Razón Social son obligatorios');
+                    return;
+                }
+                if (!operacion || !tipoOper || !concatenado) {
+                    error('Operación, Tipo Operación y Concatenado son obligatorios');
                     return;
                 }
                 const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
                 if (!validarRut(rutLimpio)) {
-                    console.log('⚠️ Validación fallida: RUT inválido');
                     error('RUT inválido');
                     return;
                 }
-                console.log('🚀 Preparando formulario para envío');
+
                 const form = document.getElementById('form-prospecto');
                 const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
                 let inp = form.querySelector('input[name="modo"]');
@@ -1348,11 +1374,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     }
                     inp.value = JSON.stringify(servicios);
                 }
-                console.log('📤 Enviando formulario');
                 form.submit();
             });
-        } else {
-            console.error('❌ Elemento #btn-save-all NO ENCONTRADO');
         }
 
         // Submodales desde la sección principal (con validación)
@@ -1394,13 +1417,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 } else {
                     error(data.message || 'Error al eliminar el prospecto');
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                error('Error de conexión al eliminar el prospecto');
-            });
+                })
+                .catch(err => {
+                    console.error(err);
+                    error('Error de conexión al eliminar el prospecto');
+                });
+            }
         }
-    });
+    
         // Submodales desde dentro del modal de servicio (con verificación segura)
         const btnCostosDentro = document.getElementById('btn-costos-servicio-dentro');
         const btnGastosDentro = document.getElementById('btn-gastos-locales-dentro');
