@@ -419,9 +419,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('pais').value = '';
             document.getElementById('direccion').value = '';
             document.getElementById('nombre').value = '';
+            document.querySelector('input[name="razon_social"]').value = ''; // ←←← CLAVE
             return;
         }
-
         // Cargar datos del cliente
         fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
             .then(r => r.json())
@@ -431,8 +431,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     document.getElementById('rut_empresa').value = c.rut || '';
                     document.getElementById('pais').value = c.pais || '';
                     document.getElementById('direccion').value = c.direccion || '';
-                    document.getElementById('nombre').value = c.nombre_comercial || ''; // comercial asignado
-
+                    document.getElementById('nombre').value = c.nombre_comercial || '';
+                    document.querySelector('input[name="razon_social"]').value = c.razon_social || ''; // ←←← CLAVE
                     // Cargar teléfono del contacto primario
                     fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
                         .then(r2 => r2.json())
