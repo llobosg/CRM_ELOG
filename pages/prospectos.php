@@ -393,54 +393,76 @@ require_once __DIR__ . '/../includes/auth_check.php';
     // ===================================================================
     // === FUNCIONES ADICIONALES PARA FICHA CLIENTE ===
     // ===================================================================
+    // Cargar clientes en el <select> de Razón Social (desde CLIENTES)
     function cargarClientesEnSelect() {
+        console.log('🔍 [CARGA CLIENTES] Iniciando carga de CLIENTES');
         fetch('/api/get_todos_clientes.php')
             .then(r => r.json())
             .then(data => {
+                console.log('📦 [CARGA CLIENTES] Clientes recibidos:', data.clientes);
                 const sel = document.getElementById('razon_social_select');
-                if (!sel) return;
+                if (!sel) {
+                    console.warn('⚠️ [CARGA CLIENTES] Elemento #razon_social_select no encontrado');
+                    return;
+                }
                 sel.innerHTML = '<option value="">Seleccionar cliente</option>';
                 (data.clientes || []).forEach(c => {
                     const opt = document.createElement('option');
-                    opt.value = c.rut; // valor = RUT
-                    opt.textContent = c.razon_social; // texto = Razón Social
+                    opt.value = c.rut;
+                    opt.textContent = c.razon_social;
                     sel.appendChild(opt);
                 });
+            })
+            .catch(err => {
+                console.error('❌ [CARGA CLIENTES] Error:', err);
+                error('No se pudieron cargar los clientes');
             });
     }
 
-    // Listener para cargar datos al seleccionar cliente
+    // Al seleccionar un cliente desde el <select>, cargar datos desde CLIENTES
     document.getElementById('razon_social_select')?.addEventListener('change', function() {
+        console.log('🔍 [SELECCIÓN CLIENTE] Iniciando carga de datos de CLIENTE');
         const rut = this.value;
         if (!rut) {
-            // Limpiar todos los campos
-            document.getElementById('rut_empresa').value = '';
-            document.getElementById('fono_empresa').value = '';
-            document.getElementById('pais').value = '';
-            document.getElementById('direccion').value = '';
-            document.getElementById('nombre').value = '';
-            document.querySelector('input[name="razon_social"]').value = ''; // ←←← CLAVE
+            console.log('ℹ️ [SELECCIÓN CLIENTE] Selección vacía, limpiando campos');
+            ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.querySelector('input[name="razon_social"]').value = '';
             return;
         }
-        // Cargar datos del cliente
+
         fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
             .then(r => r.json())
             .then(data => {
+                console.log('📦 [SELECCIÓN CLIENTE] Datos del cliente:', data);
                 if (data.existe) {
                     const c = data.cliente;
                     document.getElementById('rut_empresa').value = c.rut || '';
                     document.getElementById('pais').value = c.pais || '';
                     document.getElementById('direccion').value = c.direccion || '';
                     document.getElementById('nombre').value = c.nombre_comercial || '';
-                    document.querySelector('input[name="razon_social"]').value = c.razon_social || ''; // ←←← CLAVE
+                    document.querySelector('input[name="razon_social"]').value = c.razon_social || '';
+
                     // Cargar teléfono del contacto primario
                     fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
                         .then(r2 => r2.json())
                         .then(data2 => {
+                            console.log('📞 [SELECCIÓN CLIENTE] Contactos:', data2);
                             const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
                             document.getElementById('fono_empresa').value = primario?.fono || '';
+                        })
+                        .catch(err => {
+                            console.error('❌ [SELECCIÓN CLIENTE] Error al cargar contactos:', err);
                         });
+                } else {
+                    console.warn('⚠️ [SELECCIÓN CLIENTE] Cliente no encontrado');
                 }
+            })
+            .catch(err => {
+                console.error('❌ [SELECCIÓN CLIENTE] Error al cargar cliente:', err);
+                error('No se pudo cargar el cliente');
             });
     });
 
@@ -1435,15 +1457,19 @@ require_once __DIR__ . '/../includes/auth_check.php';
             btnGastosDentro.addEventListener('click', abrirSubmodalGastosLocales);
         }
         
-        // Búsqueda inteligente
+        // Búsqueda inteligente: busca en PROSPECTOS
         document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
+            console.log('🔍 [BÚSQUEDA INTELIGENTE] Iniciando búsqueda en PROSPECTOS');
             const term = this.value.trim();
             const div = document.getElementById('resultados-busqueda');
             div.style.display = 'none';
             if (!term) return;
+
             try {
                 const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
+                console.log('📡 [BÚSQUEDA INTELIGENTE] Respuesta HTTP:', res.status);
                 const data = await res.json();
+                console.log('📦 [BÚSQUEDA INTELIGENTE] Datos recibidos:', data);
                 div.innerHTML = '';
                 if (data.length > 0) {
                     data.forEach(p => {
@@ -1452,6 +1478,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         d.style.cursor = 'pointer';
                         d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
                         d.onclick = () => {
+                            console.log('✅ [BÚSQUEDA INTELIGENTE] Cargando prospecto ID:', p.id_ppl);
                             seleccionarProspecto(p.id_ppl);
                             div.style.display = 'none';
                             this.value = '';
@@ -1459,9 +1486,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         div.appendChild(d);
                     });
                     div.style.display = 'block';
+                } else {
+                    console.log('ℹ️ [BÚSQUEDA INTELIGENTE] No se encontraron resultados');
                 }
             } catch (e) {
-                error('Error en búsqueda');
+                console.error('❌ [BÚSQUEDA INTELIGENTE] Error:', e);
+                error('Error en búsqueda de prospectos');
             }
         });
 
