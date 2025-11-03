@@ -363,6 +363,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 </div>
 
 <script>
+    console.log('✅ Script de prospectos iniciado');
     // ===================================================================
     // === 1. VARIABLES GLOBALES ===
     // ===================================================================
