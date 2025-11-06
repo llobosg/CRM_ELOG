@@ -10,6 +10,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <input type="text" id="busqueda-inteligente" placeholder="Buscar por Concatenado, Razón Social, RUT..." style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px;" />
     <div id="resultados-busqueda" style="position: absolute; background: white; border: 1px solid #ddd; border-radius: 8px; max-height: 300px; overflow-y: auto; width: 95%; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none;"></div>
 </div>
+<!-- ==============================================   FORM  ============================================== -->
 <form method="POST" id="form-prospecto" action="">
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
@@ -376,6 +377,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
     window.editarServicio = editarServicio;
 
     // ===================================================================
+    // === 2. FUNCIONES AUXILIARES ===
+    // ===================================================================
     // === NOTIFICACIONES ===
     // ===================================================================
     function mostrarNotificacion(mensaje, tipo = 'info') {
@@ -389,10 +392,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
     }
     function exito(msg) { mostrarNotificacion(msg, 'exito'); }
     function error(msg) { mostrarNotificacion(msg, 'error'); }
-
     // ===================================================================
-    // === CARGA DE CLIENTES PARA RAZÓN SOCIAL ===
+    // === FUNCIONES ADICIONALES PARA FICHA CLIENTE ===
     // ===================================================================
+    // Cargar clientes en el <select> de Razón Social (desde CLIENTES)
     function cargarClientesEnSelect() {
         console.log('🔍 [CARGA CLIENTES] Iniciando carga de CLIENTES');
         fetch('/api/get_todos_clientes.php')
@@ -418,9 +421,52 @@ require_once __DIR__ . '/../includes/auth_check.php';
             });
     }
 
-    // ===================================================================
-    // === 2. FUNCIONES AUXILIARES ===
-    // ===================================================================
+    // Al seleccionar un cliente desde el <select>, cargar datos desde CLIENTES
+    document.getElementById('razon_social_select')?.addEventListener('change', function() {
+        console.log('🔍 [SELECCIÓN CLIENTE] Iniciando carga de datos de CLIENTE');
+        const rut = this.value;
+        if (!rut) {
+            console.log('ℹ️ [SELECCIÓN CLIENTE] Selección vacía, limpiando campos');
+            ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            return;
+        }
+
+        fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
+            .then(r => r.json())
+            .then(data => {
+                console.log('📦 [SELECCIÓN CLIENTE] Datos del cliente:', data);
+                if (data.existe) {
+                    const c = data.cliente;
+                    document.getElementById('rut_empresa').value = c.rut || '';
+                    document.getElementById('pais').value = c.pais || '';
+                    document.getElementById('direccion').value = c.direccion || '';
+                    document.getElementById('nombre').value = c.nombre_comercial || '';
+                    document.querySelector('input[name="razon_social"]').value = c.razon_social || '';
+
+                    // Cargar teléfono del contacto primario
+                    fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
+                        .then(r2 => r2.json())
+                        .then(data2 => {
+                            console.log('📞 [SELECCIÓN CLIENTE] Contactos:', data2);
+                            const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
+                            document.getElementById('fono_empresa').value = primario?.fono || '';
+                        })
+                        .catch(err => {
+                            console.error('❌ [SELECCIÓN CLIENTE] Error al cargar contactos:', err);
+                        });
+                } else {
+                    console.warn('⚠️ [SELECCIÓN CLIENTE] Cliente no encontrado');
+                }
+            })
+            .catch(err => {
+                console.error('❌ [SELECCIÓN CLIENTE] Error al cargar cliente:', err);
+                error('No se pudo cargar el cliente');
+            });
+    });
+
     function validarRut(rut) {
         if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
         const cuerpo = rut.slice(0, -1);
@@ -434,10 +480,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
         const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
         return dv === dvCalculado;
     }
-
     function cargarPaises() {
         const selectPais = document.getElementById('pais') || document.getElementById('cliente_pais');
         if (!selectPais) return;
+
         fetch('/api/get_paises.php')
             .then(r => r.json())
             .then(data => {
@@ -451,6 +497,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             })
             .catch(err => {
                 console.error('Error al cargar países:', err);
+                // Fallback opcional: lista mínima
                 const fallback = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
                 selectPais.innerHTML = '<option value="">Seleccionar país</option>';
                 fallback.forEach(p => {
@@ -461,7 +508,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 });
             });
     }
-
     function calcularConcatenado() {
         const op = document.getElementById('operacion')?.value || '';
         const tipo = document.getElementById('tipo_oper')?.value || '';
@@ -471,7 +517,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
         const id = (parseInt(document.getElementById('id_prospect')?.value || '0') + 1).toString().padStart(2, '0');
         document.getElementById('concatenado').value = `${op}${tipo}${fecha}-${id}`;
     }
-
     function actualizarTabla() {
         const tbody = document.getElementById('servicios-body');
         if (!tbody) return;
@@ -505,6 +550,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         document.getElementById('total-venta').textContent = tv.toFixed(2);
         document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
         document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
+        // === Agregar listeners a los botones ===
         document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = parseInt(this.getAttribute('data-index'));
@@ -517,12 +563,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 eliminarServicio(index);
             });
         });
+        // Mostrar/ocultar botón de eliminar prospecto
         const btnEliminar = document.getElementById('btn-eliminar-prospecto');
         if (btnEliminar) {
             btnEliminar.style.display = (servicios.length === 0) ? 'inline-block' : 'none';
         }
     }
-
     // ===================================================================
     // === 3. CARGA DE DATOS (API) ===
     // ===================================================================
@@ -557,7 +603,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 });
         });
     }
-
     function cargarDatosModalServicio(callback = null) {
         let cargas = 0;
         const total = 4;
@@ -565,60 +610,71 @@ require_once __DIR__ . '/../includes/auth_check.php';
             cargas++;
             if (cargas === total && callback) callback();
         };
-        fetch('/api/get_commoditys.php').then(r => r.json()).then(data => {
-            const sel = document.getElementById('serv_commodity');
-            if (sel) {
-                sel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.commoditys || []).forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.commodity || c;
-                    opt.textContent = c.commodity || c;
-                    sel.appendChild(opt);
-                });
-            }
-            check();
-        });
-        fetch('/api/get_medios_transporte.php').then(r => r.json()).then(data => {
-            const sel = document.getElementById('serv_medio_transporte');
-            if (sel) {
-                sel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.medios_transporte || []).forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m;
-                    opt.textContent = m;
-                    sel.appendChild(opt);
-                });
-            }
-            check();
-        });
-        fetch('/api/get_agentes.php').then(r => r.json()).then(data => {
-            const sel = document.getElementById('serv_agente');
-            if (sel) {
-                sel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.agentes || []).forEach(a => {
-                    const opt = document.createElement('option');
-                    opt.value = a;
-                    opt.textContent = a;
-                    sel.appendChild(opt);
-                });
-            }
-            check();
-        });
-        fetch('/api/get_proveedores_pnac.php').then(r => r.json()).then(data => {
-            const sel = document.getElementById('serv_proveedor_nac');
-            if (sel) {
-                sel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.proveedores || []).forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p;
-                    opt.textContent = p;
-                    sel.appendChild(opt);
-                });
-            }
-            check();
-        });
+        // Commodity
+        fetch('/api/get_commoditys.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('serv_commodity');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.commoditys || []).forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.commodity || c;
+                        opt.textContent = c.commodity || c;
+                        sel.appendChild(opt);
+                    });
+                }
+                check();
+            });
+        // Medios de transporte
+        fetch('/api/get_medios_transporte.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('serv_medio_transporte');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.medios_transporte || []).forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m;
+                        opt.textContent = m;
+                        sel.appendChild(opt);
+                    });
+                }
+                check();
+            });
+        // Agentes
+        fetch('/api/get_agentes.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('serv_agente');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.agentes || []).forEach(a => {
+                        const opt = document.createElement('option');
+                        opt.value = a;
+                        opt.textContent = a;
+                        sel.appendChild(opt);
+                    });
+                }
+                check();
+            });
+        // Proveedores nacionales
+        fetch('/api/get_proveedores_pnac.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('serv_proveedor_nac');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.proveedores || []).forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.textContent = p;
+                        sel.appendChild(opt);
+                    });
+                }
+                check();
+            });
     }
-
     // ===================================================================
     // === 4. CARGA DE LUGARES (Origen/Destino) ===
     // ===================================================================
@@ -666,132 +722,140 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 return Promise.resolve();
             });
     }
-
     // ===================================================================
     // === 5. MANEJO DE PROSPECTOS ===
     // ===================================================================
     function seleccionarProspecto(id) {
-        fetch(`/api/get_prospecto.php?id=${id}`)
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
-                const p = data.prospecto;
-                // === Actualizar el select de Razón Social ===
-                const razonSelect = document.getElementById('razon_social_select');
-                if (razonSelect) {
-                    let optionFound = false;
-                    for (let opt of razonSelect.options) {
-                        if (opt.value === p.rut_empresa) {
-                            opt.selected = true;
-                            optionFound = true;
-                            break;
-                        }
-                    }
-                    if (!optionFound && p.rut_empresa && p.razon_social) {
-                        const opt = document.createElement('option');
-                        opt.value = p.rut_empresa;
-                        opt.textContent = p.razon_social;
-                        razonSelect.appendChild(opt);
-                        razonSelect.value = p.rut_empresa;
-                    }
-                }
-                // === Cargar campos readonly ===
-                const fields = [
-                    { id: 'rut_empresa', value: p.rut_empresa },
-                    { id: 'fono_empresa', value: p.fono_empresa },
-                    { id: 'direccion', value: p.direccion },
-                    { id: 'booking', value: p.booking },
-                    { id: 'incoterm', value: p.incoterm },
-                    { id: 'concatenado', value: p.concatenado },
-                    { id: 'fecha_alta', value: p.fecha_alta },
-                    { id: 'fecha_estado', value: p.fecha_estado },
-                    { id: 'nombre', value: p.nombre }
-                ];
-                fields.forEach(f => {
-                    const el = document.getElementById(f.id);
-                    if (el) el.value = f.value || '';
-                });
-                // === Cargar país ===
-                const paisSel = document.getElementById('pais');
-                if (paisSel && p.pais) {
-                    for (let opt of paisSel.options) {
-                        if (opt.value === p.pais) {
-                            opt.selected = true;
-                            break;
-                        }
-                    }
-                    if (!paisSel.value) {
-                        const opt = document.createElement('option');
-                        opt.value = p.pais;
-                        opt.textContent = p.pais;
-                        paisSel.appendChild(opt);
-                        paisSel.value = p.pais;
-                    }
-                }
-                // === Cargar operación y tipo ===
-                const opSel = document.getElementById('operacion');
-                const tipoSel = document.getElementById('tipo_oper');
-                if (opSel && p.operacion) {
-                    opSel.value = p.operacion;
-                    fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                            (data.tipos || []).forEach(t => {
-                                const opt = document.createElement('option');
-                                opt.value = t;
-                                opt.textContent = t;
-                                tipoSel.appendChild(opt);
-                            });
-                            if (p.tipo_oper) tipoSel.value = p.tipo_oper;
-                        });
-                }
-                // === Notas ===
-                const setNota = (name, val) => {
-                    let inp = document.querySelector(`input[name="${name}"]`);
-                    if (!inp) {
-                        inp = document.createElement('input');
-                        inp.type = 'hidden';
-                        inp.name = name;
-                        document.getElementById('form-prospecto').appendChild(inp);
-                    }
-                    inp.value = val || '';
-                    const textarea = document.getElementById(`${name}_input`);
-                    if (textarea) textarea.value = val || '';
-                };
-                setNota('notas_comerciales', p.notas_comerciales);
-                setNota('notas_operaciones', p.notas_operaciones);
-                // === Servicios ===
-                servicios = (data.servicios || []).map(s => ({
-                    ...s,
-                    costo: parseFloat(s.costo) || 0,
-                    venta: parseFloat(s.venta) || 0,
-                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
-                }));
-                tieneServiciosIniciales = servicios.length > 0;
-                actualizarTabla();
-                // === IDs internos ===
-                document.getElementById('id_ppl').value = p.id_ppl || '';
-                document.getElementById('id_prospect').value = p.id_prospect || '';
-                // === Habilitar edición ===
-                const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
-                const selects = document.querySelectorAll('select');
-                inputs.forEach(input => {
-                    input.readOnly = false;
-                    input.style.backgroundColor = '';
-                });
-                selects.forEach(select => {
-                    select.disabled = false;
-                });
-                document.getElementById('btn-agregar-servicio').disabled = false;
-            })
-            .catch(err => {
-                console.error('Error al cargar prospecto:', err);
-                error('No se pudo cargar el prospecto');
-            });
-    }
+    fetch(`/api/get_prospecto.php?id=${id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
+            const p = data.prospecto;
 
+            // === Actualizar el select de Razón Social ===
+            const razonSelect = document.getElementById('razon_social_select');
+            if (razonSelect) {
+                // Buscar opción que coincida con el RUT del prospecto
+                let optionFound = false;
+                for (let opt of razonSelect.options) {
+                    if (opt.value === p.rut_empresa) {
+                        opt.selected = true;
+                        optionFound = true;
+                        break;
+                    }
+                }
+                // Si no existe, crearla dinámicamente
+                if (!optionFound && p.rut_empresa && p.razon_social) {
+                    const opt = document.createElement('option');
+                    opt.value = p.rut_empresa;
+                    opt.textContent = p.razon_social;
+                    razonSelect.appendChild(opt);
+                    razonSelect.value = p.rut_empresa;
+                }
+            }
+
+            // === Cargar campos readonly ===
+            const fields = [
+                { id: 'rut_empresa', value: p.rut_empresa },
+                { id: 'fono_empresa', value: p.fono_empresa },
+                { id: 'direccion', value: p.direccion },
+                { id: 'booking', value: p.booking },
+                { id: 'incoterm', value: p.incoterm },
+                { id: 'concatenado', value: p.concatenado },
+                { id: 'fecha_alta', value: p.fecha_alta },
+                { id: 'fecha_estado', value: p.fecha_estado },
+                { id: 'nombre', value: p.nombre } // comercial asignado
+            ];
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                if (el) el.value = f.value || '';
+            });
+
+            // === Cargar país ===
+            const paisSel = document.getElementById('pais');
+            if (paisSel && p.pais) {
+                for (let opt of paisSel.options) {
+                    if (opt.value === p.pais) {
+                        opt.selected = true;
+                        break;
+                    }
+                }
+                if (!paisSel.value) {
+                    const opt = document.createElement('option');
+                    opt.value = p.pais;
+                    opt.textContent = p.pais;
+                    paisSel.appendChild(opt);
+                    paisSel.value = p.pais;
+                }
+            }
+
+            // === Cargar operación y tipo ===
+            const opSel = document.getElementById('operacion');
+            const tipoSel = document.getElementById('tipo_oper');
+            if (opSel && p.operacion) {
+                opSel.value = p.operacion;
+                fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                        (data.tipos || []).forEach(t => {
+                            const opt = document.createElement('option');
+                            opt.value = t;
+                            opt.textContent = t;
+                            tipoSel.appendChild(opt);
+                        });
+                        if (p.tipo_oper) tipoSel.value = p.tipo_oper;
+                    });
+            }
+
+            // === Notas ===
+            const setNota = (name, val) => {
+                let inp = document.querySelector(`input[name="${name}"]`);
+                if (!inp) {
+                    inp = document.createElement('input');
+                    inp.type = 'hidden';
+                    inp.name = name;
+                    document.getElementById('form-prospecto').appendChild(inp);
+                }
+                inp.value = val || '';
+                const textarea = document.getElementById(`${name}_input`);
+                if (textarea) textarea.value = val || '';
+            };
+            setNota('notas_comerciales', p.notas_comerciales);
+            setNota('notas_operaciones', p.notas_operaciones);
+
+            // === Servicios ===
+            servicios = (data.servicios || []).map(s => ({
+                ...s,
+                costo: parseFloat(s.costo) || 0,
+                venta: parseFloat(s.venta) || 0,
+                costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
+            }));
+            tieneServiciosIniciales = servicios.length > 0;
+            actualizarTabla();
+
+            // === IDs internos ===
+            document.getElementById('id_ppl').value = p.id_ppl || '';
+            document.getElementById('id_prospect').value = p.id_prospect || '';
+
+            // === Habilitar edición ===
+            const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
+            const selects = document.querySelectorAll('select');
+            inputs.forEach(input => {
+                input.readOnly = false;
+                input.style.backgroundColor = '';
+            });
+            selects.forEach(select => {
+                select.disabled = false;
+            });
+            document.getElementById('btn-agregar-servicio').disabled = false;
+        })
+        .catch(err => {
+            console.error('Error al cargar prospecto:', err);
+            error('No se pudo cargar el prospecto');
+        });
+}
     // ===================================================================
     // === 6. MODALES PRINCIPALES ===
     // ===================================================================
@@ -827,7 +891,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             cerrarModalOperaciones();
         });
     }
-
     // ===================================================================
     // === 7. MODAL DE SERVICIO ===
     // ===================================================================
@@ -855,11 +918,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
             gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
             cargarDatosModalServicio(() => {
-                document.getElementById('serv_servicio').value = s.servicio || '';
-                document.getElementById('serv_transportador').value = s.transportador || '';
-                document.getElementById('serv_incoterm').value = s.incoterm || '';
-                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
-                // ... resto de la carga ...
+                // ... resto del código de carga ...
             });
         } else {
             servicioEnEdicion = null;
@@ -912,9 +971,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
             aol: document.getElementById('serv_aol').value,
             aod: document.getElementById('serv_aod').value,
             agente: document.getElementById('serv_agente').value,
-            transportador: document.getElementById('serv_transportador').value,
-            incoterm: document.getElementById('serv_incoterm').value,
-            ref_cliente: document.getElementById('serv_ref_cliente').value,
+            transportador: document.getElementById('serv_transportador').value, // ✅ Nuevo campo
+            incoterm: document.getElementById('serv_incoterm').value,           // ✅ Nuevo campo
+            ref_cliente: document.getElementById('serv_ref_cliente').value,     // ✅ Nuevo campo
             costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
             venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
             costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
@@ -932,19 +991,337 @@ require_once __DIR__ . '/../includes/auth_check.php';
         actualizarTabla();
         cerrarModalServicio();
     }
-
     // ===================================================================
     // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
     // ===================================================================
-    // ... (todas las funciones de costos y gastos locales sin cambios) ...
+    function abrirSubmodalCostos() {
+        const modalServicio = document.getElementById('modal-servicio');
+        if (!modalServicio || modalServicio.style.display === 'none') {
+            error('Abra primero el modal de Servicio');
+            return;
+        }
 
-    // ===================================================================
-    // === 9. INICIALIZACIÓN ===
-    // ===================================================================
+        // Si estamos editando un servicio existente, cargar sus costos
+        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+            costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) 
+                ? [...servicios[servicioEnEdicion].costos] 
+                : [];
+        }
+        // Si es un nuevo servicio, costosServicio ya contiene los datos actuales
+
+        const monedaServicio = document.getElementById('serv_moneda')?.value || 'USD';
+        document.getElementById('costo_moneda').value = monedaServicio;
+        cargarConceptosCostos();
+        const medioTransporte = document.getElementById('serv_medio_transporte')?.value || '';
+        cargarAplicacionesCostos(medioTransporte);
+        actualizarTablaCostos();
+        document.getElementById('submodal-costos').style.display = 'block';
+    }
+    // --- Gastos Locales ---
+    function abrirSubmodalGastosLocales() {
+        const modalServicio = document.getElementById('modal-servicio');
+        if (!modalServicio || modalServicio.style.display === 'none') {
+            error('Abra primero el modal de Servicio');
+            return;
+        }
+
+        // Si estamos editando un servicio existente, cargar sus gastos
+        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+            gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) 
+                ? [...servicios[servicioEnEdicion].gastos_locales] 
+                : [];
+        }
+        // Si es un nuevo servicio, gastosLocales ya contiene los datos actuales
+
+        cargarGastosPorTipo();
+        actualizarTablaGastosLocales();
+        document.getElementById('submodal-gastos-locales').style.display = 'block';
+    }
+
+    function cargarConceptosCostos() {
+        fetch('/api/get_conceptos_costos.php')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('costo_concepto');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Seleccionar concepto</option>';
+                (data.conceptos || data || []).forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.concepto || c;
+                    opt.textContent = c.concepto || c;
+                    sel.appendChild(opt);
+                });
+            })
+            .catch(err => {
+                console.error('Error al cargar conceptos:', err);
+                error('No se pudieron cargar los conceptos de costo');
+            });
+    }
+
+    function cargarAplicacionesCostos(medio) {
+        fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('costo_aplica');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Seleccionar aplica</option>';
+                const opciones = Array.isArray(data) ? data : (data.aplicaciones || []);
+                opciones.forEach(item => {
+                    const valor = typeof item === 'string' ? item : item.aplica;
+                    if (valor) {
+                        const opt = document.createElement('option');
+                        opt.value = valor;
+                        opt.textContent = valor;
+                        sel.appendChild(opt);
+                    }
+                });
+            })
+            .catch(err => {
+                console.error('Error al cargar aplicaciones:', err);
+                error('No se pudieron cargar las opciones de "Aplica"');
+            });
+    }
+
+    ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', calcularTotalesCostos);
+        }
+    });
+
+    function calcularTotalesCostos() {
+        const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+        const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+        const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+        document.getElementById('costo_total_costo').value = (qty * costo).toFixed(2);
+        document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
+    }
+    function guardarCosto() {
+        const concepto = document.getElementById('costo_concepto').value;
+        const aplica = document.getElementById('costo_aplica').value;
+        const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+        const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+        const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+        const moneda = document.getElementById('costo_moneda').value || 'CLP';
+        if (!concepto || !aplica) {
+            error('Concepto y Aplica son obligatorios');
+            return;
+        }
+        const nuevoCosto = {
+            concepto,
+            moneda,
+            qty,
+            costo,
+            total_costo: qty * costo,
+            tarifa,
+            total_tarifa: qty * tarifa,
+            aplica
+        };
+        if (window.indiceCostoEdicion !== undefined) {
+            costosServicio[window.indiceCostoEdicion] = nuevoCosto;
+            delete window.indiceCostoEdicion;
+        } else {
+            costosServicio.push(nuevoCosto);
+        }
+        actualizarTablaCostos();
+        limpiarFormularioCostos();
+        exito('Costo guardado');
+    }
+    function actualizarTablaCostos() {
+        const tbody = document.getElementById('costos-body');
+        const totalCostoEl = document.getElementById('total-costo-costos');
+        const totalTarifaEl = document.getElementById('total-tarifa-costos');
+        if (!tbody || !totalCostoEl || !totalTarifaEl) return;
+        tbody.innerHTML = '';
+        let totalCosto = 0, totalTarifa = 0;
+        costosServicio.forEach((c, i) => {
+            const costo = parseFloat(c.costo) || 0;
+            const tarifa = parseFloat(c.tarifa) || 0;
+            const qty = parseFloat(c.qty) || 0;
+            const totalCostoItem = costo * qty;
+            const totalTarifaItem = tarifa * qty;
+            totalCosto += totalCostoItem;
+            totalTarifa += totalTarifaItem;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${c.concepto}</td>
+                <td>${c.moneda}</td>
+                <td style="text-align: right;">${qty.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #fff9db;">${totalCostoItem.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #e6f7ff;">${totalTarifaItem.toFixed(2)}</td>
+                <td>${c.aplica}</td>
+                <td style="text-align: center;">
+                    <button type="button" class="btn-edit" onclick="editarCosto(${i})" style="margin-right: 0.3rem; padding: 0.2rem 0.4rem;">✏️</button>
+                    <button type="button" class="btn-delete" onclick="eliminarCosto(${i})" style="padding: 0.2rem 0.4rem;">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        totalCostoEl.textContent = totalCosto.toFixed(2);
+        totalTarifaEl.textContent = totalTarifa.toFixed(2);
+    }
+    function editarCosto(index) {
+        const c = costosServicio[index];
+        if (!c) return;
+        document.getElementById('costo_concepto').value = c.concepto || '';
+        document.getElementById('costo_qty').value = (c.qty !== undefined) ? c.qty : '';
+        document.getElementById('costo_costo').value = (c.costo !== undefined) ? c.costo : '';
+        document.getElementById('costo_tarifa').value = (c.tarifa !== undefined) ? c.tarifa : '';
+        document.getElementById('costo_aplica').value = c.aplica || '';
+        document.getElementById('costo_total_costo').value = (c.total_costo !== undefined) ? c.total_costo.toFixed(2) : '0.00';
+        document.getElementById('costo_total_tarifa').value = (c.total_tarifa !== undefined) ? c.total_tarifa.toFixed(2) : '0.00';
+        window.indiceCostoEdicion = index;
+    }
+    function eliminarCosto(index) {
+        if (confirm('¿Eliminar costo?')) {
+            costosServicio.splice(index, 1);
+            actualizarTablaCostos();
+            exito('Costo eliminado');
+        }
+    }
+    function limpiarFormularioCostos() {
+        document.getElementById('costo_concepto').selectedIndex = 0;
+        document.getElementById('costo_qty').value = '';
+        document.getElementById('costo_costo').value = '';
+        document.getElementById('costo_tarifa').value = '';
+        document.getElementById('costo_aplica').selectedIndex = 0;
+        document.getElementById('costo_total_costo').value = '0.00';
+        document.getElementById('costo_total_tarifa').value = '0.00';
+    }
+    function cerrarSubmodalCostos() {
+        // Guardar costos en el servicio actual (si hay uno en edición)
+        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+            servicios[servicioEnEdicion].costos = [...costosServicio];
+        }
+        document.getElementById('submodal-costos').style.display = 'none';
+    }
+    document.getElementById('gasto_tipo')?.addEventListener('change', cargarGastosPorTipo);
+    function cargarGastosPorTipo() {
+        const tipo = document.getElementById('gasto_tipo')?.value;
+        if (!tipo) {
+            document.getElementById('gasto_gasto').innerHTML = '<option value="">Gastos</option>';
+            return;
+        }
+        fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('gasto_gasto');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Gastos</option>';
+                (data.gastos || []).forEach(g => {
+                    const opt = document.createElement('option');
+                    opt.value = g;
+                    opt.textContent = g;
+                    sel.appendChild(opt);
+                });
+            });
+    }
+    function guardarGastoLocal() {
+        const tipo = document.getElementById('gasto_tipo').value;
+        const gasto = document.getElementById('gasto_gasto').value;
+        const moneda = document.getElementById('gasto_moneda').value;
+        const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
+        const afecto = document.getElementById('gasto_afecto').value;
+        const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
+        if (!tipo || !gasto) {
+            return error('Tipo y Gasto son obligatorios');
+        }
+        const nuevoGasto = { tipo, gasto, moneda, monto, afecto, iva };
+        gastosLocales.push(nuevoGasto);
+        actualizarTablaGastosLocales();
+        limpiarFormularioGastos();
+        exito('Gasto local agregado');
+    }
+    function actualizarTablaGastosLocales() {
+        const tbody = document.getElementById('gastos-locales-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        let totalVenta = 0, totalCosto = 0;
+        gastosLocales.forEach((g, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${g.tipo}</td>
+                <td>${g.gasto}</td>
+                <td>${g.moneda}</td>
+                <td style="text-align:right;">${g.monto.toFixed(2)}</td>
+                <td>${g.afecto}</td>
+                <td style="text-align:right;">${g.iva.toFixed(2)}</td>
+                <td style="text-align:center;">
+                    <button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            if (g.tipo === 'Ventas') totalVenta += g.monto;
+            if (g.tipo === 'Costo') totalCosto += g.monto;
+        });
+        document.getElementById('total-venta-gastos').textContent = totalVenta.toFixed(2);
+        document.getElementById('total-costo-gastos').textContent = totalCosto.toFixed(2);
+        document.getElementById('profit-local').textContent = (totalVenta - totalCosto).toFixed(2);
+        const profitPct = totalVenta > 0 ? ((totalVenta - totalCosto) / totalVenta * 100) : 0;
+        document.getElementById('profit-porcentaje').textContent = profitPct.toFixed(2) + ' %';
+    }
+    function eliminarGastoLocal(index) {
+        if (confirm('¿Eliminar este gasto?')) {
+            gastosLocales.splice(index, 1);
+            actualizarTablaGastosLocales();
+            exito('Gasto eliminado');
+        }
+    }
+    function limpiarFormularioGastos() {
+        document.getElementById('gasto_tipo').selectedIndex = 0;
+        document.getElementById('gasto_gasto').selectedIndex = 0;
+        document.getElementById('gasto_moneda').value = 'USD';
+        document.getElementById('gasto_monto').value = '';
+        document.getElementById('gasto_afecto').value = 'SI';
+        document.getElementById('gasto_iva').value = '';
+    }
+    function cerrarSubmodalGastosLocales() {
+        // Guardar gastos en el servicio actual (si hay uno en edición)
+        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+            servicios[servicioEnEdicion].gastos_locales = [...gastosLocales];
+        }
+        document.getElementById('submodal-gastos-locales').style.display = 'none';
+    }
+    // === FUNCIONES DE SERVICIOS ===
+    function editarServicio(index) {
+        try {
+            if (index < 0 || index >= servicios.length) {
+                throw new Error('Índice de servicio inválido');
+            }
+            abrirModalServicio(index);
+        } catch (e) {
+            console.error('Error al editar servicio:', e);
+            error('No se pudo abrir el servicio para edición');
+        }
+    }
+    function eliminarServicio(index) {
+        if (index < 0 || index >= servicios.length) return;
+
+        const servicio = servicios[index];
+        const tieneCostos = Array.isArray(servicio.costos) && servicio.costos.length > 0;
+        const tieneGastos = Array.isArray(servicio.gastos_locales) && servicio.gastos_locales.length > 0;
+
+        if (tieneCostos || tieneGastos) {
+            error('No se puede eliminar el servicio porque tiene costos o gastos asociados. Elimine primero los elementos inferiores.');
+            return;
+        }
+
+        if (confirm('¿Eliminar este servicio?')) {
+            servicios.splice(index, 1);
+            actualizarTabla();
+            exito('Servicio eliminado');
+        }
+    }
+    // =================================================================================================================
+    // === 9. INICIALIZACIÓN === DOMContentLoaded
+    // =================================================================================================================
     document.addEventListener('DOMContentLoaded', () => {
         cargarPaises();
         cargarOperacionesYTipos();
-        cargarClientesEnSelect();
+        cargarClientesEnSelect(); // ←←← CARGAR CLIENTES AL INICIAR
+
         // Mostrar notificación de éxito si viene en la URL
         const urlParams = new URLSearchParams(window.location.search);
         const exitoMsg = urlParams.get('exito');
@@ -952,8 +1329,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
             exito(decodeURIComponent(exitoMsg));
             history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
         }
+
+        cargarPaises();
+        cargarOperacionesYTipos();
+        cargarClientesEnSelect();
+
         document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
         document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
+
         // === BOTÓN: Agregar Servicio ===
         const btnAgregarServicio = document.getElementById('btn-agregar-servicio');
         if (btnAgregarServicio) {
@@ -967,6 +1350,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 abrirModalServicio();
             });
         }
+
         // === BOTÓN: Grabar Todo ===
         const btnGrabarTodo = document.getElementById('btn-save-all');
         if (btnGrabarTodo) {
@@ -978,6 +1362,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const operacion = document.getElementById('operacion')?.value;
                 const tipoOper = document.getElementById('tipo_oper')?.value;
                 const concatenado = document.getElementById('concatenado')?.value;
+
+                const razonHidden = document.querySelector('input[name="razon_social"]');
+                if (!razonHidden || !razonHidden.value.trim()) {
+                    error('Debe seleccionar un cliente de la lista de Razón Social');
+                    return;
+                }
+
                 if (!rut || !razon) {
                     error('RUT y Razón Social son obligatorios');
                     return;
@@ -991,6 +1382,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     error('RUT inválido');
                     return;
                 }
+
                 const form = document.getElementById('form-prospecto');
                 const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
                 let inp = form.querySelector('input[name="modo"]');
@@ -1014,6 +1406,108 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 form.submit();
             });
         }
-        // ... resto de los listeners (submodales, búsqueda inteligente, etc.) ...
+
+        // Submodales desde la sección principal (con validación)
+        document.getElementById('btn-costos-servicio')?.addEventListener('click', () => {
+            error('Abra un servicio primero para gestionar costos');
+        });
+        document.getElementById('btn-gastos-locales')?.addEventListener('click', () => {
+            error('Abra un servicio primero para gestionar gastos');
+        });
+
+        document.getElementById('btn-eliminar-prospecto')?.addEventListener('click', function() {
+        const idPpl = document.getElementById('id_ppl')?.value;
+        if (!idPpl || idPpl === '0') {
+            error('No hay prospecto seleccionado para eliminar.');
+            return;
+        }
+        if (servicios.length > 0) {
+            error('No se puede eliminar el prospecto porque tiene servicios asociados.');
+            return;
+        }
+        if (confirm('¿Está seguro de eliminar este prospecto? Esta acción no se puede deshacer.')) {
+            fetch('/api/eliminar_prospecto.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_ppl: idPpl })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    exito('Prospecto eliminado correctamente');
+                    document.getElementById('form-prospecto').reset();
+                    servicios = [];
+                    actualizarTabla();
+                    setTimeout(() => {
+                        window.location.href = '?page=prospectos';
+                    }, 1500);
+                } else {
+                    error(data.message || 'Error al eliminar el prospecto');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                error('Error de conexión al eliminar el prospecto');
+            });
+        }
+    
+        // Submodales desde dentro del modal de servicio (con verificación segura)
+        const btnCostosDentro = document.getElementById('btn-costos-servicio-dentro');
+        const btnGastosDentro = document.getElementById('btn-gastos-locales-dentro');
+        if (btnCostosDentro) {
+            btnCostosDentro.addEventListener('click', abrirSubmodalCostos);
+        }
+        if (btnGastosDentro) {
+            btnGastosDentro.addEventListener('click', abrirSubmodalGastosLocales);
+        }
+        
+        // Búsqueda inteligente: busca en PROSPECTOS
+        document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
+            console.log('🔍 [BÚSQUEDA INTELIGENTE] Iniciando búsqueda en PROSPECTOS');
+            const term = this.value.trim();
+            const div = document.getElementById('resultados-busqueda');
+            div.style.display = 'none';
+            if (!term) return;
+
+            try {
+                const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
+                console.log('📡 [BÚSQUEDA INTELIGENTE] Respuesta HTTP:', res.status);
+                const data = await res.json();
+                console.log('📦 [BÚSQUEDA INTELIGENTE] Datos recibidos:', data);
+                div.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(p => {
+                        const d = document.createElement('div');
+                        d.style.padding = '0.8rem';
+                        d.style.cursor = 'pointer';
+                        d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
+                        d.onclick = () => {
+                            console.log('✅ [BÚSQUEDA INTELIGENTE] Cargando prospecto ID:', p.id_ppl);
+                            seleccionarProspecto(p.id_ppl);
+                            div.style.display = 'none';
+                            this.value = '';
+                        };
+                        div.appendChild(d);
+                    });
+                    div.style.display = 'block';
+                } else {
+                    console.log('ℹ️ [BÚSQUEDA INTELIGENTE] No se encontraron resultados');
+                }
+            } catch (e) {
+                console.error('❌ [BÚSQUEDA INTELIGENTE] Error:', e);
+                error('Error en búsqueda de prospectos');
+            }
+        });
+
+        // Cargar prospecto desde URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const idFromUrl = urlParams.get('id_ppl');
+        if (idFromUrl && !isNaN(idFromUrl)) {
+            const cleanUrl = window.location.pathname + '?page=prospectos';
+            history.replaceState({}, document.title, cleanUrl);
+            setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
+        }
+        // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
+        window.eliminarServicio = eliminarServicio; 
     });
 </script>
