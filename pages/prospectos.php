@@ -97,8 +97,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <table id="tabla-servicios">
                 <thead>
                     <tr>
-                        <th>Servicio</th><th>Tráfico</th><th>Base Cálculo</th><th>Moneda</th><th>Tarifa</th>
-                        <th>Costo</th><th>Venta</th><th>GDC</th><th>GDV</th><th>Acción</th>
+                        <th style="grid-column: span 3;">Servicio</th>
+                        <th>Tráfico</th>
+                        <th>Moneda</th>
+                        <th>Costo</th>
+                        <th>Venta</th>
+                        <th>GDC</th>
+                        <th>GDV</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody id="servicios-body"></tbody>
@@ -532,11 +538,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
             tc += c; tv += v; tgc += gc; tgv += gv;
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${s.servicio}</td>
-                <td>${s.trafico}</td>
-                <td>${s.base_calculo || ''}</td>
-                <td>${s.moneda}</td>
-                <td>${(parseFloat(s.tarifa)||0).toFixed(2)}</td>
+                <td style="text-align: left; padding-left: 0.8rem;" colspan="3">${s.servicio || ''}</td>
+                <td>${s.trafico || ''}</td>
+                <td>${s.moneda || 'USD'}</td>
                 <td>${c.toFixed(2)}</td>
                 <td>${v.toFixed(2)}</td>
                 <td>${gc.toFixed(2)}</td>
