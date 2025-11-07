@@ -353,6 +353,10 @@
             })
             .catch(err => {
                 console.error('Error al cargar comerciales:', err);
+                // Intenta ver la respuesta real
+                fetch('/api/get_comerciales.php')
+                    .then(r => r.text())
+                    .then(text => console.log('Respuesta cruda:', text));
                 error('No se pudieron cargar los comerciales');
             });
     }

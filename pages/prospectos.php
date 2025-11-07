@@ -15,6 +15,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
     <input type="hidden" name="razon_social" />
+    <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
+    <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem;">
         <h3>
@@ -122,7 +124,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
         <h3><i class="fas fa-comments"></i> Notas Comerciales</h3>
         <span class="close" onclick="cerrarModalComercial()">&times;</span>
-        <textarea id="notas_comerciales_input" rows="6" placeholder="..."></textarea>
+        <textarea id="notas_comerciales_input" style="width: 100%; height: 85%; padding: 1rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px;"></textarea>
         <div class="modal-footer">
             <button type="button" onclick="cerrarModalComercial()">Cerrar</button>
             <button type="button" onclick="guardarNotasComerciales()">Guardar</button>
@@ -135,7 +137,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
         <h3><i class="fas fa-clipboard-list"></i> Notas Operaciones</h3>
         <span class="close" onclick="cerrarModalOperaciones()">&times;</span>
-        <textarea id="notas_operaciones_input" rows="6" placeholder="..."></textarea>
+        <textarea id="notas_operaciones_input" style="width: 100%; height: 85%; padding: 1rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px;"></textarea>
         <div class="modal-footer">
             <button type="button" onclick="cerrarModalOperaciones()">Cerrar</button>
             <button type="button" onclick="guardarNotasOperaciones()">Guardar</button>
@@ -804,17 +806,24 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                 // === Notas ===
                 const setNota = (name, val) => {
-                    let inp = document.querySelector(`input[name="${name}"]`);
+                    // Usa el ID directamente (sin [name="..."])
+                    const inp = document.getElementById(name);
                     if (!inp) {
-                        inp = document.createElement('input');
-                        inp.type = 'hidden';
-                        inp.name = name;
-                        document.getElementById('form-prospecto').appendChild(inp);
+                        // Si no existe, créalo como campo oculto
+                        const nuevoInput = document.createElement('input');
+                        nuevoInput.type = 'hidden';
+                        nuevoInput.id = name;
+                        nuevoInput.name = name;
+                        document.getElementById('form-prospecto').appendChild(nuevoInput);
+                        nuevoInput.value = val || '';
+                    } else {
+                        inp.value = val || '';
                     }
-                    inp.value = val || '';
+                    // Actualizar también el textarea del modal
                     const textarea = document.getElementById(`${name}_input`);
                     if (textarea) textarea.value = val || '';
                 };
+
                 setNota('notas_comerciales', p.notas_comerciales);
                 setNota('notas_operaciones', p.notas_operaciones);
 
