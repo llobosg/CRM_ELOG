@@ -726,136 +726,138 @@ require_once __DIR__ . '/../includes/auth_check.php';
     // === 5. MANEJO DE PROSPECTOS ===
     // ===================================================================
     function seleccionarProspecto(id) {
-    fetch(`/api/get_prospecto.php?id=${id}`)
-        .then(r => r.json())
-        .then(data => {
-            if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
-            const p = data.prospecto;
+        fetch(`/api/get_prospecto.php?id=${id}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
+                const p = data.prospecto;
 
-            // === Actualizar el select de Razón Social ===
-            const razonSelect = document.getElementById('razon_social_select');
-            if (razonSelect) {
-                // Buscar opción que coincida con el RUT del prospecto
-                let optionFound = false;
-                for (let opt of razonSelect.options) {
-                    if (opt.value === p.rut_empresa) {
-                        opt.selected = true;
-                        optionFound = true;
-                        break;
+                // === Actualizar el select de Razón Social ===
+                const razonSelect = document.getElementById('razon_social_select');
+                if (razonSelect) {
+                    let optionFound = false;
+                    // Usar bucle clásico para compatibilidad
+                    for (let i = 0; i < razonSelect.options.length; i++) {
+                        const opt = razonSelect.options[i];
+                        if (opt.value === p.rut_empresa) {
+                            opt.selected = true;
+                            optionFound = true;
+                            break;
+                        }
+                    }
+                    if (!optionFound && p.rut_empresa && p.razon_social) {
+                        const opt = document.createElement('option');
+                        opt.value = p.rut_empresa;
+                        opt.textContent = p.razon_social;
+                        razonSelect.appendChild(opt);
+                        razonSelect.value = p.rut_empresa;
                     }
                 }
-                // Si no existe, crearla dinámicamente
-                if (!optionFound && p.rut_empresa && p.razon_social) {
-                    const opt = document.createElement('option');
-                    opt.value = p.rut_empresa;
-                    opt.textContent = p.razon_social;
-                    razonSelect.appendChild(opt);
-                    razonSelect.value = p.rut_empresa;
-                }
-            }
 
-            // === Cargar campos readonly ===
-            const fields = [
-                { id: 'rut_empresa', value: p.rut_empresa },
-                { id: 'fono_empresa', value: p.fono_empresa },
-                { id: 'direccion', value: p.direccion },
-                { id: 'booking', value: p.booking },
-                { id: 'incoterm', value: p.incoterm },
-                { id: 'concatenado', value: p.concatenado },
-                { id: 'fecha_alta', value: p.fecha_alta },
-                { id: 'fecha_estado', value: p.fecha_estado },
-                { id: 'nombre', value: p.nombre } // comercial asignado
-            ];
-            fields.forEach(f => {
-                const el = document.getElementById(f.id);
-                if (el) el.value = f.value || '';
-            });
+                // === Cargar campos readonly ===
+                const fields = [
+                    { id: 'rut_empresa', value: p.rut_empresa },
+                    { id: 'fono_empresa', value: p.fono_empresa },
+                    { id: 'direccion', value: p.direccion },
+                    { id: 'booking', value: p.booking },
+                    { id: 'incoterm', value: p.incoterm },
+                    { id: 'concatenado', value: p.concatenado },
+                    { id: 'fecha_alta', value: p.fecha_alta },
+                    { id: 'fecha_estado', value: p.fecha_estado },
+                    { id: 'nombre', value: p.nombre }
+                ];
+                fields.forEach(f => {
+                    const el = document.getElementById(f.id);
+                    if (el) el.value = f.value || '';
+                });
 
-            // === Cargar país ===
-            const paisSel = document.getElementById('pais');
-            if (paisSel && p.pais) {
-                for (let opt of paisSel.options) {
-                    if (opt.value === p.pais) {
-                        opt.selected = true;
-                        break;
+                // === Cargar país ===
+                const paisSel = document.getElementById('pais');
+                if (paisSel && p.pais) {
+                    // ✅ Usar bucle clásico en lugar de for...of
+                    for (let i = 0; i < paisSel.options.length; i++) {
+                        const opt = paisSel.options[i];
+                        if (opt.value === p.pais) {
+                            opt.selected = true;
+                            break;
+                        }
+                    }
+                    if (!paisSel.value) {
+                        const opt = document.createElement('option');
+                        opt.value = p.pais;
+                        opt.textContent = p.pais;
+                        paisSel.appendChild(opt);
+                        paisSel.value = p.pais;
                     }
                 }
-                if (!paisSel.value) {
-                    const opt = document.createElement('option');
-                    opt.value = p.pais;
-                    opt.textContent = p.pais;
-                    paisSel.appendChild(opt);
-                    paisSel.value = p.pais;
-                }
-            }
 
-            // === Cargar operación y tipo ===
-            const opSel = document.getElementById('operacion');
-            const tipoSel = document.getElementById('tipo_oper');
-            if (opSel && p.operacion) {
-                opSel.value = p.operacion;
-                fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                        (data.tipos || []).forEach(t => {
-                            const opt = document.createElement('option');
-                            opt.value = t;
-                            opt.textContent = t;
-                            tipoSel.appendChild(opt);
+                // === Cargar operación y tipo ===
+                const opSel = document.getElementById('operacion');
+                const tipoSel = document.getElementById('tipo_oper');
+                if (opSel && p.operacion) {
+                    opSel.value = p.operacion;
+                    fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                            (data.tipos || []).forEach(t => {
+                                const opt = document.createElement('option');
+                                opt.value = t;
+                                opt.textContent = t;
+                                tipoSel.appendChild(opt);
+                            });
+                            if (p.tipo_oper) tipoSel.value = p.tipo_oper;
                         });
-                        if (p.tipo_oper) tipoSel.value = p.tipo_oper;
-                    });
-            }
-
-            // === Notas ===
-            const setNota = (name, val) => {
-                let inp = document.querySelector(`input[name="${name}"]`);
-                if (!inp) {
-                    inp = document.createElement('input');
-                    inp.type = 'hidden';
-                    inp.name = name;
-                    document.getElementById('form-prospecto').appendChild(inp);
                 }
-                inp.value = val || '';
-                const textarea = document.getElementById(`${name}_input`);
-                if (textarea) textarea.value = val || '';
-            };
-            setNota('notas_comerciales', p.notas_comerciales);
-            setNota('notas_operaciones', p.notas_operaciones);
 
-            // === Servicios ===
-            servicios = (data.servicios || []).map(s => ({
-                ...s,
-                costo: parseFloat(s.costo) || 0,
-                venta: parseFloat(s.venta) || 0,
-                costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
-            }));
-            tieneServiciosIniciales = servicios.length > 0;
-            actualizarTabla();
+                // === Notas ===
+                const setNota = (name, val) => {
+                    let inp = document.querySelector(`input[name="${name}"]`);
+                    if (!inp) {
+                        inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = name;
+                        document.getElementById('form-prospecto').appendChild(inp);
+                    }
+                    inp.value = val || '';
+                    const textarea = document.getElementById(`${name}_input`);
+                    if (textarea) textarea.value = val || '';
+                };
+                setNota('notas_comerciales', p.notas_comerciales);
+                setNota('notas_operaciones', p.notas_operaciones);
 
-            // === IDs internos ===
-            document.getElementById('id_ppl').value = p.id_ppl || '';
-            document.getElementById('id_prospect').value = p.id_prospect || '';
+                // === Servicios ===
+                servicios = (data.servicios || []).map(s => ({
+                    ...s,
+                    costo: parseFloat(s.costo) || 0,
+                    venta: parseFloat(s.venta) || 0,
+                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
+                }));
+                tieneServiciosIniciales = servicios.length > 0;
+                actualizarTabla();
 
-            // === Habilitar edición ===
-            const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
-            const selects = document.querySelectorAll('select');
-            inputs.forEach(input => {
-                input.readOnly = false;
-                input.style.backgroundColor = '';
+                // === IDs internos ===
+                document.getElementById('id_ppl').value = p.id_ppl || '';
+                document.getElementById('id_prospect').value = p.id_prospect || '';
+
+                // === Habilitar edición ===
+                const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
+                const selects = document.querySelectorAll('select');
+                inputs.forEach(input => {
+                    input.readOnly = false;
+                    input.style.backgroundColor = '';
+                });
+                selects.forEach(select => {
+                    select.disabled = false;
+                });
+                document.getElementById('btn-agregar-servicio').disabled = false;
+            })
+            .catch(err => {
+                console.error('Error al cargar prospecto:', err);
+                error('No se pudo cargar el prospecto');
             });
-            selects.forEach(select => {
-                select.disabled = false;
-            });
-            document.getElementById('btn-agregar-servicio').disabled = false;
-        })
-        .catch(err => {
-            console.error('Error al cargar prospecto:', err);
-            error('No se pudo cargar el prospecto');
-        });
-}
+    }
     // ===================================================================
     // === 6. MODALES PRINCIPALES ===
     // ===================================================================
