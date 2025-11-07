@@ -1450,6 +1450,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 error('Error de conexión al eliminar el prospecto');
             });
         }
+    });
     
         // Submodales desde dentro del modal de servicio (con verificación segura)
         const btnCostosDentro = document.getElementById('btn-costos-servicio-dentro');
