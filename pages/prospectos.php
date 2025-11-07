@@ -231,7 +231,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             </div>
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-secondary" onclick="cerrarModalServicioConConfirmacion()">Volver</button>
-                <button type="button" class="btn-add" onclick="guardarServicio()">Agregar Servicio</button>
+                <button type="button" class="btn-add" id="btn-guardar-servicio">Agregar Servicio</button>
             </div>
         </div>
     </div>
@@ -1561,4 +1561,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
         window.eliminarServicio = eliminarServicio; 
     });
+    // Exponer funciones para debugging o uso global
+    window.guardarServicio = guardarServicio;
+    window.abrirModalServicio = abrirModalServicio;
+    // ... otras funciones si es necesario
 </script>
