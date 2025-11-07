@@ -771,24 +771,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     if (el) el.value = f.value || '';
                 });
 
-                // === Cargar país ===
-                const paisSel = document.getElementById('pais');
-                if (paisSel && p.pais) {
-                    // ✅ Usar bucle clásico en lugar de for...of
-                    for (let i = 0; i < paisSel.options.length; i++) {
-                        const opt = paisSel.options[i];
-                        if (opt.value === p.pais) {
-                            opt.selected = true;
-                            break;
-                        }
-                    }
-                    if (!paisSel.value) {
-                        const opt = document.createElement('option');
-                        opt.value = p.pais;
-                        opt.textContent = p.pais;
-                        paisSel.appendChild(opt);
-                        paisSel.value = p.pais;
-                    }
+                // === Cargar país (input readonly) ===
+                const paisInput = document.getElementById('pais');
+                if (paisInput && p.pais) {
+                    paisInput.value = p.pais;
                 }
 
                 // === Cargar operación y tipo ===
