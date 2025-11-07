@@ -989,13 +989,23 @@ require_once __DIR__ . '/../includes/auth_check.php';
     }
 
     function guardarServicio() {
+        console.log('🔍 [SERVICIO] Iniciando guardarServicio()');
+        
         const servicio = document.getElementById('serv_servicio').value.trim();
-        if (!servicio) return error('Servicio es obligatorio');
+        if (!servicio) {
+            console.log('⚠️ [SERVICIO] Validación fallida: Servicio es obligatorio');
+            error('Servicio es obligatorio');
+            return;
+        }
+        
         const origen = document.getElementById('serv_origen').value;
         const destino = document.getElementById('serv_destino').value;
         if (origen && destino && origen === destino) {
+            console.log('⚠️ [SERVICIO] Validación fallida: Origen y Destino son iguales');
             return error('Origen y Destino no pueden ser el mismo lugar');
         }
+
+        console.log('📋 [SERVICIO] Recopilando datos del servicio...');
         const nuevo = {
             id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
             id_prospect: document.getElementById('id_prospect_serv').value,
@@ -1022,9 +1032,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
             aol: document.getElementById('serv_aol').value,
             aod: document.getElementById('serv_aod').value,
             agente: document.getElementById('serv_agente').value,
-            transportador: document.getElementById('serv_transportador').value, // ✅ Nuevo campo
-            incoterm: document.getElementById('serv_incoterm').value,           // ✅ Nuevo campo
-            ref_cliente: document.getElementById('serv_ref_cliente').value,     // ✅ Nuevo campo
+            transportador: document.getElementById('serv_transportador').value,
+            incoterm: document.getElementById('serv_incoterm').value,
+            ref_cliente: document.getElementById('serv_ref_cliente').value,
             costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
             venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
             costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
@@ -1032,15 +1042,23 @@ require_once __DIR__ . '/../includes/auth_check.php';
             costos: [...costosServicio],
             gastos_locales: [...gastosLocales]
         };
+
+        console.log('📦 [SERVICIO] Datos del servicio:', nuevo);
+
         if (servicioEnEdicion !== null) {
             servicios[servicioEnEdicion] = nuevo;
+            console.log('✅ [SERVICIO] Servicio actualizado');
             exito('Servicio actualizado correctamente');
         } else {
             servicios.push(nuevo);
+            console.log('✅ [SERVICIO] Servicio agregado a la lista');
             exito('Servicio agregado correctamente');
         }
+
         actualizarTabla();
+        console.log('🔄 [SERVICIO] Tabla actualizada');
         cerrarModalServicio();
+        console.log('🔚 [SERVICIO] Modal cerrado');
     }
     // ===================================================================
     // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
@@ -1559,10 +1577,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
             setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
         }
         // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
-        window.eliminarServicio = eliminarServicio; 
+        window.eliminarServicio = eliminarServicio;
+
+        // === LISTENER PARA EL BOTÓN "AGREGAR SERVICIO" EN EL MODAL ===
+        const btnGuardarServicio = document.getElementById('btn-guardar-servicio');
+        if (btnGuardarServicio) {
+            console.log('🔍 [SERVICIO] Listener asignado a #btn-guardar-servicio');
+            btnGuardarServicio.addEventListener('click', guardarServicio);
+        }
     });
     // Exponer funciones para debugging o uso global
     window.guardarServicio = guardarServicio;
     window.abrirModalServicio = abrirModalServicio;
-    // ... otras funciones si es necesario
 </script>
