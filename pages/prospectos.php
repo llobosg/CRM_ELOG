@@ -121,11 +121,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
 <!-- ========== MODALES ========== -->
 <!-- Modal Comercial -->
 <div id="modal-comercial" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
+    <div class="modal-content" style="max-width: 650px; max-height: 85vh; margin: 2rem auto; display: flex; flex-direction: column;">
         <h3><i class="fas fa-comments"></i> Notas Comerciales</h3>
         <span class="close" onclick="cerrarModalComercial()">&times;</span>
-        <textarea id="notas_comerciales_input" style="width: 100%; height: 85%; padding: 1rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px;"></textarea>
-        <div class="modal-footer">
+        <textarea id="notas_comerciales_input" style="flex: 1; width: 100%; height: 70%; padding: 1rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; resize: none;"></textarea>
+        <div class="modal-footer" style="margin-top: auto; text-align: right;">
             <button type="button" onclick="cerrarModalComercial()">Cerrar</button>
             <button type="button" onclick="guardarNotasComerciales()">Guardar</button>
         </div>
@@ -134,11 +134,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
 <!-- Modal Operaciones -->
 <div id="modal-operaciones" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
+    <div class="modal-content" style="max-width: 650px; max-height: 85vh; margin: 2rem auto; display: flex; flex-direction: column;">
         <h3><i class="fas fa-clipboard-list"></i> Notas Operaciones</h3>
         <span class="close" onclick="cerrarModalOperaciones()">&times;</span>
-        <textarea id="notas_operaciones_input" style="width: 100%; height: 85%; padding: 1rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px;"></textarea>
-        <div class="modal-footer">
+        <textarea id="notas_operaciones_input" style="flex: 1; width: 100%; height: 70%; padding: 1rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; resize: none;"></textarea>
+        <div class="modal-footer" style="margin-top: auto; text-align: right;">
             <button type="button" onclick="cerrarModalOperaciones()">Cerrar</button>
             <button type="button" onclick="guardarNotasOperaciones()">Guardar</button>
         </div>
