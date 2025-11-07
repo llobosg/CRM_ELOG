@@ -1501,7 +1501,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
         });
 
         // Cargar prospecto desde URL
-        const urlParams = new URLSearchParams(window.location.search);
         const idFromUrl = urlParams.get('id_ppl');
         if (idFromUrl && !isNaN(idFromUrl)) {
             const cleanUrl = window.location.pathname + '?page=prospectos';
