@@ -682,11 +682,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
         const origenSel = document.getElementById('serv_origen');
         const destinoSel = document.getElementById('serv_destino');
         if (!origenSel || !destinoSel) return Promise.resolve();
+
         if (!medio) {
             origenSel.innerHTML = '<option value="">Seleccionar</option>';
             destinoSel.innerHTML = '<option value="">Seleccionar</option>';
             return Promise.resolve();
         }
+
         return fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
             .then(r => r.json())
             .then(data => {
@@ -695,6 +697,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
                 ).join('');
                 origenSel.innerHTML = '<option value="">Seleccionar</option>' + optionsHtml;
+
                 const destinosFiltrados = origenSeleccionado
                     ? lugares.filter(l => l.lugar !== origenSeleccionado)
                     : lugares;
@@ -702,19 +705,22 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
                 ).join('');
                 destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
-                const actualizarPais = (selectId, paisId) => {
-                    const sel = document.getElementById(selectId);
-                    const pais = document.getElementById(paisId);
-                    if (!sel || !pais) return;
-                    const handler = () => {
-                        const opt = sel.options[sel.selectedIndex];
-                        pais.value = opt ? opt.getAttribute('data-pais') || '' : '';
-                    };
-                    sel.removeEventListener('change', handler);
-                    sel.addEventListener('change', handler);
+
+                // Actualizar país origen al cambiar selección
+                const handlerOrigen = () => {
+                    const opt = origenSel.options[origenSel.selectedIndex];
+                    document.getElementById('serv_pais_origen').value = opt ? opt.getAttribute('data-pais') || '' : '';
                 };
-                actualizarPais('serv_origen', 'serv_pais_origen');
-                actualizarPais('serv_destino', 'serv_pais_destino');
+                origenSel.removeEventListener('change', handlerOrigen);
+                origenSel.addEventListener('change', handlerOrigen);
+
+                // Actualizar país destino al cambiar selección
+                const handlerDestino = () => {
+                    const opt = destinoSel.options[destinoSel.selectedIndex];
+                    document.getElementById('serv_pais_destino').value = opt ? opt.getAttribute('data-pais') || '' : '';
+                };
+                destinoSel.removeEventListener('change', handlerDestino);
+                destinoSel.addEventListener('change', handlerDestino);
             })
             .catch(err => {
                 console.error('Error al cargar lugares:', err);
@@ -918,7 +924,22 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 document.getElementById('serv_transportador').value = s.transportador || '';
                 document.getElementById('serv_incoterm').value = s.incoterm || '';
                 document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
-                // ... otros campos ...
+                document.getElementById('serv_transito').value = s.transito || '';
+                document.getElementById('serv_frecuencia').value = s.frecuencia || '';
+                document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
+                document.getElementById('serv_sector').value = s.sector || '';
+                document.getElementById('serv_mercancia').value = s.mercancia || '';
+                document.getElementById('serv_bultos').value = s.bultos || '';
+                document.getElementById('serv_peso').value = s.peso || '';
+                document.getElementById('serv_volumen').value = s.volumen || '';
+                document.getElementById('serv_dimensiones').value = s.dimensiones || '';
+                document.getElementById('serv_moneda').value = s.moneda || 'USD';
+                document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
+                document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
+                document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
+                document.getElementById('serv_aol').value = s.aol || '';
+                document.getElementById('serv_aod').value = s.aod || '';
+                document.getElementById('serv_agente').value = s.agente || '';
 
                 // Cargar lugares si hay medio guardado
                 const medioGuardado = (s.trafico || '').trim();
@@ -928,9 +949,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         const origenSel = document.getElementById('serv_origen');
                         const destinoSel = document.getElementById('serv_destino');
                         if (origenSel && s.origen) {
-                            for (let opt of origenSel.options) {
-                                if (opt.value === s.origen) {
-                                    opt.selected = true;
+                            for (let i = 0; i < origenSel.options.length; i++) {
+                                if (origenSel.options[i].value === s.origen) {
+                                    origenSel.selectedIndex = i;
                                     break;
                                 }
                             }
@@ -939,9 +960,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             document.getElementById('serv_pais_origen').value = origenOpt ? origenOpt.getAttribute('data-pais') || '' : '';
                         }
                         if (destinoSel && s.destino) {
-                            for (let opt of destinoSel.options) {
-                                if (opt.value === s.destino) {
-                                    opt.selected = true;
+                            for (let i = 0; i < destinoSel.options.length; i++) {
+                                if (destinoSel.options[i].value === s.destino) {
+                                    destinoSel.selectedIndex = i;
                                     break;
                                 }
                             }
@@ -951,17 +972,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         }
                     });
                 }
+                // Cargar commodity y medio
+                const medioSel = document.getElementById('serv_medio_transporte');
+                const commoditySel = document.getElementById('serv_commodity');
+                if (medioSel && s.trafico) medioSel.value = s.trafico;
+                if (commoditySel && s.commodity) commoditySel.value = s.commodity;
             } else {
                 // Nuevo servicio
                 servicioEnEdicion = null;
-                // No hay medio preseleccionado → los lugares se cargarán al seleccionar un medio
             }
         });
 
         // Listener para cargar lugares al cambiar el medio de transporte
         const medioSel = document.getElementById('serv_medio_transporte');
         if (medioSel) {
-            // Remover listeners previos para evitar duplicados
+            // Eliminar listeners anteriores para evitar duplicados
             const newMedioSel = medioSel.cloneNode(true);
             medioSel.parentNode.replaceChild(newMedioSel, medioSel);
             newMedioSel.addEventListener('change', function() {
@@ -973,6 +998,41 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>';
                 }
             });
+        }
+
+        // Listener para filtrar destino al cambiar origen
+        const origenSel = document.getElementById('serv_origen');
+        if (origenSel) {
+            const handlerOrigen = () => {
+                const origen = origenSel.value;
+                const destinoSel = document.getElementById('serv_destino');
+                if (!destinoSel) return;
+
+                // Obtener todos los lugares del medio actual
+                const medio = document.getElementById('serv_medio_transporte')?.value;
+                if (!medio) return;
+
+                fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const lugares = data.lugares || [];
+                        const destinosFiltrados = lugares.filter(l => l.lugar !== origen);
+                        const destinoHtml = destinosFiltrados.map(l => 
+                            `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                        ).join('');
+                        destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
+                        // Actualizar país destino si hay selección
+                        const handlerDestino = () => {
+                            const opt = destinoSel.options[destinoSel.selectedIndex];
+                            document.getElementById('serv_pais_destino').value = opt ? opt.getAttribute('data-pais') || '' : '';
+                        };
+                        destinoSel.removeEventListener('change', handlerDestino);
+                        destinoSel.addEventListener('change', handlerDestino);
+                    })
+                    .catch(err => console.error('Error al filtrar destinos:', err));
+            };
+            origenSel.removeEventListener('change', handlerOrigen);
+            origenSel.addEventListener('change', handlerOrigen);
         }
 
         document.getElementById('modal-servicio').style.display = 'flex';
