@@ -889,29 +889,92 @@ require_once __DIR__ . '/../includes/auth_check.php';
             error('Guarde el prospecto primero antes de agregar servicios.');
             return;
         }
+
+        // Limpiar modal
         const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
         modalInputs.forEach(el => {
             if (el.type === 'number') el.value = '';
             else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
             else if (el.tagName === 'SELECT') el.selectedIndex = 0;
         });
+
         document.getElementById('id_prospect_serv').value = idPpl;
         document.getElementById('concatenado_serv').value = concatenado;
         document.getElementById('serv_titulo_concatenado').textContent = concatenado;
         costosServicio = [];
         gastosLocales = [];
-        if (index !== null) {
-            servicioEnEdicion = index;
-            const s = servicios[index];
-            costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
-            gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
-            cargarDatosModalServicio(() => {
-                // ... resto del código de carga ...
+
+        // Cargar datos del modal (commodity, medios, etc.)
+        cargarDatosModalServicio(() => {
+            if (index !== null) {
+                // Editar servicio existente
+                servicioEnEdicion = index;
+                const s = servicios[index];
+                costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
+                gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
+
+                // Rellenar campos
+                document.getElementById('serv_servicio').value = s.servicio || '';
+                document.getElementById('serv_transportador').value = s.transportador || '';
+                document.getElementById('serv_incoterm').value = s.incoterm || '';
+                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
+                // ... otros campos ...
+
+                // Cargar lugares si hay medio guardado
+                const medioGuardado = (s.trafico || '').trim();
+                if (medioGuardado) {
+                    cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
+                        // Seleccionar origen y destino
+                        const origenSel = document.getElementById('serv_origen');
+                        const destinoSel = document.getElementById('serv_destino');
+                        if (origenSel && s.origen) {
+                            for (let opt of origenSel.options) {
+                                if (opt.value === s.origen) {
+                                    opt.selected = true;
+                                    break;
+                                }
+                            }
+                            // Actualizar país origen
+                            const origenOpt = origenSel.options[origenSel.selectedIndex];
+                            document.getElementById('serv_pais_origen').value = origenOpt ? origenOpt.getAttribute('data-pais') || '' : '';
+                        }
+                        if (destinoSel && s.destino) {
+                            for (let opt of destinoSel.options) {
+                                if (opt.value === s.destino) {
+                                    opt.selected = true;
+                                    break;
+                                }
+                            }
+                            // Actualizar país destino
+                            const destinoOpt = destinoSel.options[destinoSel.selectedIndex];
+                            document.getElementById('serv_pais_destino').value = destinoOpt ? destinoOpt.getAttribute('data-pais') || '' : '';
+                        }
+                    });
+                }
+            } else {
+                // Nuevo servicio
+                servicioEnEdicion = null;
+                // No hay medio preseleccionado → los lugares se cargarán al seleccionar un medio
+            }
+        });
+
+        // Listener para cargar lugares al cambiar el medio de transporte
+        const medioSel = document.getElementById('serv_medio_transporte');
+        if (medioSel) {
+            // Remover listeners previos para evitar duplicados
+            const newMedioSel = medioSel.cloneNode(true);
+            medioSel.parentNode.replaceChild(newMedioSel, medioSel);
+            newMedioSel.addEventListener('change', function() {
+                const medio = this.value;
+                if (medio) {
+                    cargarLugaresPorMedio(medio);
+                } else {
+                    document.getElementById('serv_origen').innerHTML = '<option value="">Seleccionar</option>';
+                    document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>';
+                }
             });
-        } else {
-            servicioEnEdicion = null;
-            cargarDatosModalServicio();
         }
+
         document.getElementById('modal-servicio').style.display = 'flex';
     }
 
