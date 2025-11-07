@@ -1002,38 +1002,40 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         // Listener para filtrar destino al cambiar origen
         const origenSel = document.getElementById('serv_origen');
-        if (origenSel) {
-            const handlerOrigen = () => {
-                const origen = origenSel.value;
-                const destinoSel = document.getElementById('serv_destino');
-                if (!destinoSel) return;
+if (origenSel) {
+    const handlerOrigen = () => {
+        const origen = origenSel.value;
+        const destinoSel = document.getElementById('serv_destino');
+        if (!destinoSel) return;
 
-                // Obtener todos los lugares del medio actual
-                const medio = document.getElementById('serv_medio_transporte')?.value;
-                if (!medio) return;
+        const medio = document.getElementById('serv_medio_transporte')?.value;
+        if (!medio) return;
 
-                fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        const lugares = data.lugares || [];
-                        const destinosFiltrados = lugares.filter(l => l.lugar !== origen);
-                        const destinoHtml = destinosFiltrados.map(l => 
-                            `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
-                        ).join('');
-                        destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
-                        // Actualizar país destino si hay selección
-                        const handlerDestino = () => {
-                            const opt = destinoSel.options[destinoSel.selectedIndex];
-                            document.getElementById('serv_pais_destino').value = opt ? opt.getAttribute('data-pais') || '' : '';
-                        };
-                        destinoSel.removeEventListener('change', handlerDestino);
-                        destinoSel.addEventListener('change', handlerDestino);
-                    })
-                    .catch(err => console.error('Error al filtrar destinos:', err));
-            };
-            origenSel.removeEventListener('change', handlerOrigen);
-            origenSel.addEventListener('change', handlerOrigen);
-        }
+        fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
+            .then(r => r.json())
+            .then(data => {
+                const lugares = data.lugares || [];
+                // Solo excluir origen si NO está vacío
+                const destinosFiltrados = origen 
+                    ? lugares.filter(l => l.lugar !== origen)
+                    : lugares;
+                const destinoHtml = destinosFiltrados.map(l => 
+                    `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                ).join('');
+                destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
+
+                // Actualizar país destino
+                const handlerDestino = () => {
+                    const opt = destinoSel.options[destinoSel.selectedIndex];
+                    document.getElementById('serv_pais_destino').value = opt ? opt.getAttribute('data-pais') || '' : '';
+                };
+                destinoSel.removeEventListener('change', handlerDestino);
+                destinoSel.addEventListener('change', handlerDestino);
+            });
+    };
+    origenSel.removeEventListener('change', handlerOrigen);
+    origenSel.addEventListener('change', handlerOrigen);
+}
 
         document.getElementById('modal-servicio').style.display = 'flex';
     }
