@@ -1080,6 +1080,36 @@ require_once __DIR__ . '/../includes/auth_check.php';
             return error('Origen y Destino no pueden ser el mismo lugar');
         }
 
+        // === VALIDACIÓN DE LÍNEA DE CRÉDITO ===
+        const rutCliente = document.getElementById('rut_empresa')?.value.trim();
+        const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
+        
+        if (rutCliente && totalVentaServicio > 0) {
+            // Consultar saldo de crédito del cliente
+            fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        error(data.error);
+                        return;
+                    }
+                    if (totalVentaServicio > data.saldo_credito) {
+                        error(`Sobregiro detectado: El servicio supera el saldo de crédito disponible (${data.saldo_credito}). 
+                            Solicite un aumento de límite en Ficha Cliente.`);
+                        return;
+                    }
+                    // ✅ Si pasa la validación, proceder con el guardado
+                    continuarGuardarServicio();
+                })
+                .catch(err => {
+                    console.error('Error al validar crédito:', err);
+                    error('No se pudo verificar la línea de crédito. Intente nuevamente.');
+                });
+            return; // Salir aquí para esperar la respuesta asíncrona
+        }
+    }
+
+    function continuarGuardarServicio() {
         console.log('📋 [SERVICIO] Recopilando datos del servicio...');
         const nuevo = {
             id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
@@ -1135,6 +1165,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         cerrarModalServicio();
         console.log('🔚 [SERVICIO] Modal cerrado');
     }
+    
     // ===================================================================
     // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
     // ===================================================================
