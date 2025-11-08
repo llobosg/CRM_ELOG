@@ -80,7 +80,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <div class="card">
         <h3><i class="fas fa-truck"></i> Servicios Asociados</h3>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-            <!-- Izquierda: Comerciales y Operaciones -->
+            <!-- Izquierda: Solo Comerciales y Operaciones -->
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
                 <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
@@ -93,29 +93,28 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <button type="button" class="btn-primary" id="btn-save-all">Grabar Todo</button>
             </div>
         </div>
-
-        <!-- NUEVA TABLA EN GRID -->
-        <div id="tabla-servicios-grid" class="grid-table">
-            <!-- Fila 1: Títulos -->
-            <div class="header-cell" style="grid-column: span 4;">Servicio</div>
-            <div class="header-cell">Tráfico</div>
-            <div class="header-cell">Moneda</div>
-            <div class="header-cell">Costo</div>
-            <div class="header-cell">Venta</div>
-            <div class="header-cell">GDC</div>
-            <div class="header-cell">GDV</div>
-            <div class="header-cell">Acción</div>
-
-            <!-- Fila 2+: Valores (se llenará con JS) -->
-            <div id="servicios-body-grid" class="grid-body"></div>
-
-            <!-- Fila 3: Totales -->
-            <div class="total-cell" style="grid-column: span 3; text-align: right; font-weight: bold;">Totales:</div>
-            <div class="total-cell" id="total-costo">0.00</div>
-            <div class="total-cell" id="total-venta">0.00</div>
-            <div class="total-cell" id="total-costogasto">0.00</div>
-            <div class="total-cell" id="total-ventagasto">0.00</div>
-            <div class="total-cell"></div>
+        <div class="table-container">
+            <table id="tabla-servicios">
+                <td style="text-align: left; padding-left: 0.8rem;" colspan="5">SERVICIO</td>
+                <td>TRÁFICO</td>
+                <td>MONEDA</td>
+                <td>COSTO</td>
+                <td>VENTA</td>
+                <td>GDC</td>
+                <td>GDV</td>
+                <td>ACCIÓN</td>
+                <tbody id="servicios-body"></tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td colspan="" style="text-align: right; font-weight: bold;">Totales:</td>
+                        <td id="total-costo">0.00</td>
+                        <td id="total-venta">0.00</td>
+                        <td id="total-costogasto">0.00</td>
+                        <td id="total-ventagasto">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
     <input type="hidden" name="servicios_json" id="servicios_json" />
