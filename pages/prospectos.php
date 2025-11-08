@@ -110,7 +110,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <tbody id="servicios-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td colspan="5" style="text-align: right; font-weight: bold;">Totales:</td>
+                        <td colspan="7" style="text-align: right; font-weight: bold;">Totales:</td>
                         <td id="total-costo">0.00</td>
                         <td id="total-venta">0.00</td>
                         <td id="total-costogasto">0.00</td>
