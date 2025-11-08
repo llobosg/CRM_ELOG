@@ -97,7 +97,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <table id="tabla-servicios">
                 <thead>
                     <tr>
-                        <th style="grid-column: span 3;">Servicio</th>
+                        <th style="text-align: left; padding-left: 0.8rem;" colspan="3">Servicio</th>
                         <th>Tráfico</th>
                         <th>Moneda</th>
                         <th>Costo</th>
@@ -1165,7 +1165,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         cerrarModalServicio();
         console.log('🔚 [SERVICIO] Modal cerrado');
     }
-    
+
     // ===================================================================
     // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
     // ===================================================================
