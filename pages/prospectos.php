@@ -95,10 +95,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
         <div class="table-container">
             <table id="tabla-servicios">
-                <!-- Encabezado -->
                 <thead>
                     <tr>
-                        <th style="text-align: left; padding-left: 0.8rem;" colspan="5">Servicio</th>
+                        <th style="grid-column: span 3;">Servicio</th>
                         <th>Tráfico</th>
                         <th>Moneda</th>
                         <th>Costo</th>
@@ -539,7 +538,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             tc += c; tv += v; tgc += gc; tgv += gv;
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="text-align: left; padding-left: 0.8rem;" colspan="5">${s.servicio || ''}</td>
+                <td style="text-align: left; padding-left: 0.8rem;" colspan="3">${s.servicio || ''}</td>
                 <td>${s.trafico || ''}</td>
                 <td>${s.moneda || 'USD'}</td>
                 <td>${c.toFixed(2)}</td>
@@ -1166,7 +1165,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         cerrarModalServicio();
         console.log('🔚 [SERVICIO] Modal cerrado');
     }
-
+    
     // ===================================================================
     // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
     // ===================================================================
