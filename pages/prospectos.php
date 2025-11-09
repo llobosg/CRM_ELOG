@@ -1755,16 +1755,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
     // Calcular en tiempo real
     function calcularCubicacion() {
         const qty = parseFloat(document.getElementById('cubicador_qty').value) || 0;
-        const peso = parseFloat(document.getElementById('cubicador_peso').value) || 0;
+        const pesoPorBulto = parseFloat(document.getElementById('cubicador_peso').value) || 0;
         const largo = parseFloat(document.getElementById('cubicador_largo').value) || 0;
         const ancho = parseFloat(document.getElementById('cubicador_ancho').value) || 0;
         const alto = parseFloat(document.getElementById('cubicador_alto').value) || 0;
 
+        // Peso real total: peso por bulto × cantidad
+        const pesoRealTotal = pesoPorBulto * qty;
+        
+        // Volumen total en cm³ y m³
         const volumenCm3 = largo * ancho * alto * qty;
         const volumenM3 = volumenCm3 / 1000000;
+        
+        // Peso volumétrico: (volumen en cm³) / 5000
         const pesoVolumetrico = volumenCm3 / 5000;
-        const pesoFinal = Math.max(peso, pesoVolumetrico);
+        
+        // Peso a considerar: el mayor entre peso real y peso volumétrico
+        const pesoFinal = Math.max(pesoRealTotal, pesoVolumetrico);
 
+        // Mostrar resultados
         document.getElementById('cubicador_volumen').textContent = volumenM3.toFixed(3) + ' m³';
         document.getElementById('cubicador_peso_vol').textContent = pesoVolumetrico.toFixed(2) + ' kg';
         document.getElementById('cubicador_peso_final').textContent = pesoFinal.toFixed(2) + ' kg';
@@ -1773,15 +1782,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
     // Aplicar resultados al modal de servicio
     function aplicarCubicacion() {
         const qty = document.getElementById('cubicador_qty').value;
-        const peso = document.getElementById('cubicador_peso_final').textContent.split(' ')[0];
+        const pesoFinal = parseFloat(document.getElementById('cubicador_peso_final').textContent.split(' ')[0]);
         const volumen = document.getElementById('cubicador_volumen').textContent.split(' ')[0];
         const largo = document.getElementById('cubicador_largo').value;
         const ancho = document.getElementById('cubicador_ancho').value;
         const alto = document.getElementById('cubicador_alto').value;
         const dimensiones = `${largo}x${ancho}x${alto} cm`;
 
+        // Aplicar al modal de servicio
         document.getElementById('serv_bultos').value = qty;
-        document.getElementById('serv_peso').value = peso;
+        document.getElementById('serv_peso').value = pesoFinal.toFixed(2); // ✅ Peso total
         document.getElementById('serv_volumen').value = volumen;
         document.getElementById('serv_dimensiones').value = dimensiones;
 
