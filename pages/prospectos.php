@@ -95,23 +95,26 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
         <div class="table-container">
             <table id="tabla-servicios">
-                <td style="text-align: left; padding-left: 0.8rem;" colspan="5">SERVICIO</td>
-                <td>TRÁFICO</td>
-                <td>MONEDA</td>
-                <td>COSTO</td>
-                <td>VENTA</td>
-                <td>GDC</td>
-                <td>GDV</td>
-                <td>ACCIÓN</td>
+                <thead>
+                    <tr>
+                        <th>Servicio</th>      <!-- colspan="3" en el <tbody> -->
+                        <th>Tráfico</th>
+                        <th>Moneda</th>
+                        <th>Costo</th>
+                        <th>Venta</th>
+                        <th>GDC</th>
+                        <th>GDV</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
                 <tbody id="servicios-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td colspan="7" style="text-align: right; font-weight: bold;">Totales:</td>
-                        <td id="total-costo">0.00</td>
-                        <td id="total-venta">0.00</td>
-                        <td id="total-costogasto">0.00</td>
-                        <td id="total-ventagasto">0.00</td>
-                        <td></td>
+                        <td colspan="4" style="text-align: right; font-weight: bold;">Totales:</td> <!-- Columnas 1-4 -->
+                        <td id="total-costo">0.00</td>      <!-- Columna 5 -->
+                        <td id="total-venta">0.00</td>      <!-- Columna 6 -->
+                        <td id="total-costogasto">0.00</td> <!-- Columna 7 -->
+                        <td id="total-ventagasto">0.00</td> <!-- Columna 8 -->
                     </tr>
                 </tfoot>
             </table>
@@ -534,14 +537,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
             tc += c; tv += v; tgc += gc; tgv += gv;
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="text-align: left; padding-left: 0.8rem;" colspan="5">${s.servicio || ''}</td>
-                <td>${s.trafico || ''}</td>
-                <td>${s.moneda || 'USD'}</td>
-                <td>${c.toFixed(2)}</td>
-                <td>${v.toFixed(2)}</td>
-                <td>${gc.toFixed(2)}</td>
-                <td>${gv.toFixed(2)}</td>
-                <td>
+                <td>${s.servicio}</td>       <!-- 1 -->
+                <td>${s.trafico}</td>        <!-- 2 -->
+                <td>${s.moneda}</td>         <!-- 3 -->
+                <td>${c.toFixed(2)}</td>     <!-- 4 -->
+                <td>${v.toFixed(2)}</td>     <!-- 5 -->
+                <td>${gc.toFixed(2)}</td>    <!-- 6 -->
+                <td>${gv.toFixed(2)}</td>    <!-- 7 -->
+                <td>                         <!-- 8 -->
                     <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
                     <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
                 </td>
