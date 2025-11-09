@@ -122,6 +122,45 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
     </div>
     <input type="hidden" name="servicios_json" id="servicios_json" />
+
+    <!-- Submodal: Cubicador -->
+    <div id="submodal-cubicador" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
+        <div class="modal-content" style="max-width: 600px; width: 90%; margin: 2rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <h3><i class="fas fa-cube"></i> Calculadora de Volumen y Peso</h3>
+            <span class="close" onclick="cerrarSubmodalCubicador()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
+                <label>Cantidad de bultos</label>
+                <input type="number" id="cubicador_qty" min="1" value="1" />
+                
+                <label>Peso bruto total (kg)</label>
+                <input type="number" id="cubicador_peso" min="0.1" step="0.01" />
+                
+                <label>Largo (cm)</label>
+                <input type="number" id="cubicador_largo" min="1" />
+                
+                <label>Ancho (cm)</label>
+                <input type="number" id="cubicador_ancho" min="1" />
+                
+                <label>Alto (cm)</label>
+                <input type="number" id="cubicador_alto" min="1" />
+            </div>
+            <div style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px;">
+                <h4>Resultados</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div><strong>Volumen total:</strong></div>
+                    <div id="cubicador_volumen">0.00 m³</div>
+                    <div><strong>Peso volumétrico:</strong></div>
+                    <div id="cubicador_peso_vol">0.00 kg</div>
+                    <div><strong>Peso a considerar:</strong></div>
+                    <div id="cubicador_peso_final">0.00 kg</div>
+                </div>
+            </div>
+            <div style="text-align: right; margin-top: 1rem;">
+                <button type="button" class="btn-secondary" onclick="cerrarSubmodalCubicador()">Cancelar</button>
+                <button type="button" class="btn-primary" onclick="aplicarCubicacion()">Aplicar a Servicio</button>
+            </div>
+        </div>
+    </div>
 </form>
 
 <!-- ========== MODALES ========== -->
@@ -234,12 +273,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
         <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
             <div>
+                <button type="button" class="btn-comment" id="btn-cubicador" onclick="abrirSubmodalCubicador()">
+                    <i class="fas fa-calculator"></i> Cubicador
+                </button>
                 <button type="button" class="btn-comment" id="btn-costos-servicio-dentro"><i class="fas fa-calculator"></i> Costos - Ventas</button>
                 <button type="button" class="btn-comment" id="btn-gastos-locales-dentro"><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</button>
             </div>
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-secondary" onclick="cerrarModalServicioConConfirmacion()">Volver</button>
-                <button type="button" class="btn-add" id="btn-guardar-servicio">Agregar Servicio</button>
+                <button type="button" class="btn-add" onclick="guardarServicio()">Agregar Servicio</button>
             </div>
         </div>
     </div>
@@ -1697,4 +1739,58 @@ require_once __DIR__ . '/../includes/auth_check.php';
     // Exponer funciones para debugging o uso global
     window.guardarServicio = guardarServicio;
     window.abrirModalServicio = abrirModalServicio;
+
+    // Abrir el submodal de cubicación
+    function abrirSubmodalCubicador() {
+        // Cargar valores actuales del modal de servicio
+        document.getElementById('cubicador_qty').value = document.getElementById('serv_bultos').value || 1;
+        document.getElementById('cubicador_peso').value = document.getElementById('serv_peso').value || '';
+        document.getElementById('cubicador_largo').value = '';
+        document.getElementById('cubicador_ancho').value = '';
+        document.getElementById('cubicador_alto').value = '';
+        calcularCubicacion();
+        document.getElementById('submodal-cubicador').style.display = 'block';
+    }
+
+    // Calcular en tiempo real
+    function calcularCubicacion() {
+        const qty = parseFloat(document.getElementById('cubicador_qty').value) || 0;
+        const peso = parseFloat(document.getElementById('cubicador_peso').value) || 0;
+        const largo = parseFloat(document.getElementById('cubicador_largo').value) || 0;
+        const ancho = parseFloat(document.getElementById('cubicador_ancho').value) || 0;
+        const alto = parseFloat(document.getElementById('cubicador_alto').value) || 0;
+
+        const volumenCm3 = largo * ancho * alto * qty;
+        const volumenM3 = volumenCm3 / 1000000;
+        const pesoVolumetrico = volumenCm3 / 5000;
+        const pesoFinal = Math.max(peso, pesoVolumetrico);
+
+        document.getElementById('cubicador_volumen').textContent = volumenM3.toFixed(3) + ' m³';
+        document.getElementById('cubicador_peso_vol').textContent = pesoVolumetrico.toFixed(2) + ' kg';
+        document.getElementById('cubicador_peso_final').textContent = pesoFinal.toFixed(2) + ' kg';
+    }
+
+    // Aplicar resultados al modal de servicio
+    function aplicarCubicacion() {
+        const qty = document.getElementById('cubicador_qty').value;
+        const peso = document.getElementById('cubicador_peso_final').textContent.split(' ')[0];
+        const volumen = document.getElementById('cubicador_volumen').textContent.split(' ')[0];
+        const largo = document.getElementById('cubicador_largo').value;
+        const ancho = document.getElementById('cubicador_ancho').value;
+        const alto = document.getElementById('cubicador_alto').value;
+        const dimensiones = `${largo}x${ancho}x${alto} cm`;
+
+        document.getElementById('serv_bultos').value = qty;
+        document.getElementById('serv_peso').value = peso;
+        document.getElementById('serv_volumen').value = volumen;
+        document.getElementById('serv_dimensiones').value = dimensiones;
+
+        cerrarSubmodalCubicador();
+        exito('Cubicación aplicada al servicio');
+    }
+
+    // Cerrar el submodal
+    function cerrarSubmodalCubicador() {
+        document.getElementById('submodal-cubicador').style.display = 'none';
+    }
 </script>
