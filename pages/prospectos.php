@@ -1126,63 +1126,39 @@ require_once __DIR__ . '/../includes/auth_check.php';
             return error('Origen y Destino no pueden ser el mismo lugar');
         }
 
-        console.log('📋 [SERVICIO] Recopilando datos del servicio...');
-        const nuevo = {
-            id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
-            id_prospect: document.getElementById('id_prospect_serv').value,
-            servicio: servicio,
-            trafico: document.getElementById('serv_medio_transporte').value,
-            commodity: document.getElementById('serv_commodity').value,
-            origen: document.getElementById('serv_origen').value,
-            pais_origen: document.getElementById('serv_pais_origen').value,
-            destino: document.getElementById('serv_destino').value,
-            pais_destino: document.getElementById('serv_pais_destino').value,
-            transito: document.getElementById('serv_transito').value,
-            frecuencia: document.getElementById('serv_frecuencia').value,
-            lugar_carga: document.getElementById('serv_lugar_carga').value,
-            sector: document.getElementById('serv_sector').value,
-            mercancia: document.getElementById('serv_mercancia').value,
-            bultos: document.getElementById('serv_bultos').value,
-            peso: document.getElementById('serv_peso').value,
-            volumen: document.getElementById('serv_volumen').value,
-            dimensiones: document.getElementById('serv_dimensiones').value,
-            moneda: document.getElementById('serv_moneda').value,
-            tipo_cambio: document.getElementById('serv_tipo_cambio').value,
-            proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-            desconsolidac: document.getElementById('serv_desconsolidacion').value,
-            aol: document.getElementById('serv_aol').value,
-            aod: document.getElementById('serv_aod').value,
-            agente: document.getElementById('serv_agente').value,
-            transportador: document.getElementById('serv_transportador').value,
-            incoterm: document.getElementById('serv_incoterm').value,
-            ref_cliente: document.getElementById('serv_ref_cliente').value,
-            costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
-            venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
-            costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
-            ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
-            costos: [...costosServicio],
-            gastos_locales: [...gastosLocales]
-        };
+        const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
+        const rutCliente = document.getElementById('rut_empresa')?.value.trim();
 
-        console.log('📦 [SERVICIO] Datos del nuevo servicio:', nuevo);
-        console.log('📌 [SERVICIO] Modo:', servicioEnEdicion !== null ? 'Edición' : 'Inserción');
-
-        if (servicioEnEdicion !== null) {
-            console.log('🔄 [SERVICIO] Actualizando servicio en índice:', servicioEnEdicion);
-            servicios[servicioEnEdicion] = nuevo;
-            console.log('✅ [SERVICIO] Servicio actualizado en el array');
-            exito('Servicio actualizado correctamente');
-        } else {
-            console.log('➕ [SERVICIO] Agregando nuevo servicio al array');
-            servicios.push(nuevo);
-            console.log('✅ [SERVICIO] Nuevo servicio agregado');
-            exito('Servicio agregado correctamente');
+        // Validar que existan costos
+        if (costosServicio.length === 0) {
+            error('Debe agregar al menos un costo al servicio');
+            return;
         }
 
-        actualizarTabla();
-        console.log('🔁 [SERVICIO] Tabla actualizada');
-        cerrarModalServicio();
-        console.log('🔚 [SERVICIO] Modal cerrado');
+        // Validación de crédito (solo si hay RUT y monto > 0)
+        if (rutCliente && totalVentaServicio > 0) {
+            fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        error(data.error);
+                        return;
+                    }
+                    if (totalVentaServicio > data.saldo_credito) {
+                        error(`Sobregiro detectado: El servicio supera el saldo de crédito disponible (${data.saldo_credito}). 
+                            Solicite un aumento de límite en Ficha Cliente.`);
+                        return;
+                    }
+                    ejecutarGuardarServicio();
+                })
+                .catch(err => {
+                    console.error('Error al validar crédito:', err);
+                    error('No se pudo verificar la línea de crédito. Intente nuevamente.');
+                });
+        } else {
+            // Guardar directamente si no aplica validación
+            ejecutarGuardarServicio();
+        }
     }
 
     // Función que realiza el guardado real
@@ -1236,14 +1212,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
         cerrarModalServicio();
         console.log('🔚 [SERVICIO] Modal cerrado');
     }
-
-    // Asignar listener al botón del modal
-    document.addEventListener('DOMContentLoaded', () => {
-        const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
-        if (btnGuardarModal) {
-            btnGuardarModal.addEventListener('click', guardarServicio);
-        }
-    });
     
     // ===================================================================
     // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
@@ -1605,6 +1573,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
             });
         }
 
+         const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
+        if (btnGuardarModal) {
+            btnGuardarModal.addEventListener('click', guardarServicio);
+        }
+
         // === BOTÓN: Grabar Todo ===
         const btnGrabarTodo = document.getElementById('btn-save-all');
         if (btnGrabarTodo) {
@@ -1757,14 +1730,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
         // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
         window.eliminarServicio = eliminarServicio;
-
-        // === LISTENER PARA EL BOTÓN "AGREGAR SERVICIO" EN EL MODAL ===
-        const btnGuardarServicio = document.getElementById('btn-guardar-servicio');
-        if (btnGuardarServicio) {
-            console.log('🔍 [SERVICIO] Listener asignado a #btn-guardar-servicio');
-            btnGuardarServicio.addEventListener('click', guardarServicio);
-        }
     });
+
+
     // Exponer funciones para debugging o uso global
     window.guardarServicio = guardarServicio;
     window.abrirModalServicio = abrirModalServicio;
