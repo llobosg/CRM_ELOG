@@ -281,7 +281,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             </div>
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-secondary" onclick="cerrarModalServicioConConfirmacion()">Volver</button>
-                <button type="button" class="btn-add" onclick="guardarServicio()">Agregar Servicio</button>
+                <button type="button" class="btn-add" id="btn-guardar-servicio-modal">Agregar Servicio</button>
             </div>
         </div>
     </div>
@@ -1113,29 +1113,28 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
     }
 
+    // Validación de crédito y guardado de servicio
     function guardarServicio() {
-        console.log('🔍 [SERVICIO] Iniciando guardarServicio()');
-        
         const servicio = document.getElementById('serv_servicio').value.trim();
-        if (!servicio) {
-            console.log('⚠️ [SERVICIO] Validación fallida: Servicio es obligatorio');
-            error('Servicio es obligatorio');
-            return;
-        }
+        if (!servicio) return error('Servicio es obligatorio');
         
         const origen = document.getElementById('serv_origen').value;
         const destino = document.getElementById('serv_destino').value;
         if (origen && destino && origen === destino) {
-            console.log('⚠️ [SERVICIO] Validación fallida: Origen y Destino son iguales');
             return error('Origen y Destino no pueden ser el mismo lugar');
         }
 
-        // === VALIDACIÓN DE LÍNEA DE CRÉDITO ===
-        const rutCliente = document.getElementById('rut_empresa')?.value.trim();
         const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
-        
+        const rutCliente = document.getElementById('rut_empresa')?.value.trim();
+
+        // Validar que existan costos
+        if (costosServicio.length === 0) {
+            error('Debe agregar al menos un costo al servicio');
+            return;
+        }
+
+        // Validación de crédito (solo si hay RUT y monto > 0)
         if (rutCliente && totalVentaServicio > 0) {
-            // Consultar saldo de crédito del cliente
             fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
                 .then(r => r.json())
                 .then(data => {
@@ -1148,19 +1147,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             Solicite un aumento de límite en Ficha Cliente.`);
                         return;
                     }
-                    // ✅ Si pasa la validación, proceder con el guardado
-                    continuarGuardarServicio();
+                    ejecutarGuardarServicio();
                 })
                 .catch(err => {
                     console.error('Error al validar crédito:', err);
                     error('No se pudo verificar la línea de crédito. Intente nuevamente.');
                 });
-            return; // Salir aquí para esperar la respuesta asíncrona
+        } else {
+            // Guardar directamente si no aplica validación
+            ejecutarGuardarServicio();
         }
     }
 
-    function continuarGuardarServicio() {
-        console.log('📋 [SERVICIO] Recopilando datos del servicio...');
+    // Función que realiza el guardado real
+    function ejecutarGuardarServicio() {
+        const servicio = document.getElementById('serv_servicio').value.trim();
         const nuevo = {
             id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
             id_prospect: document.getElementById('id_prospect_serv').value,
@@ -1197,24 +1198,26 @@ require_once __DIR__ . '/../includes/auth_check.php';
             costos: [...costosServicio],
             gastos_locales: [...gastosLocales]
         };
-
-        console.log('📦 [SERVICIO] Datos del servicio:', nuevo);
-
         if (servicioEnEdicion !== null) {
             servicios[servicioEnEdicion] = nuevo;
-            console.log('✅ [SERVICIO] Servicio actualizado');
             exito('Servicio actualizado correctamente');
         } else {
             servicios.push(nuevo);
-            console.log('✅ [SERVICIO] Servicio agregado a la lista');
             exito('Servicio agregado correctamente');
         }
-
         actualizarTabla();
         console.log('🔄 [SERVICIO] Tabla actualizada');
         cerrarModalServicio();
         console.log('🔚 [SERVICIO] Modal cerrado');
     }
+
+    // Asignar listener al botón del modal
+    document.addEventListener('DOMContentLoaded', () => {
+        const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
+        if (btnGuardarModal) {
+            btnGuardarModal.addEventListener('click', guardarServicio);
+        }
+    });
     
     // ===================================================================
     // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
