@@ -1117,46 +1117,60 @@ require_once __DIR__ . '/../includes/auth_check.php';
     function guardarServicio() {
         const servicio = document.getElementById('serv_servicio').value.trim();
         if (!servicio) return error('Servicio es obligatorio');
-        
         const origen = document.getElementById('serv_origen').value;
         const destino = document.getElementById('serv_destino').value;
         if (origen && destino && origen === destino) {
             return error('Origen y Destino no pueden ser el mismo lugar');
         }
 
-        const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
-        const rutCliente = document.getElementById('rut_empresa')?.value.trim();
+        // ✅ Leer siempre los valores ACTUALES del modal
+        const nuevo = {
+            id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
+            id_prospect: document.getElementById('id_prospect_serv').value,
+            servicio: servicio,
+            trafico: document.getElementById('serv_medio_transporte').value,
+            commodity: document.getElementById('serv_commodity').value,
+            origen: document.getElementById('serv_origen').value,
+            pais_origen: document.getElementById('serv_pais_origen').value,
+            destino: document.getElementById('serv_destino').value,
+            pais_destino: document.getElementById('serv_pais_destino').value,
+            transito: document.getElementById('serv_transito').value,
+            frecuencia: document.getElementById('serv_frecuencia').value,
+            lugar_carga: document.getElementById('serv_lugar_carga').value,
+            sector: document.getElementById('serv_sector').value,
+            mercancia: document.getElementById('serv_mercancia').value,
+            bultos: document.getElementById('serv_bultos').value,
+            peso: document.getElementById('serv_peso').value,
+            volumen: document.getElementById('serv_volumen').value,
+            dimensiones: document.getElementById('serv_dimensiones').value,
+            moneda: document.getElementById('serv_moneda').value,
+            tipo_cambio: document.getElementById('serv_tipo_cambio').value,
+            proveedor_nac: document.getElementById('serv_proveedor_nac').value,
+            desconsolidac: document.getElementById('serv_desconsolidacion').value,
+            aol: document.getElementById('serv_aol').value,
+            aod: document.getElementById('serv_aod').value,
+            agente: document.getElementById('serv_agente').value,
+            transportador: document.getElementById('serv_transportador').value,
+            incoterm: document.getElementById('serv_incoterm').value,
+            ref_cliente: document.getElementById('serv_ref_cliente').value,
+            costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
+            venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
+            costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
+            ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
+            costos: [...costosServicio],
+            gastos_locales: [...gastosLocales]
+        };
 
-        // Validar que existan costos
-        if (costosServicio.length === 0) {
-            error('Debe agregar al menos un costo al servicio');
-            return;
-        }
-
-        // Validación de crédito (solo si hay RUT y monto > 0)
-        if (rutCliente && totalVentaServicio > 0) {
-            fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.error) {
-                        error(data.error);
-                        return;
-                    }
-                    if (totalVentaServicio > data.saldo_credito) {
-                        error(`Sobregiro detectado: El servicio supera el saldo de crédito disponible (${data.saldo_credito}). 
-                            Solicite un aumento de límite en Ficha Cliente.`);
-                        return;
-                    }
-                    ejecutarGuardarServicio();
-                })
-                .catch(err => {
-                    console.error('Error al validar crédito:', err);
-                    error('No se pudo verificar la línea de crédito. Intente nuevamente.');
-                });
+        if (servicioEnEdicion !== null) {
+            // ✅ Actualizar el servicio existente con los NUEVOS valores
+            servicios[servicioEnEdicion] = nuevo;
+            exito('Servicio actualizado correctamente');
         } else {
-            // Guardar directamente si no aplica validación
-            ejecutarGuardarServicio();
+            servicios.push(nuevo);
+            exito('Servicio agregado correctamente');
         }
+        actualizarTabla();
+        cerrarModalServicio();
     }
 
     // Función que realiza el guardado real
