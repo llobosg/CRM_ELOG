@@ -976,8 +976,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 // Editar servicio existente
                 servicioEnEdicion = index;
                 const s = servicios[index];
+                console.log('🔍 [MODAL] Servicio cargado:', s);
                 costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
                 gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
+                console.log('📋 [MODAL] Costos sincronizados:', costosServicio);
 
                 // Rellenar campos
                 document.getElementById('serv_servicio').value = s.servicio || '';
@@ -1112,7 +1114,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
     // Validación de crédito y guardado de servicio
     function guardarServicio() {
-        console.log('🔍 [SERVICIO] Iniciando guardarServicio()');
+        console.log('🔍 [SERVICIO] Iniciando guardarServicio');
+        console.log('📊 [SERVICIO] Costos en memoria:', costosServicio);
         const servicio = document.getElementById('serv_servicio').value.trim();
         if (!servicio) {
             console.log('⚠️ [SERVICIO] Validación fallida: Servicio es obligatorio');
@@ -1573,7 +1576,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             });
         }
 
-         const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
+        const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
         if (btnGuardarModal) {
             btnGuardarModal.addEventListener('click', guardarServicio);
         }
