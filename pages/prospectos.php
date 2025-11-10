@@ -100,6 +100,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         <th>Servicio</th>      <!-- colspan="3" en el <tbody> -->
                         <th>Tráfico</th>
                         <th>Moneda</th>
+                        <th>Bultos</th>
+                        <th>Peso</th>
+                        <th>Volumen</th>
                         <th>Costo</th>
                         <th>Venta</th>
                         <th>GDC</th>
@@ -110,7 +113,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <tbody id="servicios-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td colspan="3" style="text-align: right; font-weight: bold;">Totales:</td>
+                        <td colspan="7" style="text-align: right; font-weight: bold;">Totales:</td>
                         <td id="total-costo" style="text-align: right;">0.00</td>
                         <td id="total-venta" style="text-align: right;">0.00</td>
                         <td id="total-costogasto" style="text-align: right;">0.00</td>
@@ -588,6 +591,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <td>${s.servicio || ''}</td>
                 <td>${s.trafico || ''}</td>
                 <td>${s.moneda || 'USD'}</td>
+                <td>${s.bultos || ''}</td>
+                <td>${s.peso || ''}</td>
+                <td>${s.volumen || ''}</td>
                 <td>${c.toFixed(2)}</td>
                 <td>${v.toFixed(2)}</td>
                 <td>${gc.toFixed(2)}</td>
