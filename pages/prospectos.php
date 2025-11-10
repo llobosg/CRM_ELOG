@@ -1749,6 +1749,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         document.getElementById('cubicador_ancho').value = '';
         document.getElementById('cubicador_alto').value = '';
         calcularCubicacion();
+        asignarListenersCubicador(); // ←←← Asignar listeners cada vez que se abre
         document.getElementById('submodal-cubicador').style.display = 'block';
     }
 
@@ -1802,5 +1803,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
     // Cerrar el submodal
     function cerrarSubmodalCubicador() {
         document.getElementById('submodal-cubicador').style.display = 'none';
+    }
+
+    function asignarListenersCubicador() {
+        ['cubicador_qty', 'cubicador_peso', 'cubicador_largo', 'cubicador_ancho', 'cubicador_alto']
+            .forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', calcularCubicacion);
+                }
+            });
     }
 </script>
