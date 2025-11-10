@@ -568,10 +568,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
         document.getElementById('concatenado').value = `${op}${tipo}${fecha}-${id}`;
     }
     function actualizarTabla() {
+        console.log('📊 [TABLA] Iniciando actualización de tabla');
         const tbody = document.getElementById('servicios-body');
-        if (!tbody) return;
+        if (!tbody) {
+            console.warn('⚠️ [TABLA] Elemento servicios-body no encontrado');
+            return;
+        }
         tbody.innerHTML = '';
         let tc = 0, tv = 0, tgc = 0, tgv = 0;
+        console.log('📋 [TABLA] Servicios en memoria:', servicios);
         servicios.forEach((s, index) => {
             const c = parseFloat(s.costo) || 0;
             const v = parseFloat(s.venta) || 0;
@@ -583,10 +588,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <td>${s.servicio || ''}</td>
                 <td>${s.trafico || ''}</td>
                 <td>${s.moneda || 'USD'}</td>
-                <td style="text-align: right;">${c.toFixed(2)}</td>
-                <td style="text-align: right;">${v.toFixed(2)}</td>
-                <td style="text-align: right;">${gc.toFixed(2)}</td>
-                <td style="text-align: right;">${gv.toFixed(2)}</td>
+                <td>${c.toFixed(2)}</td>
+                <td>${v.toFixed(2)}</td>
+                <td>${gc.toFixed(2)}</td>
+                <td>${gv.toFixed(2)}</td>
                 <td>
                     <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
                     <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
@@ -594,36 +599,28 @@ require_once __DIR__ . '/../includes/auth_check.php';
             `;
             tbody.appendChild(tr);
         });
-        // Actualizar totales con alineación a la derecha
         document.getElementById('total-costo').textContent = tc.toFixed(2);
         document.getElementById('total-venta').textContent = tv.toFixed(2);
         document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
         document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
-        // Aplicar estilo a las celdas de totales
-        ['total-costo', 'total-venta', 'total-costogasto', 'total-ventagasto'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.textAlign = 'right';
-        });
 
-        // === Agregar listeners a los botones ===
+        // Agregar listeners
         document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = parseInt(this.getAttribute('data-index'));
+                console.log('✏️ [TABLA] Editar servicio en índice:', index);
                 editarServicio(index);
             });
         });
         document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = parseInt(this.getAttribute('data-index'));
+                console.log('🗑️ [TABLA] Eliminar servicio en índice:', index);
                 eliminarServicio(index);
             });
         });
 
-        // Mostrar/ocultar botón de eliminar prospecto
-        const btnEliminar = document.getElementById('btn-eliminar-prospecto');
-        if (btnEliminar) {
-            btnEliminar.style.display = (servicios.length === 0) ? 'inline-block' : 'none';
-        }
+        console.log('✅ [TABLA] Actualización completada');
     }
     // ===================================================================
     // === 3. CARGA DE DATOS (API) ===
@@ -1115,15 +1112,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
     // Validación de crédito y guardado de servicio
     function guardarServicio() {
+        console.log('🔍 [SERVICIO] Iniciando guardarServicio()');
         const servicio = document.getElementById('serv_servicio').value.trim();
-        if (!servicio) return error('Servicio es obligatorio');
+        if (!servicio) {
+            console.log('⚠️ [SERVICIO] Validación fallida: Servicio es obligatorio');
+            error('Servicio es obligatorio');
+            return;
+        }
         const origen = document.getElementById('serv_origen').value;
         const destino = document.getElementById('serv_destino').value;
         if (origen && destino && origen === destino) {
+            console.log('⚠️ [SERVICIO] Validación fallida: Origen y Destino son iguales');
             return error('Origen y Destino no pueden ser el mismo lugar');
         }
 
-        // ✅ Leer siempre los valores ACTUALES del modal
+        console.log('📋 [SERVICIO] Recopilando datos del servicio...');
         const nuevo = {
             id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
             id_prospect: document.getElementById('id_prospect_serv').value,
@@ -1161,16 +1164,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
             gastos_locales: [...gastosLocales]
         };
 
+        console.log('📦 [SERVICIO] Datos del nuevo servicio:', nuevo);
+        console.log('📌 [SERVICIO] Modo:', servicioEnEdicion !== null ? 'Edición' : 'Inserción');
+
         if (servicioEnEdicion !== null) {
-            // ✅ Actualizar el servicio existente con los NUEVOS valores
+            console.log('🔄 [SERVICIO] Actualizando servicio en índice:', servicioEnEdicion);
             servicios[servicioEnEdicion] = nuevo;
+            console.log('✅ [SERVICIO] Servicio actualizado en el array');
             exito('Servicio actualizado correctamente');
         } else {
+            console.log('➕ [SERVICIO] Agregando nuevo servicio al array');
             servicios.push(nuevo);
+            console.log('✅ [SERVICIO] Nuevo servicio agregado');
             exito('Servicio agregado correctamente');
         }
+
         actualizarTabla();
+        console.log('🔁 [SERVICIO] Tabla actualizada');
         cerrarModalServicio();
+        console.log('🔚 [SERVICIO] Modal cerrado');
     }
 
     // Función que realiza el guardado real
