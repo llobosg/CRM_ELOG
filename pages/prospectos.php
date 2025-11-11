@@ -113,7 +113,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <tbody id="servicios-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td colspan="7" style="text-align: right; font-weight: bold;">Totales:</td>
+                        <td colspan="6" style="text-align: right; font-weight: bold;">Totales:</td>
                         <td id="total-costo" style="text-align: right;">0.00</td>
                         <td id="total-venta" style="text-align: right;">0.00</td>
                         <td id="total-costogasto" style="text-align: right;">0.00</td>
@@ -1173,6 +1173,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
     // Función que realiza el guardado real
     function ejecutarGuardarServicio() {
         const servicio = document.getElementById('serv_servicio').value.trim();
+        const bultos = document.getElementById('serv_bultos').value;
+        const peso = document.getElementById('serv_peso').value;
+        const volumen = document.getElementById('serv_volumen').value;
+        const dimensiones = document.getElementById('serv_dimensiones').value;
+        console.log('📊 [CUBICACIÓN] Valores leídos:', { bultos, peso, volumen, dimensiones });
+
         const nuevo = {
             id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
             id_prospect: document.getElementById('id_prospect_serv').value,
@@ -1188,10 +1194,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
             lugar_carga: document.getElementById('serv_lugar_carga').value,
             sector: document.getElementById('serv_sector').value,
             mercancia: document.getElementById('serv_mercancia').value,
-            bultos: document.getElementById('serv_bultos').value,
-            peso: document.getElementById('serv_peso').value,
-            volumen: document.getElementById('serv_volumen').value,
-            dimensiones: document.getElementById('serv_dimensiones').value,
+            // datos cubicación
+            bultos: bultos,
+            peso: peso,
+            volumen: volumen,
+            dimensiones: dimensiones,
+
             moneda: document.getElementById('serv_moneda').value,
             tipo_cambio: document.getElementById('serv_tipo_cambio').value,
             proveedor_nac: document.getElementById('serv_proveedor_nac').value,
@@ -1589,6 +1597,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         // === BOTÓN: Grabar Todo ===
         const btnGrabarTodo = document.getElementById('btn-save-all');
+        console.log('📤 [SERVICIOS JSON] Enviando:', servicios);
+        
         if (btnGrabarTodo) {
             btnGrabarTodo.addEventListener('click', function(e) {
                 e.preventDefault();
