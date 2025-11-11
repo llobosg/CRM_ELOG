@@ -167,104 +167,129 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $id_srvc = "{$concatenado}-{$correlativo_srvc}";
                         }
 
-                        // ✅ INSERT ... ON DUPLICATE KEY UPDATE
-                        $stmt_serv = $pdo->prepare("
-                            INSERT INTO servicios (
-                                id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
-                                base_calculo, moneda, tarifa, iva, estado, costo, venta,
-                                costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
-                                commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
-                                lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
-                                agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
-                                ciudad, pais, direc_serv
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            ON DUPLICATE KEY UPDATE
-                                servicio = VALUES(servicio),
-                                nombre_corto = VALUES(nombre_corto),
-                                tipo = VALUES(tipo),
-                                trafico = VALUES(trafico),
-                                sub_trafico = VALUES(sub_trafico),
-                                base_calculo = VALUES(base_calculo),
-                                moneda = VALUES(moneda),
-                                tarifa = VALUES(tarifa),
-                                iva = VALUES(iva),
-                                estado = VALUES(estado),
-                                costo = VALUES(costo),
-                                venta = VALUES(venta),
-                                costogastoslocalesdestino = VALUES(costogastoslocalesdestino),
-                                ventasgastoslocalesdestino = VALUES(ventasgastoslocalesdestino),
-                                desconsolidac = VALUES(desconsolidac),
-                                commodity = VALUES(commodity),
-                                origen = VALUES(origen),
-                                pais_origen = VALUES(pais_origen),
-                                destino = VALUES(destino),
-                                pais_destino = VALUES(pais_destino),
-                                transito = VALUES(transito),
-                                frecuencia = VALUES(frecuencia),
-                                lugar_carga = VALUES(lugar_carga),
-                                sector = VALUES(sector),
-                                mercancia = VALUES(mercancia),
-                                bultos = VALUES(bultos),          // ✅
-                                peso = VALUES(peso),              // ✅
-                                volumen = VALUES(volumen),        // ✅
-                                dimensiones = VALUES(dimensiones),// ✅
-                                agente = VALUES(agente),
-                                aol = VALUES(aol),
-                                aod = VALUES(aod),
-                                transportador = VALUES(transportador),
-                                incoterm = VALUES(incoterm),
-                                ref_cliente = VALUES(ref_cliente),
-                                proveedor_nac = VALUES(proveedor_nac),
-                                tipo_cambio = VALUES(tipo_cambio),
-                                ciudad = VALUES(ciudad),
-                                pais = VALUES(pais),
-                                direc_serv = VALUES(direc_serv)
-                        ");
+                        // ✅ Reemplazar ON DUPLICATE KEY UPDATE por UPDATE explícito
+                        if (!empty($s['id_srvc']) && strpos($s['id_srvc'], 'TEMP_') === false) {
+                            // Es un servicio existente → UPDATE
+                            $stmt_serv = $pdo->prepare("
+                                UPDATE servicios SET
+                                    servicio = ?, nombre_corto = ?, tipo = ?, trafico = ?, sub_trafico = ?,
+                                    base_calculo = ?, moneda = ?, tarifa = ?, iva = ?, estado = ?,
+                                    costo = ?, venta = ?, costogastoslocalesdestino = ?, ventasgastoslocalesdestino = ?,
+                                    desconsolidac = ?, commodity = ?, origen = ?, pais_origen = ?, destino = ?, 
+                                    pais_destino = ?, transito = ?, frecuencia = ?, lugar_carga = ?, sector = ?,
+                                    mercancia = ?, bultos = ?, peso = ?, volumen = ?, dimensiones = ?,
+                                    agente = ?, aol = ?, aod = ?, transportador = ?, incoterm = ?,
+                                    ref_cliente = ?, proveedor_nac = ?, tipo_cambio = ?, ciudad = ?, pais = ?, direc_serv = ?
+                                WHERE id_srvc = ? AND id_prospect = ?
+                            ");
+                            $stmt_serv->execute([
+                                $s['servicio'] ?? '',
+                                $s['nombre_corto'] ?? '',
+                                $s['tipo'] ?? '',
+                                $s['trafico'] ?? '',
+                                $s['sub_trafico'] ?? '',
+                                $s['base_calculo'] ?? '',
+                                $s['moneda'] ?? 'CLP',
+                                (float)($s['tarifa'] ?? 0),
+                                (int)($s['iva'] ?? 19),
+                                $s['estado'] ?? 'Activo',
+                                $costo,
+                                $venta,
+                                $costogasto,
+                                $ventagasto,
+                                $s['desconsolidac'] ?? '',
+                                $s['commodity'] ?? '',
+                                $s['origen'] ?? '',
+                                $s['pais_origen'] ?? '',
+                                $s['destino'] ?? '',
+                                $s['pais_destino'] ?? '',
+                                $s['transito'] ?? '',
+                                $s['frecuencia'] ?? '',
+                                $s['lugar_carga'] ?? '',
+                                $s['sector'] ?? '',
+                                $s['mercancia'] ?? '',
+                                (string)($s['bultos'] ?? '0'),
+                                (string)($s['peso'] ?? '0'),
+                                (string)($s['volumen'] ?? '0'),
+                                $s['dimensiones'] ?? '',
+                                $s['agente'] ?? '',
+                                $s['aol'] ?? '',
+                                $s['aod'] ?? '',
+                                $s['transportador'] ?? '',
+                                $s['incoterm'] ?? '',
+                                $s['ref_cliente'] ?? '',
+                                $s['proveedor_nac'] ?? '',
+                                (float)($s['tipo_cambio'] ?? 1),
+                                $s['ciudad'] ?? '',
+                                $s['pais'] ?? '',
+                                $s['direc_serv'] ?? '',
+                                $s['id_srvc'],
+                                $id_ppl
+                            ]);
+                        } else {
+                            // Es un servicio nuevo → INSERT
+                            $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
+                            $stmt_last->execute([$id_ppl]);
+                            $last = $stmt_last->fetch();
+                            $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
+                            $id_srvc = "{$concatenado}-{$correlativo_srvc}";
 
-                        $stmt_serv->execute([
-                            $id_srvc,
-                            $id_ppl,
-                            $s['servicio'] ?? '',
-                            $s['nombre_corto'] ?? '',
-                            $s['tipo'] ?? '',
-                            $s['trafico'] ?? '',
-                            $s['sub_trafico'] ?? '',
-                            $s['base_calculo'] ?? '',
-                            $s['moneda'] ?? 'CLP',
-                            (float)($s['tarifa'] ?? 0),
-                            (int)($s['iva'] ?? 19),
-                            $s['estado'] ?? 'Activo',
-                            $costo,
-                            $venta,
-                            $costogasto,
-                            $ventagasto,
-                            $s['desconsolidac'] ?? '',
-                            $s['commodity'] ?? '',
-                            $s['origen'] ?? '',
-                            $s['pais_origen'] ?? '',
-                            $s['destino'] ?? '',
-                            $s['pais_destino'] ?? '',
-                            $s['transito'] ?? '',
-                            $s['frecuencia'] ?? '',
-                            $s['lugar_carga'] ?? '',
-                            $s['sector'] ?? '',
-                            $s['mercancia'] ?? '',
-                            (string)($s['bultos'] ?? '0'),
-                            (string)($s['peso'] ?? '0'),
-                            (string)($s['volumen'] ?? '0'),
-                            $s['dimensiones'] ?? '',
-                            $s['agente'] ?? '',
-                            $s['aol'] ?? '',
-                            $s['aod'] ?? '',
-                            $s['transportador'] ?? '',
-                            $s['incoterm'] ?? '',
-                            $s['ref_cliente'] ?? '',
-                            $s['proveedor_nac'] ?? '',
-                            (float)($s['tipo_cambio'] ?? 1),
-                            $s['ciudad'] ?? '',
-                            $s['pais'] ?? '',
-                            $s['direc_serv'] ?? ''
-                        ]);
+                            $stmt_serv = $pdo->prepare("
+                                INSERT INTO servicios (
+                                    id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
+                                    base_calculo, moneda, tarifa, iva, estado, costo, venta,
+                                    costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
+                                    commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
+                                    lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
+                                    agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
+                                    ciudad, pais, direc_serv
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ");
+                            $stmt_serv->execute([
+                                $id_srvc,
+                                $id_ppl,
+                                $s['servicio'] ?? '',
+                                $s['nombre_corto'] ?? '',
+                                $s['tipo'] ?? '',
+                                $s['trafico'] ?? '',
+                                $s['sub_trafico'] ?? '',
+                                $s['base_calculo'] ?? '',
+                                $s['moneda'] ?? 'CLP',
+                                (float)($s['tarifa'] ?? 0),
+                                (int)($s['iva'] ?? 19),
+                                $s['estado'] ?? 'Activo',
+                                $costo,
+                                $venta,
+                                $costogasto,
+                                $ventagasto,
+                                $s['desconsolidac'] ?? '',
+                                $s['commodity'] ?? '',
+                                $s['origen'] ?? '',
+                                $s['pais_origen'] ?? '',
+                                $s['destino'] ?? '',
+                                $s['pais_destino'] ?? '',
+                                $s['transito'] ?? '',
+                                $s['frecuencia'] ?? '',
+                                $s['lugar_carga'] ?? '',
+                                $s['sector'] ?? '',
+                                $s['mercancia'] ?? '',
+                                (string)($s['bultos'] ?? '0'),
+                                (string)($s['peso'] ?? '0'),
+                                (string)($s['volumen'] ?? '0'),
+                                $s['dimensiones'] ?? '',
+                                $s['agente'] ?? '',
+                                $s['aol'] ?? '',
+                                $s['aod'] ?? '',
+                                $s['transportador'] ?? '',
+                                $s['incoterm'] ?? '',
+                                $s['ref_cliente'] ?? '',
+                                $s['proveedor_nac'] ?? '',
+                                (float)($s['tipo_cambio'] ?? 1),
+                                $s['ciudad'] ?? '',
+                                $s['pais'] ?? '',
+                                $s['direc_serv'] ?? ''
+                            ]);
+                        }
 
                         // Insertar costos y gastos (como antes)
                         if (!empty($s['costos'])) {

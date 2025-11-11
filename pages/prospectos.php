@@ -1590,6 +1590,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
             });
         }
 
+        // Listener para el botón del modal de servicio
+        const btnGuardarServicioModal = document.getElementById('btn-guardar-servicio-modal');
+        if (btnGuardarServicioModal) {
+            btnGuardarServicioModal.addEventListener('click', guardarServicio);
+        }
+
         const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
         if (btnGuardarModal) {
             btnGuardarModal.addEventListener('click', guardarServicio);
