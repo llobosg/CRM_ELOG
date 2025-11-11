@@ -182,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['lugar_carga'] ?? '',
                             $s['sector'] ?? '',
                             $s['mercancia'] ?? '',
-                            (int)($s['bultos'] ?? 0),
+                            (string)($s['bultos'] ?? '0'),
                             (float)($s['peso'] ?? 0),
                             (float)($s['volumen'] ?? 0),
                             $s['dimensiones'] ?? '',
