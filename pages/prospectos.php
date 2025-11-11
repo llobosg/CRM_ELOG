@@ -1657,7 +1657,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 }
 
                 console.log('✅ [GRABAR TODO] Enviando formulario...');
-                form.submit();
+                // Pausar para permitir copiar logs
+                if (confirm('¿Enviar el formulario?\n\nVerifica la consola (F12) y copia los logs si es necesario.\n\nHaz clic en "Aceptar" para continuar.')) {
+                    console.log('✅ [GRABAR TODO] ¡Envío confirmado! Enviando formulario...');
+                    form.submit();
+                } else {
+                    console.log('⚠️ [GRABAR TODO] Envío cancelado por el usuario');
+                    error('Envío cancelado. Puede revisar los logs en la consola.');
+                }
             });
         }
 
