@@ -1602,6 +1602,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
         if (btnGrabarTodo) {
             btnGrabarTodo.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('🔍 [GRABAR TODO] Iniciando validación y envío');
+                
                 const rut = document.getElementById('rut_empresa')?.value.trim();
                 const razonSelect = document.getElementById('razon_social_select');
                 const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
@@ -1609,22 +1611,30 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const tipoOper = document.getElementById('tipo_oper')?.value;
                 const concatenado = document.getElementById('concatenado')?.value;
 
+                console.log('📋 [GRABAR TODO] Datos del prospecto:', { rut, razon, operacion, tipoOper, concatenado });
+
                 if (!rut || !razon) {
                     error('RUT y Razón Social son obligatorios');
+                    console.log('⚠️ [GRABAR TODO] Validación fallida: RUT o Razón Social vacíos');
                     return;
                 }
                 if (!operacion || !tipoOper || !concatenado) {
                     error('Operación, Tipo Operación y Concatenado son obligatorios');
+                    console.log('⚠️ [GRABAR TODO] Validación fallida: campos de operación incompletos');
                     return;
                 }
                 const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
                 if (!validarRut(rutLimpio)) {
                     error('RUT inválido');
+                    console.log('⚠️ [GRABAR TODO] Validación fallida: RUT inválido');
                     return;
                 }
 
                 const form = document.getElementById('form-prospecto');
                 const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
+                console.log('📊 [GRABAR TODO] Modo de guardado:', modo);
+                console.log('📦 [GRABAR TODO] Servicios a enviar:', servicios);
+
                 let inp = form.querySelector('input[name="modo"]');
                 if (!inp) {
                     inp = document.createElement('input');
@@ -1633,6 +1643,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     form.appendChild(inp);
                 }
                 inp.value = modo;
+
                 if (modo === 'servicios') {
                     inp = form.querySelector('input[name="servicios_json"]');
                     if (!inp) {
@@ -1642,7 +1653,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         form.appendChild(inp);
                     }
                     inp.value = JSON.stringify(servicios);
+                    console.log('📤 [GRABAR TODO] JSON de servicios generado:', inp.value);
                 }
+
+                console.log('✅ [GRABAR TODO] Enviando formulario...');
                 form.submit();
             });
         }
