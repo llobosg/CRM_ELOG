@@ -148,11 +148,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $costogasto = (float)($s['costogastoslocalesdestino'] ?? 0);
                         $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
 
-                        $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
-                        $stmt_last->execute([$id_ppl]);
-                        $last = $stmt_last->fetch();
-                        $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
-                        $id_srvc = "{$concatenado}-{$correlativo_srvc}";
+                        // ✅ Reutilizar id_srvc existente en modo edición
+                        $id_srvc = $s['id_srvc'] ?? null;
+                        if (!$id_srvc || strpos($id_srvc, 'TEMP_') === 0) {
+                            // Generar nuevo ID solo si es nuevo servicio
+                            $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
+                            $stmt_last->execute([$id_ppl]);
+                            $last = $stmt_last->fetch();
+                            $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
+                            $id_srvc = "{$concatenado}-{$correlativo_srvc}";
+                        }
 
                         $stmt_serv->execute([
                             $id_srvc,
@@ -182,9 +187,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['lugar_carga'] ?? '',
                             $s['sector'] ?? '',
                             $s['mercancia'] ?? '',
-                            (string)($s['bultos'] ?? '0'),
-                            (float)($s['peso'] ?? 0),
-                            (float)($s['volumen'] ?? 0),
+                            (string)($s['bultos'] ?? '0'),    // ✅ Corregido: string en lugar de int
+                            (string)($s['peso'] ?? '0'),      // ✅ Asegurar string
+                            (string)($s['volumen'] ?? '0'),   // ✅ Asegurar string
                             $s['dimensiones'] ?? '',
                             $s['agente'] ?? '',
                             $s['aol'] ?? '',
