@@ -1839,16 +1839,29 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
     // Cerrar el submodal
     function cerrarSubmodalCubicador() {
-        document.getElementById('submodal-cubicador').style.display = 'none';
-    }
-
-    function asignarListenersCubicador() {
+        // Eliminar listeners al cerrar
         ['cubicador_qty', 'cubicador_peso', 'cubicador_largo', 'cubicador_ancho', 'cubicador_alto']
             .forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                    el.addEventListener('input', calcularCubicacion);
+                    const nuevoEl = el.cloneNode(true);
+                    el.parentNode.replaceChild(nuevoEl, el);
                 }
             });
+        document.getElementById('submodal-cubicador').style.display = 'none';
+    }
+
+    function asignarListenersCubicador() {
+        const ids = ['cubicador_qty', 'cubicador_peso', 'cubicador_largo', 'cubicador_ancho', 'cubicador_alto'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                // Eliminar listeners anteriores clonando el elemento
+                const nuevoEl = el.cloneNode(true);
+                el.parentNode.replaceChild(nuevoEl, el);
+                // Agregar el nuevo listener
+                nuevoEl.addEventListener('input', calcularCubicacion);
+            }
+        });
     }
 </script>
