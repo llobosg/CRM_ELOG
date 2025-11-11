@@ -417,9 +417,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
 </div>
 
 <script>
-    if (window.prospectosInit) return;
-    window.prospectosInit = true;
-    
     console.log('✅ Script de prospectos iniciado');
     // ===================================================================
     // === 1. VARIABLES GLOBALES ===
