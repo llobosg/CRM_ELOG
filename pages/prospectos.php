@@ -21,8 +21,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
 
     <!-- ========== DATOS DEL PROSPECTO ========== -->
-    <div class="card" style="margin-bottom: 2rem;">
-        <h3><i class="fas fa-user"></i> Datos del Prospecto</h3>
+    <div class="card" style="margin-bottom: 2rem; position: relative;">
+        <h3>
+            <i class="fas fa-user"></i> Datos del Prospecto
+            <button type="button" class="close-prospecto" onclick="reiniciarFormProspecto()" title="Reiniciar formulario">
+                &times;
+            </button>
+        </h3>
         <!-- Fila 1 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Razón Social *</label>
@@ -424,16 +429,39 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // === 2. FUNCIONES AUXILIARES ===
         // ===================================================================
         function mostrarNotificacion(mensaje, tipo = 'info') {
+            const tipoMap = {
+                'exito': 'success',
+                'error': 'error',
+                'advertencia': 'warning',
+                'info': 'info'
+            };
+            const claseTipo = tipoMap[tipo] || 'info';
+
             const toast = document.getElementById('toast');
             const msg = document.getElementById('toast-message');
             if (!toast || !msg) return;
+
             msg.textContent = mensaje;
-            toast.className = 'toast ' + tipo;
-            toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 5000);
+            toast.className = 'toast ' + claseTipo; // Ej: 'toast success'
+
+            // Mostrar con animación
+            toast.style.display = 'flex';
+            // Forzar reflow para que la transición funcione
+            void toast.offsetWidth;
+            toast.classList.add('show');
+
+            // Ocultar después de 5 segundos
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 400); // tiempo de transición
+            }, 5000);
         }
+
         function exito(msg) { mostrarNotificacion(msg, 'exito'); }
         function error(msg) { mostrarNotificacion(msg, 'error'); }
+        function advertencia(msg) { mostrarNotificacion(msg, 'advertencia'); }
 
         // ===================================================================
         // === FUNCIONES DE CLIENTE Y PROSPECTO ===
@@ -575,62 +603,62 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // === 3. CARGA DE DATOS ===
         // ===================================================================
         function cargarOperacionesYTipos() {
-        // Cargar operaciones
-        fetch('/api/get_operaciones.php')
-            .then(r => r.json())
-            .then(data => {
-                const opSel = document.getElementById('operacion');
-                if (!opSel) return;
-                opSel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.operaciones || []).forEach(op => {
-                    const opt = document.createElement('option');
-                    opt.value = op;
-                    opt.textContent = op;
-                    opSel.appendChild(opt);
-                });
-            })
-            .catch(err => console.error('Error al cargar operaciones:', err));
+            // Cargar operaciones
+            fetch('/api/get_operaciones.php')
+                .then(r => r.json())
+                .then(data => {
+                    const opSel = document.getElementById('operacion');
+                    if (!opSel) return;
+                    opSel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.operaciones || []).forEach(op => {
+                        const opt = document.createElement('option');
+                        opt.value = op;
+                        opt.textContent = op;
+                        opSel.appendChild(opt);
+                    });
+                })
+                .catch(err => console.error('Error al cargar operaciones:', err));
 
-        // Listener para cargar tipos al cambiar operación
-        const opSel = document.getElementById('operacion');
-        if (opSel) {
-            const handler = function() {
-                const op = this.value;
-                const tipoSel = document.getElementById('tipo_oper');
-                if (!op || !tipoSel) return;
-                fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(op)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                        (data.tipos || []).forEach(t => {
-                            const opt = document.createElement('option');
-                            opt.value = t;
-                            opt.textContent = t;
-                            tipoSel.appendChild(opt);
-                        });
-                        // Recalcular concatenado si ya hay un tipo seleccionado
-                        setTimeout(() => {
-                            if (tipoSel.value) calcularConcatenado();
-                        }, 100);
-                    })
-                    .catch(err => console.error('Error al cargar tipos:', err));
-            };
-            opSel.removeEventListener('change', handler);
-            opSel.addEventListener('change', handler);
-        }
+            // Listener para cargar tipos al cambiar operación
+            const opSel = document.getElementById('operacion');
+            if (opSel) {
+                const handler = function() {
+                    const op = this.value;
+                    const tipoSel = document.getElementById('tipo_oper');
+                    if (!op || !tipoSel) return;
+                    fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(op)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                            (data.tipos || []).forEach(t => {
+                                const opt = document.createElement('option');
+                                opt.value = t;
+                                opt.textContent = t;
+                                tipoSel.appendChild(opt);
+                            });
+                            // Recalcular concatenado si ya hay un tipo seleccionado
+                            setTimeout(() => {
+                                if (tipoSel.value) calcularConcatenado();
+                            }, 100);
+                        })
+                        .catch(err => console.error('Error al cargar tipos:', err));
+                };
+                opSel.removeEventListener('change', handler);
+                opSel.addEventListener('change', handler);
+            }
 
-        // Listener para tipo_oper → recalcular concatenado
-        const tipoSel = document.getElementById('tipo_oper');
-        if (tipoSel) {
-            const handler = function() {
-                if (document.getElementById('operacion').value) {
-                    calcularConcatenado();
-                }
-            };
-            tipoSel.removeEventListener('change', handler);
-            tipoSel.addEventListener('change', handler);
+            // Listener para tipo_oper → recalcular concatenado
+            const tipoSel = document.getElementById('tipo_oper');
+            if (tipoSel) {
+                const handler = function() {
+                    if (document.getElementById('operacion').value) {
+                        calcularConcatenado();
+                    }
+                };
+                tipoSel.removeEventListener('change', handler);
+                tipoSel.addEventListener('change', handler);
+            }
         }
-    }
 
         function cargarDatosModalServicio(callback = null) {
             let cargas = 0;
@@ -1401,6 +1429,52 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         selectPais.appendChild(opt);
                     });
                 });
+        }
+
+        function reiniciarFormProspecto() {
+            // Verificar si hay cambios relevantes
+            const idPpl = document.getElementById('id_ppl')?.value;
+            const tieneId = idPpl && idPpl !== '0';
+            const tieneServicios = servicios.length > 0;
+            const tieneNotasComerciales = (document.getElementById('notas_comerciales')?.value || '').trim() !== '';
+            const tieneNotasOperaciones = (document.getElementById('notas_operaciones')?.value || '').trim() !== '';
+
+            if (tieneId || tieneServicios || tieneNotasComerciales || tieneNotasOperaciones) {
+                const confirmar = confirm(
+                    '⚠️ ATENCIÓN:\n\nEstá a punto de reiniciar el formulario.\n' +
+                    'Todos los datos no guardados (prospecto, servicios, notas) se perderán.\n\n' +
+                    '¿Desea continuar?'
+                );
+                if (!confirmar) {
+                    advertencia('Reinicio cancelado por el usuario');
+                    return;
+                }
+            }
+
+            // Limpiar formulario
+            document.getElementById('form-prospecto').reset();
+
+            // Limpiar campos ocultos y no reseteables
+            ['id_ppl', 'id_prospect', 'razon_social', 'notas_comerciales', 'notas_operaciones'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            // Limpiar selects personalizados
+            const selects = ['razon_social_select', 'operacion', 'tipo_oper', 'estado'];
+            selects.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.selectedIndex = 0;
+            });
+
+            // Limpiar servicios
+            servicios = [];
+            actualizarTabla();
+
+            // Resetear concatenado
+            document.getElementById('concatenado').value = '';
+
+            exito('Formulario reiniciado correctamente');
         }
 
         // ===================================================================

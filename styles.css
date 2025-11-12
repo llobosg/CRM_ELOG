@@ -490,3 +490,27 @@ table tr:hover {
     font-size: 1.2rem;
     min-width: 20px;
 }
+
+.close-prospecto {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.close-prospecto:hover {
+    background-color: #f8f9fa;
+    color: #333;
+}
