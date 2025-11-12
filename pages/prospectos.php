@@ -639,32 +639,94 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 cargas++;
                 if (cargas === total && callback) callback();
             };
-            ['commoditys', 'medios_transporte', 'agentes', 'proveedores_pnac'].forEach((api, i) => {
-                const fieldMap = {
-                    commoditys: 'serv_commodity',
-                    medios_transporte: 'serv_medio_transporte',
-                    agentes: 'serv_agente',
-                    proveedores_pnac: 'serv_proveedor_nac'
-                };
-                const selId = fieldMap[api];
-                fetch(`/api/get_${api}.php`)
-                    .then(r => r.json())
-                    .then(data => {
-                        const sel = document.getElementById(selId);
-                        if (sel) {
-                            sel.innerHTML = '<option value="">Seleccionar</option>';
-                            const list = Array.isArray(data) ? data : (data[api.replace('_', '') + 's'] || data);
-                            list.forEach(item => {
-                                const val = typeof item === 'string' ? item : (item.commodity || item);
-                                const opt = document.createElement('option');
-                                opt.value = val;
-                                opt.textContent = val;
-                                sel.appendChild(opt);
-                            });
-                        }
-                        check();
-                    });
-            });
+
+            // 1. Commodity
+            fetch('/api/get_commoditys.php')
+                .then(r => r.json())
+                .then(data => {
+                    const sel = document.getElementById('serv_commodity');
+                    if (sel) {
+                        sel.innerHTML = '<option value="">Seleccionar</option>';
+                        const list = Array.isArray(data)
+                            ? data
+                            : (Array.isArray(data.commoditys) ? data.commoditys : []);
+                        list.forEach(item => {
+                            const val = typeof item === 'string' ? item : (item.commodity || item);
+                            const opt = document.createElement('option');
+                            opt.value = val;
+                            opt.textContent = val;
+                            sel.appendChild(opt);
+                        });
+                    }
+                    check();
+                })
+                .catch(() => check());
+
+            // 2. Medios de transporte
+            fetch('/api/get_medios_transporte.php')
+                .then(r => r.json())
+                .then(data => {
+                    const sel = document.getElementById('serv_medio_transporte');
+                    if (sel) {
+                        sel.innerHTML = '<option value="">Seleccionar</option>';
+                        const list = Array.isArray(data)
+                            ? data
+                            : (Array.isArray(data.medios_transporte) ? data.medios_transporte : []);
+                        list.forEach(item => {
+                            const val = typeof item === 'string' ? item : item;
+                            const opt = document.createElement('option');
+                            opt.value = val;
+                            opt.textContent = val;
+                            sel.appendChild(opt);
+                        });
+                    }
+                    check();
+                })
+                .catch(() => check());
+
+            // 3. Agentes
+            fetch('/api/get_agentes.php')
+                .then(r => r.json())
+                .then(data => {
+                    const sel = document.getElementById('serv_agente');
+                    if (sel) {
+                        sel.innerHTML = '<option value="">Seleccionar</option>';
+                        const list = Array.isArray(data)
+                            ? data
+                            : (Array.isArray(data.agentes) ? data.agentes : []);
+                        list.forEach(item => {
+                            const val = typeof item === 'string' ? item : item;
+                            const opt = document.createElement('option');
+                            opt.value = val;
+                            opt.textContent = val;
+                            sel.appendChild(opt);
+                        });
+                    }
+                    check();
+                })
+                .catch(() => check());
+
+            // 4. Proveedores nacionales
+            fetch('/api/get_proveedores_pnac.php')
+                .then(r => r.json())
+                .then(data => {
+                    const sel = document.getElementById('serv_proveedor_nac');
+                    if (sel) {
+                        sel.innerHTML = '<option value="">Seleccionar</option>';
+                        const list = Array.isArray(data)
+                            ? data
+                            : (Array.isArray(data.proveedores) ? data.proveedores : []);
+                        list.forEach(item => {
+                            const val = typeof item === 'string' ? item : item;
+                            const opt = document.createElement('option');
+                            opt.value = val;
+                            opt.textContent = val;
+                            sel.appendChild(opt);
+                        });
+                    }
+                    check();
+                })
+                .catch(() => check());
         }
 
         function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
