@@ -11,6 +11,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <input type="text" id="busqueda-inteligente" placeholder="Buscar por Concatenado, Razón Social, RUT..." style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px;" />
     <div id="resultados-busqueda" style="position: absolute; background: white; border: 1px solid #ddd; border-radius: 8px; max-height: 300px; overflow-y: auto; width: 95%; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none;"></div>
 </div>
+
 <!-- ==============================================   FORM  ============================================== -->
 <form method="POST" id="form-prospecto" action="">
     <input type="hidden" name="id_ppl" id="id_ppl" />
@@ -154,1535 +155,1245 @@ require_once __DIR__ . '/../includes/auth_check.php';
             </div>
         </div>
     </div>
-</form>
 
-<!-- ========== MODALES ========== -->
-<!-- Modal Comercial -->
-<div id="modal-comercial" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
-        <h3><i class="fas fa-comments"></i> Notas Comerciales</h3>
-        <span class="close" onclick="cerrarModalComercial()">&times;</span>
-        <textarea id="notas_comerciales_input" rows="6" placeholder="..."></textarea>
-        <div class="modal-footer">
-            <button type="button" onclick="cerrarModalComercial()">Cerrar</button>
-            <button type="button" onclick="guardarNotasComerciales()">Guardar</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Operaciones -->
-<div id="modal-operaciones" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
-        <h3><i class="fas fa-clipboard-list"></i> Notas Operaciones</h3>
-        <span class="close" onclick="cerrarModalOperaciones()">&times;</span>
-        <textarea id="notas_operaciones_input" rows="6" placeholder="..."></textarea>
-        <div class="modal-footer">
-            <button type="button" onclick="cerrarModalOperaciones()">Cerrar</button>
-            <button type="button" onclick="guardarNotasOperaciones()">Guardar</button>
-        </div>
-    </div>
-</div>
-<!-- Modal Servicio -->
-<div id="modal-servicio" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 1500px; width: 95%;">
-        <h3><i class="fas fa-box"></i> Agregar Servicio para <span id="serv_titulo_concatenado">-</span></h3>
-        <span class="close" onclick="cerrarModalServicio()">&times;</span>
-        <input type="hidden" id="id_prospect_serv" name="id_prospect_serv" />
-        <input type="hidden" id="concatenado_serv" name="concatenado_serv" />
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.8rem; margin-top: 1.2rem; align-items: center;">
-            <!-- Fila 1 -->
-            <label>Servicio</label>
-            <input type="text" id="serv_servicio" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Medio Transporte</label>
-            <select id="serv_medio_transporte" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
-                <option value="">Seleccionar</option>
-            </select>
-            <label>Commodity</label>
-            <select id="serv_commodity" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
-                <option value="">Seleccionar</option>
-            </select>
-            <!-- Fila 2 -->
-            <label>Origen</label>
-            <select id="serv_origen" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
-                <option value="">Seleccionar</option>
-            </select>
-            <label>País Origen</label>
-            <input type="text" id="serv_pais_origen" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
-            <label>Destino</label>
-            <select id="serv_destino" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
-                <option value="">Seleccionar</option>
-            </select>
-            <label>País Destino</label>
-            <input type="text" id="serv_pais_destino" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
-            <label>Tránsito</label>
-            <input type="text" id="serv_transito" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Frecuencia</label>
-            <input type="text" id="serv_frecuencia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <!-- Fila 3 -->
-            <label>Lugar Carga</label>
-            <input type="text" id="serv_lugar_carga" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Sector</label>
-            <input type="text" id="serv_sector" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Mercancía</label>
-            <input type="text" id="serv_mercancia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Bultos</label>
-            <input type="number" id="serv_bultos" min="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Peso (kg)</label>
-            <input type="number" id="serv_peso" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Volumen (m³)</label>
-            <input type="number" id="serv_volumen" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Dimensiones</label>
-            <input type="text" id="serv_dimensiones" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" placeholder="Ej: 120x80x90 cm" />
-            <!-- Fila 4 -->
-            <label>Moneda</label>
-            <select id="serv_moneda" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="CLP">CLP</option>
-            </select>
-            <label>Tipo Cambio</label>
-            <input type="number" id="serv_tipo_cambio" step="0.01" min="0" value="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Proveedor Nac</label>
-            <select id="serv_proveedor_nac" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
-                <option value="">Seleccionar</option>
-            </select>
-            <label>AOL</label>
-            <input type="text" id="serv_aol" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
-            <label>AOD</label>
-            <input type="text" id="serv_aod" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
-            <label>Desconsolidación</label>
-            <input type="text" id="serv_desconsolidacion" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Agente</label>
-            <select id="serv_agente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
-                <option value="">Seleccionar</option>
-            </select>
-            <!-- Fila 5 -->
-            <label>Transportador</label>
-            <input type="text" id="serv_transportador" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Incoterm</label>
-            <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-            <label>Ref. Cliente</label>
-            <input type="text" id="serv_ref_cliente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-        </div>
-        <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <button type="button" class="btn-comment" id="btn-costos-servicio-dentro"><i class="fas fa-calculator"></i> Costos - Ventas</button>
-                <button type="button" class="btn-comment" id="btn-gastos-locales-dentro"><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</button>
-            </div>
-            <div style="display: flex; gap: 0.8rem;">
-                <button type="button" class="btn-secondary" onclick="cerrarModalServicioConConfirmacion()">Volver</button>
-                <button type="button" class="btn-add" id="btn-guardar-servicio">Agregar Servicio</button>
+    <!-- ========== MODALES ========== -->
+    <!-- Modal Comercial -->
+    <div id="modal-comercial" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
+            <h3><i class="fas fa-comments"></i> Notas Comerciales</h3>
+            <span class="close" onclick="cerrarModalComercial()">&times;</span>
+            <textarea id="notas_comerciales_input" rows="6" placeholder="..."></textarea>
+            <div class="modal-footer">
+                <button type="button" onclick="cerrarModalComercial()">Cerrar</button>
+                <button type="button" onclick="guardarNotasComerciales()">Guardar</button>
             </div>
         </div>
     </div>
-</div>
-<!-- ========== SUBMODALES ========== -->
-<!-- Submodal: Costos/Ventas/Gastos -->
-<div id="submodal-costos" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
-    <div class="modal-content" style="max-width: 1400px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-        <h3><i class="fas fa-calculator"></i> Costos, Ventas y Gastos</h3>
-        <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
-        <!-- Formulario de entrada -->
-        <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
-            <select id="costo_concepto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
-                <option value="">Seleccionar concepto</option>
-            </select>
-            <input type="text" id="costo_moneda" readonly style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center; width: 80px;" />
-            <input type="number" id="costo_qty" step="0.01" min="0" placeholder="Qty" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right; width: 80px;" />
-            <input type="number" id="costo_costo" step="0.01" min="0" placeholder="Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
-            <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
-            <input type="number" id="costo_tarifa" step="0.01" min="0" placeholder="Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
-            <input type="text" id="costo_total_tarifa" readonly placeholder="Total Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
-            <select id="costo_aplica" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
-                <option value="">Seleccionar aplica</option>
-            </select>
-            <button type="button" onclick="guardarCosto()" style="grid-column: span 1; background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
-                <i class="fas fa-plus"></i> Agregar
-            </button>
-        </div>
-        <!-- Tabla de costos -->
-        <div class="table-container" style="margin-top: 1.2rem; overflow-x: auto;">
-            <table id="tabla-costos" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
-                <thead>
-                    <tr style="background: #f1f3f5;">
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Concepto</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Moneda</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Qty</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Total Costo</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Total Tarifa</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Aplica</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="costos-body"></tbody>
-                <tfoot>
-                    <tr style="font-weight: normal; background: #f9fafcff;">
-                        <td colspan="4" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">TOTAL COSTO:</td>
-                        <td id="total-costo-costos" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd; background-color: #fff9db;">0.00</td>
-                        <td style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">TOTAL TARIFA:</td>
-                        <td id="total-tarifa-costos" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd; background-color: #e6f7ff;">0.00</td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        <div style="text-align: right; margin-top: 1.5rem;">
-            <button type="button" onclick="cerrarSubmodalCostos()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
-                <i class="fas fa-arrow-left"></i> Volver
-            </button>
+
+    <!-- Modal Operaciones -->
+    <div id="modal-operaciones" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
+            <h3><i class="fas fa-clipboard-list"></i> Notas Operaciones</h3>
+            <span class="close" onclick="cerrarModalOperaciones()">&times;</span>
+            <textarea id="notas_operaciones_input" rows="6" placeholder="..."></textarea>
+            <div class="modal-footer">
+                <button type="button" onclick="cerrarModalOperaciones()">Cerrar</button>
+                <button type="button" onclick="guardarNotasOperaciones()">Guardar</button>
+            </div>
         </div>
     </div>
-</div>
-<!-- Submodal: Gastos Locales -->
-<div id="submodal-gastos-locales" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
-    <div class="modal-content" style="max-width: 1400px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-        <h3><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</h3>
-        <span class="close" onclick="cerrarSubmodalGastosLocales()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
-            <select id="gasto_tipo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
-                <option value="">Tipo</option>
-                <option value="Costo">Costo</option>
-                <option value="Ventas">Ventas</option>
-            </select>
-            <select id="gasto_gasto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
-                <option value="">Gastos</option>
-            </select>
-            <select id="gasto_moneda" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
-                <option value="USD">USD</option>
-                <option value="CLP">CLP</option>
-                <option value="EUR">EUR</option>
-            </select>
-            <input type="number" id="gasto_monto" step="0.01" min="0" placeholder="Monto" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
-            <select id="gasto_afecto" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
-                <option value="SI">SI</option>
-                <option value="NO">NO</option>
-            </select>
-            <input type="number" id="gasto_iva" step="0.01" min="0" placeholder="IVA %" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
-            <button type="button" onclick="guardarGastoLocal()" style="grid-column: span 1; background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem;">
-                <i class="fas fa-plus"></i> Agregar
-            </button>
-        </div>
-        <div class="table-container" style="margin-top: 1.2rem; overflow-x: auto;">
-            <table id="tabla-gastos-locales" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
-                <thead>
-                    <tr style="background: #f1f3f5;">
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Tipo</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Gastos</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Moneda</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Monto</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Afecto</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">IVA %</th>
-                        <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="gastos-locales-body"></tbody>
-            </table>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(4, max-content); gap: 1.5rem 2rem; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px; justify-content: start; align-items: center;">
-            <div><strong>TOTAL VENTA:</strong></div>
-            <div id="total-venta-gastos" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
-            <div><strong>TOTAL COSTO:</strong></div>
-            <div id="total-costo-gastos" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
-            <div><strong>PROFIT LOCAL:</strong></div>
-            <div id="profit-local" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
-            <div><strong>PROFIT %:</strong></div>
-            <div id="profit-porcentaje" style="font-weight: bold; text-align: right; min-width: 80px;">0.00 %</div>
-        </div>
-        <div style="text-align: right; margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.8rem;">
-            <button type="button" onclick="cerrarSubmodalGastosLocales()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
-                <i class="fas fa-arrow-left"></i> Volver
-            </button>
+
+    <!-- Modal Servicio -->
+    <div id="modal-servicio" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 1500px; width: 95%;">
+            <h3><i class="fas fa-box"></i> Agregar Servicio para <span id="serv_titulo_concatenado">-</span></h3>
+            <span class="close" onclick="cerrarModalServicio()">&times;</span>
+            <input type="hidden" id="id_prospect_serv" name="id_prospect_serv" />
+            <input type="hidden" id="concatenado_serv" name="concatenado_serv" />
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.8rem; margin-top: 1.2rem; align-items: center;">
+                <!-- Fila 1 -->
+                <label>Servicio</label>
+                <input type="text" id="serv_servicio" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Medio Transporte</label>
+                <select id="serv_medio_transporte" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="">Seleccionar</option>
+                </select>
+                <label>Commodity</label>
+                <select id="serv_commodity" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="">Seleccionar</option>
+                </select>
+                <!-- Fila 2 -->
+                <label>Origen</label>
+                <select id="serv_origen" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="">Seleccionar</option>
+                </select>
+                <label>País Origen</label>
+                <input type="text" id="serv_pais_origen" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
+                <label>Destino</label>
+                <select id="serv_destino" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="">Seleccionar</option>
+                </select>
+                <label>País Destino</label>
+                <input type="text" id="serv_pais_destino" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
+                <label>Tránsito</label>
+                <input type="text" id="serv_transito" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Frecuencia</label>
+                <input type="text" id="serv_frecuencia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <!-- Fila 3 -->
+                <label>Lugar Carga</label>
+                <input type="text" id="serv_lugar_carga" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Sector</label>
+                <input type="text" id="serv_sector" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Mercancía</label>
+                <input type="text" id="serv_mercancia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Bultos</label>
+                <input type="number" id="serv_bultos" min="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Peso (kg)</label>
+                <input type="number" id="serv_peso" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Volumen (m³)</label>
+                <input type="number" id="serv_volumen" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Dimensiones</label>
+                <input type="text" id="serv_dimensiones" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" placeholder="Ej: 120x80x90 cm" />
+                <!-- Fila 4 -->
+                <label>Moneda</label>
+                <select id="serv_moneda" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="CLP">CLP</option>
+                </select>
+                <label>Tipo Cambio</label>
+                <input type="number" id="serv_tipo_cambio" step="0.01" min="0" value="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Proveedor Nac</label>
+                <select id="serv_proveedor_nac" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="">Seleccionar</option>
+                </select>
+                <label>AOL</label>
+                <input type="text" id="serv_aol" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
+                <label>AOD</label>
+                <input type="text" id="serv_aod" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
+                <label>Desconsolidación</label>
+                <input type="text" id="serv_desconsolidacion" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Agente</label>
+                <select id="serv_agente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="">Seleccionar</option>
+                </select>
+                <!-- Fila 5 -->
+                <label>Transportador</label>
+                <input type="text" id="serv_transportador" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Incoterm</label>
+                <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Ref. Cliente</label>
+                <input type="text" id="serv_ref_cliente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+            </div>
+            <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <button type="button" class="btn-comment" id="btn-cubicador" onclick="abrirSubmodalCubicador()">
+                        <i class="fas fa-calculator"></i> Cubicador
+                    </button>
+                    <button type="button" class="btn-comment" id="btn-costos-servicio-dentro"><i class="fas fa-calculator"></i> Costos - Ventas</button>
+                    <button type="button" class="btn-comment" id="btn-gastos-locales-dentro"><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</button>
+                </div>
+                <div style="display: flex; gap: 0.8rem;">
+                    <button type="button" class="btn-secondary" onclick="cerrarModalServicioConConfirmacion()">Volver</button>
+                    <button type="button" class="btn-add" id="btn-guardar-servicio-modal">Agregar Servicio</button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-<!-- Toast de notificaciones -->
-<div id="toast" class="toast" style="display:none;">
-    <i class="fas fa-info-circle"></i> 
-    <span id="toast-message">Mensaje</span>
-</div>
 
-<script>
-    console.log('✅ Script de prospectos iniciado');
-    // ===================================================================
-    // === 1. VARIABLES GLOBALES ===
-    // ===================================================================
-    let servicios = [];
-    let costosServicio = [];
-    let gastosLocales = [];
-    let servicioEnEdicion = null;
-    let tieneServiciosIniciales = false;
-    let estadoProspecto = 'Pendiente';
-    window.editarServicio = editarServicio;
+    <!-- Submodal: Costos/Ventas/Gastos -->
+    <div id="submodal-costos" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
+        <div class="modal-content" style="max-width: 1400px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <h3><i class="fas fa-calculator"></i> Costos, Ventas y Gastos</h3>
+            <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+            <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+                <select id="costo_concepto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                    <option value="">Seleccionar concepto</option>
+                </select>
+                <input type="text" id="costo_moneda" readonly style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center; width: 80px;" />
+                <input type="number" id="costo_qty" step="0.01" min="0" placeholder="Qty" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right; width: 80px;" />
+                <input type="number" id="costo_costo" step="0.01" min="0" placeholder="Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
+                <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
+                <input type="number" id="costo_tarifa" step="0.01" min="0" placeholder="Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
+                <input type="text" id="costo_total_tarifa" readonly placeholder="Total Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
+                <select id="costo_aplica" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                    <option value="">Seleccionar aplica</option>
+                </select>
+                <button type="button" onclick="guardarCosto()" style="grid-column: span 1; background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
+                    <i class="fas fa-plus"></i> Agregar
+                </button>
+            </div>
+            <div class="table-container" style="margin-top: 1.2rem; overflow-x: auto;">
+                <table id="tabla-costos" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
+                    <thead>
+                        <tr style="background: #f1f3f5;">
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Concepto</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Moneda</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Qty</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Total Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Total Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Aplica</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="costos-body"></tbody>
+                    <tfoot>
+                        <tr style="font-weight: normal; background: #f9fafcff;">
+                            <td colspan="4" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">TOTAL COSTO:</td>
+                            <td id="total-costo-costos" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd; background-color: #fff9db;">0.00</td>
+                            <td style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">TOTAL TARIFA:</td>
+                            <td id="total-tarifa-costos" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd; background-color: #e6f7ff;">0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div style="text-align: right; margin-top: 1.5rem;">
+                <button type="button" onclick="cerrarSubmodalCostos()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+            </div>
+        </div>
+    </div>
 
-    // ===================================================================
-    // === 2. FUNCIONES AUXILIARES ===
-    // ===================================================================
-    // === NOTIFICACIONES ===
-    // ===================================================================
-    function mostrarNotificacion(mensaje, tipo = 'info') {
-        const toast = document.getElementById('toast');
-        const msg = document.getElementById('toast-message');
-        if (!toast || !msg) return;
-        msg.textContent = mensaje;
-        toast.className = 'toast ' + tipo;
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 5000);
-    }
-    function exito(msg) { mostrarNotificacion(msg, 'exito'); }
-    function error(msg) { mostrarNotificacion(msg, 'error'); }
-    // ===================================================================
-    // === FUNCIONES ADICIONALES PARA FICHA CLIENTE ===
-    // ===================================================================
-    // Cargar clientes en el <select> de Razón Social (desde CLIENTES)
-    function cargarClientesEnSelect() {
-        console.log('🔍 [CARGA CLIENTES] Iniciando carga de CLIENTES');
-        fetch('/api/get_todos_clientes.php')
-            .then(r => r.json())
-            .then(data => {
-                console.log('📦 [CARGA CLIENTES] Clientes recibidos:', data.clientes);
-                const sel = document.getElementById('razon_social_select');
-                if (!sel) {
-                    console.warn('⚠️ [CARGA CLIENTES] Elemento #razon_social_select no encontrado');
-                    return;
-                }
-                sel.innerHTML = '<option value="">Seleccionar cliente</option>';
-                (data.clientes || []).forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.rut;
-                    opt.textContent = c.razon_social;
-                    sel.appendChild(opt);
-                });
-            })
-            .catch(err => {
-                console.error('❌ [CARGA CLIENTES] Error:', err);
-                error('No se pudieron cargar los clientes');
-            });
-    }
+    <!-- Submodal: Gastos Locales -->
+    <div id="submodal-gastos-locales" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
+        <div class="modal-content" style="max-width: 1400px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <h3><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</h3>
+            <span class="close" onclick="cerrarSubmodalGastosLocales()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+                <select id="gasto_tipo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
+                    <option value="">Tipo</option>
+                    <option value="Costo">Costo</option>
+                    <option value="Ventas">Ventas</option>
+                </select>
+                <select id="gasto_gasto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
+                    <option value="">Gastos</option>
+                </select>
+                <select id="gasto_moneda" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
+                    <option value="USD">USD</option>
+                    <option value="CLP">CLP</option>
+                    <option value="EUR">EUR</option>
+                </select>
+                <input type="number" id="gasto_monto" step="0.01" min="0" placeholder="Monto" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
+                <select id="gasto_afecto" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;">
+                    <option value="SI">SI</option>
+                    <option value="NO">NO</option>
+                </select>
+                <input type="number" id="gasto_iva" step="0.01" min="0" placeholder="IVA %" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
+                <button type="button" onclick="guardarGastoLocal()" style="grid-column: span 1; background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem;">
+                    <i class="fas fa-plus"></i> Agregar
+                </button>
+            </div>
+            <div class="table-container" style="margin-top: 1.2rem; overflow-x: auto;">
+                <table id="tabla-gastos-locales" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
+                    <thead>
+                        <tr style="background: #f1f3f5;">
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Tipo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Gastos</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Moneda</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Monto</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Afecto</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">IVA %</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gastos-locales-body"></tbody>
+                </table>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, max-content); gap: 1.5rem 2rem; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px; justify-content: start; align-items: center;">
+                <div><strong>TOTAL VENTA:</strong></div>
+                <div id="total-venta-gastos" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
+                <div><strong>TOTAL COSTO:</strong></div>
+                <div id="total-costo-gastos" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
+                <div><strong>PROFIT LOCAL:</strong></div>
+                <div id="profit-local" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
+                <div><strong>PROFIT %:</strong></div>
+                <div id="profit-porcentaje" style="font-weight: bold; text-align: right; min-width: 80px;">0.00 %</div>
+            </div>
+            <div style="text-align: right; margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.8rem;">
+                <button type="button" onclick="cerrarSubmodalGastosLocales()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+            </div>
+        </div>
+    </div>
 
-    // Al seleccionar un cliente desde el <select>, cargar datos desde CLIENTES
-    document.getElementById('razon_social_select')?.addEventListener('change', function() {
-        console.log('🔍 [SELECCIÓN CLIENTE] Iniciando carga de datos de CLIENTE');
-        const rut = this.value;
-        if (!rut) {
-            console.log('ℹ️ [SELECCIÓN CLIENTE] Selección vacía, limpiando campos');
-            ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
-            return;
+    <!-- Toast de notificaciones -->
+    <div id="toast" class="toast" style="display:none;">
+        <i class="fas fa-info-circle"></i> 
+        <span id="toast-message">Mensaje</span>
+    </div>
+
+    <script>
+        console.log('✅ Script de prospectos iniciado');
+        // ===================================================================
+        // === 1. VARIABLES GLOBALES ===
+        // ===================================================================
+        let servicios = [];
+        let costosServicio = [];
+        let gastosLocales = [];
+        let servicioEnEdicion = null;
+        let tieneServiciosIniciales = false;
+        let estadoProspecto = 'Pendiente';
+        window.editarServicio = editarServicio;
+
+        // ===================================================================
+        // === 2. FUNCIONES AUXILIARES ===
+        // ===================================================================
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toast-message');
+            if (!toast || !msg) return;
+            msg.textContent = mensaje;
+            toast.className = 'toast ' + tipo;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 5000);
         }
+        function exito(msg) { mostrarNotificacion(msg, 'exito'); }
+        function error(msg) { mostrarNotificacion(msg, 'error'); }
 
-        fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
-            .then(r => r.json())
-            .then(data => {
-                console.log('📦 [SELECCIÓN CLIENTE] Datos del cliente:', data);
-                if (data.existe) {
-                    const c = data.cliente;
-                    document.getElementById('rut_empresa').value = c.rut || '';
-                    document.getElementById('pais').value = c.pais || '';
-                    document.getElementById('direccion').value = c.direccion || '';
-                    document.getElementById('nombre').value = c.nombre_comercial || '';
-                    document.querySelector('input[name="razon_social"]').value = c.razon_social || '';
-
-                    // Cargar teléfono del contacto primario
-                    fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
-                        .then(r2 => r2.json())
-                        .then(data2 => {
-                            console.log('📞 [SELECCIÓN CLIENTE] Contactos:', data2);
-                            const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
-                            document.getElementById('fono_empresa').value = primario?.fono || '';
-                        })
-                        .catch(err => {
-                            console.error('❌ [SELECCIÓN CLIENTE] Error al cargar contactos:', err);
-                        });
-                } else {
-                    console.warn('⚠️ [SELECCIÓN CLIENTE] Cliente no encontrado');
-                }
-            })
-            .catch(err => {
-                console.error('❌ [SELECCIÓN CLIENTE] Error al cargar cliente:', err);
-                error('No se pudo cargar el cliente');
-            });
-    });
-
-    function validarRut(rut) {
-        if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
-        const cuerpo = rut.slice(0, -1);
-        const dv = rut.slice(-1).toUpperCase();
-        let suma = 0, multiplo = 2;
-        for (let i = cuerpo.length - 1; i >= 0; i--) {
-            suma += parseInt(cuerpo[i]) * multiplo;
-            multiplo = multiplo < 7 ? multiplo + 1 : 2;
-        }
-        const dvEsperado = (11 - (suma % 11)).toString();
-        const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
-        return dv === dvCalculado;
-    }
-    function cargarPaises() {
-        const selectPais = document.getElementById('pais') || document.getElementById('cliente_pais');
-        if (!selectPais) return;
-
-        fetch('/api/get_paises.php')
-            .then(r => r.json())
-            .then(data => {
-                selectPais.innerHTML = '<option value="">Seleccionar país</option>';
-                (data.paises || []).forEach(pais => {
-                    const opt = document.createElement('option');
-                    opt.value = pais;
-                    opt.textContent = pais;
-                    selectPais.appendChild(opt);
-                });
-            })
-            .catch(err => {
-                console.error('Error al cargar países:', err);
-                // Fallback opcional: lista mínima
-                const fallback = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
-                selectPais.innerHTML = '<option value="">Seleccionar país</option>';
-                fallback.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p;
-                    opt.textContent = p;
-                    selectPais.appendChild(opt);
-                });
-            });
-    }
-    function calcularConcatenado() {
-        const op = document.getElementById('operacion')?.value || '';
-        const tipo = document.getElementById('tipo_oper')?.value || '';
-        if (!op || !tipo) return;
-        const hoy = new Date();
-        const fecha = hoy.toISOString().slice(2, 10).replace(/-/g, '');
-        const id = (parseInt(document.getElementById('id_prospect')?.value || '0') + 1).toString().padStart(2, '0');
-        document.getElementById('concatenado').value = `${op}${tipo}${fecha}-${id}`;
-    }
-    function actualizarTabla() {
-        const tbody = document.getElementById('servicios-body');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-        let tc = 0, tv = 0, tgc = 0, tgv = 0;
-        servicios.forEach((s, index) => {
-            const c = parseFloat(s.costo) || 0;
-            const v = parseFloat(s.venta) || 0;
-            const gc = parseFloat(s.costogastoslocalesdestino) || 0;
-            const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
-            tc += c; tv += v; tgc += gc; tgv += gv;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${s.servicio}</td>
-                <td>${s.trafico}</td>
-                <td>${s.base_calculo || ''}</td>
-                <td>${s.moneda}</td>
-                <td>${(parseFloat(s.tarifa)||0).toFixed(2)}</td>
-                <td>${c.toFixed(2)}</td>
-                <td>${v.toFixed(2)}</td>
-                <td>${gc.toFixed(2)}</td>
-                <td>${gv.toFixed(2)}</td>
-                <td>
-                    <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
-                    <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-        document.getElementById('total-costo').textContent = tc.toFixed(2);
-        document.getElementById('total-venta').textContent = tv.toFixed(2);
-        document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
-        document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
-        // === Agregar listeners a los botones ===
-        document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                editarServicio(index);
-            });
-        });
-        document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                eliminarServicio(index);
-            });
-        });
-        // Mostrar/ocultar botón de eliminar prospecto
-        const btnEliminar = document.getElementById('btn-eliminar-prospecto');
-        if (btnEliminar) {
-            btnEliminar.style.display = (servicios.length === 0) ? 'inline-block' : 'none';
-        }
-    }
-    // ===================================================================
-    // === 3. CARGA DE DATOS (API) ===
-    // ===================================================================
-    function cargarOperacionesYTipos() {
-        fetch('/api/get_operaciones.php')
-            .then(r => r.json())
-            .then(data => {
-                const sel = document.getElementById('operacion');
-                if (!sel) return;
-                sel.innerHTML = '<option value="">Seleccionar</option>';
-                (data.operaciones || []).forEach(op => {
-                    const opt = document.createElement('option');
-                    opt.value = op;
-                    opt.textContent = op;
-                    sel.appendChild(opt);
-                });
-            });
-        document.getElementById('operacion')?.addEventListener('change', function() {
-            const op = this.value;
-            const tipoSel = document.getElementById('tipo_oper');
-            if (!op || !tipoSel) return;
-            fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(op)}`)
+        // ===================================================================
+        // === FUNCIONES DE CLIENTE Y PROSPECTO ===
+        // ===================================================================
+        function cargarClientesEnSelect() {
+            fetch('/api/get_todos_clientes.php')
                 .then(r => r.json())
                 .then(data => {
-                    tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                    (data.tipos || []).forEach(t => {
+                    const sel = document.getElementById('razon_social_select');
+                    if (!sel) return;
+                    sel.innerHTML = '<option value="">Seleccionar cliente</option>';
+                    (data.clientes || []).forEach(c => {
                         const opt = document.createElement('option');
-                        opt.value = t;
-                        opt.textContent = t;
-                        tipoSel.appendChild(opt);
-                    });
-                });
-        });
-    }
-    function cargarDatosModalServicio(callback = null) {
-        let cargas = 0;
-        const total = 4;
-        const check = () => {
-            cargas++;
-            if (cargas === total && callback) callback();
-        };
-        // Commodity
-        fetch('/api/get_commoditys.php')
-            .then(r => r.json())
-            .then(data => {
-                const sel = document.getElementById('serv_commodity');
-                if (sel) {
-                    sel.innerHTML = '<option value="">Seleccionar</option>';
-                    (data.commoditys || []).forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.commodity || c;
-                        opt.textContent = c.commodity || c;
+                        opt.value = c.rut;
+                        opt.textContent = c.razon_social;
                         sel.appendChild(opt);
                     });
-                }
-                check();
-            });
-        // Medios de transporte
-        fetch('/api/get_medios_transporte.php')
-            .then(r => r.json())
-            .then(data => {
-                const sel = document.getElementById('serv_medio_transporte');
-                if (sel) {
-                    sel.innerHTML = '<option value="">Seleccionar</option>';
-                    (data.medios_transporte || []).forEach(m => {
-                        const opt = document.createElement('option');
-                        opt.value = m;
-                        opt.textContent = m;
-                        sel.appendChild(opt);
-                    });
-                }
-                check();
-            });
-        // Agentes
-        fetch('/api/get_agentes.php')
-            .then(r => r.json())
-            .then(data => {
-                const sel = document.getElementById('serv_agente');
-                if (sel) {
-                    sel.innerHTML = '<option value="">Seleccionar</option>';
-                    (data.agentes || []).forEach(a => {
-                        const opt = document.createElement('option');
-                        opt.value = a;
-                        opt.textContent = a;
-                        sel.appendChild(opt);
-                    });
-                }
-                check();
-            });
-        // Proveedores nacionales
-        fetch('/api/get_proveedores_pnac.php')
-            .then(r => r.json())
-            .then(data => {
-                const sel = document.getElementById('serv_proveedor_nac');
-                if (sel) {
-                    sel.innerHTML = '<option value="">Seleccionar</option>';
-                    (data.proveedores || []).forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p;
-                        opt.textContent = p;
-                        sel.appendChild(opt);
-                    });
-                }
-                check();
-            });
-    }
-    // ===================================================================
-    // === 4. CARGA DE LUGARES (Origen/Destino) ===
-    // ===================================================================
-    function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
-        const origenSel = document.getElementById('serv_origen');
-        const destinoSel = document.getElementById('serv_destino');
-        if (!origenSel || !destinoSel) return Promise.resolve();
-
-        if (!medio) {
-            origenSel.innerHTML = '<option value="">Seleccionar</option>';
-            destinoSel.innerHTML = '<option value="">Seleccionar</option>';
-            return Promise.resolve();
+                })
+                .catch(err => error('No se pudieron cargar los clientes'));
         }
 
-        return fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
-            .then(r => r.json())
-            .then(data => {
-                const lugares = data.lugares || [];
-                const optionsHtml = lugares.map(l => 
-                    `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
-                ).join('');
-                origenSel.innerHTML = '<option value="">Seleccionar</option>' + optionsHtml;
-
-                const destinosFiltrados = origenSeleccionado
-                    ? lugares.filter(l => l.lugar !== origenSeleccionado)
-                    : lugares;
-                const destinoHtml = destinosFiltrados.map(l => 
-                    `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
-                ).join('');
-                destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
-
-                // Actualizar país origen al cambiar selección
-                const handlerOrigen = () => {
-                    const opt = origenSel.options[origenSel.selectedIndex];
-                    document.getElementById('serv_pais_origen').value = opt ? opt.getAttribute('data-pais') || '' : '';
-                };
-                origenSel.removeEventListener('change', handlerOrigen);
-                origenSel.addEventListener('change', handlerOrigen);
-
-                // Actualizar país destino al cambiar selección
-                const handlerDestino = () => {
-                    const opt = destinoSel.options[destinoSel.selectedIndex];
-                    document.getElementById('serv_pais_destino').value = opt ? opt.getAttribute('data-pais') || '' : '';
-                };
-                destinoSel.removeEventListener('change', handlerDestino);
-                destinoSel.addEventListener('change', handlerDestino);
-            })
-            .catch(err => {
-                console.error('Error al cargar lugares:', err);
-                error('No se pudieron cargar los lugares para este medio');
-                return Promise.resolve();
-            });
-    }
-    // ===================================================================
-    // === 5. MANEJO DE PROSPECTOS ===
-    // ===================================================================
-    function seleccionarProspecto(id) {
-        fetch(`/api/get_prospecto.php?id=${id}`)
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
-                const p = data.prospecto;
-
-                // === Actualizar el select de Razón Social ===
-                const razonSelect = document.getElementById('razon_social_select');
-                if (razonSelect) {
-                    let optionFound = false;
-                    // Usar bucle clásico para compatibilidad
-                    for (let i = 0; i < razonSelect.options.length; i++) {
-                        const opt = razonSelect.options[i];
-                        if (opt.value === p.rut_empresa) {
-                            opt.selected = true;
-                            optionFound = true;
-                            break;
-                        }
-                    }
-                    if (!optionFound && p.rut_empresa && p.razon_social) {
-                        const opt = document.createElement('option');
-                        opt.value = p.rut_empresa;
-                        opt.textContent = p.razon_social;
-                        razonSelect.appendChild(opt);
-                        razonSelect.value = p.rut_empresa;
-                    }
-                }
-
-                // === Cargar campos readonly ===
-                const fields = [
-                    { id: 'rut_empresa', value: p.rut_empresa },
-                    { id: 'fono_empresa', value: p.fono_empresa },
-                    { id: 'direccion', value: p.direccion },
-                    { id: 'booking', value: p.booking },
-                    { id: 'incoterm', value: p.incoterm },
-                    { id: 'concatenado', value: p.concatenado },
-                    { id: 'fecha_alta', value: p.fecha_alta },
-                    { id: 'fecha_estado', value: p.fecha_estado },
-                    { id: 'nombre', value: p.nombre }
-                ];
-                fields.forEach(f => {
-                    const el = document.getElementById(f.id);
-                    if (el) el.value = f.value || '';
+        document.getElementById('razon_social_select')?.addEventListener('change', function() {
+            const rut = this.value;
+            if (!rut) {
+                ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
                 });
-
-                // === Cargar país (input readonly) ===
-                const paisInput = document.getElementById('pais');
-                if (paisInput && p.pais) {
-                    paisInput.value = p.pais;
-                }
-
-                // === Cargar operación y tipo ===
-                const opSel = document.getElementById('operacion');
-                const tipoSel = document.getElementById('tipo_oper');
-                if (opSel && p.operacion) {
-                    opSel.value = p.operacion;
-                    fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                            (data.tipos || []).forEach(t => {
-                                const opt = document.createElement('option');
-                                opt.value = t;
-                                opt.textContent = t;
-                                tipoSel.appendChild(opt);
-                            });
-                            if (p.tipo_oper) tipoSel.value = p.tipo_oper;
-                        });
-                }
-
-                // === Notas ===
-                const setNota = (name, val) => {
-                    let inp = document.querySelector(`input[name="${name}"]`);
-                    if (!inp) {
-                        inp = document.createElement('input');
-                        inp.type = 'hidden';
-                        inp.name = name;
-                        document.getElementById('form-prospecto').appendChild(inp);
-                    }
-                    inp.value = val || '';
-                    const textarea = document.getElementById(`${name}_input`);
-                    if (textarea) textarea.value = val || '';
-                };
-                setNota('notas_comerciales', p.notas_comerciales);
-                setNota('notas_operaciones', p.notas_operaciones);
-
-                // === Servicios ===
-                servicios = (data.servicios || []).map(s => ({
-                    ...s,
-                    costo: parseFloat(s.costo) || 0,
-                    venta: parseFloat(s.venta) || 0,
-                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
-                }));
-                tieneServiciosIniciales = servicios.length > 0;
-                actualizarTabla();
-
-                // === IDs internos ===
-                document.getElementById('id_ppl').value = p.id_ppl || '';
-                document.getElementById('id_prospect').value = p.id_prospect || '';
-
-                // === Habilitar edición ===
-                const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
-                const selects = document.querySelectorAll('select');
-                inputs.forEach(input => {
-                    input.readOnly = false;
-                    input.style.backgroundColor = '';
-                });
-                selects.forEach(select => {
-                    select.disabled = false;
-                });
-                document.getElementById('btn-agregar-servicio').disabled = false;
-            })
-            .catch(err => {
-                console.error('Error al cargar prospecto:', err);
-                error('No se pudo cargar el prospecto');
-            });
-    }
-    // ===================================================================
-    // === 6. MODALES PRINCIPALES ===
-    // ===================================================================
-    function abrirModalComercial() { document.getElementById('modal-comercial').style.display = 'block'; }
-    function cerrarModalComercial() { document.getElementById('modal-comercial').style.display = 'none'; }
-    function abrirModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'block'; }
-    function cerrarModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'none'; }
-    function guardarNotasComerciales() {
-        const id = document.getElementById('id_ppl')?.value;
-        if (!id || id === '0') return error('Prospecto no válido');
-        const val = document.getElementById('notas_comerciales_input').value.trim();
-        fetch('/api/guardar_nota.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({id_ppl: id, campo: 'notas_comerciales', valor: val})
-        }).then(r => r.json()).then(d => {
-            if (d.success) exito('Notas guardadas');
-            else error(d.message || 'Error');
-            cerrarModalComercial();
-        });
-    }
-    function guardarNotasOperaciones() {
-        const id = document.getElementById('id_ppl')?.value;
-        if (!id || id === '0') return error('Prospecto no válido');
-        const val = document.getElementById('notas_operaciones_input').value.trim();
-        fetch('/api/guardar_nota.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({id_ppl: id, campo: 'notas_operaciones', valor: val})
-        }).then(r => r.json()).then(d => {
-            if (d.success) exito('Notas guardadas');
-            else error(d.message || 'Error');
-            cerrarModalOperaciones();
-        });
-    }
-    // ===================================================================
-    // === 7. MODAL DE SERVICIO ===
-    // ===================================================================
-    function abrirModalServicio(index = null) {
-        const idPpl = document.getElementById('id_ppl')?.value;
-        const concatenado = document.getElementById('concatenado')?.value;
-        if (!idPpl || idPpl === '0' || !concatenado) {
-            error('Guarde el prospecto primero antes de agregar servicios.');
-            return;
-        }
-
-        // Limpiar modal
-        const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
-        modalInputs.forEach(el => {
-            if (el.type === 'number') el.value = '';
-            else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
-            else if (el.tagName === 'SELECT') el.selectedIndex = 0;
-        });
-
-        document.getElementById('id_prospect_serv').value = idPpl;
-        document.getElementById('concatenado_serv').value = concatenado;
-        document.getElementById('serv_titulo_concatenado').textContent = concatenado;
-        costosServicio = [];
-        gastosLocales = [];
-
-        // Cargar datos del modal (commodity, medios, etc.)
-        cargarDatosModalServicio(() => {
-            if (index !== null) {
-                // Editar servicio existente
-                servicioEnEdicion = index;
-                const s = servicios[index];
-                costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
-                gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
-
-                // Rellenar campos
-                document.getElementById('serv_servicio').value = s.servicio || '';
-                document.getElementById('serv_transportador').value = s.transportador || '';
-                document.getElementById('serv_incoterm').value = s.incoterm || '';
-                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
-                document.getElementById('serv_transito').value = s.transito || '';
-                document.getElementById('serv_frecuencia').value = s.frecuencia || '';
-                document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
-                document.getElementById('serv_sector').value = s.sector || '';
-                document.getElementById('serv_mercancia').value = s.mercancia || '';
-                document.getElementById('serv_bultos').value = s.bultos || '';
-                document.getElementById('serv_peso').value = s.peso || '';
-                document.getElementById('serv_volumen').value = s.volumen || '';
-                document.getElementById('serv_dimensiones').value = s.dimensiones || '';
-                document.getElementById('serv_moneda').value = s.moneda || 'USD';
-                document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
-                document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
-                document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
-                document.getElementById('serv_aol').value = s.aol || '';
-                document.getElementById('serv_aod').value = s.aod || '';
-                document.getElementById('serv_agente').value = s.agente || '';
-
-                // Cargar lugares si hay medio guardado
-                const medioGuardado = (s.trafico || '').trim();
-                if (medioGuardado) {
-                    cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
-                        // Seleccionar origen y destino
-                        const origenSel = document.getElementById('serv_origen');
-                        const destinoSel = document.getElementById('serv_destino');
-                        if (origenSel && s.origen) {
-                            for (let i = 0; i < origenSel.options.length; i++) {
-                                if (origenSel.options[i].value === s.origen) {
-                                    origenSel.selectedIndex = i;
-                                    break;
-                                }
-                            }
-                            // Actualizar país origen
-                            const origenOpt = origenSel.options[origenSel.selectedIndex];
-                            document.getElementById('serv_pais_origen').value = origenOpt ? origenOpt.getAttribute('data-pais') || '' : '';
-                        }
-                        if (destinoSel && s.destino) {
-                            for (let i = 0; i < destinoSel.options.length; i++) {
-                                if (destinoSel.options[i].value === s.destino) {
-                                    destinoSel.selectedIndex = i;
-                                    break;
-                                }
-                            }
-                            // Actualizar país destino
-                            const destinoOpt = destinoSel.options[destinoSel.selectedIndex];
-                            document.getElementById('serv_pais_destino').value = destinoOpt ? destinoOpt.getAttribute('data-pais') || '' : '';
-                        }
-                    });
-                }
-                // Cargar commodity y medio
-                const medioSel = document.getElementById('serv_medio_transporte');
-                const commoditySel = document.getElementById('serv_commodity');
-                if (medioSel && s.trafico) medioSel.value = s.trafico;
-                if (commoditySel && s.commodity) commoditySel.value = s.commodity;
-            } else {
-                // Nuevo servicio
-                servicioEnEdicion = null;
+                return;
             }
+            fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.existe) {
+                        const c = data.cliente;
+                        document.getElementById('rut_empresa').value = c.rut || '';
+                        document.getElementById('pais').value = c.pais || '';
+                        document.getElementById('direccion').value = c.direccion || '';
+                        document.getElementById('nombre').value = c.nombre_comercial || '';
+                        document.querySelector('input[name="razon_social"]').value = c.razon_social || '';
+                        fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
+                            .then(r2 => r2.json())
+                            .then(data2 => {
+                                const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
+                                document.getElementById('fono_empresa').value = primario?.fono || '';
+                            });
+                    }
+                });
         });
 
-        // Listener para cargar lugares al cambiar el medio de transporte
-        const medioSel = document.getElementById('serv_medio_transporte');
-        if (medioSel) {
-            // Eliminar listeners anteriores para evitar duplicados
-            const newMedioSel = medioSel.cloneNode(true);
-            medioSel.parentNode.replaceChild(newMedioSel, medioSel);
-            newMedioSel.addEventListener('change', function() {
-                const medio = this.value;
-                if (medio) {
-                    cargarLugaresPorMedio(medio);
-                } else {
-                    document.getElementById('serv_origen').innerHTML = '<option value="">Seleccionar</option>';
-                    document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>';
-                }
+        function validarRut(rut) {
+            if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
+            const cuerpo = rut.slice(0, -1);
+            const dv = rut.slice(-1).toUpperCase();
+            let suma = 0, multiplo = 2;
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                suma += parseInt(cuerpo[i]) * multiplo;
+                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            }
+            const dvEsperado = (11 - (suma % 11)).toString();
+            const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
+            return dv === dvCalculado;
+        }
+
+        function calcularConcatenado() {
+            const op = document.getElementById('operacion')?.value || '';
+            const tipo = document.getElementById('tipo_oper')?.value || '';
+            if (!op || !tipo) return;
+            const fecha = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+            const id = (parseInt(document.getElementById('id_prospect')?.value || '0') + 1).toString().padStart(2, '0');
+            document.getElementById('concatenado').value = `${op}${tipo}${fecha}-${id}`;
+        }
+
+        function actualizarTabla() {
+            const tbody = document.getElementById('servicios-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            let tc = 0, tv = 0, tgc = 0, tgv = 0;
+            servicios.forEach((s, index) => {
+                const c = parseFloat(s.costo) || 0;
+                const v = parseFloat(s.venta) || 0;
+                const gc = parseFloat(s.costogastoslocalesdestino) || 0;
+                const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
+                tc += c; tv += v; tgc += gc; tgv += gv;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${s.servicio || ''}</td>
+                    <td>${s.trafico || ''}</td>
+                    <td>${s.moneda || 'USD'}</td>
+                    <td>${s.bultos || ''}</td>
+                    <td>${s.peso || ''}</td>
+                    <td>${s.volumen || ''}</td>
+                    <td>${c.toFixed(2)}</td>
+                    <td>${v.toFixed(2)}</td>
+                    <td>${gc.toFixed(2)}</td>
+                    <td>${gv.toFixed(2)}</td>
+                    <td>
+                        <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
+                        <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('total-costo').textContent = tc.toFixed(2);
+            document.getElementById('total-venta').textContent = tv.toFixed(2);
+            document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
+            document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
+
+            // Listeners
+            document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    editarServicio(index);
+                });
+            });
+            document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    eliminarServicio(index);
+                });
             });
         }
 
-        // Listener para filtrar destino al cambiar origen
-        const origenSel = document.getElementById('serv_origen');
-        if (origenSel) {
-            const handlerOrigen = () => {
-                const origen = origenSel.value;
-                const destinoSel = document.getElementById('serv_destino');
-                if (!destinoSel) return;
-
-                const medio = document.getElementById('serv_medio_transporte')?.value;
-                if (!medio) return;
-
-                fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
+        // ===================================================================
+        // === 3. CARGA DE DATOS ===
+        // ===================================================================
+        function cargarOperacionesYTipos() {
+            fetch('/api/get_operaciones.php')
+                .then(r => r.json())
+                .then(data => {
+                    const sel = document.getElementById('operacion');
+                    if (!sel) return;
+                    sel.innerHTML = '<option value="">Seleccionar</option>';
+                    (data.operaciones || []).forEach(op => {
+                        const opt = document.createElement('option');
+                        opt.value = op;
+                        opt.textContent = op;
+                        sel.appendChild(opt);
+                    });
+                });
+            document.getElementById('operacion')?.addEventListener('change', function() {
+                const op = this.value;
+                const tipoSel = document.getElementById('tipo_oper');
+                if (!op || !tipoSel) return;
+                fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(op)}`)
                     .then(r => r.json())
                     .then(data => {
-                        const lugares = data.lugares || [];
-                        // Solo excluir origen si NO está vacío
-                        const destinosFiltrados = origen 
-                            ? lugares.filter(l => l.lugar !== origen)
-                            : lugares;
-                        const destinoHtml = destinosFiltrados.map(l => 
-                            `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
-                        ).join('');
-                        destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
-
-                        // Actualizar país destino
-                        const handlerDestino = () => {
-                            const opt = destinoSel.options[destinoSel.selectedIndex];
-                            document.getElementById('serv_pais_destino').value = opt ? opt.getAttribute('data-pais') || '' : '';
-                        };
-                        destinoSel.removeEventListener('change', handlerDestino);
-                        destinoSel.addEventListener('change', handlerDestino);
+                        tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                        (data.tipos || []).forEach(t => {
+                            const opt = document.createElement('option');
+                            opt.value = t;
+                            opt.textContent = t;
+                            tipoSel.appendChild(opt);
+                        });
                     });
-            };
-            origenSel.removeEventListener('change', handlerOrigen);
-            origenSel.addEventListener('change', handlerOrigen);
-        }
-
-        document.getElementById('modal-servicio').style.display = 'flex';
-    }
-
-    function cerrarModalServicio() {
-        document.getElementById('modal-servicio').style.display = 'none';
-    }
-
-    function cerrarModalServicioConConfirmacion() {
-        if (confirm('¿Desea cancelar sin guardar los cambios?')) {
-            cerrarModalServicio();
-        }
-    }
-
-    function guardarServicio() {
-        console.log('🔍 [SERVICIO] Iniciando guardarServicio()');
-        
-        const servicio = document.getElementById('serv_servicio').value.trim();
-        if (!servicio) {
-            console.log('⚠️ [SERVICIO] Validación fallida: Servicio es obligatorio');
-            error('Servicio es obligatorio');
-            return;
-        }
-        
-        const origen = document.getElementById('serv_origen').value;
-        const destino = document.getElementById('serv_destino').value;
-        if (origen && destino && origen === destino) {
-            console.log('⚠️ [SERVICIO] Validación fallida: Origen y Destino son iguales');
-            return error('Origen y Destino no pueden ser el mismo lugar');
-        }
-
-        console.log('📋 [SERVICIO] Recopilando datos del servicio...');
-        const nuevo = {
-            id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
-            id_prospect: document.getElementById('id_prospect_serv').value,
-            servicio: servicio,
-            trafico: document.getElementById('serv_medio_transporte').value,
-            commodity: document.getElementById('serv_commodity').value,
-            origen: document.getElementById('serv_origen').value,
-            pais_origen: document.getElementById('serv_pais_origen').value,
-            destino: document.getElementById('serv_destino').value,
-            pais_destino: document.getElementById('serv_pais_destino').value,
-            transito: document.getElementById('serv_transito').value,
-            frecuencia: document.getElementById('serv_frecuencia').value,
-            lugar_carga: document.getElementById('serv_lugar_carga').value,
-            sector: document.getElementById('serv_sector').value,
-            mercancia: document.getElementById('serv_mercancia').value,
-            bultos: document.getElementById('serv_bultos').value,
-            peso: document.getElementById('serv_peso').value,
-            volumen: document.getElementById('serv_volumen').value,
-            dimensiones: document.getElementById('serv_dimensiones').value,
-            moneda: document.getElementById('serv_moneda').value,
-            tipo_cambio: document.getElementById('serv_tipo_cambio').value,
-            proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-            desconsolidac: document.getElementById('serv_desconsolidacion').value,
-            aol: document.getElementById('serv_aol').value,
-            aod: document.getElementById('serv_aod').value,
-            agente: document.getElementById('serv_agente').value,
-            transportador: document.getElementById('serv_transportador').value,
-            incoterm: document.getElementById('serv_incoterm').value,
-            ref_cliente: document.getElementById('serv_ref_cliente').value,
-            costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
-            venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
-            costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
-            ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
-            costos: [...costosServicio],
-            gastos_locales: [...gastosLocales]
-        };
-
-        console.log('📦 [SERVICIO] Datos del servicio:', nuevo);
-
-        if (servicioEnEdicion !== null) {
-            servicios[servicioEnEdicion] = nuevo;
-            console.log('✅ [SERVICIO] Servicio actualizado');
-            exito('Servicio actualizado correctamente');
-        } else {
-            servicios.push(nuevo);
-            console.log('✅ [SERVICIO] Servicio agregado a la lista');
-            exito('Servicio agregado correctamente');
-        }
-
-        actualizarTabla();
-        console.log('🔄 [SERVICIO] Tabla actualizada');
-        cerrarModalServicio();
-        console.log('🔚 [SERVICIO] Modal cerrado');
-    }
-    // ===================================================================
-    // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
-    // ===================================================================
-    function abrirSubmodalCostos() {
-        const modalServicio = document.getElementById('modal-servicio');
-        if (!modalServicio || modalServicio.style.display === 'none') {
-            error('Abra primero el modal de Servicio');
-            return;
-        }
-
-        // Si estamos editando un servicio existente, cargar sus costos
-        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-            costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) 
-                ? [...servicios[servicioEnEdicion].costos] 
-                : [];
-        }
-        // Si es un nuevo servicio, costosServicio ya contiene los datos actuales
-
-        const monedaServicio = document.getElementById('serv_moneda')?.value || 'USD';
-        document.getElementById('costo_moneda').value = monedaServicio;
-        cargarConceptosCostos();
-        const medioTransporte = document.getElementById('serv_medio_transporte')?.value || '';
-        cargarAplicacionesCostos(medioTransporte);
-        actualizarTablaCostos();
-        document.getElementById('submodal-costos').style.display = 'block';
-    }
-    // --- Gastos Locales ---
-    function abrirSubmodalGastosLocales() {
-        const modalServicio = document.getElementById('modal-servicio');
-        if (!modalServicio || modalServicio.style.display === 'none') {
-            error('Abra primero el modal de Servicio');
-            return;
-        }
-
-        // Si estamos editando un servicio existente, cargar sus gastos
-        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-            gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) 
-                ? [...servicios[servicioEnEdicion].gastos_locales] 
-                : [];
-        }
-        // Si es un nuevo servicio, gastosLocales ya contiene los datos actuales
-
-        cargarGastosPorTipo();
-        actualizarTablaGastosLocales();
-        document.getElementById('submodal-gastos-locales').style.display = 'block';
-    }
-
-    function cargarConceptosCostos() {
-        fetch('/api/get_conceptos_costos.php')
-            .then(r => r.json())
-            .then(data => {
-                const sel = document.getElementById('costo_concepto');
-                if (!sel) return;
-                sel.innerHTML = '<option value="">Seleccionar concepto</option>';
-                (data.conceptos || data || []).forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.concepto || c;
-                    opt.textContent = c.concepto || c;
-                    sel.appendChild(opt);
-                });
-            })
-            .catch(err => {
-                console.error('Error al cargar conceptos:', err);
-                error('No se pudieron cargar los conceptos de costo');
             });
-    }
+        }
 
-    function cargarAplicacionesCostos(medio) {
-        fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
-            .then(r => r.json())
-            .then(data => {
-                const sel = document.getElementById('costo_aplica');
-                if (!sel) return;
-                sel.innerHTML = '<option value="">Seleccionar aplica</option>';
-                const opciones = Array.isArray(data) ? data : (data.aplicaciones || []);
-                opciones.forEach(item => {
-                    const valor = typeof item === 'string' ? item : item.aplica;
-                    if (valor) {
-                        const opt = document.createElement('option');
-                        opt.value = valor;
-                        opt.textContent = valor;
-                        sel.appendChild(opt);
+        function cargarDatosModalServicio(callback = null) {
+            let cargas = 0;
+            const total = 4;
+            const check = () => {
+                cargas++;
+                if (cargas === total && callback) callback();
+            };
+            ['commoditys', 'medios_transporte', 'agentes', 'proveedores_pnac'].forEach((api, i) => {
+                const fieldMap = {
+                    commoditys: 'serv_commodity',
+                    medios_transporte: 'serv_medio_transporte',
+                    agentes: 'serv_agente',
+                    proveedores_pnac: 'serv_proveedor_nac'
+                };
+                const selId = fieldMap[api];
+                fetch(`/api/get_${api}.php`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById(selId);
+                        if (sel) {
+                            sel.innerHTML = '<option value="">Seleccionar</option>';
+                            const list = Array.isArray(data) ? data : (data[api.replace('_', '') + 's'] || data);
+                            list.forEach(item => {
+                                const val = typeof item === 'string' ? item : (item.commodity || item);
+                                const opt = document.createElement('option');
+                                opt.value = val;
+                                opt.textContent = val;
+                                sel.appendChild(opt);
+                            });
+                        }
+                        check();
+                    });
+            });
+        }
+
+        function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
+            const origenSel = document.getElementById('serv_origen');
+            const destinoSel = document.getElementById('serv_destino');
+            if (!medio) {
+                origenSel.innerHTML = '<option value="">Seleccionar</option>';
+                destinoSel.innerHTML = '<option value="">Seleccionar</option>';
+                return Promise.resolve();
+            }
+            return fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
+                .then(r => r.json())
+                .then(data => {
+                    const lugares = data.lugares || [];
+                    const optionsHtml = lugares.map(l => `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`).join('');
+                    origenSel.innerHTML = '<option value="">Seleccionar</option>' + optionsHtml;
+                    const destinosFiltrados = origenSeleccionado ? lugares.filter(l => l.lugar !== origenSeleccionado) : lugares;
+                    const destinoHtml = destinosFiltrados.map(l => `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`).join('');
+                    destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
+                })
+                .catch(err => error('No se pudieron cargar los lugares'));
+        }
+
+        // ===================================================================
+        // === 4. MANEJO DE PROSPECTOS ===
+        // ===================================================================
+        function seleccionarProspecto(id) {
+            fetch(`/api/get_prospecto.php?id=${id}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
+                    const p = data.prospecto;
+                    const razonSelect = document.getElementById('razon_social_select');
+                    if (razonSelect) {
+                        let found = false;
+                        for (let i = 0; i < razonSelect.options.length; i++) {
+                            if (razonSelect.options[i].value === p.rut_empresa) {
+                                razonSelect.selectedIndex = i;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found && p.rut_empresa && p.razon_social) {
+                            const opt = document.createElement('option');
+                            opt.value = p.rut_empresa;
+                            opt.textContent = p.razon_social;
+                            razonSelect.appendChild(opt);
+                            razonSelect.value = p.rut_empresa;
+                        }
+                    }
+                    const fields = [
+                        'rut_empresa', 'fono_empresa', 'direccion', 'booking', 'incoterm',
+                        'concatenado', 'fecha_alta', 'fecha_estado', 'nombre', 'pais'
+                    ];
+                    fields.forEach(f => {
+                        const el = document.getElementById(f);
+                        if (el) el.value = p[f] || '';
+                    });
+                    const opSel = document.getElementById('operacion');
+                    const tipoSel = document.getElementById('tipo_oper');
+                    if (opSel && p.operacion) {
+                        opSel.value = p.operacion;
+                        fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                                (data.tipos || []).forEach(t => {
+                                    const opt = document.createElement('option');
+                                    opt.value = t;
+                                    opt.textContent = t;
+                                    tipoSel.appendChild(opt);
+                                });
+                                if (p.tipo_oper) tipoSel.value = p.tipo_oper;
+                            });
+                    }
+                    const setNota = (name, val) => {
+                        const inp = document.getElementById(name);
+                        if (inp) inp.value = val || '';
+                        const ta = document.getElementById(`${name}_input`);
+                        if (ta) ta.value = val || '';
+                    };
+                    setNota('notas_comerciales', p.notas_comerciales);
+                    setNota('notas_operaciones', p.notas_operaciones);
+                    servicios = (data.servicios || []).map(s => ({
+                        ...s,
+                        costo: parseFloat(s.costo) || 0,
+                        venta: parseFloat(s.venta) || 0,
+                        costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                        ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
+                    }));
+                    tieneServiciosIniciales = servicios.length > 0;
+                    actualizarTabla();
+                    document.getElementById('id_ppl').value = p.id_ppl || '';
+                    document.getElementById('id_prospect').value = p.id_prospect || '';
+                    const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
+                    const selects = document.querySelectorAll('select');
+                    inputs.forEach(i => { i.readOnly = false; i.style.backgroundColor = ''; });
+                    selects.forEach(s => s.disabled = false);
+                    document.getElementById('btn-agregar-servicio').disabled = false;
+                });
+        }
+
+        // ===================================================================
+        // === 5. MODALES Y SUBMODALES ===
+        // ===================================================================
+        function abrirModalComercial() { document.getElementById('modal-comercial').style.display = 'block'; }
+        function cerrarModalComercial() { document.getElementById('modal-comercial').style.display = 'none'; }
+        function abrirModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'block'; }
+        function cerrarModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'none'; }
+
+        function guardarNotasComerciales() {
+            const id = document.getElementById('id_ppl')?.value;
+            if (!id || id === '0') return error('Prospecto no válido');
+            const val = document.getElementById('notas_comerciales_input').value.trim();
+            fetch('/api/guardar_nota.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id_ppl: id, campo: 'notas_comerciales', valor: val})
+            }).then(r => r.json()).then(d => {
+                if (d.success) exito('Notas guardadas');
+                else error(d.message || 'Error');
+                cerrarModalComercial();
+            });
+        }
+
+        function guardarNotasOperaciones() {
+            const id = document.getElementById('id_ppl')?.value;
+            if (!id || id === '0') return error('Prospecto no válido');
+            const val = document.getElementById('notas_operaciones_input').value.trim();
+            fetch('/api/guardar_nota.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id_ppl: id, campo: 'notas_operaciones', valor: val})
+            }).then(r => r.json()).then(d => {
+                if (d.success) exito('Notas guardadas');
+                else error(d.message || 'Error');
+                cerrarModalOperaciones();
+            });
+        }
+
+        function abrirModalServicio(index = null) {
+            const idPpl = document.getElementById('id_ppl')?.value;
+            const concatenado = document.getElementById('concatenado')?.value;
+            if (!idPpl || idPpl === '0' || !concatenado) {
+                return error('Guarde el prospecto primero antes de agregar servicios.');
+            }
+            const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
+            modalInputs.forEach(el => {
+                if (el.type === 'number') el.value = '';
+                else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
+                else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            });
+            document.getElementById('id_prospect_serv').value = idPpl;
+            document.getElementById('concatenado_serv').value = concatenado;
+            document.getElementById('serv_titulo_concatenado').textContent = concatenado;
+            costosServicio = [];
+            gastosLocales = [];
+            cargarDatosModalServicio(() => {
+                if (index !== null && servicios[index]) {
+                    servicioEnEdicion = index;
+                    const s = servicios[index];
+                    costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
+                    gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
+                    const fields = ['servicio','transportador','incoterm','ref_cliente','transito','frecuencia','lugar_carga',
+                                   'sector','mercancia','bultos','peso','volumen','dimensiones','moneda','tipo_cambio',
+                                   'proveedor_nac','desconsolidacion','aol','aod','agente'];
+                    fields.forEach(f => {
+                        const el = document.getElementById(`serv_${f}`);
+                        if (el) el.value = s[f] || '';
+                    });
+                    const medioGuardado = s.trafico || '';
+                    if (medioGuardado) {
+                        cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
+                            ['origen', 'destino'].forEach(field => {
+                                const sel = document.getElementById(`serv_${field}`);
+                                if (sel && s[field]) {
+                                    for (let i = 0; i < sel.options.length; i++) {
+                                        if (sel.options[i].value === s[field]) {
+                                            sel.selectedIndex = i;
+                                            break;
+                                        }
+                                    }
+                                    const opt = sel.options[sel.selectedIndex];
+                                    document.getElementById(`serv_pais_${field}`).value = opt ? opt.getAttribute('data-pais') || '' : '';
+                                }
+                            });
+                        });
+                    }
+                    document.getElementById('serv_medio_transporte').value = s.trafico || '';
+                    document.getElementById('serv_commodity').value = s.commodity || '';
+                } else {
+                    servicioEnEdicion = null;
+                }
+            });
+
+            const medioSel = document.getElementById('serv_medio_transporte');
+            if (medioSel) {
+                const newMedioSel = medioSel.cloneNode(true);
+                medioSel.parentNode.replaceChild(newMedioSel, medioSel);
+                newMedioSel.addEventListener('change', function() {
+                    const medio = this.value;
+                    if (medio) {
+                        cargarLugaresPorMedio(medio);
+                    } else {
+                        document.getElementById('serv_origen').innerHTML = '<option value="">Seleccionar</option>';
+                        document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>';
                     }
                 });
-            })
-            .catch(err => {
-                console.error('Error al cargar aplicaciones:', err);
-                error('No se pudieron cargar las opciones de "Aplica"');
-            });
-    }
-
-    ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', calcularTotalesCostos);
-        }
-    });
-
-    function calcularTotalesCostos() {
-        const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
-        const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
-        const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-        document.getElementById('costo_total_costo').value = (qty * costo).toFixed(2);
-        document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
-    }
-    function guardarCosto() {
-        const concepto = document.getElementById('costo_concepto').value;
-        const aplica = document.getElementById('costo_aplica').value;
-        const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
-        const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
-        const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-        const moneda = document.getElementById('costo_moneda').value || 'CLP';
-        if (!concepto || !aplica) {
-            error('Concepto y Aplica son obligatorios');
-            return;
-        }
-        const nuevoCosto = {
-            concepto,
-            moneda,
-            qty,
-            costo,
-            total_costo: qty * costo,
-            tarifa,
-            total_tarifa: qty * tarifa,
-            aplica
-        };
-        if (window.indiceCostoEdicion !== undefined) {
-            costosServicio[window.indiceCostoEdicion] = nuevoCosto;
-            delete window.indiceCostoEdicion;
-        } else {
-            costosServicio.push(nuevoCosto);
-        }
-        actualizarTablaCostos();
-        limpiarFormularioCostos();
-        exito('Costo guardado');
-    }
-    function actualizarTablaCostos() {
-        const tbody = document.getElementById('costos-body');
-        const totalCostoEl = document.getElementById('total-costo-costos');
-        const totalTarifaEl = document.getElementById('total-tarifa-costos');
-        if (!tbody || !totalCostoEl || !totalTarifaEl) return;
-        tbody.innerHTML = '';
-        let totalCosto = 0, totalTarifa = 0;
-        costosServicio.forEach((c, i) => {
-            const costo = parseFloat(c.costo) || 0;
-            const tarifa = parseFloat(c.tarifa) || 0;
-            const qty = parseFloat(c.qty) || 0;
-            const totalCostoItem = costo * qty;
-            const totalTarifaItem = tarifa * qty;
-            totalCosto += totalCostoItem;
-            totalTarifa += totalTarifaItem;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${c.concepto}</td>
-                <td>${c.moneda}</td>
-                <td style="text-align: right;">${qty.toFixed(2)}</td>
-                <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
-                <td style="text-align: right; background-color: #fff9db;">${totalCostoItem.toFixed(2)}</td>
-                <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
-                <td style="text-align: right; background-color: #e6f7ff;">${totalTarifaItem.toFixed(2)}</td>
-                <td>${c.aplica}</td>
-                <td style="text-align: center;">
-                    <button type="button" class="btn-edit" onclick="editarCosto(${i})" style="margin-right: 0.3rem; padding: 0.2rem 0.4rem;">✏️</button>
-                    <button type="button" class="btn-delete" onclick="eliminarCosto(${i})" style="padding: 0.2rem 0.4rem;">🗑️</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-        totalCostoEl.textContent = totalCosto.toFixed(2);
-        totalTarifaEl.textContent = totalTarifa.toFixed(2);
-    }
-    function editarCosto(index) {
-        const c = costosServicio[index];
-        if (!c) return;
-        document.getElementById('costo_concepto').value = c.concepto || '';
-        document.getElementById('costo_qty').value = (c.qty !== undefined) ? c.qty : '';
-        document.getElementById('costo_costo').value = (c.costo !== undefined) ? c.costo : '';
-        document.getElementById('costo_tarifa').value = (c.tarifa !== undefined) ? c.tarifa : '';
-        document.getElementById('costo_aplica').value = c.aplica || '';
-        document.getElementById('costo_total_costo').value = (c.total_costo !== undefined) ? c.total_costo.toFixed(2) : '0.00';
-        document.getElementById('costo_total_tarifa').value = (c.total_tarifa !== undefined) ? c.total_tarifa.toFixed(2) : '0.00';
-        window.indiceCostoEdicion = index;
-    }
-    function eliminarCosto(index) {
-        if (confirm('¿Eliminar costo?')) {
-            costosServicio.splice(index, 1);
-            actualizarTablaCostos();
-            exito('Costo eliminado');
-        }
-    }
-    function limpiarFormularioCostos() {
-        document.getElementById('costo_concepto').selectedIndex = 0;
-        document.getElementById('costo_qty').value = '';
-        document.getElementById('costo_costo').value = '';
-        document.getElementById('costo_tarifa').value = '';
-        document.getElementById('costo_aplica').selectedIndex = 0;
-        document.getElementById('costo_total_costo').value = '0.00';
-        document.getElementById('costo_total_tarifa').value = '0.00';
-    }
-    function cerrarSubmodalCostos() {
-        // Guardar costos en el servicio actual (si hay uno en edición)
-        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-            servicios[servicioEnEdicion].costos = [...costosServicio];
-        }
-        document.getElementById('submodal-costos').style.display = 'none';
-    }
-    document.getElementById('gasto_tipo')?.addEventListener('change', cargarGastosPorTipo);
-    function cargarGastosPorTipo() {
-        const tipo = document.getElementById('gasto_tipo')?.value;
-        if (!tipo) {
-            document.getElementById('gasto_gasto').innerHTML = '<option value="">Gastos</option>';
-            return;
-        }
-        fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
-            .then(r => r.json())
-            .then(data => {
-                const sel = document.getElementById('gasto_gasto');
-                if (!sel) return;
-                sel.innerHTML = '<option value="">Gastos</option>';
-                (data.gastos || []).forEach(g => {
-                    const opt = document.createElement('option');
-                    opt.value = g;
-                    opt.textContent = g;
-                    sel.appendChild(opt);
-                });
-            });
-    }
-    function guardarGastoLocal() {
-        const tipo = document.getElementById('gasto_tipo').value;
-        const gasto = document.getElementById('gasto_gasto').value;
-        const moneda = document.getElementById('gasto_moneda').value;
-        const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
-        const afecto = document.getElementById('gasto_afecto').value;
-        const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
-        if (!tipo || !gasto) {
-            return error('Tipo y Gasto son obligatorios');
-        }
-        const nuevoGasto = { tipo, gasto, moneda, monto, afecto, iva };
-        gastosLocales.push(nuevoGasto);
-        actualizarTablaGastosLocales();
-        limpiarFormularioGastos();
-        exito('Gasto local agregado');
-    }
-    function actualizarTablaGastosLocales() {
-        const tbody = document.getElementById('gastos-locales-body');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-        let totalVenta = 0, totalCosto = 0;
-        gastosLocales.forEach((g, i) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${g.tipo}</td>
-                <td>${g.gasto}</td>
-                <td>${g.moneda}</td>
-                <td style="text-align:right;">${g.monto.toFixed(2)}</td>
-                <td>${g.afecto}</td>
-                <td style="text-align:right;">${g.iva.toFixed(2)}</td>
-                <td style="text-align:center;">
-                    <button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-            if (g.tipo === 'Ventas') totalVenta += g.monto;
-            if (g.tipo === 'Costo') totalCosto += g.monto;
-        });
-        document.getElementById('total-venta-gastos').textContent = totalVenta.toFixed(2);
-        document.getElementById('total-costo-gastos').textContent = totalCosto.toFixed(2);
-        document.getElementById('profit-local').textContent = (totalVenta - totalCosto).toFixed(2);
-        const profitPct = totalVenta > 0 ? ((totalVenta - totalCosto) / totalVenta * 100) : 0;
-        document.getElementById('profit-porcentaje').textContent = profitPct.toFixed(2) + ' %';
-    }
-    function eliminarGastoLocal(index) {
-        if (confirm('¿Eliminar este gasto?')) {
-            gastosLocales.splice(index, 1);
-            actualizarTablaGastosLocales();
-            exito('Gasto eliminado');
-        }
-    }
-    function limpiarFormularioGastos() {
-        document.getElementById('gasto_tipo').selectedIndex = 0;
-        document.getElementById('gasto_gasto').selectedIndex = 0;
-        document.getElementById('gasto_moneda').value = 'USD';
-        document.getElementById('gasto_monto').value = '';
-        document.getElementById('gasto_afecto').value = 'SI';
-        document.getElementById('gasto_iva').value = '';
-    }
-    function cerrarSubmodalGastosLocales() {
-        // Guardar gastos en el servicio actual (si hay uno en edición)
-        if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-            servicios[servicioEnEdicion].gastos_locales = [...gastosLocales];
-        }
-        document.getElementById('submodal-gastos-locales').style.display = 'none';
-    }
-    // === FUNCIONES DE SERVICIOS ===
-    function editarServicio(index) {
-        try {
-            if (index < 0 || index >= servicios.length) {
-                throw new Error('Índice de servicio inválido');
             }
-            abrirModalServicio(index);
-        } catch (e) {
-            console.error('Error al editar servicio:', e);
-            error('No se pudo abrir el servicio para edición');
-        }
-    }
-    function eliminarServicio(index) {
-        if (index < 0 || index >= servicios.length) return;
 
-        const servicio = servicios[index];
-        const tieneCostos = Array.isArray(servicio.costos) && servicio.costos.length > 0;
-        const tieneGastos = Array.isArray(servicio.gastos_locales) && servicio.gastos_locales.length > 0;
-
-        if (tieneCostos || tieneGastos) {
-            error('No se puede eliminar el servicio porque tiene costos o gastos asociados. Elimine primero los elementos inferiores.');
-            return;
-        }
-
-        if (confirm('¿Eliminar este servicio?')) {
-            servicios.splice(index, 1);
-            actualizarTabla();
-            exito('Servicio eliminado');
-        }
-    }
-    // =================================================================================================================
-    // === 9. INICIALIZACIÓN === DOMContentLoaded
-    // =================================================================================================================
-    document.addEventListener('DOMContentLoaded', () => {
-        cargarPaises();
-        cargarOperacionesYTipos();
-        cargarClientesEnSelect(); // ←←← CARGAR CLIENTES AL INICIAR
-
-        // Mostrar notificación de éxito si viene en la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const exitoMsg = urlParams.get('exito');
-        if (exitoMsg) {
-            exito(decodeURIComponent(exitoMsg));
-            history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
+            const origenSel = document.getElementById('serv_origen');
+            if (origenSel) {
+                const handler = () => {
+                    const origen = origenSel.value;
+                    const medio = document.getElementById('serv_medio_transporte')?.value;
+                    if (!medio) return;
+                    fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            const lugares = data.lugares || [];
+                            const destinos = origen ? lugares.filter(l => l.lugar !== origen) : lugares;
+                            const html = destinos.map(l => `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`).join('');
+                            document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>' + html;
+                        });
+                };
+                origenSel.removeEventListener('change', handler);
+                origenSel.addEventListener('change', handler);
+            }
+            document.getElementById('modal-servicio').style.display = 'flex';
         }
 
-        cargarPaises();
-        cargarOperacionesYTipos();
-        cargarClientesEnSelect();
+        function cerrarModalServicio() {
+            document.getElementById('modal-servicio').style.display = 'none';
+        }
 
-        document.getElementById('operacion')?.addEventListener('change', calcularConcatenado);
-        document.getElementById('tipo_oper')?.addEventListener('change', calcularConcatenado);
+        function cerrarModalServicioConConfirmacion() {
+            if (confirm('¿Desea cancelar sin guardar los cambios?')) {
+                cerrarModalServicio();
+            }
+        }
 
-        // === BOTÓN: Agregar Servicio ===
-        const btnAgregarServicio = document.getElementById('btn-agregar-servicio');
-        if (btnAgregarServicio) {
-            btnAgregarServicio.addEventListener('click', function() {
-                const idPpl = document.getElementById('id_ppl')?.value;
-                const concatenado = document.getElementById('concatenado')?.value;
-                if (!idPpl || idPpl === '0' || !concatenado) {
-                    error('Guarde el prospecto primero antes de agregar servicios.');
-                    return;
+        function guardarServicio() {
+            const servicio = document.getElementById('serv_servicio').value.trim();
+            if (!servicio) return error('Servicio es obligatorio');
+            const origen = document.getElementById('serv_origen').value;
+            const destino = document.getElementById('serv_destino').value;
+            if (origen && destino && origen === destino) return error('Origen y Destino no pueden ser el mismo');
+
+            const rutCliente = document.getElementById('rut_empresa')?.value.trim();
+            const totalVenta = costosServicio.reduce((sum, c) => sum + (parseFloat(c.total_tarifa) || 0), 0);
+            if (costosServicio.length === 0) return error('Debe agregar al menos un costo al servicio');
+
+            const continuar = () => {
+                const nuevo = {
+                    id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
+                    id_prospect: document.getElementById('id_prospect_serv').value,
+                    servicio: document.getElementById('serv_servicio').value,
+                    trafico: document.getElementById('serv_medio_transporte').value,
+                    commodity: document.getElementById('serv_commodity').value,
+                    origen: document.getElementById('serv_origen').value,
+                    pais_origen: document.getElementById('serv_pais_origen').value,
+                    destino: document.getElementById('serv_destino').value,
+                    pais_destino: document.getElementById('serv_pais_destino').value,
+                    transito: document.getElementById('serv_transito').value,
+                    frecuencia: document.getElementById('serv_frecuencia').value,
+                    lugar_carga: document.getElementById('serv_lugar_carga').value,
+                    sector: document.getElementById('serv_sector').value,
+                    mercancia: document.getElementById('serv_mercancia').value,
+                    bultos: document.getElementById('serv_bultos').value,
+                    peso: document.getElementById('serv_peso').value,
+                    volumen: document.getElementById('serv_volumen').value,
+                    dimensiones: document.getElementById('serv_dimensiones').value,
+                    moneda: document.getElementById('serv_moneda').value,
+                    tipo_cambio: document.getElementById('serv_tipo_cambio').value,
+                    proveedor_nac: document.getElementById('serv_proveedor_nac').value,
+                    desconsolidac: document.getElementById('serv_desconsolidacion').value,
+                    aol: document.getElementById('serv_aol').value,
+                    aod: document.getElementById('serv_aod').value,
+                    agente: document.getElementById('serv_agente').value,
+                    transportador: document.getElementById('serv_transportador').value,
+                    incoterm: document.getElementById('serv_incoterm').value,
+                    ref_cliente: document.getElementById('serv_ref_cliente').value,
+                    costo: costosServicio.reduce((sum, c) => sum + (parseFloat(c.total_costo) || 0), 0),
+                    venta: costosServicio.reduce((sum, c) => sum + (parseFloat(c.total_tarifa) || 0), 0),
+                    costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (parseFloat(g.monto) || 0), 0),
+                    ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (parseFloat(g.monto) || 0), 0),
+                    costos: [...costosServicio],
+                    gastos_locales: [...gastosLocales]
+                };
+
+                if (servicioEnEdicion !== null) {
+                    servicios[servicioEnEdicion] = nuevo;
+                    exito('Servicio actualizado correctamente');
+                } else {
+                    servicios.push(nuevo);
+                    exito('Servicio agregado correctamente');
                 }
-                abrirModalServicio();
+                actualizarTabla();
+                cerrarModalServicio();
+            };
+
+            if (rutCliente && totalVenta > 0) {
+                fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.error) {
+                            error(data.error);
+                        } else if (totalVenta > data.saldo_credito) {
+                            error(`Sobregiro: El servicio supera el crédito disponible (${data.saldo_credito}).`);
+                        } else {
+                            continuar();
+                        }
+                    });
+            } else {
+                continuar();
+            }
+        }
+
+        // --- Submodales ---
+        function abrirSubmodalCostos() {
+            if (document.getElementById('modal-servicio').style.display === 'none') return error('Abra primero el modal de Servicio');
+            if (servicioEnEdicion !== null) {
+                costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) ? [...servicios[servicioEnEdicion].costos] : [];
+            }
+            document.getElementById('costo_moneda').value = document.getElementById('serv_moneda')?.value || 'USD';
+            fetch('/api/get_conceptos_costos.php')
+                .then(r => r.json())
+                .then(data => {
+                    const sel = document.getElementById('costo_concepto');
+                    if (sel) {
+                        sel.innerHTML = '<option value="">Seleccionar concepto</option>';
+                        (data.conceptos || data).forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.concepto || c;
+                            opt.textContent = c.concepto || c;
+                            sel.appendChild(opt);
+                        });
+                    }
+                });
+            const medio = document.getElementById('serv_medio_transporte')?.value || '';
+            fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
+                .then(r => r.json())
+                .then(data => {
+                    const sel = document.getElementById('costo_aplica');
+                    if (sel) {
+                        sel.innerHTML = '<option value="">Seleccionar aplica</option>';
+                        (Array.isArray(data) ? data : (data.aplicaciones || [])).forEach(item => {
+                            const val = typeof item === 'string' ? item : item.aplica;
+                            if (val) {
+                                const opt = document.createElement('option');
+                                opt.value = val;
+                                opt.textContent = val;
+                                sel.appendChild(opt);
+                            }
+                        });
+                    }
+                });
+            actualizarTablaCostos();
+            document.getElementById('submodal-costos').style.display = 'block';
+        }
+
+        function abrirSubmodalGastosLocales() {
+            if (document.getElementById('modal-servicio').style.display === 'none') return error('Abra primero el modal de Servicio');
+            if (servicioEnEdicion !== null) {
+                gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) ? [...servicios[servicioEnEdicion].gastos_locales] : [];
+            }
+            const tipo = document.getElementById('gasto_tipo')?.value;
+            if (tipo) {
+                fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('gasto_gasto');
+                        if (sel) {
+                            sel.innerHTML = '<option value="">Gastos</option>';
+                            (data.gastos || []).forEach(g => {
+                                const opt = document.createElement('option');
+                                opt.value = g;
+                                opt.textContent = g;
+                                sel.appendChild(opt);
+                            });
+                        }
+                    });
+            }
+            actualizarTablaGastosLocales();
+            document.getElementById('submodal-gastos-locales').style.display = 'block';
+        }
+
+        ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', () => {
+                const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+                const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+                const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+                document.getElementById('costo_total_costo').value = (qty * costo).toFixed(2);
+                document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
             });
+        });
+
+        function guardarCosto() {
+            const concepto = document.getElementById('costo_concepto').value;
+            const aplica = document.getElementById('costo_aplica').value;
+            const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+            const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+            const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+            const moneda = document.getElementById('costo_moneda').value || 'CLP';
+            if (!concepto || !aplica) return error('Concepto y Aplica son obligatorios');
+            const nuevo = { concepto, moneda, qty, costo, total_costo: qty * costo, tarifa, total_tarifa: qty * tarifa, aplica };
+            if (window.indiceCostoEdicion !== undefined) {
+                costosServicio[window.indiceCostoEdicion] = nuevo;
+                delete window.indiceCostoEdicion;
+            } else {
+                costosServicio.push(nuevo);
+            }
+            actualizarTablaCostos();
+            ['costo_concepto', 'costo_qty', 'costo_costo', 'costo_tarifa', 'costo_aplica'].forEach(id => {
+                if (id.includes('concepto') || id.includes('aplica')) {
+                    document.getElementById(id).selectedIndex = 0;
+                } else {
+                    document.getElementById(id).value = '';
+                }
+            });
+            document.getElementById('costo_total_costo').value = '0.00';
+            document.getElementById('costo_total_tarifa').value = '0.00';
+            exito('Costo guardado');
         }
 
-        // === BOTÓN: Grabar Todo ===
-        const btnGrabarTodo = document.getElementById('btn-save-all');
-        if (btnGrabarTodo) {
-            btnGrabarTodo.addEventListener('click', function(e) {
-                e.preventDefault();
-                const rut = document.getElementById('rut_empresa')?.value.trim();
-                const razonSelect = document.getElementById('razon_social_select');
-                const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
-                const operacion = document.getElementById('operacion')?.value;
-                const tipoOper = document.getElementById('tipo_oper')?.value;
-                const concatenado = document.getElementById('concatenado')?.value;
+        function actualizarTablaCostos() {
+            const tbody = document.getElementById('costos-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            let tc = 0, tt = 0;
+            costosServicio.forEach((c, i) => {
+                const qty = parseFloat(c.qty) || 0;
+                const costo = parseFloat(c.costo) || 0;
+                const tarifa = parseFloat(c.tarifa) || 0;
+                const tcosto = qty * costo;
+                const ttarifa = qty * tarifa;
+                tc += tcosto; tt += ttarifa;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${c.concepto}</td>
+                    <td>${c.moneda}</td>
+                    <td style="text-align: right;">${qty.toFixed(2)}</td>
+                    <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
+                    <td style="text-align: right; background-color: #fff9db;">${tcosto.toFixed(2)}</td>
+                    <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
+                    <td style="text-align: right; background-color: #e6f7ff;">${ttarifa.toFixed(2)}</td>
+                    <td>${c.aplica}</td>
+                    <td>
+                        <button type="button" onclick="editarCosto(${i})">✏️</button>
+                        <button type="button" onclick="eliminarCosto(${i})">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('total-costo-costos').textContent = tc.toFixed(2);
+            document.getElementById('total-tarifa-costos').textContent = tt.toFixed(2);
+        }
 
-                if (!rut || !razon) {
-                    error('RUT y Razón Social son obligatorios');
-                    return;
-                }
-                if (!operacion || !tipoOper || !concatenado) {
-                    error('Operación, Tipo Operación y Concatenado son obligatorios');
-                    return;
-                }
-                const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
-                if (!validarRut(rutLimpio)) {
-                    error('RUT inválido');
-                    return;
-                }
+        function editarCosto(i) {
+            const c = costosServicio[i];
+            if (!c) return;
+            document.getElementById('costo_concepto').value = c.concepto || '';
+            document.getElementById('costo_qty').value = c.qty || '';
+            document.getElementById('costo_costo').value = c.costo || '';
+            document.getElementById('costo_tarifa').value = c.tarifa || '';
+            document.getElementById('costo_aplica').value = c.aplica || '';
+            document.getElementById('costo_total_costo').value = (parseFloat(c.qty || 0) * parseFloat(c.costo || 0)).toFixed(2);
+            document.getElementById('costo_total_tarifa').value = (parseFloat(c.qty || 0) * parseFloat(c.tarifa || 0)).toFixed(2);
+            window.indiceCostoEdicion = i;
+        }
 
-                const form = document.getElementById('form-prospecto');
-                const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
-                let inp = form.querySelector('input[name="modo"]');
-                if (!inp) {
-                    inp = document.createElement('input');
-                    inp.type = 'hidden';
-                    inp.name = 'modo';
-                    form.appendChild(inp);
+        function eliminarCosto(i) {
+            if (confirm('¿Eliminar costo?')) {
+                costosServicio.splice(i, 1);
+                actualizarTablaCostos();
+                exito('Costo eliminado');
+            }
+        }
+
+        function cerrarSubmodalCostos() {
+            if (servicioEnEdicion !== null) {
+                servicios[servicioEnEdicion].costos = [...costosServicio];
+            }
+            document.getElementById('submodal-costos').style.display = 'none';
+        }
+
+        document.getElementById('gasto_tipo')?.addEventListener('change', function() {
+            const tipo = this.value;
+            if (!tipo) {
+                document.getElementById('gasto_gasto').innerHTML = '<option value="">Gastos</option>';
+                return;
+            }
+            fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+                .then(r => r.json())
+                .then(data => {
+                    const sel = document.getElementById('gasto_gasto');
+                    if (sel) {
+                        sel.innerHTML = '<option value="">Gastos</option>';
+                        (data.gastos || []).forEach(g => {
+                            const opt = document.createElement('option');
+                            opt.value = g;
+                            opt.textContent = g;
+                            sel.appendChild(opt);
+                        });
+                    }
+                });
+        });
+
+        function guardarGastoLocal() {
+            const tipo = document.getElementById('gasto_tipo').value;
+            const gasto = document.getElementById('gasto_gasto').value;
+            const moneda = document.getElementById('gasto_moneda').value;
+            const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
+            const afecto = document.getElementById('gasto_afecto').value;
+            const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
+            if (!tipo || !gasto) return error('Tipo y Gasto son obligatorios');
+            gastosLocales.push({ tipo, gasto, moneda, monto, afecto, iva });
+            actualizarTablaGastosLocales();
+            ['gasto_tipo', 'gasto_gasto', 'gasto_moneda', 'gasto_monto', 'gasto_afecto', 'gasto_iva'].forEach(id => {
+                if (id.includes('tipo') || id.includes('gasto') || id.includes('moneda') || id.includes('afecto')) {
+                    document.getElementById(id).selectedIndex = 0;
+                } else {
+                    document.getElementById(id).value = '';
                 }
-                inp.value = modo;
-                if (modo === 'servicios') {
-                    inp = form.querySelector('input[name="servicios_json"]');
+            });
+            exito('Gasto local agregado');
+        }
+
+        function actualizarTablaGastosLocales() {
+            const tbody = document.getElementById('gastos-locales-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            let tv = 0, tc = 0;
+            gastosLocales.forEach((g, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${g.tipo}</td>
+                    <td>${g.gasto}</td>
+                    <td>${g.moneda}</td>
+                    <td style="text-align:right;">${g.monto.toFixed(2)}</td>
+                    <td>${g.afecto}</td>
+                    <td style="text-align:right;">${g.iva.toFixed(2)}</td>
+                    <td><button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button></td>
+                `;
+                tbody.appendChild(tr);
+                if (g.tipo === 'Ventas') tv += g.monto;
+                if (g.tipo === 'Costo') tc += g.monto;
+            });
+            document.getElementById('total-venta-gastos').textContent = tv.toFixed(2);
+            document.getElementById('total-costo-gastos').textContent = tc.toFixed(2);
+            document.getElementById('profit-local').textContent = (tv - tc).toFixed(2);
+            const pct = tv > 0 ? ((tv - tc) / tv * 100) : 0;
+            document.getElementById('profit-porcentaje').textContent = pct.toFixed(2) + ' %';
+        }
+
+        function eliminarGastoLocal(i) {
+            if (confirm('¿Eliminar este gasto?')) {
+                gastosLocales.splice(i, 1);
+                actualizarTablaGastosLocales();
+                exito('Gasto eliminado');
+            }
+        }
+
+        function cerrarSubmodalGastosLocales() {
+            if (servicioEnEdicion !== null) {
+                servicios[servicioEnEdicion].gastos_locales = [...gastosLocales];
+            }
+            document.getElementById('submodal-gastos-locales').style.display = 'none';
+        }
+
+        // === FUNCIONES DE SERVICIOS ===
+        function editarServicio(index) {
+            if (index < 0 || index >= servicios.length) return error('Índice inválido');
+            abrirModalServicio(index);
+        }
+
+        function eliminarServicio(index) {
+            if (index < 0 || index >= servicios.length) return;
+            const s = servicios[index];
+            if ((s.costos && s.costos.length > 0) || (s.gastos_locales && s.gastos_locales.length > 0)) {
+                return error('No se puede eliminar: tiene costos o gastos asociados.');
+            }
+            if (confirm('¿Eliminar este servicio?')) {
+                servicios.splice(index, 1);
+                actualizarTabla();
+                exito('Servicio eliminado');
+            }
+        }
+
+        // ===================================================================
+        // === 6. CUBICADOR ===
+        // ===================================================================
+        function abrirSubmodalCubicador() {
+            document.getElementById('cubicador_qty').value = document.getElementById('serv_bultos').value || 1;
+            document.getElementById('cubicador_peso').value = document.getElementById('serv_peso').value || '';
+            document.getElementById('cubicador_largo').value = '';
+            document.getElementById('cubicador_ancho').value = '';
+            document.getElementById('cubicador_alto').value = '';
+            calcularCubicacion();
+            const ids = ['cubicador_qty', 'cubicador_peso', 'cubicador_largo', 'cubicador_ancho', 'cubicador_alto'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const clone = el.cloneNode(true);
+                    el.parentNode.replaceChild(clone, el);
+                    clone.addEventListener('input', calcularCubicacion);
+                }
+            });
+            document.getElementById('submodal-cubicador').style.display = 'block';
+        }
+
+        function calcularCubicacion() {
+            const qty = parseFloat(document.getElementById('cubicador_qty').value) || 0;
+            const pesoPorBulto = parseFloat(document.getElementById('cubicador_peso').value) || 0;
+            const largo = parseFloat(document.getElementById('cubicador_largo').value) || 0;
+            const ancho = parseFloat(document.getElementById('cubicador_ancho').value) || 0;
+            const alto = parseFloat(document.getElementById('cubicador_alto').value) || 0;
+            const pesoRealTotal = pesoPorBulto * qty;
+            const volumenCm3 = largo * ancho * alto * qty;
+            const volumenM3 = volumenCm3 / 1000000;
+            const pesoVolumetrico = volumenCm3 / 5000;
+            const pesoFinal = Math.max(pesoRealTotal, pesoVolumetrico);
+            document.getElementById('cubicador_volumen').textContent = volumenM3.toFixed(3) + ' m³';
+            document.getElementById('cubicador_peso_vol').textContent = pesoVolumetrico.toFixed(2) + ' kg';
+            document.getElementById('cubicador_peso_final').textContent = pesoFinal.toFixed(2) + ' kg';
+        }
+
+        function aplicarCubicacion() {
+            const qty = document.getElementById('cubicador_qty').value;
+            const pesoFinal = parseFloat(document.getElementById('cubicador_peso_final').textContent);
+            const volumen = document.getElementById('cubicador_volumen').textContent.split(' ')[0];
+            const l = document.getElementById('cubicador_largo').value;
+            const a = document.getElementById('cubicador_ancho').value;
+            const h = document.getElementById('cubicador_alto').value;
+            document.getElementById('serv_bultos').value = qty;
+            document.getElementById('serv_peso').value = pesoFinal;
+            document.getElementById('serv_volumen').value = volumen;
+            document.getElementById('serv_dimensiones').value = `${l}x${a}x${h} cm`;
+            cerrarSubmodalCubicador();
+            exito('Cubicación aplicada');
+        }
+
+        function cerrarSubmodalCubicador() {
+            document.getElementById('submodal-cubicador').style.display = 'none';
+        }
+
+        // ===================================================================
+        // === 7. INICIALIZACIÓN ===
+        // ===================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarPaises();
+            cargarOperacionesYTipos();
+            cargarClientesEnSelect();
+
+            const params = new URLSearchParams(window.location.search);
+            const msg = params.get('exito');
+            if (msg) {
+                exito(decodeURIComponent(msg));
+                history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
+            }
+
+            ['operacion', 'tipo_oper'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', calcularConcatenado);
+            });
+
+            const btnAgregar = document.getElementById('btn-agregar-servicio');
+            if (btnAgregar) {
+                btnAgregar.addEventListener('click', () => {
+                    const id = document.getElementById('id_ppl')?.value;
+                    const concat = document.getElementById('concatenado')?.value;
+                    if (!id || id === '0' || !concat) return error('Guarde el prospecto primero.');
+                    abrirModalServicio();
+                });
+            }
+
+            const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
+            if (btnGuardarModal) {
+                btnGuardarModal.addEventListener('click', guardarServicio);
+            }
+
+            const btnGrabar = document.getElementById('btn-save-all');
+            if (btnGrabar) {
+                btnGrabar.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const rut = document.getElementById('rut_empresa')?.value.trim();
+                    const razon = document.getElementById('razon_social_select')?.selectedOptions[0]?.textContent.trim();
+                    const op = document.getElementById('operacion')?.value;
+                    const tipo = document.getElementById('tipo_oper')?.value;
+                    const concat = document.getElementById('concatenado')?.value;
+                    if (!rut || !razon) return error('RUT y Razón Social son obligatorios');
+                    if (!op || !tipo || !concat) return error('Operación, Tipo Operación y Concatenado son obligatorios');
+                    const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
+                    if (!validarRut(rutLimpio)) return error('RUT inválido');
+
+                    const form = document.getElementById('form-prospecto');
+                    const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
+                    let inp = form.querySelector('input[name="modo"]');
                     if (!inp) {
                         inp = document.createElement('input');
                         inp.type = 'hidden';
-                        inp.name = 'servicios_json';
+                        inp.name = 'modo';
                         form.appendChild(inp);
                     }
-                    inp.value = JSON.stringify(servicios);
+                    inp.value = modo;
+                    if (modo === 'servicios') {
+                        inp = form.querySelector('input[name="servicios_json"]');
+                        if (!inp) {
+                            inp = document.createElement('input');
+                            inp.type = 'hidden';
+                            inp.name = 'servicios_json';
+                            form.appendChild(inp);
+                        }
+                        inp.value = JSON.stringify(servicios);
+                    }
+
+                    if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs si es necesario.\nHaga clic en "Aceptar" para continuar.')) {
+                        form.submit();
+                    } else {
+                        error('Envío cancelado. Puede revisar los logs en la consola.');
+                    }
+                });
+            }
+
+            const btnCostos = document.getElementById('btn-costos-servicio-dentro');
+            const btnGastos = document.getElementById('btn-gastos-locales-dentro');
+            if (btnCostos) btnCostos.addEventListener('click', abrirSubmodalCostos);
+            if (btnGastos) btnGastos.addEventListener('click', abrirSubmodalGastosLocales);
+
+            document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
+                const term = this.value.trim();
+                const div = document.getElementById('resultados-busqueda');
+                div.style.display = 'none';
+                if (!term) return;
+                try {
+                    const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
+                    const data = await res.json();
+                    div.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(p => {
+                            const d = document.createElement('div');
+                            d.style.padding = '0.8rem';
+                            d.style.cursor = 'pointer';
+                            d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
+                            d.onclick = () => {
+                                seleccionarProspecto(p.id_ppl);
+                                div.style.display = 'none';
+                                this.value = '';
+                            };
+                            div.appendChild(d);
+                        });
+                        div.style.display = 'block';
+                    }
+                } catch (e) {
+                    error('Error en búsqueda de prospectos');
                 }
-                form.submit();
             });
-        }
 
-        // Submodales desde la sección principal (con validación)
-        document.getElementById('btn-costos-servicio')?.addEventListener('click', () => {
-            error('Abra un servicio primero para gestionar costos');
-        });
-        document.getElementById('btn-gastos-locales')?.addEventListener('click', () => {
-            error('Abra un servicio primero para gestionar gastos');
-        });
-
-        document.getElementById('btn-eliminar-prospecto')?.addEventListener('click', function() {
-        const idPpl = document.getElementById('id_ppl')?.value;
-        if (!idPpl || idPpl === '0') {
-            error('No hay prospecto seleccionado para eliminar.');
-            return;
-        }
-        if (servicios.length > 0) {
-            error('No se puede eliminar el prospecto porque tiene servicios asociados.');
-            return;
-        }
-        if (confirm('¿Está seguro de eliminar este prospecto? Esta acción no se puede deshacer.')) {
-            fetch('/api/eliminar_prospecto.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_ppl: idPpl })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    exito('Prospecto eliminado correctamente');
-                    document.getElementById('form-prospecto').reset();
-                    servicios = [];
-                    actualizarTabla();
-                    setTimeout(() => {
-                        window.location.href = '?page=prospectos';
-                    }, 1500);
-                } else {
-                    error(data.message || 'Error al eliminar el prospecto');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                error('Error de conexión al eliminar el prospecto');
-            });
-        }
-    });
-    
-        // Submodales desde dentro del modal de servicio (con verificación segura)
-        const btnCostosDentro = document.getElementById('btn-costos-servicio-dentro');
-        const btnGastosDentro = document.getElementById('btn-gastos-locales-dentro');
-        if (btnCostosDentro) {
-            btnCostosDentro.addEventListener('click', abrirSubmodalCostos);
-        }
-        if (btnGastosDentro) {
-            btnGastosDentro.addEventListener('click', abrirSubmodalGastosLocales);
-        }
-        
-        // Búsqueda inteligente: busca en PROSPECTOS
-        document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
-            console.log('🔍 [BÚSQUEDA INTELIGENTE] Iniciando búsqueda en PROSPECTOS');
-            const term = this.value.trim();
-            const div = document.getElementById('resultados-busqueda');
-            div.style.display = 'none';
-            if (!term) return;
-
-            try {
-                const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
-                console.log('📡 [BÚSQUEDA INTELIGENTE] Respuesta HTTP:', res.status);
-                const data = await res.json();
-                console.log('📦 [BÚSQUEDA INTELIGENTE] Datos recibidos:', data);
-                div.innerHTML = '';
-                if (data.length > 0) {
-                    data.forEach(p => {
-                        const d = document.createElement('div');
-                        d.style.padding = '0.8rem';
-                        d.style.cursor = 'pointer';
-                        d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
-                        d.onclick = () => {
-                            console.log('✅ [BÚSQUEDA INTELIGENTE] Cargando prospecto ID:', p.id_ppl);
-                            seleccionarProspecto(p.id_ppl);
-                            div.style.display = 'none';
-                            this.value = '';
-                        };
-                        div.appendChild(d);
-                    });
-                    div.style.display = 'block';
-                } else {
-                    console.log('ℹ️ [BÚSQUEDA INTELIGENTE] No se encontraron resultados');
-                }
-            } catch (e) {
-                console.error('❌ [BÚSQUEDA INTELIGENTE] Error:', e);
-                error('Error en búsqueda de prospectos');
+            const idFromUrl = params.get('id_ppl');
+            if (idFromUrl && !isNaN(idFromUrl)) {
+                setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
+                history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
             }
         });
 
-        // Cargar prospecto desde URL
-        const idFromUrl = urlParams.get('id_ppl');
-        if (idFromUrl && !isNaN(idFromUrl)) {
-            const cleanUrl = window.location.pathname + '?page=prospectos';
-            history.replaceState({}, document.title, cleanUrl);
-            setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
-        }
-        // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
+        // Exponer funciones globales
+        window.guardarServicio = guardarServicio;
+        window.abrirModalServicio = abrirModalServicio;
         window.eliminarServicio = eliminarServicio;
-
-        // === LISTENER PARA EL BOTÓN "AGREGAR SERVICIO" EN EL MODAL ===
-        const btnGuardarServicio = document.getElementById('btn-guardar-servicio');
-        if (btnGuardarServicio) {
-            console.log('🔍 [SERVICIO] Listener asignado a #btn-guardar-servicio');
-            btnGuardarServicio.addEventListener('click', guardarServicio);
-        }
-    });
-    // Exponer funciones para debugging o uso global
-    window.guardarServicio = guardarServicio;
-    window.abrirModalServicio = abrirModalServicio;
-</script>
+    </script>
+</form>
