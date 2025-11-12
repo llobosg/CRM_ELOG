@@ -1625,6 +1625,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         }
                         inp.value = JSON.stringify(servicios);
                     }
+
+                     if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs si es necesario.\nHaga clic en "Aceptar" para continuar.')) {
+                        form.submit();
+                    } else {
+                        error('Envío cancelado. Puede revisar los logs en la consola.');
+                    }
                 });
             }
 
