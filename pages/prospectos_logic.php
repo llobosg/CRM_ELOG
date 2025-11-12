@@ -112,47 +112,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         // === Procesar servicios si el modo es 'servicios' ===
         if ($_POST['modo'] === 'servicios') {
-            error_log("DEBUG: Servicios JSON recibido: " . $_POST['servicios_json']);
-            $servicios_json = $_POST['servicios_json'] ?? null;
+            // Eliminar servicios y sus costos/gastos asociados
+            $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
+            $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
+            $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
 
-            // Eliminar servicios existentes si no hay nuevos
-            if ($servicios_json === null || $servicios_json === '') {
-                $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
-                $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
-                $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
-            } else {
-                // Decodificar servicios
+            $servicios_json = $_POST['servicios_json'] ?? '';
+            $total_costo = 0;
+            $total_venta = 0;
+            $total_costogasto = 0;
+            $total_ventagasto = 0;
+
+            if ($servicios_json !== '') {
                 $servicios_data = json_decode($servicios_json, true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new Exception('Error al decodificar servicios JSON: ' . json_last_error_msg());
                 }
 
                 if (!empty($servicios_data)) {
-                    // Eliminar servicios que no están en el nuevo listado
-                    $ids_nuevos = [];
-                    foreach ($servicios_data as $s) {
-                        if (!empty($s['id_srvc'])) {
-                            $ids_nuevos[] = $s['id_srvc'];
-                        }
-                    }
-
-                    if (!empty($ids_nuevos)) {
-                        $placeholders = str_repeat('?,', count($ids_nuevos) - 1) . '?';
-                        $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ? AND id_srvc NOT IN ($placeholders)")
-                            ->execute(array_merge([$id_ppl], $ids_nuevos));
-                    } else {
-                        $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
-                    }
-
-                    $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio NOT IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?) AND id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")
-                        ->execute([$id_ppl, $id_ppl]);
-                    $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio NOT IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?) AND id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")
-                        ->execute([$id_ppl, $id_ppl]);
-
-                    $total_costo = 0;
-                    $total_venta = 0;
-                    $total_costogasto = 0;
-                    $total_ventagasto = 0;
+                    $stmt_serv = $pdo->prepare("
+                        INSERT INTO servicios (
+                            id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
+                            base_calculo, moneda, tarifa, iva, estado, costo, venta,
+                            costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
+                            commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
+                            lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
+                            agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
+                            ciudad, pais, direc_serv
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
 
                     foreach ($servicios_data as $s) {
                         $costo = (float)($s['costo'] ?? 0);
@@ -160,70 +148,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $costogasto = (float)($s['costogastoslocalesdestino'] ?? 0);
                         $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
 
-                        // Reutilizar id_srvc existente
-                        $id_srvc = $s['id_srvc'] ?? null;
-                        if (!$id_srvc || strpos($id_srvc, 'TEMP_') === 0) {
-                            // Generar nuevo ID solo si es temporal
-                            $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
-                            $stmt_last->execute([$id_ppl]);
-                            $last = $stmt_last->fetch();
-                            $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
-                            $id_srvc = "{$concatenado}-{$correlativo_srvc}";
-                        }
-
-                        // INSERT ... ON DUPLICATE KEY UPDATE
-                        $stmt_serv = $pdo->prepare("
-                            INSERT INTO servicios (
-                                id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
-                                base_calculo, moneda, tarifa, iva, estado, costo, venta,
-                                costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
-                                commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
-                                lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
-                                agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
-                                ciudad, pais, direc_serv
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            ON DUPLICATE KEY UPDATE
-                                servicio = VALUES(servicio),
-                                nombre_corto = VALUES(nombre_corto),
-                                tipo = VALUES(tipo),
-                                trafico = VALUES(trafico),
-                                sub_trafico = VALUES(sub_trafico),
-                                base_calculo = VALUES(base_calculo),
-                                moneda = VALUES(moneda),
-                                tarifa = VALUES(tarifa),
-                                iva = VALUES(iva),
-                                estado = VALUES(estado),
-                                costo = VALUES(costo),
-                                venta = VALUES(venta),
-                                costogastoslocalesdestino = VALUES(costogastoslocalesdestino),
-                                ventasgastoslocalesdestino = VALUES(ventasgastoslocalesdestino),
-                                desconsolidac = VALUES(desconsolidac),
-                                commodity = VALUES(commodity),
-                                origen = VALUES(origen),
-                                pais_origen = VALUES(pais_origen),
-                                destino = VALUES(destino),
-                                pais_destino = VALUES(pais_destino),
-                                transito = VALUES(transito),
-                                frecuencia = VALUES(frecuencia),
-                                lugar_carga = VALUES(lugar_carga),
-                                sector = VALUES(sector),
-                                mercancia = VALUES(mercancia),
-                                bultos = VALUES(bultos),
-                                peso = VALUES(peso),
-                                volumen = VALUES(volumen),
-                                dimensiones = VALUES(dimensiones),
-                                agente = VALUES(agente),
-                                aol = VALUES(aol),
-                                aod = VALUES(aod),
-                                transportador = VALUES(transportador),
-                                incoterm = VALUES(incoterm),
-                                ref_cliente = VALUES(ref_cliente),
-                                proveedor_nac = VALUES(proveedor_nac),
-                                tipo_cambio = VALUES(tipo_cambio),
-                                ciudad = VALUES(ciudad),
-                                pais = VALUES(pais),
-                                direc_serv = VALUES(direc_serv)
-                        ");
+                        $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
+                        $stmt_last->execute([$id_ppl]);
+                        $last = $stmt_last->fetch();
+                        $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
+                        $id_srvc = "{$concatenado}-{$correlativo_srvc}";
 
                         $stmt_serv->execute([
                             $id_srvc,
@@ -255,8 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['mercancia'] ?? '',
                             (int)($s['bultos'] ?? 0),
                             (float)($s['peso'] ?? 0),
-                            (string)($s['volumen'] ?? '0.00'),
-                            (string)($s['dimensiones'] ?? ''),
+                            (float)($s['volumen'] ?? 0),
                             $s['dimensiones'] ?? '',
                             $s['agente'] ?? '',
                             $s['aol'] ?? '',
@@ -271,21 +199,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['direc_serv'] ?? ''
                         ]);
 
-                        // Insertar costos y gastos
+                        // Insertar costos
                         if (!empty($s['costos'])) {
                             $stmt_costo = $pdo->prepare("
                                 INSERT INTO costos_servicios (
                                     id_servicio, concepto, moneda, qty, costo, total_costo, tarifa, total_tarifa, aplica
                                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                ON DUPLICATE KEY UPDATE
-                                    concepto = VALUES(concepto),
-                                    moneda = VALUES(moneda),
-                                    qty = VALUES(qty),
-                                    costo = VALUES(costo),
-                                    total_costo = VALUES(total_costo),
-                                    tarifa = VALUES(tarifa),
-                                    total_tarifa = VALUES(total_tarifa),
-                                    aplica = VALUES(aplica)
                             ");
                             foreach ($s['costos'] as $c) {
                                 $stmt_costo->execute([
@@ -302,18 +221,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             }
                         }
 
+                        // Insertar gastos locales
                         if (!empty($s['gastos_locales'])) {
                             $stmt_gasto = $pdo->prepare("
                                 INSERT INTO gastos_locales_detalle (
                                     id_servicio, tipo, gasto, moneda, monto, afecto, iva
                                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                                ON DUPLICATE KEY UPDATE
-                                    tipo = VALUES(tipo),
-                                    gasto = VALUES(gasto),
-                                    moneda = VALUES(moneda),
-                                    monto = VALUES(monto),
-                                    afecto = VALUES(afecto),
-                                    iva = VALUES(iva)
                             ");
                             foreach ($s['gastos_locales'] as $g) {
                                 $stmt_gasto->execute([
@@ -347,15 +260,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         // Si el prospecto pasa a CerradoOK, actualizar crédito del cliente
         if ($_POST['estado'] === 'CerradoOK' && $estado_anterior !== 'CerradoOK') {
+            // Obtener total_venta del prospecto
             $stmt_venta = $pdo->prepare("SELECT total_venta FROM prospectos WHERE id_ppl = ?");
             $stmt_venta->execute([$id_ppl]);
             $total_venta = (float)$stmt_venta->fetchColumn();
 
+            // Obtener RUT del prospecto
             $stmt_rut = $pdo->prepare("SELECT rut_empresa FROM prospectos WHERE id_ppl = ?");
             $stmt_rut->execute([$id_ppl]);
             $rut_empresa = $stmt_rut->fetchColumn();
 
             if ($rut_empresa && $total_venta > 0) {
+                // Actualizar usado_credito en clientes
                 $stmt_update_credito = $pdo->prepare("
                     UPDATE clientes 
                     SET usado_credito = usado_credito + ? 

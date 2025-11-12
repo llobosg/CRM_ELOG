@@ -15,8 +15,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
     <input type="hidden" name="razon_social" />
-    <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
-    <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem;">
         <h3>
@@ -97,27 +95,18 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <table id="tabla-servicios">
                 <thead>
                     <tr>
-                        <th>Servicio</th>      <!-- colspan="3" en el <tbody> -->
-                        <th>Tráfico</th>
-                        <th>Moneda</th>
-                        <th>Bultos</th>
-                        <th>Peso</th>
-                        <th>Volumen</th>
-                        <th>Costo</th>
-                        <th>Venta</th>
-                        <th>GDC</th>
-                        <th>GDV</th>
-                        <th>Acción</th>
+                        <th>Servicio</th><th>Tráfico</th><th>Base Cálculo</th><th>Moneda</th><th>Tarifa</th>
+                        <th>Costo</th><th>Venta</th><th>GDC</th><th>GDV</th><th>Acción</th>
                     </tr>
                 </thead>
                 <tbody id="servicios-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td colspan="6" style="text-align: right; font-weight: bold;">Totales:</td>
-                        <td id="total-costo" style="text-align: right;">0.00</td>
-                        <td id="total-venta" style="text-align: right;">0.00</td>
-                        <td id="total-costogasto" style="text-align: right;">0.00</td>
-                        <td id="total-ventagasto" style="text-align: right;">0.00</td>
+                        <td colspan="5" style="text-align: right; font-weight: bold;">Totales:</td>
+                        <td id="total-costo">0.00</td>
+                        <td id="total-venta">0.00</td>
+                        <td id="total-costogasto">0.00</td>
+                        <td id="total-ventagasto">0.00</td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -125,45 +114,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
     </div>
     <input type="hidden" name="servicios_json" id="servicios_json" />
-
-    <!-- Submodal: Cubicador -->
-    <div id="submodal-cubicador" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
-        <div class="modal-content" style="max-width: 600px; width: 90%; margin: 2rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-            <h3><i class="fas fa-cube"></i> Calculadora de Volumen y Peso</h3>
-            <span class="close" onclick="cerrarSubmodalCubicador()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
-                <label>Cantidad de bultos</label>
-                <input type="number" id="cubicador_qty" min="1" value="1" />
-                
-                <label>Peso bruto total (kg)</label>
-                <input type="number" id="cubicador_peso" min="0.1" step="0.01" />
-                
-                <label>Largo (cm)</label>
-                <input type="number" id="cubicador_largo" min="1" />
-                
-                <label>Ancho (cm)</label>
-                <input type="number" id="cubicador_ancho" min="1" />
-                
-                <label>Alto (cm)</label>
-                <input type="number" id="cubicador_alto" min="1" />
-            </div>
-            <div style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px;">
-                <h4>Resultados</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div><strong>Volumen total:</strong></div>
-                    <div id="cubicador_volumen">0.00 m³</div>
-                    <div><strong>Peso volumétrico:</strong></div>
-                    <div id="cubicador_peso_vol">0.00 kg</div>
-                    <div><strong>Peso a considerar:</strong></div>
-                    <div id="cubicador_peso_final">0.00 kg</div>
-                </div>
-            </div>
-            <div style="text-align: right; margin-top: 1rem;">
-                <button type="button" class="btn-secondary" onclick="cerrarSubmodalCubicador()">Cancelar</button>
-                <button type="button" class="btn-primary" onclick="aplicarCubicacion()">Aplicar a Servicio</button>
-            </div>
-        </div>
-    </div>
 </form>
 
 <!-- ========== MODALES ========== -->
@@ -276,15 +226,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
         <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <button type="button" class="btn-comment" id="btn-cubicador" onclick="abrirSubmodalCubicador()">
-                    <i class="fas fa-calculator"></i> Cubicador
-                </button>
                 <button type="button" class="btn-comment" id="btn-costos-servicio-dentro"><i class="fas fa-calculator"></i> Costos - Ventas</button>
                 <button type="button" class="btn-comment" id="btn-gastos-locales-dentro"><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</button>
             </div>
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-secondary" onclick="cerrarModalServicioConConfirmacion()">Volver</button>
-                <button type="button" class="btn-add" id="btn-guardar-servicio-modal">Agregar Servicio</button>
+                <button type="button" class="btn-add" id="btn-guardar-servicio">Agregar Servicio</button>
             </div>
         </div>
     </div>
@@ -571,15 +518,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
         document.getElementById('concatenado').value = `${op}${tipo}${fecha}-${id}`;
     }
     function actualizarTabla() {
-        console.log('📊 [TABLA] Iniciando actualización de tabla');
         const tbody = document.getElementById('servicios-body');
-        if (!tbody) {
-            console.warn('⚠️ [TABLA] Elemento servicios-body no encontrado');
-            return;
-        }
+        if (!tbody) return;
         tbody.innerHTML = '';
         let tc = 0, tv = 0, tgc = 0, tgv = 0;
-        console.log('📋 [TABLA] Servicios en memoria:', servicios);
         servicios.forEach((s, index) => {
             const c = parseFloat(s.costo) || 0;
             const v = parseFloat(s.venta) || 0;
@@ -588,12 +530,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
             tc += c; tv += v; tgc += gc; tgv += gv;
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${s.servicio || ''}</td>
-                <td>${s.trafico || ''}</td>
-                <td>${s.moneda || 'USD'}</td>
-                <td>${s.bultos || ''}</td>
-                <td>${s.peso || ''}</td>
-                <td>${s.volumen || ''}</td>
+                <td>${s.servicio}</td>
+                <td>${s.trafico}</td>
+                <td>${s.base_calculo || ''}</td>
+                <td>${s.moneda}</td>
+                <td>${(parseFloat(s.tarifa)||0).toFixed(2)}</td>
                 <td>${c.toFixed(2)}</td>
                 <td>${v.toFixed(2)}</td>
                 <td>${gc.toFixed(2)}</td>
@@ -609,24 +550,24 @@ require_once __DIR__ . '/../includes/auth_check.php';
         document.getElementById('total-venta').textContent = tv.toFixed(2);
         document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
         document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
-
-        // Agregar listeners
+        // === Agregar listeners a los botones ===
         document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = parseInt(this.getAttribute('data-index'));
-                console.log('✏️ [TABLA] Editar servicio en índice:', index);
                 editarServicio(index);
             });
         });
         document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = parseInt(this.getAttribute('data-index'));
-                console.log('🗑️ [TABLA] Eliminar servicio en índice:', index);
                 eliminarServicio(index);
             });
         });
-
-        console.log('✅ [TABLA] Actualización completada');
+        // Mostrar/ocultar botón de eliminar prospecto
+        const btnEliminar = document.getElementById('btn-eliminar-prospecto');
+        if (btnEliminar) {
+            btnEliminar.style.display = (servicios.length === 0) ? 'inline-block' : 'none';
+        }
     }
     // ===================================================================
     // === 3. CARGA DE DATOS (API) ===
@@ -863,24 +804,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                 // === Notas ===
                 const setNota = (name, val) => {
-                    // Usa el ID directamente (sin [name="..."])
-                    const inp = document.getElementById(name);
+                    let inp = document.querySelector(`input[name="${name}"]`);
                     if (!inp) {
-                        // Si no existe, créalo como campo oculto
-                        const nuevoInput = document.createElement('input');
-                        nuevoInput.type = 'hidden';
-                        nuevoInput.id = name;
-                        nuevoInput.name = name;
-                        document.getElementById('form-prospecto').appendChild(nuevoInput);
-                        nuevoInput.value = val || '';
-                    } else {
-                        inp.value = val || '';
+                        inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = name;
+                        document.getElementById('form-prospecto').appendChild(inp);
                     }
-                    // Actualizar también el textarea del modal
+                    inp.value = val || '';
                     const textarea = document.getElementById(`${name}_input`);
                     if (textarea) textarea.value = val || '';
                 };
-
                 setNota('notas_comerciales', p.notas_comerciales);
                 setNota('notas_operaciones', p.notas_operaciones);
 
@@ -982,10 +916,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 // Editar servicio existente
                 servicioEnEdicion = index;
                 const s = servicios[index];
-                console.log('🔍 [MODAL] Servicio cargado:', s);
                 costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
                 gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
-                console.log('📋 [MODAL] Costos sincronizados:', costosServicio);
 
                 // Rellenar campos
                 document.getElementById('serv_servicio').value = s.servicio || '';
@@ -1118,16 +1050,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
     }
 
-    // Validación de crédito y guardado de servicio
     function guardarServicio() {
-        console.log('🔍 [SERVICIO] Iniciando guardarServicio');
-        console.log('📊 [SERVICIO] Costos en memoria:', costosServicio);
+        console.log('🔍 [SERVICIO] Iniciando guardarServicio()');
+        
         const servicio = document.getElementById('serv_servicio').value.trim();
         if (!servicio) {
             console.log('⚠️ [SERVICIO] Validación fallida: Servicio es obligatorio');
             error('Servicio es obligatorio');
             return;
         }
+        
         const origen = document.getElementById('serv_origen').value;
         const destino = document.getElementById('serv_destino').value;
         if (origen && destino && origen === destino) {
@@ -1135,50 +1067,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             return error('Origen y Destino no pueden ser el mismo lugar');
         }
 
-        const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
-        const rutCliente = document.getElementById('rut_empresa')?.value.trim();
-
-        // Validar que existan costos
-        if (costosServicio.length === 0) {
-            error('Debe agregar al menos un costo al servicio');
-            return;
-        }
-
-        // Validación de crédito (solo si hay RUT y monto > 0)
-        if (rutCliente && totalVentaServicio > 0) {
-            fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.error) {
-                        error(data.error);
-                        return;
-                    }
-                    if (totalVentaServicio > data.saldo_credito) {
-                        error(`Sobregiro detectado: El servicio supera el saldo de crédito disponible (${data.saldo_credito}). 
-                            Solicite un aumento de límite en Ficha Cliente.`);
-                        return;
-                    }
-                    ejecutarGuardarServicio();
-                })
-                .catch(err => {
-                    console.error('Error al validar crédito:', err);
-                    error('No se pudo verificar la línea de crédito. Intente nuevamente.');
-                });
-        } else {
-            // Guardar directamente si no aplica validación
-            ejecutarGuardarServicio();
-        }
-    }
-
-    // Función que realiza el guardado real
-    function ejecutarGuardarServicio() {
-        const servicio = document.getElementById('serv_servicio').value.trim();
-        const bultos = document.getElementById('serv_bultos').value;
-        const peso = document.getElementById('serv_peso').value;
-        const volumen = document.getElementById('serv_volumen').value;
-        const dimensiones = document.getElementById('serv_dimensiones').value;
-        console.log('📊 [CUBICACIÓN] Valores leídos:', { bultos, peso, volumen, dimensiones });
-
+        console.log('📋 [SERVICIO] Recopilando datos del servicio...');
         const nuevo = {
             id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
             id_prospect: document.getElementById('id_prospect_serv').value,
@@ -1194,12 +1083,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
             lugar_carga: document.getElementById('serv_lugar_carga').value,
             sector: document.getElementById('serv_sector').value,
             mercancia: document.getElementById('serv_mercancia').value,
-            // datos cubicación
-            bultos: bultos,
-            peso: peso,
-            volumen: volumen,
-            dimensiones: dimensiones,
-
+            bultos: document.getElementById('serv_bultos').value,
+            peso: document.getElementById('serv_peso').value,
+            volumen: document.getElementById('serv_volumen').value,
+            dimensiones: document.getElementById('serv_dimensiones').value,
             moneda: document.getElementById('serv_moneda').value,
             tipo_cambio: document.getElementById('serv_tipo_cambio').value,
             proveedor_nac: document.getElementById('serv_proveedor_nac').value,
@@ -1217,19 +1104,24 @@ require_once __DIR__ . '/../includes/auth_check.php';
             costos: [...costosServicio],
             gastos_locales: [...gastosLocales]
         };
+
+        console.log('📦 [SERVICIO] Datos del servicio:', nuevo);
+
         if (servicioEnEdicion !== null) {
             servicios[servicioEnEdicion] = nuevo;
+            console.log('✅ [SERVICIO] Servicio actualizado');
             exito('Servicio actualizado correctamente');
         } else {
             servicios.push(nuevo);
+            console.log('✅ [SERVICIO] Servicio agregado a la lista');
             exito('Servicio agregado correctamente');
         }
+
         actualizarTabla();
         console.log('🔄 [SERVICIO] Tabla actualizada');
         cerrarModalServicio();
         console.log('🔚 [SERVICIO] Modal cerrado');
     }
-    
     // ===================================================================
     // === 8. SUBMODALES: COSTOS Y GASTOS LOCALES ===
     // ===================================================================
@@ -1590,26 +1482,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
             });
         }
 
-        // Listener para el botón del modal de servicio
-        const btnGuardarServicioModal = document.getElementById('btn-guardar-servicio-modal');
-        if (btnGuardarServicioModal) {
-            btnGuardarServicioModal.addEventListener('click', guardarServicio);
-        }
-
-        const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
-        if (btnGuardarModal) {
-            btnGuardarModal.addEventListener('click', guardarServicio);
-        }
-
         // === BOTÓN: Grabar Todo ===
         const btnGrabarTodo = document.getElementById('btn-save-all');
-        console.log('📤 [SERVICIOS JSON] Enviando:', servicios);
-        
         if (btnGrabarTodo) {
             btnGrabarTodo.addEventListener('click', function(e) {
                 e.preventDefault();
-                console.log('🔍 [GRABAR TODO] Iniciando validación y envío');
-                
                 const rut = document.getElementById('rut_empresa')?.value.trim();
                 const razonSelect = document.getElementById('razon_social_select');
                 const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
@@ -1617,30 +1494,22 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const tipoOper = document.getElementById('tipo_oper')?.value;
                 const concatenado = document.getElementById('concatenado')?.value;
 
-                console.log('📋 [GRABAR TODO] Datos del prospecto:', { rut, razon, operacion, tipoOper, concatenado });
-
                 if (!rut || !razon) {
                     error('RUT y Razón Social son obligatorios');
-                    console.log('⚠️ [GRABAR TODO] Validación fallida: RUT o Razón Social vacíos');
                     return;
                 }
                 if (!operacion || !tipoOper || !concatenado) {
                     error('Operación, Tipo Operación y Concatenado son obligatorios');
-                    console.log('⚠️ [GRABAR TODO] Validación fallida: campos de operación incompletos');
                     return;
                 }
                 const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
                 if (!validarRut(rutLimpio)) {
                     error('RUT inválido');
-                    console.log('⚠️ [GRABAR TODO] Validación fallida: RUT inválido');
                     return;
                 }
 
                 const form = document.getElementById('form-prospecto');
                 const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
-                console.log('📊 [GRABAR TODO] Modo de guardado:', modo);
-                console.log('📦 [GRABAR TODO] Servicios a enviar:', servicios);
-
                 let inp = form.querySelector('input[name="modo"]');
                 if (!inp) {
                     inp = document.createElement('input');
@@ -1649,7 +1518,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     form.appendChild(inp);
                 }
                 inp.value = modo;
-
                 if (modo === 'servicios') {
                     inp = form.querySelector('input[name="servicios_json"]');
                     if (!inp) {
@@ -1659,18 +1527,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         form.appendChild(inp);
                     }
                     inp.value = JSON.stringify(servicios);
-                    console.log('📤 [GRABAR TODO] JSON de servicios generado:', inp.value);
                 }
-
-                console.log('✅ [GRABAR TODO] Enviando formulario...');
-                // Pausar para permitir copiar logs
-                if (confirm('¿Enviar el formulario?\n\nVerifica la consola (F12) y copia los logs si es necesario.\n\nHaz clic en "Aceptar" para continuar.')) {
-                    console.log('✅ [GRABAR TODO] ¡Envío confirmado! Enviando formulario...');
-                    form.submit();
-                } else {
-                    console.log('⚠️ [GRABAR TODO] Envío cancelado por el usuario');
-                    error('Envío cancelado. Puede revisar los logs en la consola.');
-                }
+                form.submit();
             });
         }
 
@@ -1776,98 +1634,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
         // Exponer funciones para uso global (aunque ya no uses onclick, es bueno para debugging)
         window.eliminarServicio = eliminarServicio;
+
+        // === LISTENER PARA EL BOTÓN "AGREGAR SERVICIO" EN EL MODAL ===
+        const btnGuardarServicio = document.getElementById('btn-guardar-servicio');
+        if (btnGuardarServicio) {
+            console.log('🔍 [SERVICIO] Listener asignado a #btn-guardar-servicio');
+            btnGuardarServicio.addEventListener('click', guardarServicio);
+        }
     });
-
-
     // Exponer funciones para debugging o uso global
     window.guardarServicio = guardarServicio;
     window.abrirModalServicio = abrirModalServicio;
-
-    // Abrir el submodal de cubicación
-    function abrirSubmodalCubicador() {
-        // Cargar valores actuales del modal de servicio
-        document.getElementById('cubicador_qty').value = document.getElementById('serv_bultos').value || 1;
-        document.getElementById('cubicador_peso').value = document.getElementById('serv_peso').value || '';
-        document.getElementById('cubicador_largo').value = '';
-        document.getElementById('cubicador_ancho').value = '';
-        document.getElementById('cubicador_alto').value = '';
-        calcularCubicacion();
-        asignarListenersCubicador(); // ←←← Asignar listeners cada vez que se abre
-        document.getElementById('submodal-cubicador').style.display = 'block';
-    }
-
-    // Calcular en tiempo real
-    function calcularCubicacion() {
-        const qty = parseFloat(document.getElementById('cubicador_qty').value) || 0;
-        const pesoPorBulto = parseFloat(document.getElementById('cubicador_peso').value) || 0;
-        const largo = parseFloat(document.getElementById('cubicador_largo').value) || 0;
-        const ancho = parseFloat(document.getElementById('cubicador_ancho').value) || 0;
-        const alto = parseFloat(document.getElementById('cubicador_alto').value) || 0;
-
-        // Peso real total: peso por bulto × cantidad
-        const pesoRealTotal = pesoPorBulto * qty;
-        
-        // Volumen total en cm³ y m³
-        const volumenCm3 = largo * ancho * alto * qty;
-        const volumenM3 = volumenCm3 / 1000000;
-        
-        // Peso volumétrico: (volumen en cm³) / 5000
-        const pesoVolumetrico = volumenCm3 / 5000;
-        
-        // Peso a considerar: el mayor entre peso real y peso volumétrico
-        const pesoFinal = Math.max(pesoRealTotal, pesoVolumetrico);
-
-        // Mostrar resultados
-        document.getElementById('cubicador_volumen').textContent = volumenM3.toFixed(3) + ' m³';
-        document.getElementById('cubicador_peso_vol').textContent = pesoVolumetrico.toFixed(2) + ' kg';
-        document.getElementById('cubicador_peso_final').textContent = pesoFinal.toFixed(2) + ' kg';
-    }
-
-    // Aplicar resultados al modal de servicio
-    function aplicarCubicacion() {
-        const qty = document.getElementById('cubicador_qty').value;
-        const pesoFinal = parseFloat(document.getElementById('cubicador_peso_final').textContent.split(' ')[0]);
-        const volumen = document.getElementById('cubicador_volumen').textContent.split(' ')[0];
-        const largo = document.getElementById('cubicador_largo').value;
-        const ancho = document.getElementById('cubicador_ancho').value;
-        const alto = document.getElementById('cubicador_alto').value;
-        const dimensiones = `${largo}x${ancho}x${alto} cm`;
-
-        // Aplicar al modal de servicio
-        document.getElementById('serv_bultos').value = qty;
-        document.getElementById('serv_peso').value = pesoFinal.toFixed(2); // ✅ Peso total
-        document.getElementById('serv_volumen').value = volumen;
-        document.getElementById('serv_dimensiones').value = dimensiones;
-
-        cerrarSubmodalCubicador();
-        exito('Cubicación aplicada al servicio');
-    }
-
-    // Cerrar el submodal
-    function cerrarSubmodalCubicador() {
-        // Eliminar listeners al cerrar
-        ['cubicador_qty', 'cubicador_peso', 'cubicador_largo', 'cubicador_ancho', 'cubicador_alto']
-            .forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    const nuevoEl = el.cloneNode(true);
-                    el.parentNode.replaceChild(nuevoEl, el);
-                }
-            });
-        document.getElementById('submodal-cubicador').style.display = 'none';
-    }
-
-    function asignarListenersCubicador() {
-        const ids = ['cubicador_qty', 'cubicador_peso', 'cubicador_largo', 'cubicador_ancho', 'cubicador_alto'];
-        ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                // Eliminar listeners anteriores clonando el elemento
-                const nuevoEl = el.cloneNode(true);
-                el.parentNode.replaceChild(nuevoEl, el);
-                // Agregar el nuevo listener
-                nuevoEl.addEventListener('input', calcularCubicacion);
-            }
-        });
-    }
 </script>
