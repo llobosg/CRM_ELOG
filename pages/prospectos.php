@@ -757,25 +757,76 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 .catch(() => check());
         }
 
-        function cargarLugaresPorMedio(medio, origenSeleccionado = null) {
+        function cargarLugaresPorMedio(medio, origenSeleccionado = null, paisOrigenSeleccionado = null) {
             const origenSel = document.getElementById('serv_origen');
             const destinoSel = document.getElementById('serv_destino');
+            if (!origenSel || !destinoSel) return Promise.resolve();
+
             if (!medio) {
                 origenSel.innerHTML = '<option value="">Seleccionar</option>';
                 destinoSel.innerHTML = '<option value="">Seleccionar</option>';
                 return Promise.resolve();
             }
+
             return fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
                 .then(r => r.json())
                 .then(data => {
                     const lugares = data.lugares || [];
-                    const optionsHtml = lugares.map(l => `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`).join('');
-                    origenSel.innerHTML = '<option value="">Seleccionar</option>' + optionsHtml;
-                    const destinosFiltrados = origenSeleccionado ? lugares.filter(l => l.lugar !== origenSeleccionado) : lugares;
-                    const destinoHtml = destinosFiltrados.map(l => `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`).join('');
-                    destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoHtml;
+
+                    // Generar opciones para Origen
+                    const origenOptions = lugares.map(l => 
+                        `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                    ).join('');
+                    origenSel.innerHTML = '<option value="">Seleccionar</option>' + origenOptions;
+
+                    // Filtrar Destino: excluir dupla completa (lugar + pais)
+                    const destinosFiltrados = lugares.filter(l => 
+                        !(l.lugar === origenSeleccionado && l.pais === paisOrigenSeleccionado)
+                    );
+
+                    const destinoOptions = destinosFiltrados.map(l => 
+                        `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                    ).join('');
+                    destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoOptions;
+
+                    // Listener para Origen → País Origen + recargar Destino
+                    const handlerOrigen = () => {
+                        const opt = origenSel.options[origenSel.selectedIndex];
+                        const lugar = opt?.value || '';
+                        const pais = opt ? opt.getAttribute('data-pais') || '' : '';
+                        document.getElementById('serv_pais_origen').value = pais;
+
+                        // Recargar Destino excluyendo (lugar, pais)
+                        const nuevosDestinos = lugares.filter(l => 
+                            !(l.lugar === lugar && l.pais === pais)
+                        );
+                        const nuevasOpciones = nuevosDestinos.map(l => 
+                            `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                        ).join('');
+                        destinoSel.innerHTML = '<option value="">Seleccionar</option>' + nuevasOpciones;
+
+                        // Limpiar país destino
+                        document.getElementById('serv_pais_destino').value = '';
+                    };
+
+                    // Listener para Destino → País Destino
+                    const handlerDestino = () => {
+                        const opt = destinoSel.options[destinoSel.selectedIndex];
+                        const pais = opt ? opt.getAttribute('data-pais') || '' : '';
+                        document.getElementById('serv_pais_destino').value = pais;
+                    };
+
+                    // Limpiar y asignar listeners
+                    origenSel.removeEventListener('change', handlerOrigen);
+                    destinoSel.removeEventListener('change', handlerDestino);
+                    origenSel.addEventListener('change', handlerOrigen);
+                    destinoSel.addEventListener('change', handlerDestino);
                 })
-                .catch(err => error('No se pudieron cargar los lugares'));
+                .catch(err => {
+                    console.error('Error al cargar lugares por medio:', err);
+                    error('No se pudieron cargar los lugares para este medio de transporte');
+                    return Promise.resolve();
+                });
         }
 
         // ===================================================================
@@ -900,57 +951,101 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
             if (!idPpl || idPpl === '0' || !concatenado) {
-                return error('Guarde el prospecto primero antes de agregar servicios.');
+                error('Guarde el prospecto primero antes de agregar servicios.');
+                return;
             }
+
+            // Limpiar modal
             const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
             modalInputs.forEach(el => {
                 if (el.type === 'number') el.value = '';
                 else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
                 else if (el.tagName === 'SELECT') el.selectedIndex = 0;
             });
+
             document.getElementById('id_prospect_serv').value = idPpl;
             document.getElementById('concatenado_serv').value = concatenado;
             document.getElementById('serv_titulo_concatenado').textContent = concatenado;
             costosServicio = [];
             gastosLocales = [];
+
+            // Cargar datos del modal (commodity, medios, etc.)
             cargarDatosModalServicio(() => {
-                if (index !== null && servicios[index]) {
+                if (index !== null) {
+                    // Editar servicio existente
                     servicioEnEdicion = index;
                     const s = servicios[index];
                     costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
                     gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
-                    const fields = ['servicio','transportador','incoterm','ref_cliente','transito','frecuencia','lugar_carga',
-                                   'sector','mercancia','bultos','peso','volumen','dimensiones','moneda','tipo_cambio',
-                                   'proveedor_nac','desconsolidacion','aol','aod','agente'];
-                    fields.forEach(f => {
-                        const el = document.getElementById(`serv_${f}`);
-                        if (el) el.value = s[f] || '';
-                    });
-                    const medioGuardado = s.trafico || '';
+
+                    // Rellenar campos básicos
+                    document.getElementById('serv_servicio').value = s.servicio || '';
+                    document.getElementById('serv_transportador').value = s.transportador || '';
+                    document.getElementById('serv_incoterm').value = s.incoterm || '';
+                    document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
+                    document.getElementById('serv_transito').value = s.transito || '';
+                    document.getElementById('serv_frecuencia').value = s.frecuencia || '';
+                    document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
+                    document.getElementById('serv_sector').value = s.sector || '';
+                    document.getElementById('serv_mercancia').value = s.mercancia || '';
+                    document.getElementById('serv_bultos').value = s.bultos || '';
+                    document.getElementById('serv_peso').value = s.peso || '';
+                    document.getElementById('serv_volumen').value = s.volumen || '';
+                    document.getElementById('serv_dimensiones').value = s.dimensiones || '';
+                    document.getElementById('serv_moneda').value = s.moneda || 'USD';
+                    document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
+                    document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
+                    document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
+                    document.getElementById('serv_aol').value = s.aol || '';
+                    document.getElementById('serv_aod').value = s.aod || '';
+                    document.getElementById('serv_agente').value = s.agente || '';
+
+                    // Cargar lugares si hay medio guardado
+                    const medioGuardado = (s.trafico || '').trim();
                     if (medioGuardado) {
-                        cargarLugaresPorMedio(medioGuardado, s.origen).then(() => {
-                            ['origen', 'destino'].forEach(field => {
-                                const sel = document.getElementById(`serv_${field}`);
-                                if (sel && s[field]) {
-                                    for (let i = 0; i < sel.options.length; i++) {
-                                        if (sel.options[i].value === s[field]) {
-                                            sel.selectedIndex = i;
-                                            break;
-                                        }
+                        // ✅ PASAR ORIGEN + PAÍS_ORIGEN para filtrado preciso
+                        cargarLugaresPorMedio(medioGuardado, s.origen, s.pais_origen).then(() => {
+                            const origenSel = document.getElementById('serv_origen');
+                            const destinoSel = document.getElementById('serv_destino');
+
+                            // Preseleccionar Origen (por valor + país)
+                            if (origenSel && s.origen && s.pais_origen) {
+                                for (let i = 0; i < origenSel.options.length; i++) {
+                                    const opt = origenSel.options[i];
+                                    if (opt.value === s.origen && opt.getAttribute('data-pais') === s.pais_origen) {
+                                        origenSel.selectedIndex = i;
+                                        document.getElementById('serv_pais_origen').value = s.pais_origen;
+                                        break;
                                     }
-                                    const opt = sel.options[sel.selectedIndex];
-                                    document.getElementById(`serv_pais_${field}`).value = opt ? opt.getAttribute('data-pais') || '' : '';
                                 }
-                            });
+                            }
+
+                            // Preseleccionar Destino (por valor + país)
+                            if (destinoSel && s.destino && s.pais_destino) {
+                                for (let i = 0; i < destinoSel.options.length; i++) {
+                                    const opt = destinoSel.options[i];
+                                    if (opt.value === s.destino && opt.getAttribute('data-pais') === s.pais_destino) {
+                                        destinoSel.selectedIndex = i;
+                                        document.getElementById('serv_pais_destino').value = s.pais_destino;
+                                        break;
+                                    }
+                                }
+                            }
                         });
                     }
-                    document.getElementById('serv_medio_transporte').value = s.trafico || '';
-                    document.getElementById('serv_commodity').value = s.commodity || '';
+
+                    // Cargar commodity y medio
+                    const medioSel = document.getElementById('serv_medio_transporte');
+                    const commoditySel = document.getElementById('serv_commodity');
+                    if (medioSel && s.trafico) medioSel.value = s.trafico;
+                    if (commoditySel && s.commodity) commoditySel.value = s.commodity;
                 } else {
+                    // Nuevo servicio
                     servicioEnEdicion = null;
                 }
             });
 
+            // Listener para cargar lugares al cambiar el medio de transporte
             const medioSel = document.getElementById('serv_medio_transporte');
             if (medioSel) {
                 const newMedioSel = medioSel.cloneNode(true);
@@ -958,32 +1053,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 newMedioSel.addEventListener('change', function() {
                     const medio = this.value;
                     if (medio) {
-                        cargarLugaresPorMedio(medio);
+                        cargarLugaresPorMedio(medio); // Sin origen → cargar todos
                     } else {
                         document.getElementById('serv_origen').innerHTML = '<option value="">Seleccionar</option>';
                         document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>';
+                        document.getElementById('serv_pais_origen').value = '';
+                        document.getElementById('serv_pais_destino').value = '';
                     }
                 });
             }
 
-            const origenSel = document.getElementById('serv_origen');
-            if (origenSel) {
-                const handler = () => {
-                    const origen = origenSel.value;
-                    const medio = document.getElementById('serv_medio_transporte')?.value;
-                    if (!medio) return;
-                    fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            const lugares = data.lugares || [];
-                            const destinos = origen ? lugares.filter(l => l.lugar !== origen) : lugares;
-                            const html = destinos.map(l => `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`).join('');
-                            document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>' + html;
-                        });
-                };
-                origenSel.removeEventListener('change', handler);
-                origenSel.addEventListener('change', handler);
-            }
             document.getElementById('modal-servicio').style.display = 'flex';
         }
 
@@ -1545,12 +1624,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             form.appendChild(inp);
                         }
                         inp.value = JSON.stringify(servicios);
-                    }
-
-                    if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs si es necesario.\nHaga clic en "Aceptar" para continuar.')) {
-                        form.submit();
-                    } else {
-                        error('Envío cancelado. Puede revisar los logs en la consola.');
                     }
                 });
             }
