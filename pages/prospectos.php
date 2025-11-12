@@ -3,6 +3,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 ?>
 <!-- Mini consola de depuración -->
 <div id="debug-trace" style="margin: 1rem; padding: 0.5rem; background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
+
 <!-- Búsqueda inteligente -->
 <div style="height: 4rem;"></div>
 <div style="margin: 1rem 0;">
@@ -15,12 +16,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
     <input type="hidden" name="razon_social" />
+    <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
+    <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
+
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem;">
-        <h3>
-            <i class="fas fa-user"></i> Datos del Prospecto
-        </h3>
-        <!-- Fila 1: Razón Social (select) + RUT (readonly) -->
+        <h3><i class="fas fa-user"></i> Datos del Prospecto</h3>
+        <!-- Fila 1 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Razón Social *</label>
             <select name="razon_social_select" id="razon_social_select" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
@@ -33,8 +35,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <label>Fecha</label>
             <input type="date" name="fecha_alta" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" value="<?= date('Y-m-d') ?>" />
         </div>
-
-        <!-- Fila 2: País y Dirección (readonly) -->
+        <!-- Fila 2 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>País</label>
             <input type="text" name="pais" id="pais" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
@@ -49,8 +50,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <option value="Rechazado">Rechazado</option>
             </select>
         </div>
-
-        <!-- Fila 3: Operación (select) -->
+        <!-- Fila 3 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Operación</label>
             <select name="operacion" id="operacion" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
@@ -65,25 +65,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <label>Booking</label>
             <input type="text" name="booking" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
-
-        <!-- Fila 4: Comercial asignado y btn Grabar Todo a la derecha -->
+        <!-- Fila 4 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
-            <!--<label>Comercial ID</label>-->
-            <!--<input type="number" name="id_comercial" id="id_comercial" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />  -->
             <label>Comercial Asignado</label>
             <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
         </div>
     </div>
+
     <!-- ========== SERVICIOS ASOCIADOS ========== -->
     <div class="card">
         <h3><i class="fas fa-truck"></i> Servicios Asociados</h3>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-            <!-- Izquierda: Solo Comerciales y Operaciones -->
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
                 <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
             </div>
-            <!-- Derecha: Agregar Servicio + Grabar Todo -->
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-add" id="btn-agregar-servicio">
                     <i class="fas fa-plus"></i> Agregar Servicio
@@ -95,18 +91,27 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <table id="tabla-servicios">
                 <thead>
                     <tr>
-                        <th>Servicio</th><th>Tráfico</th><th>Base Cálculo</th><th>Moneda</th><th>Tarifa</th>
-                        <th>Costo</th><th>Venta</th><th>GDC</th><th>GDV</th><th>Acción</th>
+                        <th>Servicio</th>
+                        <th>Tráfico</th>
+                        <th>Moneda</th>
+                        <th>Bultos</th>
+                        <th>Peso</th>
+                        <th>Volumen</th>
+                        <th>Costo</th>
+                        <th>Venta</th>
+                        <th>GDC</th>
+                        <th>GDV</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody id="servicios-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td colspan="5" style="text-align: right; font-weight: bold;">Totales:</td>
-                        <td id="total-costo">0.00</td>
-                        <td id="total-venta">0.00</td>
-                        <td id="total-costogasto">0.00</td>
-                        <td id="total-ventagasto">0.00</td>
+                        <td colspan="6" style="text-align: right; font-weight: bold;">Totales:</td>
+                        <td id="total-costo" style="text-align: right;">0.00</td>
+                        <td id="total-venta" style="text-align: right;">0.00</td>
+                        <td id="total-costogasto" style="text-align: right;">0.00</td>
+                        <td id="total-ventagasto" style="text-align: right;">0.00</td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -114,6 +119,41 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
     </div>
     <input type="hidden" name="servicios_json" id="servicios_json" />
+
+    <!-- Submodal: Cubicador -->
+    <div id="submodal-cubicador" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
+        <div class="modal-content" style="max-width: 600px; width: 90%; margin: 2rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <h3><i class="fas fa-cube"></i> Calculadora de Volumen y Peso</h3>
+            <span class="close" onclick="cerrarSubmodalCubicador()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
+                <label>Cantidad de bultos</label>
+                <input type="number" id="cubicador_qty" min="1" value="1" />
+                <label>Peso bruto total (kg)</label>
+                <input type="number" id="cubicador_peso" min="0.1" step="0.01" />
+                <label>Largo (cm)</label>
+                <input type="number" id="cubicador_largo" min="1" />
+                <label>Ancho (cm)</label>
+                <input type="number" id="cubicador_ancho" min="1" />
+                <label>Alto (cm)</label>
+                <input type="number" id="cubicador_alto" min="1" />
+            </div>
+            <div style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px;">
+                <h4>Resultados</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div><strong>Volumen total:</strong></div>
+                    <div id="cubicador_volumen">0.00 m³</div>
+                    <div><strong>Peso volumétrico:</strong></div>
+                    <div id="cubicador_peso_vol">0.00 kg</div>
+                    <div><strong>Peso a considerar:</strong></div>
+                    <div id="cubicador_peso_final">0.00 kg</div>
+                </div>
+            </div>
+            <div style="text-align: right; margin-top: 1rem;">
+                <button type="button" class="btn-secondary" onclick="cerrarSubmodalCubicador()">Cancelar</button>
+                <button type="button" class="btn-primary" onclick="aplicarCubicacion()">Aplicar a Servicio</button>
+            </div>
+        </div>
+    </div>
 </form>
 
 <!-- ========== MODALES ========== -->

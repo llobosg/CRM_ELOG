@@ -1,6 +1,6 @@
 <?php
 // pages/prospectos_logic.php
-// Lógica de guardado para prospectos (ejecutada antes de cualquier salida HTML)
+// Lógica estable: elimina todos los servicios y los vuelve a insertar
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
     require_once __DIR__ . '/../config.php';
@@ -11,14 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         $id_ppl = (int)($_POST['id_ppl'] ?? 0);
         $modo_update = ($id_ppl > 0);
-        $servicios_existentes = false;
 
         if ($modo_update) {
-            // Verificar si ya tiene servicios
-            $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM servicios WHERE id_prospect = ?");
-            $stmt_check->execute([$id_ppl]);
-            $servicios_existentes = $stmt_check->fetchColumn() > 0;
-
             // Obtener id_prospect
             $stmt_id = $pdo->prepare("SELECT id_prospect FROM prospectos WHERE id_ppl = ?");
             $stmt_id->execute([$id_ppl]);
@@ -68,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
         $correlativo = str_pad($id_prospect + 1, 2, '0', STR_PAD_LEFT);
         $concatenado = $prefijo . $fecha_actual . '-' . $correlativo;
 
-        // === Preparar datos del prospecto ===
+        // === Datos prospecto ===
         $id_comercial = !empty($_POST['id_comercial']) ? (int)$_POST['id_comercial'] : null;
         $data = [
             'id_prospect' => $id_prospect,
@@ -91,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             'fecha_estado' => $_POST['fecha_estado'] ?? date('Y-m-d'),
         ];
 
-        // === Insertar o Actualizar Prospecto ===
+        // === Guardar prospecto ===
         if ($modo_update) {
             $setParts = [];
             $values = [];
@@ -110,9 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             $id_ppl = $pdo->lastInsertId();
         }
 
-        // === Procesar servicios si el modo es 'servicios' ===
+        // === Procesar servicios ===
         if ($_POST['modo'] === 'servicios') {
-            // Eliminar servicios y sus costos/gastos asociados
+            // ✅ Elimina todos los servicios y sus dependencias
             $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
             $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
             $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
@@ -152,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $stmt_last->execute([$id_ppl]);
                         $last = $stmt_last->fetch();
                         $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
-                        $id_srvc = "{$concatenado}-{$correlativo_srvc}";
+                        $id_srvc = $concatenado . '-' . $correlativo_srvc;
 
                         $stmt_serv->execute([
                             $id_srvc,
@@ -184,9 +178,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['mercancia'] ?? '',
                             (int)($s['bultos'] ?? 0),
                             (float)($s['peso'] ?? 0),
-                            (float)($s['volumen'] ?? 0),
-                            $s['dimensiones'] ?? '',
-                            $s['agente'] ?? '',
+                            (string)($s['volumen'] ?? '0.00'),  // ✅ string, como VARCHAR
+                            (string)($s['dimensiones'] ?? ''), // ✅ string
+                            $s['agente'] ?? '',                // ✅ posición correcta
                             $s['aol'] ?? '',
                             $s['aod'] ?? '',
                             $s['transportador'] ?? '',
@@ -199,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['direc_serv'] ?? ''
                         ]);
 
-                        // Insertar costos
+                        // Insertar costos y gastos (igual que en tu versión)
                         if (!empty($s['costos'])) {
                             $stmt_costo = $pdo->prepare("
                                 INSERT INTO costos_servicios (
@@ -221,7 +215,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             }
                         }
 
-                        // Insertar gastos locales
                         if (!empty($s['gastos_locales'])) {
                             $stmt_gasto = $pdo->prepare("
                                 INSERT INTO gastos_locales_detalle (
@@ -258,26 +251,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             }
         }
 
-        // Si el prospecto pasa a CerradoOK, actualizar crédito del cliente
+        // === Actualizar crédito si pasa a CerradoOK ===
         if ($_POST['estado'] === 'CerradoOK' && $estado_anterior !== 'CerradoOK') {
-            // Obtener total_venta del prospecto
             $stmt_venta = $pdo->prepare("SELECT total_venta FROM prospectos WHERE id_ppl = ?");
             $stmt_venta->execute([$id_ppl]);
             $total_venta = (float)$stmt_venta->fetchColumn();
 
-            // Obtener RUT del prospecto
             $stmt_rut = $pdo->prepare("SELECT rut_empresa FROM prospectos WHERE id_ppl = ?");
             $stmt_rut->execute([$id_ppl]);
             $rut_empresa = $stmt_rut->fetchColumn();
 
             if ($rut_empresa && $total_venta > 0) {
-                // Actualizar usado_credito en clientes
-                $stmt_update_credito = $pdo->prepare("
+                $pdo->prepare("
                     UPDATE clientes 
                     SET usado_credito = usado_credito + ? 
                     WHERE rut = ?
-                ");
-                $stmt_update_credito->execute([$total_venta, $rut_empresa]);
+                ")->execute([$total_venta, $rut_empresa]);
             }
         }
 
@@ -291,11 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
         exit;
 
     } catch (Exception $e) {
-        try {
-            $pdo->rollback();
-        } catch (Exception $ex) {
-            // Silencioso
-        }
+        $pdo->rollback();
         $mensajeUsuario = "Error al guardar el prospecto.";
         if (defined('DEVELOPMENT') && DEVELOPMENT) {
             $mensajeUsuario = $e->getMessage();
