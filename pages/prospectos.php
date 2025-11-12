@@ -51,13 +51,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <option value="Rechazado">Rechazado</option>
             </select>
         </div>
-        <!-- Fila 3 -->
+        <!-- Fila 3: Operación y Tipo Operación -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
-            <label>Operación</label>
+            <label>Operación *</label>
             <select name="operacion" id="operacion" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
                 <option value="">Seleccionar</option>
             </select>
-            <label>Tipo Operación</label>
+            <label>Tipo Operación *</label>
             <select name="tipo_oper" id="tipo_oper" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
                 <option value="">Seleccionar</option>
             </select>
@@ -499,12 +499,26 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
 
         function calcularConcatenado() {
-            const op = document.getElementById('operacion')?.value || '';
-            const tipo = document.getElementById('tipo_oper')?.value || '';
-            if (!op || !tipo) return;
+            const opSelect = document.getElementById('operacion');
+            const tipoSelect = document.getElementById('tipo_oper');
+            const op = opSelect?.value || '';
+            const tipo = tipoSelect?.value || '';
+            
+            if (!op || !tipo) {
+                document.getElementById('concatenado').value = '';
+                return;
+            }
+
+            // Extraer abreviaturas
+            const opClean = op.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 2) || 'XX';
+            const tipoClean = tipo.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 4) || 'XXXX';
+
             const fecha = new Date().toISOString().slice(2, 10).replace(/-/g, '');
-            const id = (parseInt(document.getElementById('id_prospect')?.value || '0') + 1).toString().padStart(2, '0');
-            document.getElementById('concatenado').value = `${op}${tipo}${fecha}-${id}`;
+            const idProspect = parseInt(document.getElementById('id_prospect')?.value || '0') + 1;
+            const correlativo = idProspect.toString().padStart(2, '0');
+
+            const concatenado = `${opClean}${tipoClean}${fecha}-${correlativo}`;
+            document.getElementById('concatenado').value = concatenado;
         }
 
         function actualizarTabla() {
@@ -561,20 +575,26 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // === 3. CARGA DE DATOS ===
         // ===================================================================
         function cargarOperacionesYTipos() {
-            fetch('/api/get_operaciones.php')
-                .then(r => r.json())
-                .then(data => {
-                    const sel = document.getElementById('operacion');
-                    if (!sel) return;
-                    sel.innerHTML = '<option value="">Seleccionar</option>';
-                    (data.operaciones || []).forEach(op => {
-                        const opt = document.createElement('option');
-                        opt.value = op;
-                        opt.textContent = op;
-                        sel.appendChild(opt);
-                    });
+        // Cargar operaciones
+        fetch('/api/get_operaciones.php')
+            .then(r => r.json())
+            .then(data => {
+                const opSel = document.getElementById('operacion');
+                if (!opSel) return;
+                opSel.innerHTML = '<option value="">Seleccionar</option>';
+                (data.operaciones || []).forEach(op => {
+                    const opt = document.createElement('option');
+                    opt.value = op;
+                    opt.textContent = op;
+                    opSel.appendChild(opt);
                 });
-            document.getElementById('operacion')?.addEventListener('change', function() {
+            })
+            .catch(err => console.error('Error al cargar operaciones:', err));
+
+        // Listener para cargar tipos al cambiar operación
+        const opSel = document.getElementById('operacion');
+        if (opSel) {
+            const handler = function() {
                 const op = this.value;
                 const tipoSel = document.getElementById('tipo_oper');
                 if (!op || !tipoSel) return;
@@ -588,9 +608,29 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             opt.textContent = t;
                             tipoSel.appendChild(opt);
                         });
-                    });
-            });
+                        // Recalcular concatenado si ya hay un tipo seleccionado
+                        setTimeout(() => {
+                            if (tipoSel.value) calcularConcatenado();
+                        }, 100);
+                    })
+                    .catch(err => console.error('Error al cargar tipos:', err));
+            };
+            opSel.removeEventListener('change', handler);
+            opSel.addEventListener('change', handler);
         }
+
+        // Listener para tipo_oper → recalcular concatenado
+        const tipoSel = document.getElementById('tipo_oper');
+        if (tipoSel) {
+            const handler = function() {
+                if (document.getElementById('operacion').value) {
+                    calcularConcatenado();
+                }
+            };
+            tipoSel.removeEventListener('change', handler);
+            tipoSel.addEventListener('change', handler);
+        }
+    }
 
         function cargarDatosModalServicio(callback = null) {
             let cargas = 0;
@@ -698,6 +738,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                                     tipoSel.appendChild(opt);
                                 });
                                 if (p.tipo_oper) tipoSel.value = p.tipo_oper;
+                                    setTimeout(calcularConcatenado, 100);
                             });
                     }
                     const setNota = (name, val) => {
@@ -1270,6 +1311,34 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         function cerrarSubmodalCubicador() {
             document.getElementById('submodal-cubicador').style.display = 'none';
+        }
+
+        function cargarPaises() {
+            const selectPais = document.getElementById('pais') || document.getElementById('cliente_pais');
+            if (!selectPais) return;
+            fetch('/api/get_paises.php')
+                .then(r => r.json())
+                .then(data => {
+                    selectPais.innerHTML = '<option value="">Seleccionar país</option>';
+                    (data.paises || []).forEach(pais => {
+                        const opt = document.createElement('option');
+                        opt.value = pais;
+                        opt.textContent = pais;
+                        selectPais.appendChild(opt);
+                    });
+                })
+                .catch(err => {
+                    console.error('Error al cargar países:', err);
+                    // Fallback básico
+                    const fallback = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
+                    selectPais.innerHTML = '<option value="">Seleccionar país</option>';
+                    fallback.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.textContent = p;
+                        selectPais.appendChild(opt);
+                    });
+                });
         }
 
         // ===================================================================
