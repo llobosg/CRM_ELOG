@@ -112,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         // === Procesar servicios si el modo es 'servicios' ===
         if ($_POST['modo'] === 'servicios') {
+            error_log("DEBUG: Servicios JSON recibido: " . $_POST['servicios_json']);
             $servicios_json = $_POST['servicios_json'] ?? null;
 
             // Eliminar servicios existentes si no hay nuevos
