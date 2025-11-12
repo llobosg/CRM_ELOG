@@ -1,6 +1,7 @@
 # Archivos sensibles
 .env
 *.log
+.DS_Store
 
 # XAMPP
 /xamppfiles/
