@@ -10,22 +10,28 @@ try {
         echo json_encode(['error' => 'RUT no especificado']);
         exit;
     }
-    // Limpiar RUT
     $rutLimpio = preg_replace('/[^0-9Kk]/', '', strtoupper($rut));
     if (strlen($rutLimpio) < 8) {
         echo json_encode(['error' => 'RUT inválido']);
         exit;
     }
-    // Consultar saldo
-    $stmt = $pdo->prepare("SELECT saldo_credito FROM clientes WHERE rut = ?");
+
+    // ✅ Calcular saldo dinámicamente
+    $stmt = $pdo->prepare("
+        SELECT 
+            COALESCE(linea_credito, 0) - COALESCE(usado_credito, 0) AS saldo
+        FROM clientes 
+        WHERE rut = ?
+    ");
     $stmt->execute([$rutLimpio]);
-    $saldo = $stmt->fetchColumn();
-    if ($saldo === false) {
+    $row = $stmt->fetch();
+    if (!$row) {
         echo json_encode(['error' => 'Cliente no encontrado']);
     } else {
-        echo json_encode(['saldo_credito' => (float)$saldo]);
+        echo json_encode(['saldo_credito' => floatval($row['saldo'])]);
     }
 } catch (Exception $e) {
+    error_log("get_saldo_credito error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => 'Error al consultar el crédito']);
 }

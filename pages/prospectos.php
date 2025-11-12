@@ -19,6 +19,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <input type="hidden" name="razon_social" />
     <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
+    <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
 
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem; position: relative;">
@@ -561,6 +562,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
                 tc += c; tv += v; tgc += gc; tgv += gv;
                 const tr = document.createElement('tr');
+
+                document.getElementById('total-venta').textContent = tv.toFixed(2);
+                document.getElementById('total_venta_prospecto').value = tv.toFixed(2);
+                
                 tr.innerHTML = `
                     <td>${s.servicio || ''}</td>
                     <td>${s.trafico || ''}</td>
@@ -1626,11 +1631,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         inp.value = JSON.stringify(servicios);
                     }
 
-                     if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs si es necesario.\nHaga clic en "Aceptar" para continuar.')) {
-                        form.submit();
-                    } else {
-                        error('Envío cancelado. Puede revisar los logs en la consola.');
-                    }
+                    form.submit();
                 });
             }
 
