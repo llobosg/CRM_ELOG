@@ -841,17 +841,20 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 .then(data => {
                     if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
                     const p = data.prospecto;
+
+                    // === Actualizar el select de Razón Social ===
                     const razonSelect = document.getElementById('razon_social_select');
                     if (razonSelect) {
-                        let found = false;
+                        let optionFound = false;
                         for (let i = 0; i < razonSelect.options.length; i++) {
-                            if (razonSelect.options[i].value === p.rut_empresa) {
-                                razonSelect.selectedIndex = i;
-                                found = true;
+                            const opt = razonSelect.options[i];
+                            if (opt.value === p.rut_empresa) {
+                                opt.selected = true;
+                                optionFound = true;
                                 break;
                             }
                         }
-                        if (!found && p.rut_empresa && p.razon_social) {
+                        if (!optionFound && p.rut_empresa && p.razon_social) {
                             const opt = document.createElement('option');
                             opt.value = p.rut_empresa;
                             opt.textContent = p.razon_social;
@@ -859,14 +862,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             razonSelect.value = p.rut_empresa;
                         }
                     }
+
+                    // === Cargar campos del formulario ===
                     const fields = [
-                        'rut_empresa', 'fono_empresa', 'direccion', 'booking', 'incoterm',
-                        'concatenado', 'fecha_alta', 'fecha_estado', 'nombre', 'pais'
+                        { id: 'rut_empresa', value: p.rut_empresa },
+                        { id: 'fono_empresa', value: p.fono_empresa },
+                        { id: 'direccion', value: p.direccion },
+                        { id: 'booking', value: p.booking },
+                        { id: 'incoterm', value: p.incoterm },
+                        { id: 'fecha_alta', value: p.fecha_alta },
+                        { id: 'fecha_estado', value: p.fecha_estado },
+                        { id: 'nombre', value: p.nombre },
+                        { id: 'pais', value: p.pais }
                     ];
                     fields.forEach(f => {
-                        const el = document.getElementById(f);
-                        if (el) el.value = p[f] || '';
+                        const el = document.getElementById(f.id);
+                        if (el) el.value = f.value || '';
                     });
+
+                    // === Cargar operación y tipo_oper ===
                     const opSel = document.getElementById('operacion');
                     const tipoSel = document.getElementById('tipo_oper');
                     if (opSel && p.operacion) {
@@ -882,9 +896,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                                     tipoSel.appendChild(opt);
                                 });
                                 if (p.tipo_oper) tipoSel.value = p.tipo_oper;
-                                    setTimeout(calcularConcatenado, 100);
                             });
                     }
+
+                    // === Notas comerciales y operaciones ===
                     const setNota = (name, val) => {
                         const inp = document.getElementById(name);
                         if (inp) inp.value = val || '';
@@ -893,6 +908,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     };
                     setNota('notas_comerciales', p.notas_comerciales);
                     setNota('notas_operaciones', p.notas_operaciones);
+
+                    // === Cargar servicios (si existen) ===
                     servicios = (data.servicios || []).map(s => ({
                         ...s,
                         costo: parseFloat(s.costo) || 0,
@@ -902,13 +919,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     }));
                     tieneServiciosIniciales = servicios.length > 0;
                     actualizarTabla();
-                    document.getElementById('id_ppl').value = p.id_ppl || '';
-                    document.getElementById('id_prospect').value = p.id_prospect || '';
+
+                    // ✅✅✅ ASIGNACIONES CLAVE PARA EL BOTÓN "AGREGAR SERVICIO" ✅✅✅
+                    const idPplInput = document.getElementById('id_ppl');
+                    const concatenadoInput = document.getElementById('concatenado');
+                    if (idPplInput) idPplInput.value = p.id_ppl || '';
+                    if (concatenadoInput) concatenadoInput.value = p.concatenado || '';
+
+                    // === Habilitar campos y botones ===
                     const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
                     const selects = document.querySelectorAll('select');
                     inputs.forEach(i => { i.readOnly = false; i.style.backgroundColor = ''; });
                     selects.forEach(s => s.disabled = false);
-                    document.getElementById('btn-agregar-servicio').disabled = false;
+                    const btnAgregar = document.getElementById('btn-agregar-servicio');
+                    if (btnAgregar) btnAgregar.disabled = false;
+
+                })
+                .catch(err => {
+                    console.error('Error al cargar prospecto:', err);
+                    error('No se pudo cargar el prospecto');
                 });
         }
 
@@ -1581,20 +1610,30 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const btnAgregarServicio = document.getElementById('btn-agregar-servicio');
             if (btnAgregarServicio) {
                 btnAgregarServicio.addEventListener('click', function() {
-                    const idPpl = document.getElementById('id_ppl')?.value;
-                    const concatenado = document.getElementById('concatenado')?.value;
+                    const idPplInput = document.getElementById('id_ppl');
+                    const concatenadoInput = document.getElementById('concatenado');
 
-                    // Validar que id_ppl sea un número válido (> 0)
-                    const idValido = idPpl && !isNaN(idPpl) && parseInt(idPpl) > 0;
-                    const concatValido = concatenado && concatenado.trim() !== '';
+                    if (!idPplInput || !concatenadoInput) {
+                        console.error('❌ [Agregar Servicio] Campos ocultos no encontrados en el DOM');
+                        error('Error interno: campos del formulario no disponibles');
+                        return;
+                    }
+
+                    const idPpl = idPplInput.value.trim();
+                    const concatenado = concatenadoInput.value.trim();
+
+                    // Validar que id_ppl sea un número entero > 0
+                    const idPplNum = parseInt(idPpl, 10);
+                    const idValido = !isNaN(idPplNum) && idPplNum > 0;
+                    const concatValido = concatenado.length > 0;
+
+                    console.log('🔍 [Agregar Servicio] Valores actuales:', { idPpl, concatenado, idValido, concatValido });
 
                     if (!idValido || !concatValido) {
-                        console.warn('⚠️ [Agregar Servicio] Validación fallida', { id_ppl: idPpl, concatenado: concatenado });
                         error('Debe seleccionar un prospecto válido antes de agregar servicios.');
                         return;
                     }
 
-                    console.log('✅ [Agregar Servicio] Abriendo modal para prospecto ID:', idPpl);
                     abrirModalServicio();
                 });
             }
