@@ -1,11 +1,6 @@
 <?php
-require_once __DIR__ . '/../includes/auth_check.php';
-
-// Solo accesible para admin_finanzas
-if (!isset($_SESSION['user_rol']) || $_SESSION['user_rol'] !== 'admin_finanzas') {
-    header('Location: ?page=prospectos&error=' . urlencode('Acceso denegado'));
-    exit;
-}
+// ✅ NO hay validación de rol aquí → se hace en index.php
+// ✅ Este archivo SOLO contiene HTML/JS, sin header() ni redirección
 ?>
 <div class="card">
     <h3><i class="fas fa-file-invoice-dollar"></i> Módulo de Facturación</h3>
