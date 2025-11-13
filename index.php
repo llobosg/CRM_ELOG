@@ -21,14 +21,15 @@ $validPages = [
     'trafico',
     'dashboard',
     'prospectos',
-    'ficha_cliente'
+    'ficha_cliente',
+    'facturacion'
 ];
 
 // En index.php, antes de: include "pages/$page.php";
 $page = $_GET['page'] ?? 'dashboard';
 
 // === Protección de páginas por rol ===
-$paginas_admin_finanzas = ['ficha_cliente'];
+$paginas_admin_finanzas = ['ficha_cliente', 'facturacion'];
 
 if (in_array($page, $paginas_admin_finanzas)) {
     require_once __DIR__ . '/includes/auth_check.php';
