@@ -257,8 +257,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <input type="text" id="serv_aol" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
                 <label>AOD</label>
                 <input type="text" id="serv_aod" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
-                <label>Desconsolidación</label>
-                <input type="text" id="serv_desconsolidacion" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Agente</label>
                 <select id="serv_agente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="">Seleccionar</option>
@@ -293,8 +291,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <h3><i class="fas fa-calculator"></i> Costos, Ventas y Gastos</h3>
             <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
             <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
-                <select id="costo_concepto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
-                    <option value="">Seleccionar concepto</option>
+                <select id="costo_aplica" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                    <option value="">Seleccionar aplica</option>
                 </select>
                 <input type="text" id="costo_moneda" readonly style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center; width: 80px;" />
                 <input type="number" id="costo_qty" step="0.01" min="0" placeholder="Qty" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right; width: 80px;" />
@@ -302,8 +300,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
                 <input type="number" id="costo_tarifa" step="0.01" min="0" placeholder="Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
                 <input type="text" id="costo_total_tarifa" readonly placeholder="Total Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
-                <select id="costo_aplica" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
-                    <option value="">Seleccionar aplica</option>
+                <select id="costo_concepto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                    <option value="">Seleccionar concepto</option>
                 </select>
                 <button type="button" onclick="guardarCosto()" style="grid-column: span 1; background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
                     <i class="fas fa-plus"></i> Agregar
@@ -1000,7 +998,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     document.getElementById('serv_moneda').value = s.moneda || 'USD';
                     document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
                     document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
-                    document.getElementById('serv_desconsolidacion').value = s.desconsolidac || '';
                     document.getElementById('serv_aol').value = s.aol || '';
                     document.getElementById('serv_aod').value = s.aod || '';
                     document.getElementById('serv_agente').value = s.agente || '';
@@ -1115,7 +1112,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     moneda: document.getElementById('serv_moneda').value,
                     tipo_cambio: document.getElementById('serv_tipo_cambio').value,
                     proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-                    desconsolidac: document.getElementById('serv_desconsolidacion').value,
                     aol: document.getElementById('serv_aol').value,
                     aod: document.getElementById('serv_aod').value,
                     agente: document.getElementById('serv_agente').value,
@@ -1581,12 +1577,24 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 if (el) el.addEventListener('change', calcularConcatenado);
             });
 
-            const btnAgregar = document.getElementById('btn-agregar-servicio');
-            if (btnAgregar) {
-                btnAgregar.addEventListener('click', () => {
-                    const id = document.getElementById('id_ppl')?.value;
-                    const concat = document.getElementById('concatenado')?.value;
-                    if (!id || id === '0' || !concat) return error('Guarde el prospecto primero.');
+            // === BOTÓN: Agregar Servicio ===
+            const btnAgregarServicio = document.getElementById('btn-agregar-servicio');
+            if (btnAgregarServicio) {
+                btnAgregarServicio.addEventListener('click', function() {
+                    const idPpl = document.getElementById('id_ppl')?.value;
+                    const concatenado = document.getElementById('concatenado')?.value;
+
+                    // Validar que id_ppl sea un número válido (> 0)
+                    const idValido = idPpl && !isNaN(idPpl) && parseInt(idPpl) > 0;
+                    const concatValido = concatenado && concatenado.trim() !== '';
+
+                    if (!idValido || !concatValido) {
+                        console.warn('⚠️ [Agregar Servicio] Validación fallida', { id_ppl: idPpl, concatenado: concatenado });
+                        error('Debe seleccionar un prospecto válido antes de agregar servicios.');
+                        return;
+                    }
+
+                    console.log('✅ [Agregar Servicio] Abriendo modal para prospecto ID:', idPpl);
                     abrirModalServicio();
                 });
             }
