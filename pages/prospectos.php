@@ -88,7 +88,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
             </div>
             <div style="display: flex; gap: 0.8rem;">
-                <button type="button" class="btn-add" id="btn-agregar-servicio">
+                <button type="button" class="btn-add" id="btn-agregar-servicio" style="display: none;">
                     <i class="fas fa-plus"></i> Agregar Servicio
                 </button>
                 <button type="button" class="btn-primary" id="btn-save-all">Grabar Todo</button>
@@ -931,8 +931,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     const selects = document.querySelectorAll('select');
                     inputs.forEach(i => { i.readOnly = false; i.style.backgroundColor = ''; });
                     selects.forEach(s => s.disabled = false);
+                    // Mostrar botón de agregar servicio si el prospecto ya existe
                     const btnAgregar = document.getElementById('btn-agregar-servicio');
-                    if (btnAgregar) btnAgregar.disabled = false;
+                    if (btnAgregar && p.id_ppl && p.id_ppl > 0) {
+                        btnAgregar.style.display = 'inline-flex'; // o 'inline-block'
+                    }
 
                 })
                 .catch(err => {
@@ -1582,6 +1585,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
             // Resetear concatenado
             document.getElementById('concatenado').value = '';
+
+            // Ocultar botón de agregar servicio
+            const btnAgregar = document.getElementById('btn-agregar-servicio');
+            if (btnAgregar) btnAgregar.style.display = 'none';
 
             exito('Formulario reiniciado correctamente');
         }
