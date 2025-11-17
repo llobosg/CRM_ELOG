@@ -1,15 +1,16 @@
 <?php
-// config.php — Versión mínima y funcional para Railway
+// Detectar Railway usando $_ENV o $_SERVER (no getenv)
+$isRailway = isset($_ENV['MYSQLHOST']) || isset($_SERVER['MYSQLHOST']);
 
-// Forzar la detección de Railway usando MYSQLHOST
-if (!empty($_SERVER['MYSQLHOST'])) {
-    $db_host = $_SERVER['MYSQLHOST'];
-    $db_port = $_SERVER['MYSQLPORT'] ?? 3306;
-    $db_name = $_SERVER['MYSQLDATABASE'] ?? 'railway';
-    $db_user = $_SERVER['MYSQLUSER'] ?? 'root';
-    $db_password = $_SERVER['MYSQL_ROOT_PASSWORD'] ?? $_SERVER['MYSQLPASSWORD'] ?? '';
+if ($isRailway) {
+    // Railway: usa las variables inyectadas
+    $db_host = $_ENV['MYSQLHOST']     ?? $_SERVER['MYSQLHOST']     ?? '127.0.0.1';
+    $db_port = $_ENV['MYSQLPORT']     ?? $_SERVER['MYSQLPORT']     ?? 3306;
+    $db_name = $_ENV['MYSQLDATABASE'] ?? $_SERVER['MYSQLDATABASE'] ?? 'railway';
+    $db_user = $_ENV['MYSQLUSER']     ?? $_SERVER['MYSQLUSER']     ?? 'root';
+    $db_password = $_ENV['MYSQLPASSWORD'] ?? $_SERVER['MYSQLPASSWORD'] ?? '';
 } else {
-    // Fallback local (solo para desarrollo)
+    // Local (XAMPP)
     $db_host = '127.0.0.1';
     $db_port = 3306;
     $db_name = 'crm_aduanas';
@@ -22,11 +23,10 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     ]);
 } catch (PDOException $e) {
-    if (!empty($_SERVER['MYSQLHOST'])) {
-        http_response_code(500);
-        die("<h2>❌ Error en Railway</h2><p>No se pudo conectar a la base de datos.</p><pre>" . htmlspecialchars($e->getMessage()) . "</pre>");
+    if ($isRailway) {
+        die("Error en Railway: " . $e->getMessage());
     } else {
-        die("<h2>❌ Error local</h2><pre>" . htmlspecialchars($e->getMessage()) . "</pre>");
+        die("Error local: " . $e->getMessage());
     }
 }
 ?>
