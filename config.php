@@ -1,12 +1,12 @@
 <?php
 // config.php — Compatible con XAMPP local y Railway (QA/Producción)
 
-// Detectar Railway: si existe MYSQLHOST, estamos en Railway
-$isRailway = !empty($_SERVER['MYSQLHOST']);
+// Detectar entorno Railway usando la variable oficial
+$isRailway = !empty($_SERVER['RAILWAY_ENVIRONMENT_NAME']);
 
 if ($isRailway) {
-    // ✅ Usar variables de Railway (MySQL clásicas)
-    $db_host = $_SERVER['MYSQLHOST'];
+    // ✅ Entorno Railway (QA o producción)
+    $db_host = $_SERVER['MYSQLHOST'] ?? '127.0.0.1';
     $db_port = $_SERVER['MYSQLPORT'] ?? 3306;
     $db_name = $_SERVER['MYSQLDATABASE'] ?? 'railway';
     $db_user = $_SERVER['MYSQLUSER'] ?? 'root';
@@ -15,7 +15,7 @@ if ($isRailway) {
     // ✅ Entorno local (XAMPP/MAMP)
     $db_host = '127.0.0.1';
     $db_port = 3306;
-    $db_name = 'crm_aduanas'; // ← ajusta si tu BD local se llama distinto
+    $db_name = 'crm_aduanas'; // ← ajusta si tu BD local tiene otro nombre
     $db_user = 'root';
     $db_password = '';
 }
@@ -28,7 +28,7 @@ try {
     ]);
 } catch (PDOException $e) {
     if ($isRailway) {
-        die("Error en Railway: No se pudo conectar a la base de datos.<br>" .
+        die("Error en Railway (" . ($_SERVER['RAILWAY_ENVIRONMENT_NAME'] ?? 'desconocido') . "): No se pudo conectar a la base de datos.<br>" .
             "Host: $db_host, DB: $db_name, Usuario: $db_user<br>" .
             "Detalles: " . htmlspecialchars($e->getMessage()));
     } else {
