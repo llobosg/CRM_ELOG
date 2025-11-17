@@ -3,7 +3,6 @@
 
 // === Detección de entorno Railway ===
 $isRailway = (
-    echo "<p style='color: green;'>¡pasa por $isRailway!</p>";
     !empty($_SERVER['RAILWAY']) ||
     !empty($_SERVER['RAILWAY_ENVIRONMENT']) ||
     !empty($_SERVER['RAILWAY_ENVIRONMENT_NAME']) ||
@@ -16,7 +15,6 @@ $isRailway = (
 if ($isRailway) {
     // ✅ Entorno Railway (QA o producción)
     error_log("✅ [CONFIG] Detectado entorno Railway");
-    echo "<p style='color: green;'>¡detecta entorno $isRailway!</p>";
     $db_host = $_SERVER['MYSQLHOST'] ?? $_ENV['MYSQLHOST'] ?? '127.0.0.1';
     $db_port = $_SERVER['MYSQLPORT'] ?? $_ENV['MYSQLPORT'] ?? 3306;
     $db_name = $_SERVER['MYSQLDATABASE'] ?? $_ENV['MYSQLDATABASE'] ?? 'railway';
@@ -25,7 +23,6 @@ if ($isRailway) {
 } else {
     // ✅ Entorno local (XAMPP/MAMP)
     error_log("🖥️ [CONFIG] Detectado entorno local");
-    echo "<p style='color: green;'>¡no detectó entorno $isRailway, pasa por else...!</p>";
     $db_host = '127.0.0.1';
     $db_port = 3306;
     $db_name = 'crm_aduanas';
