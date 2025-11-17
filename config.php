@@ -6,6 +6,8 @@ $isRailway = !empty($_SERVER['RAILWAY_ENVIRONMENT_NAME']);
 
 if ($isRailway) {
     // ✅ Entorno Railway (QA o producción)
+    error_log("entra por Railway");
+    echo "<p style='color: green;'>¡Entra por Railway!</p>";
     $db_host = $_SERVER['MYSQLHOST'] ?? '127.0.0.1';
     $db_port = $_SERVER['MYSQLPORT'] ?? 3306;
     $db_name = $_SERVER['MYSQLDATABASE'] ?? 'railway';
@@ -13,6 +15,7 @@ if ($isRailway) {
     $db_password = $_SERVER['MYSQL_ROOT_PASSWORD'] ?? $_SERVER['MYSQLPASSWORD'] ?? '';
 } else {
     // ✅ Entorno local (XAMPP/MAMP)
+    echo "<p style='color: green;'>¡Entra else Railway!</p>";
     $db_host = '127.0.0.1';
     $db_port = 3306;
     $db_name = 'crm_aduanas'; // ← ajusta si tu BD local tiene otro nombre
