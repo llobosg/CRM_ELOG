@@ -1,31 +1,18 @@
 <?php
-// config.php - Compatible con XAMPP local y Railway.app (MySQL/PostgreSQL)
+// config.php — Compatible con XAMPP local y Railway (QA/Producción)
 
-$isRailway = !empty($_ENV['RAILWAY_ENVIRONMENT']) || !empty($_ENV['DATABASE_URL']) || !empty($_ENV['MYSQLHOST']);
+// Detectar Railway: si existe MYSQLHOST, estamos en Railway
+$isRailway = !empty($_SERVER['MYSQLHOST']);
 
 if ($isRailway) {
-    // === Opción 1: Usar DATABASE_URL (formato estándar en Railway) ===
-    if (!empty($_ENV['DATABASE_URL'])) {
-        $db_host = 'shuttle.proxy.rlwy.net';
-        $db_port = 48498; // ← ¡Puerto real!
-        $db_name = 'railway';
-        $db_user = 'root';
-        $db_password = 'oTLbkFsCazCViKmMFncPSBSHfoYjOnhA';
-    }
-    // === Opción 2: Fallback a variables de MySQL clásicas ===
-    elseif (!empty($_ENV['MYSQLHOST'])) {
-        $db_host = $_ENV['MYSQLHOST'];
-        $db_port = $_ENV['MYSQLPORT'] ?? 3306;
-        $db_name = $_ENV['MYSQLDATABASE'] ?? 'railway';
-        $db_user = $_ENV['MYSQLUSER'] ?? 'root';
-        $db_password = $_ENV['MYSQLPASSWORD'] ?? '';
-    }
-    // === No se encontraron variables válidas ===
-    else {
-        die("Error crítico: Railway no inyectó DATABASE_URL ni MYSQLHOST. Verifica que el servicio de base de datos esté vinculado al proyecto.");
-    }
+    // ✅ Usar variables de Railway (MySQL clásicas)
+    $db_host = $_SERVER['MYSQLHOST'];
+    $db_port = $_SERVER['MYSQLPORT'] ?? 3306;
+    $db_name = $_SERVER['MYSQLDATABASE'] ?? 'railway';
+    $db_user = $_SERVER['MYSQLUSER'] ?? 'root';
+    $db_password = $_SERVER['MYSQL_ROOT_PASSWORD'] ?? $_SERVER['MYSQLPASSWORD'] ?? '';
 } else {
-    // === Entorno local (XAMPP/MAMP) ===
+    // ✅ Entorno local (XAMPP/MAMP)
     $db_host = '127.0.0.1';
     $db_port = 3306;
     $db_name = 'crm_aduanas'; // ← ajusta si tu BD local se llama distinto
@@ -41,9 +28,11 @@ try {
     ]);
 } catch (PDOException $e) {
     if ($isRailway) {
-        die("Error: No se pudo conectar a la base de datos en Railway.<br>Detalles: " . htmlspecialchars($e->getMessage()));
+        die("Error en Railway: No se pudo conectar a la base de datos.<br>" .
+            "Host: $db_host, DB: $db_name, Usuario: $db_user<br>" .
+            "Detalles: " . htmlspecialchars($e->getMessage()));
     } else {
-        die("Error de conexión local: " . htmlspecialchars($e->getMessage()));
+        die("Error local: " . htmlspecialchars($e->getMessage()));
     }
 }
 ?>
