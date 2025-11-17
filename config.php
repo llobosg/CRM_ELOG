@@ -1,28 +1,15 @@
 <?php
-// config.php — Detección robusta de Railway
+// config.php — Versión mínima y funcional para Railway
 
-// === Detección de entorno Railway ===
-$isRailway = (
-    !empty($_SERVER['RAILWAY']) ||
-    !empty($_SERVER['RAILWAY_ENVIRONMENT']) ||
-    !empty($_SERVER['RAILWAY_ENVIRONMENT_NAME']) ||
-    !empty($_SERVER['MYSQLHOST']) ||
-    !empty($_ENV['RAILWAY']) ||
-    !empty($_ENV['MYSQLHOST']) ||
-    (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], '.railway.app') !== false)
-);
-
-if ($isRailway) {
-    // ✅ Entorno Railway (QA o producción)
-    error_log("✅ [CONFIG] Detectado entorno Railway");
-    $db_host = $_SERVER['MYSQLHOST'] ?? $_ENV['MYSQLHOST'] ?? '127.0.0.1';
-    $db_port = $_SERVER['MYSQLPORT'] ?? $_ENV['MYSQLPORT'] ?? 3306;
-    $db_name = $_SERVER['MYSQLDATABASE'] ?? $_ENV['MYSQLDATABASE'] ?? 'railway';
-    $db_user = $_SERVER['MYSQLUSER'] ?? $_ENV['MYSQLUSER'] ?? 'root';
-    $db_password = $_SERVER['MYSQL_ROOT_PASSWORD'] ?? $_ENV['MYSQL_ROOT_PASSWORD'] ?? $_SERVER['MYSQLPASSWORD'] ?? $_ENV['MYSQLPASSWORD'] ?? '';
+// Forzar la detección de Railway usando MYSQLHOST
+if (!empty($_SERVER['MYSQLHOST'])) {
+    $db_host = $_SERVER['MYSQLHOST'];
+    $db_port = $_SERVER['MYSQLPORT'] ?? 3306;
+    $db_name = $_SERVER['MYSQLDATABASE'] ?? 'railway';
+    $db_user = $_SERVER['MYSQLUSER'] ?? 'root';
+    $db_password = $_SERVER['MYSQL_ROOT_PASSWORD'] ?? $_SERVER['MYSQLPASSWORD'] ?? '';
 } else {
-    // ✅ Entorno local (XAMPP/MAMP)
-    error_log("🖥️ [CONFIG] Detectado entorno local");
+    // Fallback local (solo para desarrollo)
     $db_host = '127.0.0.1';
     $db_port = 3306;
     $db_name = 'crm_aduanas';
@@ -30,17 +17,16 @@ if ($isRailway) {
     $db_password = '';
 }
 
-// === Conexión ===
 try {
     $pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4", $db_user, $db_password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
 } catch (PDOException $e) {
-    if ($isRailway) {
+    if (!empty($_SERVER['MYSQLHOST'])) {
+        http_response_code(500);
         die("<h2>❌ Error en Railway</h2><p>No se pudo conectar a la base de datos.</p><pre>" . htmlspecialchars($e->getMessage()) . "</pre>");
     } else {
-        die("<h2>❌ Error local</h2><p>MySQL no está activo o la base de datos 'crm_aduanas' no existe.</p><pre>" . htmlspecialchars($e->getMessage()) . "</pre>");
+        die("<h2>❌ Error local</h2><pre>" . htmlspecialchars($e->getMessage()) . "</pre>");
     }
 }
 ?>
