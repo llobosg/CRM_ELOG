@@ -1789,7 +1789,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     const operacion = document.getElementById('operacion')?.value;
                     const tipoOper = document.getElementById('tipo_oper')?.value;
                     const concatenado = document.getElementById('concatenado')?.value;
-                    const estado = document.getElementById('estado')?.value || 'Pendiente';
 
                     if (!rut || !razon) {
                         error('RUT y Razón Social son obligatorios');
