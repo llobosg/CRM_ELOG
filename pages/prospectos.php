@@ -551,18 +551,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
                 tc += c; tv += v; tgc += gc; tgv += gv;
 
-                // === Determinar estado de costos (con retrocompatibilidad) ===
+                // ✅ Determinar estado de costos
                 let estadoCostos = s.estado_costos || 'pendiente';
-                // Si no tiene costos y no tiene estado definido, es "pendiente"
                 if (!s.costos || s.costos.length === 0) {
                     estadoCostos = 'pendiente';
                 }
 
-                // === Ícono según estado ===
+                // ✅ Ícono según estado
                 let iconoCostos = '';
                 if (estadoCostos === 'pendiente') {
-                    // ✉️ Listo para solicitar costos a Pricing
-                    iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc;" title="Listo para solicitar costos a Pricing"></i>';
+                    iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
                 } else if (estadoCostos === 'solicitado') {
                     iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos de Pricing"></i>';
                 } else if (estadoCostos === 'completado') {
@@ -596,17 +594,39 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // === Listeners para íconos de notificación ===
-            document.querySelectorAll('#tabla-servicios i.fa-paper-plane, #tabla-servicios i.fa-envelope, #tabla-servicios i.fa-envelope-open').forEach(icon => {
+            // ✅ Listeners para ícono de notificación
+            document.querySelectorAll('#tabla-servicios i.fa-paper-plane').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
                     const servicio = servicios[index];
-                    manejarNotificacionCostos(servicio, index);
+                    if (servicio.estado_costos === 'pendiente') {
+                        // Notificar a Pricing
+                        fetch('/api/notificar_costos.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id_srvc: servicio.id_srvc,
+                                estado: 'solicitado',
+                                usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
+                                rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
+                            })
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                servicios[index].estado_costos = 'solicitado';
+                                actualizarTabla(); // ✅ Refrescar visualmente
+                                exito('Notificación enviada a Pricing');
+                            } else {
+                                error('Error al notificar: ' + (data.message || 'Intente nuevamente'));
+                            }
+                        });
+                    }
                 });
             });
 
-            // === Listeners de edición/eliminación ===
+            // Listeners de edición/eliminación
             document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const index = parseInt(this.getAttribute('data-index'));
@@ -1204,13 +1224,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
 
         function guardarServicio() {
-            console.log('🔍 [SERVICIO] Iniciando guardarServicio');
             const servicio = document.getElementById('serv_servicio').value.trim();
             if (!servicio) {
                 error('Servicio es obligatorio');
                 return;
             }
-
             const origen = document.getElementById('serv_origen').value;
             const destino = document.getElementById('serv_destino').value;
             if (origen && destino && origen === destino) {
@@ -1218,42 +1236,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 return;
             }
 
-            // ✅ NO validar que existan costos aquí → Permitir servicio sin costos
-
-            const rutCliente = document.getElementById('rut_empresa')?.value.trim();
-            const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
-
-            // Validar crédito SOLO si hay costos y monto > 0
-            if (rutCliente && totalVentaServicio > 0) {
-                fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.error) {
-                            error(data.error);
-                            return;
-                        }
-                        if (totalVentaServicio > data.saldo_credito) {
-                            error(`Sobregiro detectado: El servicio supera el saldo de crédito disponible (${data.saldo_credito}). 
-                                Solicite un aumento de límite en Ficha Cliente.`);
-                            return;
-                        }
-                        ejecutarGuardarServicio();
-                    })
-                    .catch(err => {
-                        console.error('Error al validar crédito:', err);
-                        error('No se pudo verificar la línea de crédito.');
-                    });
-            } else {
-                // ✅ Guardar sin validar crédito si no hay costos (flujo Comercial → Pricing)
-                ejecutarGuardarServicio();
-            }
-        }
-
-        function ejecutarGuardarServicio() {
+            // ✅ NO VALIDAR COSTOS AQUÍ → se valida solo al enviar prospecto
             const nuevo = {
                 id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
                 id_prospect: document.getElementById('id_prospect_serv').value,
-                servicio: document.getElementById('serv_servicio').value.trim(),
+                servicio: servicio,
                 trafico: document.getElementById('serv_medio_transporte').value,
                 commodity: document.getElementById('serv_commodity').value,
                 origen: document.getElementById('serv_origen').value,
@@ -1272,7 +1259,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 moneda: document.getElementById('serv_moneda').value,
                 tipo_cambio: document.getElementById('serv_tipo_cambio').value,
                 proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-                desconsolidac: '',
+                desconsolidac: document.getElementById('serv_desconsolidacion').value,
                 aol: document.getElementById('serv_aol').value,
                 aod: document.getElementById('serv_aod').value,
                 agente: document.getElementById('serv_agente').value,
@@ -1285,7 +1272,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
                 costos: [...costosServicio],
                 gastos_locales: [...gastosLocales],
-                // ✅ Estado de costos: si no hay costos, está "pendiente" (listo para enviar a Pricing)
+                // ✅ Estado de costos: "pendiente" si no hay costos
                 estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
             };
 
@@ -1296,7 +1283,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 servicios.push(nuevo);
                 exito('Servicio agregado correctamente');
             }
-
             actualizarTabla();
             cerrarModalServicio();
         }
@@ -1787,6 +1773,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
             if (btnGrabarTodo) {
                 btnGrabarTodo.addEventListener('click', function(e) {
                     e.preventDefault();
+                    const estado = document.getElementById('estado')?.value || 'Pendiente';
+
+                    // ✅ Validar costos SOLO si el prospecto se envía o cierra
+                    if (estado === 'Enviado' || estado === 'CerradoOK') {
+                        const tieneServiciosSinCostos = servicios.some(s => !s.costos || s.costos.length === 0);
+                        if (tieneServiciosSinCostos) {
+                            error('No se puede enviar el prospecto: todos los servicios deben tener costos asociados.');
+                            return;
+                        }
+                    }
                     const rut = document.getElementById('rut_empresa')?.value.trim();
                     const razonSelect = document.getElementById('razon_social_select');
                     const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
