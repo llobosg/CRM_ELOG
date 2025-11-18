@@ -1106,7 +1106,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 cerrarModalComercial();
             });
         }
-
         function guardarNotasOperaciones() {
             const id = document.getElementById('id_ppl')?.value;
             if (!id || id === '0') return error('Prospecto no válido');
