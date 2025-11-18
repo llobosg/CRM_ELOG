@@ -1,21 +1,12 @@
 <?php
 // config.php - Compatible con XAMPP local y Railway.app
 
-if (getenv('MYSQLHOST')) {
     // Entorno Railway
-    $db_host     = $_ENV['MYSQLHOST'];
-    $db_port     = $_ENV['MYSQLPORT']     ?? 3306;
-    $db_name     = $_ENV['MYSQLDATABASE'] ?? 'railway';
-    $db_user     = $_ENV['MYSQLUSER']     ?? 'root';
-    $db_password = $_ENV['MYSQLPASSWORD'] ?? '';
-} else {
-    // Entorno local (XAMPP)
-    $db_host     = '127.0.0.1';
-    $db_port     = 3306;
-    $db_name     = 'crm_aduanas';
+    $db_host     = 'mysql://root:oTLbkFsCazCViKmMFncPSBSHfoYjOnhA@shuttle.proxy.rlwy.net:48498/railway';
+    $db_port     = 48498;
+    $db_name     = 'railway';
     $db_user     = 'root';
-    $db_password = '';
-}
+    $db_password = 'oTLbkFsCazCViKmMFncPSBSHfoYjOnhA';
 
 try {
     $pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4", $db_user, $db_password, [
