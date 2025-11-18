@@ -1320,7 +1320,7 @@ function ejecutarGuardarServicio() {
         moneda: document.getElementById('serv_moneda').value,
         tipo_cambio: document.getElementById('serv_tipo_cambio').value,
         proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-        desconsolidac: '',
+        desconsolidac: '0',
         aol: document.getElementById('serv_aol').value,
         aod: document.getElementById('serv_aod').value,
         agente: document.getElementById('serv_agente').value,
