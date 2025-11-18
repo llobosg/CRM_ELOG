@@ -642,25 +642,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 if (!servicio.costos || servicio.costos.length === 0) {
                     alert('Debe agregar al menos un costo antes de notificar.');
                     return;
-        }
-        if (!confirm('¿Notificar al Comercial que los costos están listos?')) return;
-        enviarNotificacionCostos(servicio.id_srvc, 'completado', index);
-        return;
-    }
+                }
+                if (!confirm('¿Notificar al Comercial que los costos están listos?')) return;
+                enviarNotificacionCostos(servicio.id_srvc, 'completado', index);
+                return;
+            }
 
-    // === Solo Comercial puede aprobar (opcional) ===
-    if (estadoActual === 'completado') {
-        if (rolUsuario !== 'comercial') {
-            alert('Solo el Comercial puede aprobar los costos.');
-            return;
-        }
-        if (!confirm('¿Confirmar que los costos han sido revisados?')) return;
-        enviarNotificacionCostos(servicio.id_srvc, 'revisado', index);
-        return;
-    }
+            // === Solo Comercial puede aprobar (opcional) ===
+            if (estadoActual === 'completado') {
+                if (rolUsuario !== 'comercial') {
+                    alert('Solo el Comercial puede aprobar los costos.');
+                    return;
+                }
+                if (!confirm('¿Confirmar que los costos han sido revisados?')) return;
+                enviarNotificacionCostos(servicio.id_srvc, 'revisado', index);
+                return;
+            }
 
-    alert('Acción no permitida en este estado.');
-}
+            alert('Acción no permitida en este estado.');
+        }
 
         function enviarNotificacionCostos(idSrvc, nuevoEstado, index) {
             fetch('/api/notificar_costos.php', {
@@ -676,6 +676,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
+                    // ✅ Actualizar estado localmente
                     servicios[index].estado_costos = nuevoEstado;
                     if (nuevoEstado === 'solicitado') {
                         servicios[index].solicitado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
@@ -684,6 +685,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         servicios[index].completado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
                         servicios[index].fecha_completado = new Date().toISOString().slice(0, 19).replace('T', ' ');
                     }
+                    // ✅ Refrescar la tabla para que el ícono cambie inmediatamente
                     actualizarTabla();
                     alert(data.message);
                 } else {
@@ -1316,7 +1318,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             if (btnAgregar) {
                 btnAgregar.style.display = esPricing ? 'flex' : 'none';
             }
-            
+
             // Continúa proceso normal
             if (document.getElementById('modal-servicio').style.display === 'none') return error('Abra primero el modal de Servicio');
             if (servicioEnEdicion !== null) {
@@ -1780,58 +1782,47 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 btnGuardarModal.addEventListener('click', guardarServicio);
             }
 
-            const btnGrabar = document.getElementById('btn-save-all');
-            if (btnGrabar) {
-                btnGrabar.addEventListener('click', async (e) => {
+            // === BOTÓN: Grabar Todo ===
+            const btnGrabarTodo = document.getElementById('btn-save-all');
+            if (btnGrabarTodo) {
+                btnGrabarTodo.addEventListener('click', function(e) {
                     e.preventDefault();
                     const rut = document.getElementById('rut_empresa')?.value.trim();
-                    const razon = document.getElementById('razon_social_select')?.selectedOptions[0]?.textContent.trim();
-                    const op = document.getElementById('operacion')?.value;
-                    const tipo = document.getElementById('tipo_oper')?.value;
-                    const concat = document.getElementById('concatenado')?.value;
+                    const razonSelect = document.getElementById('razon_social_select');
+                    const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
+                    const operacion = document.getElementById('operacion')?.value;
+                    const tipoOper = document.getElementById('tipo_oper')?.value;
+                    const concatenado = document.getElementById('concatenado')?.value;
                     const estado = document.getElementById('estado')?.value || 'Pendiente';
-                    const totalVentaProspecto = parseFloat(document.getElementById('total_venta_prospecto')?.value) || 0;
 
-                    if (!rut || !razon) return error('RUT y Razón Social son obligatorios');
-                    if (!op || !tipo || !concat) return error('Operación, Tipo Operación y Concatenado son obligatorios');
+                    if (!rut || !razon) {
+                        error('RUT y Razón Social son obligatorios');
+                        return;
+                    }
+                    if (!operacion || !tipoOper || !concatenado) {
+                        error('Operación, Tipo Operación y Concatenado son obligatorios');
+                        return;
+                    }
                     const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
-                    if (!validarRut(rutLimpio)) return error('RUT inválido');
+                    if (!validarRut(rutLimpio)) {
+                        error('RUT inválido');
+                        return;
+                    }
 
-                    // ✅ VALIDACIÓN DE CRÉDITO solo si se intenta cerrar el prospecto
-                    if (estado === 'CerradoOK' && totalVentaProspecto > 0) {
-                        try {
-                            const res = await fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutLimpio)}`);
-                            const data = await res.json();
-
-                            if (data.error) {
-                                return error('Error al verificar línea de crédito: ' + data.error);
+                    // ✅ Validación condicional: solo si estado es "Enviado" o "CerradoOK"
+                    if (estado === 'Enviado' || estado === 'CerradoOK') {
+                        let servicioSinCostos = false;
+                        servicios.forEach(s => {
+                            if (!s.costos || s.costos.length === 0) {
+                                servicioSinCostos = true;
                             }
-
-                            const saldoCredito = parseFloat(data.saldo_credito) || 0;
-
-                            if (totalVentaProspecto > saldoCredito) {
-                                // ❌ Crédito insuficiente → detener y notificar
-                                alert(
-                                    `⚠️ LÍNEA DE CRÉDITO INSUFICIENTE\n\n` +
-                                    `SALDO DISPONIBLE: $${saldoCredito.toLocaleString('es-CL', { minimumFractionDigits: 2 })}\n` +
-                                    `TOTAL REQUERIDO: $${totalVentaProspecto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}\n\n` +
-                                    `El estado del prospecto se mantendrá como "Pendiente".\n\n` +
-                                    `Por favor, solicite al Administrador Financiero que ajuste la línea de crédito en Ficha Cliente.`
-                                );
-                                
-                                // Forzar estado a "Pendiente"
-                                document.getElementById('estado').value = 'Pendiente';
-                                error('Crédito insuficiente. Estado cambiado a "Pendiente".');
-                                return;
-                            }
-                            // ✅ Crédito suficiente → continuar
-                        } catch (err) {
-                            console.error('Error al validar crédito:', err);
-                            return error('No se pudo verificar la línea de crédito. Intente nuevamente.');
+                        });
+                        if (servicioSinCostos) {
+                            error('No se puede enviar el prospecto: todos los servicios deben tener costos asociados.');
+                            return;
                         }
                     }
 
-                    // ✅ Preparar y enviar formulario
                     const form = document.getElementById('form-prospecto');
                     const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
                     let inp = form.querySelector('input[name="modo"]');
@@ -1842,7 +1833,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         form.appendChild(inp);
                     }
                     inp.value = modo;
-
                     if (modo === 'servicios') {
                         inp = form.querySelector('input[name="servicios_json"]');
                         if (!inp) {
