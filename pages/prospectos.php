@@ -98,27 +98,18 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <table id="tabla-servicios">
                 <thead>
                     <tr>
-                        <th>Servicio</th>
-                        <th>Tráfico</th>
-                        <th>Moneda</th>
-                        <th>Bultos</th>
-                        <th>Peso</th>
-                        <th>Volumen</th>
-                        <th>Costo</th>
-                        <th>Venta</th>
-                        <th>GDC</th>
-                        <th>GDV</th>
-                        <th>Acción</th>
+                        <th>Servicio</th><th>Tráfico</th><th>Moneda</th><th>Bultos</th><th>Peso</th><th>Volumen</th>
+                        <th>Costo</th><th>Venta</th><th>GDC</th><th>GDV</th><th>Acción</th>
                     </tr>
                 </thead>
                 <tbody id="servicios-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
                         <td colspan="6" style="text-align: right; font-weight: bold;">Totales:</td>
-                        <td id="total-costo" style="text-align: right;">0.00</td>
-                        <td id="total-venta" style="text-align: right;">0.00</td>
-                        <td id="total-costogasto" style="text-align: right;">0.00</td>
-                        <td id="total-ventagasto" style="text-align: right;">0.00</td>
+                        <td id="total-costo">0.00</td>
+                        <td id="total-venta">0.00</td>
+                        <td id="total-costogasto">0.00</td>
+                        <td id="total-ventagasto">0.00</td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -559,11 +550,19 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const gc = parseFloat(s.costogastoslocalesdestino) || 0;
                 const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
                 tc += c; tv += v; tgc += gc; tgv += gv;
+
+                // === ÍCONO DE ESTADO DE COSTOS ===
+                const estadoCostos = s.estado_costos || 'pendiente';
+                let iconoCostos = '';
+                if (estadoCostos === 'solicitado') {
+                    iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos de Pricing"></i>';
+                } else if (estadoCostos === 'completado') {
+                    iconoCostos = '<i class="fas fa-envelope-open" style="color: #009966;" title="Costos listos para revisión"></i>';
+                } else if (estadoCostos === 'revisado') {
+                    iconoCostos = '<i class="fas fa-check-circle" style="color: #006644;" title="Aprobado por Comercial"></i>';
+                }
+
                 const tr = document.createElement('tr');
-
-                document.getElementById('total-venta').textContent = tv.toFixed(2);
-                document.getElementById('total_venta_prospecto').value = tv.toFixed(2);
-
                 tr.innerHTML = `
                     <td>${s.servicio || ''}</td>
                     <td>${s.trafico || ''}</td>
@@ -576,6 +575,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     <td>${gc.toFixed(2)}</td>
                     <td>${gv.toFixed(2)}</td>
                     <td>
+                        ${iconoCostos}
                         <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
                         <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
                     </td>
@@ -587,7 +587,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // Listeners
+            // === Listeners para los íconos de correo ===
+            document.querySelectorAll('#tabla-servicios i.fa-envelope, #tabla-servicios i.fa-envelope-open').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const index = Array.from(row.parentNode.children).indexOf(row);
+                    const servicio = servicios[index];
+                    manejarNotificacionCostos(servicio, index);
+                });
+            });
+
+            // === Listeners de edición/eliminación ===
             document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const index = parseInt(this.getAttribute('data-index'));
@@ -600,6 +610,70 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     eliminarServicio(index);
                 });
             });
+        }
+
+        // === NUEVA FUNCIÓN: Gestión de notificaciones de costos ===
+        function manejarNotificacionCostos(servicio, index) {
+            const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+            const estadoActual = servicio.estado_costos || 'pendiente';
+
+            let accion = '';
+            if (rolUsuario === 'comercial' && estadoActual === 'pendiente') {
+                accion = 'solicitar';
+            } else if (rolUsuario === 'pricing' && (estadoActual === 'solicitado' || estadoActual === 'pendiente')) {
+                accion = 'completar';
+            } else if (rolUsuario === 'comercial' && estadoActual === 'completado') {
+                accion = 'aprobar';
+            } else {
+                alert('No tienes permisos para realizar esta acción.');
+                return;
+            }
+
+            if (accion === 'solicitar') {
+                if (!confirm('¿Solicitar costos al equipo de Pricing?')) return;
+                enviarNotificacionCostos(servicio.id_srvc, 'solicitado', index);
+            } else if (accion === 'completar') {
+                if (!servicio.costos || servicio.costos.length === 0) {
+                    alert('Debe agregar al menos un costo antes de notificar.');
+                    return;
+                }
+                if (!confirm('¿Notificar al Comercial que los costos están listos?')) return;
+                enviarNotificacionCostos(servicio.id_srvc, 'completado', index);
+            } else if (accion === 'aprobar') {
+                if (!confirm('¿Confirmar que los costos han sido revisados?')) return;
+                enviarNotificacionCostos(servicio.id_srvc, 'revisado', index);
+            }
+        }
+
+        function enviarNotificacionCostos(idSrvc, nuevoEstado, index) {
+            fetch('/api/notificar_costos.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_srvc: idSrvc,
+                    estado: nuevoEstado,
+                    usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
+                    rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    servicios[index].estado_costos = nuevoEstado;
+                    if (nuevoEstado === 'solicitado') {
+                        servicios[index].solicitado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
+                        servicios[index].fecha_solicitado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                    } else if (nuevoEstado === 'completado') {
+                        servicios[index].completado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
+                        servicios[index].fecha_completado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                    }
+                    actualizarTabla();
+                    alert(data.message);
+                } else {
+                    alert('Error: ' + (data.message || 'Intente nuevamente'));
+                }
+            })
+            .catch(() => alert('Error de conexión'));
         }
 
         // ===================================================================
@@ -1771,6 +1845,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
                 history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
             }
+
+            // === Restringir edición de costos por rol ===
+            const originalAbrirSubmodalCostos = abrirSubmodalCostos;
+            window.abrirSubmodalCostos = function() {
+                const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+                if (rolUsuario !== 'pricing' && rolUsuario !== 'admin') {
+                    alert('Solo el rol Pricing puede editar costos.');
+                    return;
+                }
+                originalAbrirSubmodalCostos();
+            };
         });
 
         // Exponer funciones globales
