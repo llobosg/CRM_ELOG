@@ -104,9 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             $id_ppl = $pdo->lastInsertId();
         }
 
-        // === Procesar servicios ===
+        // === Procesar servicios si el modo es 'servicios' ===
         if ($_POST['modo'] === 'servicios') {
-            // ✅ Elimina todos los servicios y sus dependencias
+            // Eliminar servicios y sus costos/gastos asociados
             $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
             $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
             $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         INSERT INTO servicios (
                             id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
                             base_calculo, moneda, tarifa, iva, estado, costo, venta,
-                            costogastoslocalesdestino, ventasgastoslocalesdestino,
+                            costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
                             commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
                             lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
                             agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
@@ -142,11 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $costogasto = (float)($s['costogastoslocalesdestino'] ?? 0);
                         $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
 
-                        $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
-                        $stmt_last->execute([$id_ppl]);
-                        $last = $stmt_last->fetch();
-                        $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
-                        $id_srvc = $concatenado . '-' . $correlativo_srvc;
+                        // ✅ Generar id_srvc si es TEMP
+                        $id_srvc = $s['id_srvc'] ?? null;
+                        if (!$id_srvc || strpos($id_srvc, 'TEMP_') === 0) {
+                            $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
+                            $stmt_last->execute([$id_ppl]);
+                            $last = $stmt_last->fetch();
+                            $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
+                            $id_srvc = "{$concatenado}-{$correlativo_srvc}";
+                        }
 
                         $stmt_serv->execute([
                             $id_srvc,
@@ -165,6 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $venta,
                             $costogasto,
                             $ventagasto,
+                            $s['desconsolidac'] ?? '',
                             $s['commodity'] ?? '',
                             $s['origen'] ?? '',
                             $s['pais_origen'] ?? '',
@@ -177,9 +182,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['mercancia'] ?? '',
                             (int)($s['bultos'] ?? 0),
                             (float)($s['peso'] ?? 0),
-                            (string)($s['volumen'] ?? '0.00'),  // ✅ string, como VARCHAR
-                            (string)($s['dimensiones'] ?? ''), // ✅ string
-                            $s['agente'] ?? '',                // ✅ posición correcta
+                            (string)($s['volumen'] ?? '0.00'),
+                            (string)($s['dimensiones'] ?? ''),
+                            $s['agente'] ?? '',
                             $s['aol'] ?? '',
                             $s['aod'] ?? '',
                             $s['transportador'] ?? '',
@@ -192,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['direc_serv'] ?? ''
                         ]);
 
-                        // Insertar costos y gastos (igual que en tu versión)
+                        // Insertar costos y gastos (igual que antes)
                         if (!empty($s['costos'])) {
                             $stmt_costo = $pdo->prepare("
                                 INSERT INTO costos_servicios (
