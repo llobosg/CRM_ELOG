@@ -551,17 +551,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
                 tc += c; tv += v; tgc += gc; tgv += gv;
 
-                // === Ícono de estado de costos ===
-                const estadoCostos = s.estado_costos || 'pendiente';
+                // === Determinar estado de costos (con retrocompatibilidad) ===
+                let estadoCostos = s.estado_costos || 'pendiente';
+                // Si no tiene costos y no tiene estado definido, es "pendiente"
+                if (!s.costos || s.costos.length === 0) {
+                    estadoCostos = 'pendiente';
+                }
+
+                // === Ícono según estado ===
                 let iconoCostos = '';
-                if (estadoCostos === 'solicitado') {
+                if (estadoCostos === 'pendiente') {
+                    // ✉️ Listo para solicitar costos a Pricing
+                    iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc;" title="Listo para solicitar costos a Pricing"></i>';
+                } else if (estadoCostos === 'solicitado') {
                     iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos de Pricing"></i>';
                 } else if (estadoCostos === 'completado') {
                     iconoCostos = '<i class="fas fa-envelope-open" style="color: #009966;" title="Costos listos para revisión"></i>';
                 } else if (estadoCostos === 'revisado') {
                     iconoCostos = '<i class="fas fa-check-circle" style="color: #006644;" title="Aprobado por Comercial"></i>';
                 }
-                // Si estado_costos === 'pendiente', no se muestra ícono (servicio sin costos, listo para solicitar)
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -588,8 +596,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // === Listeners para los íconos de correo (si existen) ===
-            document.querySelectorAll('#tabla-servicios i.fa-envelope, #tabla-servicios i.fa-envelope-open').forEach(icon => {
+            // === Listeners para íconos de notificación ===
+            document.querySelectorAll('#tabla-servicios i.fa-paper-plane, #tabla-servicios i.fa-envelope, #tabla-servicios i.fa-envelope-open').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
