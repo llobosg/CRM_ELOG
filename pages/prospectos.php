@@ -282,7 +282,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <h3><i class="fas fa-calculator"></i> Costos, Ventas y Gastos</h3>
             <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
             <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
-                <select id="costo_concepto" style="grid-column: span 3; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                <select id="costo_concepto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
                         <option value="">Seleccionar concepto</option>
                 </select>    
                 <input type="text" id="costo_moneda" readonly style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center; width: 80px;" />
@@ -626,33 +626,41 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
             const estadoActual = servicio.estado_costos || 'pendiente';
 
-            let accion = '';
-            if (rolUsuario === 'comercial' && estadoActual === 'pendiente') {
-                accion = 'solicitar';
-            } else if (rolUsuario === 'pricing' && (estadoActual === 'solicitado' || estadoActual === 'pendiente')) {
-                accion = 'completar';
-            } else if (rolUsuario === 'comercial' && estadoActual === 'completado') {
-                accion = 'aprobar';
-            } else {
-                alert('No tienes permisos para realizar esta acción.');
+            // === Cualquiera puede enviar un servicio SIN costos ===
+            if (estadoActual === 'pendiente') {
+                if (!confirm('¿Solicitar costos al equipo de Pricing?')) return;
+                enviarNotificacionCostos(servicio.id_srvc, 'solicitado', index);
                 return;
             }
 
-            if (accion === 'solicitar') {
-                if (!confirm('¿Solicitar costos al equipo de Pricing?')) return;
-                enviarNotificacionCostos(servicio.id_srvc, 'solicitado', index);
-            } else if (accion === 'completar') {
+            // === Solo Pricing puede marcar como completado ===
+            if (estadoActual === 'solicitado') {
+                if (rolUsuario !== 'pricing') {
+                    alert('Solo el rol Pricing puede marcar los costos como completados.');
+                    return;
+                }
                 if (!servicio.costos || servicio.costos.length === 0) {
                     alert('Debe agregar al menos un costo antes de notificar.');
                     return;
-                }
-                if (!confirm('¿Notificar al Comercial que los costos están listos?')) return;
-                enviarNotificacionCostos(servicio.id_srvc, 'completado', index);
-            } else if (accion === 'aprobar') {
-                if (!confirm('¿Confirmar que los costos han sido revisados?')) return;
-                enviarNotificacionCostos(servicio.id_srvc, 'revisado', index);
-            }
         }
+        if (!confirm('¿Notificar al Comercial que los costos están listos?')) return;
+        enviarNotificacionCostos(servicio.id_srvc, 'completado', index);
+        return;
+    }
+
+    // === Solo Comercial puede aprobar (opcional) ===
+    if (estadoActual === 'completado') {
+        if (rolUsuario !== 'comercial') {
+            alert('Solo el Comercial puede aprobar los costos.');
+            return;
+        }
+        if (!confirm('¿Confirmar que los costos han sido revisados?')) return;
+        enviarNotificacionCostos(servicio.id_srvc, 'revisado', index);
+        return;
+    }
+
+    alert('Acción no permitida en este estado.');
+}
 
         function enviarNotificacionCostos(idSrvc, nuevoEstado, index) {
             fetch('/api/notificar_costos.php', {
@@ -1293,6 +1301,23 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         // --- Submodales ---
         function abrirSubmodalCostos() {
+            const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+            const esPricing = (rolUsuario === 'pricing' || rolUsuario === 'admin');
+
+            // Deshabilitar edición si no es Pricing
+            document.getElementById('costo_qty').disabled = !esPricing;
+            document.getElementById('costo_costo').disabled = !esPricing;
+            document.getElementById('costo_tarifa').disabled = !esPricing;
+            document.getElementById('costo_concepto').disabled = !esPricing;
+            document.getElementById('costo_aplica').disabled = !esPricing;
+
+            // Ocultar botón "Agregar" si no es Pricing
+            const btnAgregar = document.querySelector('#submodal-costos button[onclick="guardarCosto()"]');
+            if (btnAgregar) {
+                btnAgregar.style.display = esPricing ? 'flex' : 'none';
+            }
+            
+            // Continúa proceso normal
             if (document.getElementById('modal-servicio').style.display === 'none') return error('Abra primero el modal de Servicio');
             if (servicioEnEdicion !== null) {
                 costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) ? [...servicios[servicioEnEdicion].costos] : [];
