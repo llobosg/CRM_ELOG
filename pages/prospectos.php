@@ -599,19 +599,24 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // === Listener para ícono de notificación ===
+            // === Listener para ícono de notificación (pendiente → solicitado) ===
             document.querySelectorAll('#tabla-servicios i.fa-paper-plane').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
                     const servicio = servicios[index];
 
+                    console.log('📤 [NOTIFICAR] Servicio seleccionado:', servicio);
+
                     if (!servicio.id_srvc) {
+                        console.log('❌ [NOTIFICAR] Error: servicio sin id_srvc');
                         error('El servicio no tiene un ID válido. Guarde primero el prospecto.');
                         return;
                     }
 
                     if (confirm('¿Solicitar costos al equipo de Pricing?')) {
+                        console.log('📤 [NOTIFICAR] Enviando solicitud a API...');
+
                         fetch('/api/notificar_costos.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -622,21 +627,26 @@ require_once __DIR__ . '/../includes/auth_check.php';
                                 rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
                             })
                         })
-                        .then(r => {
-                            if (!r.ok) throw new Error('Error en la respuesta del servidor');
-                            return r.json();
+                        .then(response => {
+                            console.log('📡 [NOTIFICAR] Respuesta HTTP:', response.status);
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
                         })
                         .then(data => {
+                            console.log('✅ [NOTIFICAR] Respuesta JSON:', data);
                             if (data.success) {
                                 servicios[index].estado_costos = 'solicitado';
-                                actualizarTabla(); // ✅ Refrescar visualmente
+                                actualizarTabla();
                                 exito('Notificación enviada a Pricing');
+                                console.log('✅ [NOTIFICAR] Mensaje de éxito mostrado');
                             } else {
-                                error('Error: ' + (data.message || 'No se pudo notificar'));
+                                error('Error al notificar: ' + (data.message || 'Intente nuevamente'));
                             }
                         })
                         .catch(err => {
-                            console.error('Error en notificación:', err);
+                            console.error('❌ [NOTIFICAR] Error en fetch:', err);
                             error('Error de conexión al notificar a Pricing');
                         });
                     }
@@ -1834,46 +1844,46 @@ function ejecutarGuardarServicio() {
             if (btnGrabarTodo) {
                 btnGrabarTodo.addEventListener('click', function(e) {
                     e.preventDefault();
-                    const estado = document.getElementById('estado')?.value || 'Pendiente';
+                    console.log('🔍 [GRABAR TODO] Iniciando validación...');
 
-                    // ✅ Validar costos SOLO si el prospecto se envía o cierra
-                    if (estado === 'Enviado' || estado === 'CerradoOK') {
-                        const tieneServiciosSinCostos = servicios.some(s => !s.costos || s.costos.length === 0);
-                        if (tieneServiciosSinCostos) {
-                            error('No se puede enviar el prospecto: todos los servicios deben tener costos asociados.');
-                            return;
-                        }
-                    }
                     const rut = document.getElementById('rut_empresa')?.value.trim();
                     const razonSelect = document.getElementById('razon_social_select');
                     const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
                     const operacion = document.getElementById('operacion')?.value;
                     const tipoOper = document.getElementById('tipo_oper')?.value;
                     const concatenado = document.getElementById('concatenado')?.value;
+                    const estado = document.getElementById('estado')?.value || 'Pendiente';
+
+                    console.log('📋 [GRABAR TODO] Valores:', { rut, razon, operacion, tipoOper, concatenado, estado });
 
                     if (!rut || !razon) {
+                        console.log('❌ [GRABAR TODO] Error: RUT o Razón Social vacíos');
                         error('RUT y Razón Social son obligatorios');
                         return;
                     }
-                    if (!operacion || !tipoOper || !concatenado) {
-                        error('Operación, Tipo Operación y Concatenado son obligatorios');
+                    if (!operacion || !tipoOper) {
+                        console.log('❌ [GRABAR TODO] Error: Operación o Tipo Operación vacíos');
+                        error('Operación y Tipo Operación son obligatorios');
                         return;
                     }
+                    if (!concatenado) {
+                        console.log('❌ [GRABAR TODO] Error: Concatenado vacío');
+                        error('El campo Concatenado no puede estar vacío');
+                        return;
+                    }
+
                     const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
                     if (!validarRut(rutLimpio)) {
+                        console.log('❌ [GRABAR TODO] Error: RUT inválido');
                         error('RUT inválido');
                         return;
                     }
 
-                    // ✅ Validación condicional: solo si estado es "Enviado" o "CerradoOK"
+                    // ✅ Validación condicional: solo si estado es Enviado o CerradoOK
                     if (estado === 'Enviado' || estado === 'CerradoOK') {
-                        let servicioSinCostos = false;
-                        servicios.forEach(s => {
-                            if (!s.costos || s.costos.length === 0) {
-                                servicioSinCostos = true;
-                            }
-                        });
-                        if (servicioSinCostos) {
+                        const tieneServiciosSinCostos = servicios.some(s => !s.costos || s.costos.length === 0);
+                        if (tieneServiciosSinCostos) {
+                            console.log('❌ [GRABAR TODO] Error: Servicios sin costos en estado final');
                             error('No se puede enviar el prospecto: todos los servicios deben tener costos asociados.');
                             return;
                         }
@@ -1881,6 +1891,9 @@ function ejecutarGuardarServicio() {
 
                     const form = document.getElementById('form-prospecto');
                     const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
+                    console.log('📤 [GRABAR TODO] Modo:', modo);
+
+                    // Asegurar campos ocultos
                     let inp = form.querySelector('input[name="modo"]');
                     if (!inp) {
                         inp = document.createElement('input');
@@ -1889,6 +1902,7 @@ function ejecutarGuardarServicio() {
                         form.appendChild(inp);
                     }
                     inp.value = modo;
+
                     if (modo === 'servicios') {
                         inp = form.querySelector('input[name="servicios_json"]');
                         if (!inp) {
@@ -1898,12 +1912,15 @@ function ejecutarGuardarServicio() {
                             form.appendChild(inp);
                         }
                         inp.value = JSON.stringify(servicios);
+                        console.log('📦 [GRABAR TODO] JSON de servicios:', inp.value);
                     }
 
-                    if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs si es necesario.\nHaga clic en "Aceptar" para continuar.')) {
+                    if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs.')) {
+                        console.log('✅ [GRABAR TODO] ¡Formulario enviado!');
                         form.submit();
                     } else {
-                        error('Envío cancelado. Puede revisar los logs en la consola.');
+                        console.log('⚠️ [GRABAR TODO] Envío cancelado por el usuario');
+                        error('Envío cancelado');
                     }
                 });
             }
