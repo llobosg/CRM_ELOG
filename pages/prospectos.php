@@ -594,34 +594,36 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // ✅ Listeners para ícono de notificación
+            // ✅ Listener para ícono de notificación (pendiente → solicitado)
             document.querySelectorAll('#tabla-servicios i.fa-paper-plane').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
                     const servicio = servicios[index];
                     if (servicio.estado_costos === 'pendiente') {
-                        // Notificar a Pricing
-                        fetch('/api/notificar_costos.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                id_srvc: servicio.id_srvc,
-                                estado: 'solicitado',
-                                usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
-                                rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
+                        if (confirm('¿Solicitar costos al equipo de Pricing?')) {
+                            fetch('/api/notificar_costos.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    id_srvc: servicio.id_srvc,
+                                    estado: 'solicitado',
+                                    usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
+                                    rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
+                                })
                             })
-                        })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) {
-                                servicios[index].estado_costos = 'solicitado';
-                                actualizarTabla(); // ✅ Refrescar visualmente
-                                exito('Notificación enviada a Pricing');
-                            } else {
-                                error('Error al notificar: ' + (data.message || 'Intente nuevamente'));
-                            }
-                        });
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.success) {
+                                    servicios[index].estado_costos = 'solicitado';
+                                    actualizarTabla(); // ✅ Refrescar visualmente
+                                    exito('Notificación enviada a Pricing');
+                                } else {
+                                    error('Error al notificar: ' + (data.message || 'Intente nuevamente'));
+                                }
+                            })
+                            .catch(() => error('Error de conexión al notificar'));
+                        }
                     }
                 });
             });
