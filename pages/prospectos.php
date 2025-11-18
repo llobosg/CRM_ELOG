@@ -502,20 +502,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 });
         });
 
-        function validarRut(rut) {
-            if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
-            const cuerpo = rut.slice(0, -1);
-            const dv = rut.slice(-1).toUpperCase();
-            let suma = 0, multiplo = 2;
-            for (let i = cuerpo.length - 1; i >= 0; i--) {
-                suma += parseInt(cuerpo[i]) * multiplo;
-                multiplo = multiplo < 7 ? multiplo + 1 : 2;
-            }
-            const dvEsperado = (11 - (suma % 11)).toString();
-            const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
-            return dv === dvCalculado;
-        }
-
         function calcularConcatenado() {
             const opSelect = document.getElementById('operacion');
             const tipoSelect = document.getElementById('tipo_oper');
@@ -537,6 +523,20 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
             const concatenado = `${opClean}${tipoClean}${fecha}-${correlativo}`;
             document.getElementById('concatenado').value = concatenado;
+        }
+
+        function validarRut(rut) {
+            if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
+            const cuerpo = rut.slice(0, -1);
+            const dv = rut.slice(-1).toUpperCase();
+            let suma = 0, multiplo = 2;
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                suma += parseInt(cuerpo[i]) * multiplo;
+                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            }
+            const dvEsperado = (11 - (suma % 11)).toString();
+            const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
+            return dv === dvCalculado;
         }
 
         function actualizarTabla() {
