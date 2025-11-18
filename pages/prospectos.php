@@ -551,13 +551,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
                 tc += c; tv += v; tgc += gc; tgv += gv;
 
-                // ✅ Determinar estado de costos
+                // ✅ Forzar estado_costos
                 let estadoCostos = s.estado_costos || 'pendiente';
                 if (!s.costos || s.costos.length === 0) {
                     estadoCostos = 'pendiente';
                 }
 
-                // ✅ Ícono según estado
                 let iconoCostos = '';
                 if (estadoCostos === 'pendiente') {
                     iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
@@ -589,18 +588,26 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 `;
                 tbody.appendChild(tr);
             });
+
             document.getElementById('total-costo').textContent = tc.toFixed(2);
             document.getElementById('total-venta').textContent = tv.toFixed(2);
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // ✅ Listener para ícono de notificación (pendiente → solicitado)
+            // ✅ Listener para ícono de notificación
             document.querySelectorAll('#tabla-servicios i.fa-paper-plane').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
                     const servicio = servicios[index];
-                    if (servicio.estado_costos === 'pendiente') {
+
+                    // Verificar que el servicio esté en estado 'pendiente'
+                    let estado = servicio.estado_costos || 'pendiente';
+                    if (!servicio.costos || servicio.costos.length === 0) {
+                        estado = 'pendiente';
+                    }
+
+                    if (estado === 'pendiente') {
                         if (confirm('¿Solicitar costos al equipo de Pricing?')) {
                             fetch('/api/notificar_costos.php', {
                                 method: 'POST',
@@ -616,14 +623,18 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             .then(data => {
                                 if (data.success) {
                                     servicios[index].estado_costos = 'solicitado';
-                                    actualizarTabla(); // ✅ Refrescar visualmente
+                                    actualizarTabla();
                                     exito('Notificación enviada a Pricing');
                                 } else {
                                     error('Error al notificar: ' + (data.message || 'Intente nuevamente'));
                                 }
                             })
-                            .catch(() => error('Error de conexión al notificar'));
+                            .catch(() => {
+                                error('Error de conexión al notificar');
+                            });
                         }
+                    } else {
+                        error('Este servicio ya fue notificado a Pricing.');
                     }
                 });
             });
