@@ -539,7 +539,79 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('concatenado').value = concatenado;
         }
 
-        
+        function actualizarTabla() {
+            const tbody = document.getElementById('servicios-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            let tc = 0, tv = 0, tgc = 0, tgv = 0;
+            servicios.forEach((s, index) => {
+                const c = parseFloat(s.costo) || 0;
+                const v = parseFloat(s.venta) || 0;
+                const gc = parseFloat(s.costogastoslocalesdestino) || 0;
+                const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
+                tc += c; tv += v; tgc += gc; tgv += gv;
+
+                // === Ícono de estado de costos ===
+                const estadoCostos = s.estado_costos || 'pendiente';
+                let iconoCostos = '';
+                if (estadoCostos === 'solicitado') {
+                    iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos de Pricing"></i>';
+                } else if (estadoCostos === 'completado') {
+                    iconoCostos = '<i class="fas fa-envelope-open" style="color: #009966;" title="Costos listos para revisión"></i>';
+                } else if (estadoCostos === 'revisado') {
+                    iconoCostos = '<i class="fas fa-check-circle" style="color: #006644;" title="Aprobado por Comercial"></i>';
+                }
+                // Si estado_costos === 'pendiente', no se muestra ícono (servicio sin costos, listo para solicitar)
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${s.servicio || ''}</td>
+                    <td>${s.trafico || ''}</td>
+                    <td>${s.moneda || 'USD'}</td>
+                    <td>${s.bultos || ''}</td>
+                    <td>${s.peso || ''}</td>
+                    <td>${s.volumen || ''}</td>
+                    <td>${c.toFixed(2)}</td>
+                    <td>${v.toFixed(2)}</td>
+                    <td>${gc.toFixed(2)}</td>
+                    <td>${gv.toFixed(2)}</td>
+                    <td>
+                        ${iconoCostos}
+                        <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
+                        <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('total-costo').textContent = tc.toFixed(2);
+            document.getElementById('total-venta').textContent = tv.toFixed(2);
+            document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
+            document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
+
+            // === Listeners para los íconos de correo (si existen) ===
+            document.querySelectorAll('#tabla-servicios i.fa-envelope, #tabla-servicios i.fa-envelope-open').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const index = Array.from(row.parentNode.children).indexOf(row);
+                    const servicio = servicios[index];
+                    manejarNotificacionCostos(servicio, index);
+                });
+            });
+
+            // === Listeners de edición/eliminación ===
+            document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    editarServicio(index);
+                });
+            });
+            document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    eliminarServicio(index);
+                });
+            });
+        }
 
         // === NUEVA FUNCIÓN: Gestión de notificaciones de costos ===
         function manejarNotificacionCostos(servicio, index) {
