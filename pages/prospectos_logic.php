@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         INSERT INTO servicios (
                             id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
                             base_calculo, moneda, tarifa, iva, estado, costo, venta,
-                            costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
+                            costogastoslocalesdestino, ventasgastoslocalesdestino,
                             commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
                             lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
                             agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
@@ -165,7 +165,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $venta,
                             $costogasto,
                             $ventagasto,
-                            $s['desconsolidac'] ?? '',
                             $s['commodity'] ?? '',
                             $s['origen'] ?? '',
                             $s['pais_origen'] ?? '',

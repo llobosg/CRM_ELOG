@@ -98,27 +98,18 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <table id="tabla-servicios">
                 <thead>
                     <tr>
-                        <th>Servicio</th>
-                        <th>Tráfico</th>
-                        <th>Moneda</th>
-                        <th>Bultos</th>
-                        <th>Peso</th>
-                        <th>Volumen</th>
-                        <th>Costo</th>
-                        <th>Venta</th>
-                        <th>GDC</th>
-                        <th>GDV</th>
-                        <th>Acción</th>
+                        <th>Servicio</th><th>Tráfico</th><th>Moneda</th><th>Bultos</th><th>Peso</th><th>Volumen</th>
+                        <th>Costo</th><th>Venta</th><th>GDC</th><th>GDV</th><th>Acción</th>
                     </tr>
                 </thead>
                 <tbody id="servicios-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
                         <td colspan="6" style="text-align: right; font-weight: bold;">Totales:</td>
-                        <td id="total-costo" style="text-align: right;">0.00</td>
-                        <td id="total-venta" style="text-align: right;">0.00</td>
-                        <td id="total-costogasto" style="text-align: right;">0.00</td>
-                        <td id="total-ventagasto" style="text-align: right;">0.00</td>
+                        <td id="total-costo">0.00</td>
+                        <td id="total-venta">0.00</td>
+                        <td id="total-costogasto">0.00</td>
+                        <td id="total-ventagasto">0.00</td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -291,17 +282,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <h3><i class="fas fa-calculator"></i> Costos, Ventas y Gastos</h3>
             <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
             <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.7rem; margin: 1.2rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
-                <select id="costo_aplica" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
-                    <option value="">Seleccionar aplica</option>
-                </select>
+                <select id="costo_concepto" style="grid-column: span 3; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                        <option value="">Seleccionar concepto</option>
+                </select>    
                 <input type="text" id="costo_moneda" readonly style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center; width: 80px;" />
                 <input type="number" id="costo_qty" step="0.01" min="0" placeholder="Qty" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right; width: 80px;" />
                 <input type="number" id="costo_costo" step="0.01" min="0" placeholder="Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
                 <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
                 <input type="number" id="costo_tarifa" step="0.01" min="0" placeholder="Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
                 <input type="text" id="costo_total_tarifa" readonly placeholder="Total Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
-                <select id="costo_concepto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
-                    <option value="">Seleccionar concepto</option>
+                <select id="costo_aplica" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                    <option value="">Seleccionar aplica</option>
                 </select>
                 <button type="button" onclick="guardarCosto()" style="grid-column: span 1; background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
                     <i class="fas fa-plus"></i> Agregar
@@ -314,8 +305,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Concepto</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Moneda</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Qty</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Total Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #2d2a2aff; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #2d2a2aff; background-color: #fff9db; font-size: 0.92rem;">Total Costo</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Total Tarifa</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Aplica</th>
@@ -559,11 +550,20 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const gc = parseFloat(s.costogastoslocalesdestino) || 0;
                 const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
                 tc += c; tv += v; tgc += gc; tgv += gv;
+
+                // === Ícono de estado de costos ===
+                const estadoCostos = s.estado_costos || 'pendiente';
+                let iconoCostos = '';
+                if (estadoCostos === 'solicitado') {
+                    iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos de Pricing"></i>';
+                } else if (estadoCostos === 'completado') {
+                    iconoCostos = '<i class="fas fa-envelope-open" style="color: #009966;" title="Costos listos para revisión"></i>';
+                } else if (estadoCostos === 'revisado') {
+                    iconoCostos = '<i class="fas fa-check-circle" style="color: #006644;" title="Aprobado por Comercial"></i>';
+                }
+                // Si estado_costos === 'pendiente', no se muestra ícono (servicio sin costos, listo para solicitar)
+
                 const tr = document.createElement('tr');
-
-                document.getElementById('total-venta').textContent = tv.toFixed(2);
-                document.getElementById('total_venta_prospecto').value = tv.toFixed(2);
-
                 tr.innerHTML = `
                     <td>${s.servicio || ''}</td>
                     <td>${s.trafico || ''}</td>
@@ -576,6 +576,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     <td>${gc.toFixed(2)}</td>
                     <td>${gv.toFixed(2)}</td>
                     <td>
+                        ${iconoCostos}
                         <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
                         <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
                     </td>
@@ -587,7 +588,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // Listeners
+            // === Listeners para los íconos de correo (si existen) ===
+            document.querySelectorAll('#tabla-servicios i.fa-envelope, #tabla-servicios i.fa-envelope-open').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const index = Array.from(row.parentNode.children).indexOf(row);
+                    const servicio = servicios[index];
+                    manejarNotificacionCostos(servicio, index);
+                });
+            });
+
+            // === Listeners de edición/eliminación ===
             document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const index = parseInt(this.getAttribute('data-index'));
@@ -600,6 +611,70 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     eliminarServicio(index);
                 });
             });
+        }
+
+        // === NUEVA FUNCIÓN: Gestión de notificaciones de costos ===
+        function manejarNotificacionCostos(servicio, index) {
+            const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+            const estadoActual = servicio.estado_costos || 'pendiente';
+
+            let accion = '';
+            if (rolUsuario === 'comercial' && estadoActual === 'pendiente') {
+                accion = 'solicitar';
+            } else if (rolUsuario === 'pricing' && (estadoActual === 'solicitado' || estadoActual === 'pendiente')) {
+                accion = 'completar';
+            } else if (rolUsuario === 'comercial' && estadoActual === 'completado') {
+                accion = 'aprobar';
+            } else {
+                alert('No tienes permisos para realizar esta acción.');
+                return;
+            }
+
+            if (accion === 'solicitar') {
+                if (!confirm('¿Solicitar costos al equipo de Pricing?')) return;
+                enviarNotificacionCostos(servicio.id_srvc, 'solicitado', index);
+            } else if (accion === 'completar') {
+                if (!servicio.costos || servicio.costos.length === 0) {
+                    alert('Debe agregar al menos un costo antes de notificar.');
+                    return;
+                }
+                if (!confirm('¿Notificar al Comercial que los costos están listos?')) return;
+                enviarNotificacionCostos(servicio.id_srvc, 'completado', index);
+            } else if (accion === 'aprobar') {
+                if (!confirm('¿Confirmar que los costos han sido revisados?')) return;
+                enviarNotificacionCostos(servicio.id_srvc, 'revisado', index);
+            }
+        }
+
+        function enviarNotificacionCostos(idSrvc, nuevoEstado, index) {
+            fetch('/api/notificar_costos.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_srvc: idSrvc,
+                    estado: nuevoEstado,
+                    usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
+                    rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    servicios[index].estado_costos = nuevoEstado;
+                    if (nuevoEstado === 'solicitado') {
+                        servicios[index].solicitado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
+                        servicios[index].fecha_solicitado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                    } else if (nuevoEstado === 'completado') {
+                        servicios[index].completado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
+                        servicios[index].fecha_completado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                    }
+                    actualizarTabla();
+                    alert(data.message);
+                } else {
+                    alert('Error: ' + (data.message || 'Intente nuevamente'));
+                }
+            })
+            .catch(() => alert('Error de conexión'));
         }
 
         // ===================================================================
@@ -1111,79 +1186,101 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
 
         function guardarServicio() {
+            console.log('🔍 [SERVICIO] Iniciando guardarServicio');
             const servicio = document.getElementById('serv_servicio').value.trim();
-            if (!servicio) return error('Servicio es obligatorio');
+            if (!servicio) {
+                error('Servicio es obligatorio');
+                return;
+            }
+
             const origen = document.getElementById('serv_origen').value;
             const destino = document.getElementById('serv_destino').value;
-            if (origen && destino && origen === destino) return error('Origen y Destino no pueden ser el mismo');
+            if (origen && destino && origen === destino) {
+                error('Origen y Destino no pueden ser el mismo lugar');
+                return;
+            }
+
+            // ✅ NO validar que existan costos aquí → Permitir servicio sin costos
 
             const rutCliente = document.getElementById('rut_empresa')?.value.trim();
-            const totalVenta = costosServicio.reduce((sum, c) => sum + (parseFloat(c.total_tarifa) || 0), 0);
-            if (costosServicio.length === 0) return error('Debe agregar al menos un costo al servicio');
+            const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
 
-            const continuar = () => {
-                const nuevo = {
-                    id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
-                    id_prospect: document.getElementById('id_prospect_serv').value,
-                    servicio: document.getElementById('serv_servicio').value,
-                    trafico: document.getElementById('serv_medio_transporte').value,
-                    commodity: document.getElementById('serv_commodity').value,
-                    origen: document.getElementById('serv_origen').value,
-                    pais_origen: document.getElementById('serv_pais_origen').value,
-                    destino: document.getElementById('serv_destino').value,
-                    pais_destino: document.getElementById('serv_pais_destino').value,
-                    transito: document.getElementById('serv_transito').value,
-                    frecuencia: document.getElementById('serv_frecuencia').value,
-                    lugar_carga: document.getElementById('serv_lugar_carga').value,
-                    sector: document.getElementById('serv_sector').value,
-                    mercancia: document.getElementById('serv_mercancia').value,
-                    bultos: document.getElementById('serv_bultos').value,
-                    peso: document.getElementById('serv_peso').value,
-                    volumen: document.getElementById('serv_volumen').value,
-                    dimensiones: document.getElementById('serv_dimensiones').value,
-                    moneda: document.getElementById('serv_moneda').value,
-                    tipo_cambio: document.getElementById('serv_tipo_cambio').value,
-                    proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-                    aol: document.getElementById('serv_aol').value,
-                    aod: document.getElementById('serv_aod').value,
-                    agente: document.getElementById('serv_agente').value,
-                    transportador: document.getElementById('serv_transportador').value,
-                    incoterm: document.getElementById('serv_incoterm').value,
-                    ref_cliente: document.getElementById('serv_ref_cliente').value,
-                    costo: costosServicio.reduce((sum, c) => sum + (parseFloat(c.total_costo) || 0), 0),
-                    venta: costosServicio.reduce((sum, c) => sum + (parseFloat(c.total_tarifa) || 0), 0),
-                    costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (parseFloat(g.monto) || 0), 0),
-                    ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (parseFloat(g.monto) || 0), 0),
-                    costos: [...costosServicio],
-                    gastos_locales: [...gastosLocales]
-                };
-
-                if (servicioEnEdicion !== null) {
-                    servicios[servicioEnEdicion] = nuevo;
-                    exito('Servicio actualizado correctamente');
-                } else {
-                    servicios.push(nuevo);
-                    exito('Servicio agregado correctamente');
-                }
-                actualizarTabla();
-                cerrarModalServicio();
-            };
-
-            if (rutCliente && totalVenta > 0) {
+            // Validar crédito SOLO si hay costos y monto > 0
+            if (rutCliente && totalVentaServicio > 0) {
                 fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
                     .then(r => r.json())
                     .then(data => {
                         if (data.error) {
                             error(data.error);
-                        } else if (totalVenta > data.saldo_credito) {
-                            error(`Sobregiro: El servicio supera el crédito disponible (${data.saldo_credito}).`);
-                        } else {
-                            continuar();
+                            return;
                         }
+                        if (totalVentaServicio > data.saldo_credito) {
+                            error(`Sobregiro detectado: El servicio supera el saldo de crédito disponible (${data.saldo_credito}). 
+                                Solicite un aumento de límite en Ficha Cliente.`);
+                            return;
+                        }
+                        ejecutarGuardarServicio();
+                    })
+                    .catch(err => {
+                        console.error('Error al validar crédito:', err);
+                        error('No se pudo verificar la línea de crédito.');
                     });
             } else {
-                continuar();
+                // ✅ Guardar sin validar crédito si no hay costos (flujo Comercial → Pricing)
+                ejecutarGuardarServicio();
             }
+        }
+
+        function ejecutarGuardarServicio() {
+            const nuevo = {
+                id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
+                id_prospect: document.getElementById('id_prospect_serv').value,
+                servicio: document.getElementById('serv_servicio').value.trim(),
+                trafico: document.getElementById('serv_medio_transporte').value,
+                commodity: document.getElementById('serv_commodity').value,
+                origen: document.getElementById('serv_origen').value,
+                pais_origen: document.getElementById('serv_pais_origen').value,
+                destino: document.getElementById('serv_destino').value,
+                pais_destino: document.getElementById('serv_pais_destino').value,
+                transito: document.getElementById('serv_transito').value,
+                frecuencia: document.getElementById('serv_frecuencia').value,
+                lugar_carga: document.getElementById('serv_lugar_carga').value,
+                sector: document.getElementById('serv_sector').value,
+                mercancia: document.getElementById('serv_mercancia').value,
+                bultos: document.getElementById('serv_bultos').value,
+                peso: document.getElementById('serv_peso').value,
+                volumen: document.getElementById('serv_volumen').value,
+                dimensiones: document.getElementById('serv_dimensiones').value,
+                moneda: document.getElementById('serv_moneda').value,
+                tipo_cambio: document.getElementById('serv_tipo_cambio').value,
+                proveedor_nac: document.getElementById('serv_proveedor_nac').value,
+                desconsolidac: document.getElementById('serv_desconsolidacion').value,
+                aol: document.getElementById('serv_aol').value,
+                aod: document.getElementById('serv_aod').value,
+                agente: document.getElementById('serv_agente').value,
+                transportador: document.getElementById('serv_transportador').value,
+                incoterm: document.getElementById('serv_incoterm').value,
+                ref_cliente: document.getElementById('serv_ref_cliente').value,
+                costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
+                venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
+                costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
+                ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
+                costos: [...costosServicio],
+                gastos_locales: [...gastosLocales],
+                // ✅ Estado de costos: si no hay costos, está "pendiente" (listo para enviar a Pricing)
+                estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
+            };
+
+            if (servicioEnEdicion !== null) {
+                servicios[servicioEnEdicion] = nuevo;
+                exito('Servicio actualizado correctamente');
+            } else {
+                servicios.push(nuevo);
+                exito('Servicio agregado correctamente');
+            }
+
+            actualizarTabla();
+            cerrarModalServicio();
         }
 
         // --- Submodales ---
@@ -1771,6 +1868,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
                 history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
             }
+
+            // === Restringir edición de costos por rol ===
+            const originalAbrirSubmodalCostos = abrirSubmodalCostos;
+            window.abrirSubmodalCostos = function() {
+                const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+                if (rolUsuario !== 'pricing' && rolUsuario !== 'admin') {
+                    alert('Solo el rol Pricing puede editar costos.');
+                    return;
+                }
+                originalAbrirSubmodalCostos();
+            };
         });
 
         // Exponer funciones globales
