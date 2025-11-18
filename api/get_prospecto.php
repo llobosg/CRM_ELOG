@@ -50,6 +50,9 @@ try {
             $g['iva'] = (float)$g['iva'];
         }
         $servicio['gastos_locales'] = $gastos;
+
+        // ✅ Incluir estado_costos
+        'estado_costos' => $row['estado_costos'] ?? 'pendiente'
     }
 
     echo json_encode([

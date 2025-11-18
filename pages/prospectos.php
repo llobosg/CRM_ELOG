@@ -639,7 +639,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             if (data.success) {
                                 servicios[index].estado_costos = 'solicitado';
                                 actualizarTabla();
-                                exito('Notificación enviada a Pricing');
+                                exito('✅ Solicitud enviada a Pricing.\n\n💡 Recuerde hacer clic en "Grabar Todo" para guardar el estado del prospecto.');
                                 console.log('✅ [NOTIFICAR] Mensaje de éxito mostrado');
                             } else {
                                 error('Error al notificar: ' + (data.message || 'Intente nuevamente'));
