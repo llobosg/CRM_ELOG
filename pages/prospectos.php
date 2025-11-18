@@ -545,27 +545,31 @@ require_once __DIR__ . '/../includes/auth_check.php';
             tbody.innerHTML = '';
             let tc = 0, tv = 0, tgc = 0, tgv = 0;
             servicios.forEach((s, index) => {
+                // Asegurar que el servicio tenga id_srvc
+                if (!s.id_srvc) {
+                    s.id_srvc = `TEMP_${Date.now()}_${index}`;
+                }
+                // Asegurar estado_costos
+                if (!s.estado_costos) {
+                    s.estado_costos = s.costos && s.costos.length > 0 ? 'completado' : 'pendiente';
+                }
+
                 const c = parseFloat(s.costo) || 0;
                 const v = parseFloat(s.venta) || 0;
                 const gc = parseFloat(s.costogastoslocalesdestino) || 0;
                 const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
                 tc += c; tv += v; tgc += gc; tgv += gv;
 
-                // ✅ Forzar estado_costos
-                let estadoCostos = s.estado_costos || 'pendiente';
-                if (!s.costos || s.costos.length === 0) {
-                    estadoCostos = 'pendiente';
-                }
-
+                // Ícono de notificación
                 let iconoCostos = '';
-                if (estadoCostos === 'pendiente') {
+                if (s.estado_costos === 'pendiente') {
                     iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
-                } else if (estadoCostos === 'solicitado') {
+                } else if (s.estado_costos === 'solicitado') {
                     iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos de Pricing"></i>';
-                } else if (estadoCostos === 'completado') {
+                } else if (s.estado_costos === 'completado') {
                     iconoCostos = '<i class="fas fa-envelope-open" style="color: #009966;" title="Costos listos para revisión"></i>';
-                } else if (estadoCostos === 'revisado') {
-                    iconoCostos = '<i class="fas fa-check-circle" style="color: #006644;" title="Aprobado por Comercial"></i>';
+                } else if (s.estado_costos === 'revisado') {
+                    iconoCostos = '<i class="fas fa-check-circle" style="color: #006644;" title="Aprobado"></i>';
                 }
 
                 const tr = document.createElement('tr');
@@ -589,52 +593,52 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 tbody.appendChild(tr);
             });
 
+            // Actualizar totales
             document.getElementById('total-costo').textContent = tc.toFixed(2);
             document.getElementById('total-venta').textContent = tv.toFixed(2);
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // ✅ Listener para ícono de notificación
+            // === Listener para ícono de notificación ===
             document.querySelectorAll('#tabla-servicios i.fa-paper-plane').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
                     const servicio = servicios[index];
 
-                    // Verificar que el servicio esté en estado 'pendiente'
-                    let estado = servicio.estado_costos || 'pendiente';
-                    if (!servicio.costos || servicio.costos.length === 0) {
-                        estado = 'pendiente';
+                    if (!servicio.id_srvc) {
+                        error('El servicio no tiene un ID válido. Guarde primero el prospecto.');
+                        return;
                     }
 
-                    if (estado === 'pendiente') {
-                        if (confirm('¿Solicitar costos al equipo de Pricing?')) {
-                            fetch('/api/notificar_costos.php', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    id_srvc: servicio.id_srvc,
-                                    estado: 'solicitado',
-                                    usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
-                                    rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
-                                })
+                    if (confirm('¿Solicitar costos al equipo de Pricing?')) {
+                        fetch('/api/notificar_costos.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id_srvc: servicio.id_srvc,
+                                estado: 'solicitado',
+                                usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
+                                rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
                             })
-                            .then(r => r.json())
-                            .then(data => {
-                                if (data.success) {
-                                    servicios[index].estado_costos = 'solicitado';
-                                    actualizarTabla();
-                                    exito('Notificación enviada a Pricing');
-                                } else {
-                                    error('Error al notificar: ' + (data.message || 'Intente nuevamente'));
-                                }
-                            })
-                            .catch(() => {
-                                error('Error de conexión al notificar');
-                            });
-                        }
-                    } else {
-                        error('Este servicio ya fue notificado a Pricing.');
+                        })
+                        .then(r => {
+                            if (!r.ok) throw new Error('Error en la respuesta del servidor');
+                            return r.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                servicios[index].estado_costos = 'solicitado';
+                                actualizarTabla(); // ✅ Refrescar visualmente
+                                exito('Notificación enviada a Pricing');
+                            } else {
+                                error('Error: ' + (data.message || 'No se pudo notificar'));
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error en notificación:', err);
+                            error('Error de conexión al notificar a Pricing');
+                        });
                     }
                 });
             });
@@ -1237,68 +1241,112 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
 
         function guardarServicio() {
-            const servicio = document.getElementById('serv_servicio').value.trim();
-            if (!servicio) {
-                error('Servicio es obligatorio');
-                return;
-            }
-            const origen = document.getElementById('serv_origen').value;
-            const destino = document.getElementById('serv_destino').value;
-            if (origen && destino && origen === destino) {
-                error('Origen y Destino no pueden ser el mismo lugar');
-                return;
-            }
+    console.log('🔍 [SERVICIO] Iniciando guardarServicio');
+    const servicio = document.getElementById('serv_servicio').value.trim();
+    if (!servicio) {
+        console.log('⚠️ [SERVICIO] Validación fallida: Servicio es obligatorio');
+        error('Servicio es obligatorio');
+        return;
+    }
+    const origen = document.getElementById('serv_origen').value;
+    const destino = document.getElementById('serv_destino').value;
+    if (origen && destino && origen === destino) {
+        console.log('⚠️ [SERVICIO] Validación fallida: Origen y Destino son iguales');
+        error('Origen y Destino no pueden ser el mismo lugar');
+        return;
+    }
 
-            // ✅ NO VALIDAR COSTOS AQUÍ → se valida solo al enviar prospecto
-            const nuevo = {
-                id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
-                id_prospect: document.getElementById('id_prospect_serv').value,
-                servicio: servicio,
-                trafico: document.getElementById('serv_medio_transporte').value,
-                commodity: document.getElementById('serv_commodity').value,
-                origen: document.getElementById('serv_origen').value,
-                pais_origen: document.getElementById('serv_pais_origen').value,
-                destino: document.getElementById('serv_destino').value,
-                pais_destino: document.getElementById('serv_pais_destino').value,
-                transito: document.getElementById('serv_transito').value,
-                frecuencia: document.getElementById('serv_frecuencia').value,
-                lugar_carga: document.getElementById('serv_lugar_carga').value,
-                sector: document.getElementById('serv_sector').value,
-                mercancia: document.getElementById('serv_mercancia').value,
-                bultos: document.getElementById('serv_bultos').value,
-                peso: document.getElementById('serv_peso').value,
-                volumen: document.getElementById('serv_volumen').value,
-                dimensiones: document.getElementById('serv_dimensiones').value,
-                moneda: document.getElementById('serv_moneda').value,
-                tipo_cambio: document.getElementById('serv_tipo_cambio').value,
-                proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-                desconsolidac: '',
-                aol: document.getElementById('serv_aol').value,
-                aod: document.getElementById('serv_aod').value,
-                agente: document.getElementById('serv_agente').value,
-                transportador: document.getElementById('serv_transportador').value,
-                incoterm: document.getElementById('serv_incoterm').value,
-                ref_cliente: document.getElementById('serv_ref_cliente').value,
-                costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
-                venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
-                costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
-                ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
-                costos: [...costosServicio],
-                gastos_locales: [...gastosLocales],
-                // ✅ Estado de costos: "pendiente" si no hay costos
-                estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
-            };
+    // ✅ Obtener el estado actual del prospecto
+    const estadoProspecto = document.getElementById('estado')?.value || 'Pendiente';
+    const rutCliente = document.getElementById('rut_empresa')?.value.trim();
+    const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
 
-            if (servicioEnEdicion !== null) {
-                servicios[servicioEnEdicion] = nuevo;
-                exito('Servicio actualizado correctamente');
-            } else {
-                servicios.push(nuevo);
-                exito('Servicio agregado correctamente');
-            }
-            actualizarTabla();
-            cerrarModalServicio();
+    // ✅ Validar costos SOLO si el estado es "Enviado" o "CerradoOK"
+    if (estadoProspecto === 'Enviado' || estadoProspecto === 'CerradoOK') {
+        if (costosServicio.length === 0) {
+            error('Debe agregar al menos un costo al servicio antes de enviarlo.');
+            return;
         }
+    }
+
+    // ✅ Validar crédito solo si hay RUT y monto > 0
+    if (rutCliente && totalVentaServicio > 0) {
+        fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    error(data.error);
+                    return;
+                }
+                if (totalVentaServicio > data.saldo_credito) {
+                    error(`Sobregiro detectado: El servicio supera el saldo de crédito disponible (${data.saldo_credito}). 
+                        Solicite un aumento de límite en Ficha Cliente.`);
+                    return;
+                }
+                ejecutarGuardarServicio();
+            })
+            .catch(err => {
+                console.error('Error al validar crédito:', err);
+                error('No se pudo verificar la línea de crédito.');
+            });
+    } else {
+        // ✅ Guardar sin validación de crédito ni costos (si estado es Pendiente)
+        ejecutarGuardarServicio();
+    }
+}
+
+// === Función que realiza el guardado real ===
+function ejecutarGuardarServicio() {
+    const servicio = document.getElementById('serv_servicio').value.trim();
+    const nuevo = {
+        id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
+        id_prospect: document.getElementById('id_prospect_serv').value,
+        servicio: servicio,
+        trafico: document.getElementById('serv_medio_transporte').value,
+        commodity: document.getElementById('serv_commodity').value,
+        origen: document.getElementById('serv_origen').value,
+        pais_origen: document.getElementById('serv_pais_origen').value,
+        destino: document.getElementById('serv_destino').value,
+        pais_destino: document.getElementById('serv_pais_destino').value,
+        transito: document.getElementById('serv_transito').value,
+        frecuencia: document.getElementById('serv_frecuencia').value,
+        lugar_carga: document.getElementById('serv_lugar_carga').value,
+        sector: document.getElementById('serv_sector').value,
+        mercancia: document.getElementById('serv_mercancia').value,
+        bultos: document.getElementById('serv_bultos').value,
+        peso: document.getElementById('serv_peso').value,
+        volumen: document.getElementById('serv_volumen').value,
+        dimensiones: document.getElementById('serv_dimensiones').value,
+        moneda: document.getElementById('serv_moneda').value,
+        tipo_cambio: document.getElementById('serv_tipo_cambio').value,
+        proveedor_nac: document.getElementById('serv_proveedor_nac').value,
+        desconsolidac: '',
+        aol: document.getElementById('serv_aol').value,
+        aod: document.getElementById('serv_aod').value,
+        agente: document.getElementById('serv_agente').value,
+        transportador: document.getElementById('serv_transportador').value,
+        incoterm: document.getElementById('serv_incoterm').value,
+        ref_cliente: document.getElementById('serv_ref_cliente').value,
+        costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
+        venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
+        costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
+        ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
+        costos: [...costosServicio],
+        gastos_locales: [...gastosLocales],
+        // ✅ Estado de costos: "pendiente" si no hay costos
+        estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
+    };
+
+    if (servicioEnEdicion !== null) {
+        servicios[servicioEnEdicion] = nuevo;
+        exito('Servicio actualizado correctamente');
+    } else {
+        servicios.push(nuevo);
+        exito('Servicio agregado correctamente');
+    }
+    actualizarTabla();
+    cerrarModalServicio();
+}
 
         // --- Submodales ---
         function abrirSubmodalCostos() {
