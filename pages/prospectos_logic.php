@@ -132,8 +132,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
                             lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
                             agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
-                            ciudad, pais, direc_serv
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ciudad, pais, direc_serv,
+                            -- ✅ Campos nuevos para gestión de costos --
+                            estado_costos, solicitado_por, fecha_solicitado,
+                            completado_por, fecha_completado, revisado_por, fecha_revisado
+                        ) VALUES (
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            -- Valores nuevos --
+                            ?, ?, ?,
+                            ?, ?, ?, ?
+                        )
                     ");
 
                     foreach ($servicios_data as $s) {
@@ -194,7 +203,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             (float)($s['tipo_cambio'] ?? 1),
                             $s['ciudad'] ?? '',
                             $s['pais'] ?? '',
-                            $s['direc_serv'] ?? ''
+                            $s['direc_serv'] ?? '',
+                            (string)($s['estado_costos'] ?? 'pendiente'),
+                            (int)($s['solicitado_por'] ?? 0),
+                            $s['fecha_solicitado'] ?? null,
+                            (int)($s['completado_por'] ?? 0),
+                            $s['fecha_completado'] ?? null,
+                            (int)($s['revisado_por'] ?? 0),
+                            $s['fecha_revisado'] ?? null
                         ]);
 
                         // Insertar costos y gastos (igual que antes)

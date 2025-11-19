@@ -550,8 +550,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     s.id_srvc = `TEMP_${Date.now()}_${index}`;
                 }
                 // Asegurar estado_costos
-                if (!s.estado_costos) {
-                    s.estado_costos = s.costos && s.costos.length > 0 ? 'completado' : 'pendiente';
+                let estadoCostos = s.estado_costos || 'pendiente';
+                if (!s.costos || s.costos.length === 0) {
+                    // Solo forzar a 'pendiente' si no hay costos Y no hay estado guardado
+                    if (!s.estado_costos) {
+                        estadoCostos = 'pendiente';
+                    }
                 }
 
                 const c = parseFloat(s.costo) || 0;
@@ -1987,6 +1991,18 @@ function ejecutarGuardarServicio() {
                 }
                 originalAbrirSubmodalCostos();
             };
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const idFromUrl = urlParams.get('id_ppl');
+            if (idFromUrl && !isNaN(idFromUrl)) {
+                // ✅ Ejecutar selección solo si hay id_ppl válido
+                setTimeout(() => {
+                    console.log('🔄 Cargando prospecto desde URL:', idFromUrl);
+                    seleccionarProspecto(parseInt(idFromUrl));
+                }, 300);
+                // ✅ Eliminar el parámetro de la URL después de cargar
+                history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
+            }
         });
 
         // Exponer funciones globales
