@@ -1,5 +1,6 @@
 <?php
 // pages/prospectos_logic.php
+// ✅ Versión corregida: genera id_srvc permanente para servicios TEMP_...
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
     require_once __DIR__ . '/../config.php';
     require_once __DIR__ . '/../includes/auth_check.php';
