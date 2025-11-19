@@ -1,6 +1,6 @@
 <?php
 // pages/prospectos_logic.php
-// Lógica estable: elimina todos los servicios y los vuelve a insertar
+// Lógica de guardado para prospectos (ejecutada antes de cualquier salida HTML)
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
     require_once __DIR__ . '/../config.php';
@@ -11,8 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         $id_ppl = (int)($_POST['id_ppl'] ?? 0);
         $modo_update = ($id_ppl > 0);
+        $servicios_existentes = false;
 
         if ($modo_update) {
+            // Verificar si ya tiene servicios
+            $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM servicios WHERE id_prospect = ?");
+            $stmt_check->execute([$id_ppl]);
+            $servicios_existentes = $stmt_check->fetchColumn() > 0;
+
             // Obtener id_prospect
             $stmt_id = $pdo->prepare("SELECT id_prospect FROM prospectos WHERE id_ppl = ?");
             $stmt_id->execute([$id_ppl]);
@@ -62,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
         $correlativo = str_pad($id_prospect + 1, 2, '0', STR_PAD_LEFT);
         $concatenado = $prefijo . $fecha_actual . '-' . $correlativo;
 
-        // === Datos prospecto ===
+        // === Preparar datos del prospecto ===
         $id_comercial = !empty($_POST['id_comercial']) ? (int)$_POST['id_comercial'] : null;
         $data = [
             'id_prospect' => $id_prospect,
@@ -85,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             'fecha_estado' => $_POST['fecha_estado'] ?? date('Y-m-d'),
         ];
 
-        // === Guardar prospecto ===
+        // === Insertar o Actualizar Prospecto ===
         if ($modo_update) {
             $setParts = [];
             $values = [];
@@ -120,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             if ($servicios_json !== '') {
                 $servicios_data = json_decode($servicios_json, true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new Exception('Error al decodificar servicios JSON');
+                    throw new Exception('Error al decodificar servicios JSON: ' . json_last_error_msg());
                 }
 
                 if (!empty($servicios_data)) {
@@ -137,13 +143,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             completado_por, fecha_completado, revisado_por, fecha_revisado
                         ) VALUES (
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, ?, ?, ?, ?
                         )
                     ");
 
                     foreach ($servicios_data as $s) {
-                        // ✅ Generar id_srvc permanente si es TEMP
+                        // ✅ Generar id_srvc permanente si es temporal
                         $id_srvc = $s['id_srvc'] ?? null;
                         if (!$id_srvc || strpos($id_srvc, 'TEMP_') === 0) {
                             $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
@@ -211,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['fecha_revisado'] ?? null
                         ]);
 
-                        // Insertar costos y gastos...
+                        // Insertar costos
                         if (!empty($s['costos'])) {
                             $stmt_costo = $pdo->prepare("
                                 INSERT INTO costos_servicios (
@@ -233,6 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             }
                         }
 
+                        // Insertar gastos
                         if (!empty($s['gastos_locales'])) {
                             $stmt_gasto = $pdo->prepare("
                                 INSERT INTO gastos_locales_detalle (
@@ -258,6 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $total_ventagasto += $ventagasto;
                     }
 
+                    // Actualizar totales en prospecto
                     $pdo->prepare("UPDATE prospectos SET
                         total_costo = ?, total_venta = ?,
                         total_costogastoslocalesdestino = ?, total_ventasgastoslocalesdestino = ?
@@ -268,7 +276,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             }
         }
 
-        // === Actualizar crédito si pasa a CerradoOK ===
+        // Si el prospecto pasa a CerradoOK, actualizar crédito del cliente
         if ($_POST['estado'] === 'CerradoOK' && $estado_anterior !== 'CerradoOK') {
             $stmt_venta = $pdo->prepare("SELECT total_venta FROM prospectos WHERE id_ppl = ?");
             $stmt_venta->execute([$id_ppl]);
@@ -279,11 +287,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             $rut_empresa = $stmt_rut->fetchColumn();
 
             if ($rut_empresa && $total_venta > 0) {
-                $pdo->prepare("
+                $stmt_update_credito = $pdo->prepare("
                     UPDATE clientes 
                     SET usado_credito = usado_credito + ? 
                     WHERE rut = ?
-                ")->execute([$total_venta, $rut_empresa]);
+                ");
+                $stmt_update_credito->execute([$total_venta, $rut_empresa]);
             }
         }
 
@@ -298,7 +307,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
         exit;
 
     } catch (Exception $e) {
-        $pdo->rollback();
+        try {
+            $pdo->rollback();
+        } catch (Exception $ex) {
+            // Silencioso
+        }
         $mensajeUsuario = "Error al guardar el prospecto.";
         if (defined('DEVELOPMENT') && DEVELOPMENT) {
             $mensajeUsuario = $e->getMessage();
