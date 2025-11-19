@@ -977,6 +977,20 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // ===================================================================
         function seleccionarProspecto(id) {
             fetch(`/api/get_prospecto.php?id=${id}`)
+                // === Validación antes de r.json()
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`HTTP ${r.status}`);
+                    }
+                    return r.text().then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            console.error('❌ Respuesta no es JSON:', text);
+                            throw new Error('La API devolvió HTML en lugar de JSON');
+                        }
+                    });
+                })
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
