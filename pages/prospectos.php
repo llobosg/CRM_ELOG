@@ -991,7 +991,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         }
                     });
                 })
-                .then(r => r.json())
                 .then(data => {
                     if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
                     const p = data.prospecto;
