@@ -32,10 +32,37 @@ try {
         $valores[] = $usuarioId;
     }
 
+    // === Actualiza BD ===
     $valores[] = $idSrvc;
     $sql = "UPDATE servicios SET " . implode(', ', $campos) . " WHERE id_srvc = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($valores);
+
+    // === Envío de correo ===
+    if ($estado === 'solicitado') {
+        // Obtener datos para el correo
+        $stmt = $pdo->prepare("
+            SELECT p.concatenado, p.razon_social, s.id_prospect, u.nombre as comercial_nombre
+            FROM servicios s
+            JOIN prospectos p ON s.id_prospect = p.id_ppl
+            LEFT JOIN users u ON p.id_comercial = u.id
+            WHERE s.id_srvc = ?
+        ");
+        $stmt->execute([$idSrvc]);
+        $prospecto = $stmt->fetch();
+
+        if ($prospecto) {
+            // Incluir la función de envío
+            require_once __DIR__ . '/enviar_correo_pricing.php';
+            $resultado = enviarCorreoPricing(
+                $prospecto['id_prospect'],
+                $prospecto['concatenado'],
+                $prospecto['razon_social'],
+                $prospecto['comercial_nombre'] ?? 'Comercial asignado'
+            );
+            $mensaje .= " ✉️ " . $resultado['message'];
+        }
+    }
 
     // === Mensaje claro para el frontend ===
     $mensaje = match($estado) {
