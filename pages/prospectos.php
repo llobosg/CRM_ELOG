@@ -1975,9 +1975,15 @@ function ejecutarGuardarServicio() {
                 }
             });
 
-            const idFromUrl = params.get('id_ppl');
+            // === Cargar prospecto desde la URL (si viene con ?id_ppl=...) ===
+            const urlParams = new URLSearchParams(window.location.search);
+            const idFromUrl = urlParams.get('id_ppl');
             if (idFromUrl && !isNaN(idFromUrl)) {
-                setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
+                setTimeout(() => {
+                    console.log('🔄 Cargando prospecto desde URL:', idFromUrl);
+                    seleccionarProspecto(parseInt(idFromUrl));
+                }, 300);
+                // Limpiar la URL para evitar recargas innecesarias
                 history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
             }
 
@@ -1991,18 +1997,6 @@ function ejecutarGuardarServicio() {
                 }
                 originalAbrirSubmodalCostos();
             };
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const idFromUrl = urlParams.get('id_ppl');
-            if (idFromUrl && !isNaN(idFromUrl)) {
-                // ✅ Ejecutar selección solo si hay id_ppl válido
-                setTimeout(() => {
-                    console.log('🔄 Cargando prospecto desde URL:', idFromUrl);
-                    seleccionarProspecto(parseInt(idFromUrl));
-                }, 300);
-                // ✅ Eliminar el parámetro de la URL después de cargar
-                history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
-            }
         });
 
         // Exponer funciones globales
