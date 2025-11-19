@@ -545,35 +545,33 @@ require_once __DIR__ . '/../includes/auth_check.php';
             tbody.innerHTML = '';
             let tc = 0, tv = 0, tgc = 0, tgv = 0;
             servicios.forEach((s, index) => {
-                // Asegurar que el servicio tenga id_srvc
-                if (!s.id_srvc) {
-                    s.id_srvc = `TEMP_${Date.now()}_${index}`;
-                }
-                // Asegurar estado_costos
-                let estadoCostos = s.estado_costos || 'pendiente';
-                if (!s.costos || s.costos.length === 0) {
-                    // Solo forzar a 'pendiente' si no hay costos Y no hay estado guardado
-                    if (!s.estado_costos) {
-                        estadoCostos = 'pendiente';
-                    }
-                }
-
                 const c = parseFloat(s.costo) || 0;
                 const v = parseFloat(s.venta) || 0;
                 const gc = parseFloat(s.costogastoslocalesdestino) || 0;
                 const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
                 tc += c; tv += v; tgc += gc; tgv += gv;
 
-                // Ícono de notificación
+                // === Determinar estado de costos ===
+                let estadoCostos = s.estado_costos || 'pendiente';
+                // Si no tiene costos y no tiene estado definido, es "pendiente"
+                if (!s.costos || s.costos.length === 0) {
+                    estadoCostos = 'pendiente';
+                }
+
+                // === Ícono según estado ===
                 let iconoCostos = '';
-                if (s.estado_costos === 'pendiente') {
-                    iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
-                } else if (s.estado_costos === 'solicitado') {
+                if (estadoCostos === 'pendiente') {
+                    // ✉️ Solo mostrar si el servicio ya fue guardado (no es TEMP)
+                    if (s.id_srvc && !s.id_srvc.startsWith('TEMP_')) {
+                        iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
+                    }
+                    // Si es TEMP, no se muestra ícono (no se puede notificar)
+                } else if (estadoCostos === 'solicitado') {
                     iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos de Pricing"></i>';
-                } else if (s.estado_costos === 'completado') {
+                } else if (estadoCostos === 'completado') {
                     iconoCostos = '<i class="fas fa-envelope-open" style="color: #009966;" title="Costos listos para revisión"></i>';
-                } else if (s.estado_costos === 'revisado') {
-                    iconoCostos = '<i class="fas fa-check-circle" style="color: #006644;" title="Aprobado"></i>';
+                } else if (estadoCostos === 'revisado') {
+                    iconoCostos = '<i class="fas fa-check-circle" style="color: #006644;" title="Aprobado por Comercial"></i>';
                 }
 
                 const tr = document.createElement('tr');
@@ -596,31 +594,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 `;
                 tbody.appendChild(tr);
             });
-
-            // Actualizar totales
             document.getElementById('total-costo').textContent = tc.toFixed(2);
             document.getElementById('total-venta').textContent = tv.toFixed(2);
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // === Listener para ícono de notificación (pendiente → solicitado) ===
+            // === Listeners para ícono de notificación (solo si es paper-plane) ===
             document.querySelectorAll('#tabla-servicios i.fa-paper-plane').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
                     const servicio = servicios[index];
 
-                    console.log('📤 [NOTIFICAR] Servicio seleccionado:', servicio);
-
-                    if (!servicio.id_srvc) {
-                        console.log('❌ [NOTIFICAR] Error: servicio sin id_srvc');
-                        error('El servicio no tiene un ID válido. Guarde primero el prospecto.');
+                    // Validar que el servicio tenga un ID válido (ya guardado)
+                    if (!servicio.id_srvc || servicio.id_srvc.startsWith('TEMP_')) {
+                        alert('Debe guardar el prospecto primero antes de solicitar costos.');
                         return;
                     }
 
                     if (confirm('¿Solicitar costos al equipo de Pricing?')) {
-                        console.log('📤 [NOTIFICAR] Enviando solicitud a API...');
-
                         fetch('/api/notificar_costos.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -642,9 +634,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             console.log('✅ [NOTIFICAR] Respuesta JSON:', data);
                             if (data.success) {
                                 servicios[index].estado_costos = 'solicitado';
-                                actualizarTabla();
-                                exito('✅ Solicitud enviada a Pricing.\n\n💡 Recuerde hacer clic en "Grabar Todo" para guardar el estado del prospecto.');
-                                console.log('✅ [NOTIFICAR] Mensaje de éxito mostrado');
+                                actualizarTabla(); // ✅ Refrescar visualmente
+                                exito('Notificación enviada a Pricing');
                             } else {
                                 error('Error al notificar: ' + (data.message || 'Intente nuevamente'));
                             }
@@ -657,7 +648,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 });
             });
 
-            // Listeners de edición/eliminación
+            // === Listeners de edición/eliminación ===
             document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const index = parseInt(this.getAttribute('data-index'));

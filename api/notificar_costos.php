@@ -10,6 +10,15 @@ try {
     $estado = $data['estado'] ?? '';
     $usuarioId = (int)($data['usuario_id'] ?? 0);
 
+    // === validación id_srvc ===
+    $idSrvc = $data['id_srvc'] ?? '';
+    if (empty($idSrvc) || !is_string($idSrvc)) {
+        throw new Exception('ID de servicio inválido o no proporcionado');
+    }
+    if (strlen($idSrvc) > 50 || !preg_match('/^[a-zA-Z0-9\-_]+$/', $idSrvc)) {
+        throw new Exception('Formato de ID de servicio no válido');
+    }
+
     if (!$idSrvc || !in_array($estado, ['solicitado', 'completado', 'revisado'])) {
         throw new Exception('Datos inválidos para notificación de costos');
     }
