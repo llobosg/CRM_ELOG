@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         // === Procesar servicios si el modo es 'servicios' ===
         if ($_POST['modo'] === 'servicios') {
-            // Eliminar servicios y sus costos/gastos asociados
+            // Eliminar servicios y sus dependencias
             $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
             $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
             $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             if ($servicios_json !== '') {
                 $servicios_data = json_decode($servicios_json, true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new Exception('Error al decodificar servicios JSON: ' . json_last_error_msg());
+                    throw new Exception('Error al decodificar servicios JSON');
                 }
 
                 if (!empty($servicios_data)) {
@@ -133,25 +133,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
                             agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
                             ciudad, pais, direc_serv,
-                            -- ✅ Campos nuevos para gestión de costos --
                             estado_costos, solicitado_por, fecha_solicitado,
                             completado_por, fecha_completado, revisado_por, fecha_revisado
                         ) VALUES (
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            -- Valores nuevos --
-                            ?, ?, ?,
-                            ?, ?, ?, ?
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?, ?
                         )
                     ");
 
                     foreach ($servicios_data as $s) {
-                        $costo = (float)($s['costo'] ?? 0);
-                        $venta = (float)($s['venta'] ?? 0);
-                        $costogasto = (float)($s['costogastoslocalesdestino'] ?? 0);
-                        $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
-
-                        // ✅ Generar id_srvc si es TEMP
+                        // ✅ Generar id_srvc permanente si es TEMP
                         $id_srvc = $s['id_srvc'] ?? null;
                         if (!$id_srvc || strpos($id_srvc, 'TEMP_') === 0) {
                             $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
@@ -160,6 +152,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
                             $id_srvc = "{$concatenado}-{$correlativo_srvc}";
                         }
+
+                        $costo = (float)($s['costo'] ?? 0);
+                        $venta = (float)($s['venta'] ?? 0);
+                        $costogasto = (float)($s['costogastoslocalesdestino'] ?? 0);
+                        $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
 
                         $stmt_serv->execute([
                             $id_srvc,
@@ -204,16 +201,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             $s['ciudad'] ?? '',
                             $s['pais'] ?? '',
                             $s['direc_serv'] ?? '',
-                            (string)($s['estado_costos'] ?? 'pendiente'),
-                            (int)($s['solicitado_por'] ?? 0),
+                            // ✅ Campos de gestión de costos
+                            $s['estado_costos'] ?? 'pendiente',
+                            $s['solicitado_por'] ?? null,
                             $s['fecha_solicitado'] ?? null,
-                            (int)($s['completado_por'] ?? 0),
+                            $s['completado_por'] ?? null,
                             $s['fecha_completado'] ?? null,
-                            (int)($s['revisado_por'] ?? 0),
+                            $s['revisado_por'] ?? null,
                             $s['fecha_revisado'] ?? null
                         ]);
 
-                        // Insertar costos y gastos (igual que antes)
+                        // Insertar costos y gastos...
                         if (!empty($s['costos'])) {
                             $stmt_costo = $pdo->prepare("
                                 INSERT INTO costos_servicios (
@@ -260,7 +258,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $total_ventagasto += $ventagasto;
                     }
 
-                    // Actualizar totales en prospecto
                     $pdo->prepare("UPDATE prospectos SET
                         total_costo = ?, total_venta = ?,
                         total_costogastoslocalesdestino = ?, total_ventasgastoslocalesdestino = ?
@@ -296,6 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             ? 'Prospecto y servicios actualizados correctamente'
             : 'Prospecto creado correctamente';
 
+        // ✅ Incluir id_ppl en la redirección
         header("Location: " . $_SERVER['PHP_SELF'] . "?page=prospectos&exito=" . urlencode($mensaje_exito) . "&id_ppl=" . $id_ppl);
         exit;
 
