@@ -1,67 +1,70 @@
 <?php
-require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
-
+// /api/get_prospecto.php
 header('Content-Type: application/json; charset=utf-8');
 
+// Evitar salida de errores en producción
+error_reporting(0);
+
 try {
-    $id = (int)($_GET['id'] ?? 0);
+    require_once __DIR__ . '/../config.php';
+    require_once __DIR__ . '/../includes/auth_check.php';
+
+    $id = $_GET['id'] ?? null;
     if (!$id) {
-        throw new Exception('ID de prospecto inválido');
+        throw new Exception('ID de prospecto no especificado');
     }
 
     // === Cargar prospecto ===
-    $stmt = $pdo->prepare("SELECT * FROM prospectos WHERE id_ppl = ?");
+    $stmt = $pdo->prepare("
+        SELECT * FROM prospectos 
+        WHERE id_ppl = ?
+    ");
     $stmt->execute([$id]);
     $prospecto = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$prospecto) {
-        echo json_encode(['success' => false, 'message' => 'Prospecto no encontrado']);
-        exit;
+        throw new Exception('Prospecto no encontrado');
     }
 
     // === Cargar servicios ===
-    $stmt = $pdo->prepare("SELECT * FROM servicios WHERE id_prospect = ? ORDER BY id_srvc");
+    $stmt = $pdo->prepare("
+        SELECT * FROM servicios 
+        WHERE id_prospect = ?
+        ORDER BY id_srvc
+    ");
     $stmt->execute([$id]);
     $servicios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // === Procesar costos y gastos locales para cada servicio ===
-    foreach ($servicios as &$servicio) {
-        // --- Costos ---
-        $stmt_costos = $pdo->prepare("SELECT * FROM costos_servicios WHERE id_servicio = ? ORDER BY concepto");
-        $stmt_costos->execute([$servicio['id_srvc']]);
-        $costos = $stmt_costos->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($costos as &$c) {
-            $c['qty'] = (float)$c['qty'];
-            $c['costo'] = (float)$c['costo'];
-            $c['total_costo'] = (float)$c['total_costo'];
-            $c['tarifa'] = (float)$c['tarifa'];
-            $c['total_tarifa'] = (float)$c['total_tarifa'];
-        }
-        $servicio['costos'] = $costos;
+    // === Cargar costos y gastos por servicio ===
+    $serviciosConDetalles = [];
+    foreach ($servicios as $s) {
+        // Costos
+        $stmtCostos = $pdo->prepare("SELECT * FROM costos_servicios WHERE id_servicio = ?");
+        $stmtCostos->execute([$s['id_srvc']]);
+        $costos = $stmtCostos->fetchAll(PDO::FETCH_ASSOC);
 
-        // --- Gastos locales ---
-        $stmt_gastos = $pdo->prepare("SELECT * FROM gastos_locales_detalle WHERE id_servicio = ? ORDER BY tipo, gasto");
-        $stmt_gastos->execute([$servicio['id_srvc']]);
-        $gastos = $stmt_gastos->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($gastos as &$g) {
-            // ✅ Conversión explícita a float
-            $g['monto'] = (float)$g['monto'];
-            $g['iva'] = (float)$g['iva'];
-        }
-        $servicio['gastos_locales'] = $gastos;
+        // Gastos locales
+        $stmtGastos = $pdo->prepare("SELECT * FROM gastos_locales_detalle WHERE id_servicio = ?");
+        $stmtGastos->execute([$s['id_srvc']]);
+        $gastos = $stmtGastos->fetchAll(PDO::FETCH_ASSOC);
 
-        // ✅ Incluir estado_costos
-        'estado_costos' => $row['estado_costos'] ?? 'pendiente'
+        $serviciosConDetalles[] = array_merge($s, [
+            'costos' => $costos,
+            'gastos_locales' => $gastos
+        ]);
     }
 
     echo json_encode([
         'success' => true,
         'prospecto' => $prospecto,
-        'servicios' => $servicios
-    ], JSON_UNESCAPED_UNICODE);
+        'servicios' => $serviciosConDetalles
+    ]);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage()
+    ]);
 }
+?>
