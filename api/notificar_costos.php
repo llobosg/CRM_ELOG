@@ -14,28 +14,42 @@ try {
         throw new Exception('Datos inválidos para notificación de costos');
     }
 
-    // Actualizar estado en la base de datos
-    $stmt = $pdo->prepare("
-        UPDATE servicios 
-        SET estado_costos = ?, 
-            fecha_solicitado = CASE WHEN ? = 'solicitado' THEN NOW() ELSE fecha_solicitado END,
-            solicitado_por = CASE WHEN ? = 'solicitado' THEN ? ELSE solicitado_por END
-        WHERE id_srvc = ?
-    ");
-    $stmt->execute([$estado, $estado, $estado, $usuarioId, $idSrvc]);
+    // === Preparar campos a actualizar según el estado ===
+    $campos = ['estado_costos = ?'];
+    $valores = [$estado];
 
-    // Mensaje según el estado
+    if ($estado === 'solicitado') {
+        $campos[] = 'fecha_solicitado = NOW()';
+        $campos[] = 'solicitado_por = ?';
+        $valores[] = $usuarioId;
+    } elseif ($estado === 'completado') {
+        $campos[] = 'fecha_completado = NOW()';
+        $campos[] = 'completado_por = ?';
+        $valores[] = $usuarioId;
+    } elseif ($estado === 'revisado') {
+        $campos[] = 'fecha_revisado = NOW()';
+        $campos[] = 'revisado_por = ?';
+        $valores[] = $usuarioId;
+    }
+
+    $valores[] = $idSrvc;
+    $sql = "UPDATE servicios SET " . implode(', ', $campos) . " WHERE id_srvc = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($valores);
+
+    // === Mensaje claro para el frontend ===
     $mensaje = match($estado) {
         'solicitado' => 'Solicitud de costos enviada al equipo de Pricing.',
         'completado' => 'Costos marcados como completados.',
         'revisado' => 'Costos aprobados por el Comercial.',
-        default => 'Estado actualizado.'
+        default => 'Estado de costos actualizado.'
     };
 
     echo json_encode(['success' => true, 'message' => $mensaje]);
 
 } catch (Exception $e) {
+    error_log("Error en notificar_costos.php: " . $e->getMessage());
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Error al actualizar el estado de costos.']);
 }
 ?>
