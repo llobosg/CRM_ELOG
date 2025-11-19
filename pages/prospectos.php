@@ -551,26 +551,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
                 tc += c; tv += v; tgc += gc; tgv += gv;
 
-                // ✅ Estado de costos
-                let estadoCostos = s.estado_costos || 'pendiente';
-                if (!s.costos || s.costos.length === 0) {
-                    if (s.id_srvc && !s.id_srvc.startsWith('TEMP_')) {
-                        estadoCostos = 'pendiente'; // Servicio guardado sin costos
-                    } else {
-                        estadoCostos = 'temporal'; // Servicio no guardado
-                    }
-                }
-
-                // ✅ Ícono
+                // ✅ Solo permitir notificar si el servicio ya fue guardado
                 let iconoCostos = '';
-                if (estadoCostos === 'pendiente') {
-                    iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
-                } else if (estadoCostos === 'solicitado') {
-                    iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos de Pricing"></i>';
-                } else if (estadoCostos === 'completado') {
-                    iconoCostos = '<i class="fas fa-envelope-open" style="color: #009966;" title="Costos listos para revisión"></i>';
-                } else if (estadoCostos === 'revisado') {
-                    iconoCostos = '<i class="fas fa-check-circle" style="color: #006644;" title="Aprobado por Comercial"></i>';
+                if (s.id_srvc && !s.id_srvc.startsWith('TEMP_')) {
+                    if (s.estado_costos === 'pendiente' || (!s.costos || s.costos.length === 0)) {
+                        iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
+                    } else if (s.estado_costos === 'solicitado') {
+                        iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos"></i>';
+                    } else if (s.estado_costos === 'completado') {
+                        iconoCostos = '<i class="fas fa-envelope-open" style="color: #009966;" title="Costos listos"></i>';
+                    }
                 }
 
                 const tr = document.createElement('tr');
@@ -599,13 +589,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // ✅ Listeners para ícono de notificación
+            // Listeners para ícono de notificación
             document.querySelectorAll('#tabla-servicios i.fa-paper-plane').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
                     const servicio = servicios[index];
 
+                    // ✅ Validar que el servicio tenga ID permanente
                     if (!servicio.id_srvc || servicio.id_srvc.startsWith('TEMP_')) {
                         alert('Debe guardar el prospecto primero antes de solicitar costos.');
                         return;
@@ -1266,14 +1257,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const estadoProspecto = document.getElementById('estado')?.value || 'Pendiente';
             const rutCliente = document.getElementById('rut_empresa')?.value.trim();
             const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
-
-            // ✅ Validar costos SOLO si el estado es "Enviado" o "CerradoOK"
-            if (estadoProspecto === 'Enviado' || estadoProspecto === 'CerradoOK') {
-                if (costosServicio.length === 0) {
-                    error('Debe agregar al menos un costo al servicio antes de enviarlo.');
-                    return;
-                }
-            }
 
             // ✅ Validar crédito solo si hay RUT y monto > 0
             if (rutCliente && totalVentaServicio > 0) {
