@@ -249,17 +249,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         $pdo->commit();
 
-        // ✅ Definir mensaje de éxito con valor seguro
-        $mensaje_exito = $modo_update
-            ? 'Prospecto y servicios actualizados correctamente'
-            : 'Prospecto creado correctamente';
-
         // ✅ Asegurar que $id_ppl no sea null
         $redirect_id = $id_ppl ?: 0;
         $redirect_url = $_SERVER['PHP_SELF'] . "?page=prospectos&exito=" . urlencode($mensaje_exito) . "&id_ppl=" . $redirect_id;
         header("Location: " . $redirect_url);
         exit;
 
+        // ✅ Definir mensaje de éxito con valor seguro
+        $mensaje_exito = $modo_update
+            ? 'Prospecto y servicios actualizados correctamente'
+            : 'Prospecto creado correctamente';
+   
     } catch (Exception $e) {
         $pdo->rollback();
         $mensajeUsuario = "Error al guardar el prospecto: " . $e->getMessage();
