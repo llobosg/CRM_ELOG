@@ -1,37 +1,40 @@
 <?php
 session_start();
+require_once __DIR__ . '/config.php';
 
-if (empty($_POST['nombre']) || empty($_POST['password'])) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: login.php');
+    exit;
+}
+
+$nombre = trim($_POST['nombre'] ?? '');
+$password = $_POST['password'] ?? '';
+
+if (!$nombre || !$password) {
     header('Location: login.php?error=1');
     exit;
 }
 
-$username = $_POST['nombre'];
-$password = $_POST['password'];
+try {
+    // Ajusta el nombre de la tabla y columnas según tu esquema
+    $stmt = $pdo->prepare("SELECT id_usr, email, rol, password FROM usuarios WHERE email = ? OR nombre = ?");
+    $stmt->execute([$nombre, $nombre]);
+    $usuario = $stmt->fetch();
 
-// 🔍 $username antes de pasar por config.php
-error_log("🔍 Login antes de config.php: '$username'");
+    if ($usuario && password_verify($password, $usuario['password'])) {
+        // ✅ Guarda TODOS los datos necesarios en la sesión
+        $_SESSION['user'] = $usuario['email'];
+        $_SESSION['user_id'] = (int)$usuario['id_usr']; // ← ¡ESTO ES CLAVE!
+        $_SESSION['rol'] = $usuario['rol'];
 
-require_once __DIR__ . '/config.php';
-
-// 🔍 $username cuando vuelve de config.php
-error_log("🔍 Login después de pasar por config: '$username'");
-
-error_log("🔍 Consulta: SELECT nombre, rol, password FROM usuarios WHERE nombre = '$username'");
-$stmt = $pdo->prepare("SELECT nombre, rol, password FROM usuarios WHERE nombre = ?");
-$stmt->execute([$username]);
-$user = $stmt->fetch();
-error_log("🔍 Resultado SQL: " . json_encode($user));
-
-// 🔍 LOG DEL RESULTADO
-error_log("🔍 Usuario encontrado: " . ($user ? $user['nombre'] : 'NINGUNO'));
-
-if ($user && $password === $user['password']) {
-    $_SESSION['user'] = $user['nombre'];
-    $_SESSION['rol'] = $user['rol'];
-    header('Location: index.php');
-    exit;
-} else {
+        header('Location: index.php?page=prospectos');
+        exit;
+    } else {
+        header('Location: login.php?error=1');
+        exit;
+    }
+} catch (Exception $e) {
+    error_log("Error en auth.php: " . $e->getMessage());
     header('Location: login.php?error=1');
     exit;
 }
