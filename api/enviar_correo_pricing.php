@@ -18,10 +18,10 @@ require_once __DIR__ . '/../config.php';
 function enviarCorreoPricing($prospectoId, $concatenado, $razonSocial, $comercialNombre = 'Comercial asignado') {
     global $pdo;
     
-    // 1. Obtener correos de usuarios con rol 'pricing'
+    // 1. Obtener correos de usuarios con rol 'pricing' → TABLA: usuarios (no "users")
     $stmt = $pdo->prepare("
         SELECT email, nombre 
-        FROM users 
+        FROM usuarios 
         WHERE rol = 'pricing' 
         AND email IS NOT NULL 
         AND email != '' 
@@ -133,7 +133,7 @@ function enviarCorreoPricing($prospectoId, $concatenado, $razonSocial, $comercia
             </html>
         ";
 
-        // Alternativa en texto plano (para clientes que no soportan HTML)
+        // Alternativa en texto plano
         $mail->AltBody = "Nueva solicitud de costos para el prospecto $concatenado (Cliente: $razonSocial).\n\n" .
                          "Solicitado por: $comercialNombre\n\n" .
                          "Acceda al prospecto aquí: $link";

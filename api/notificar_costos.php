@@ -51,23 +51,37 @@ try {
     if ($estado === 'solicitado') {
         // Obtener datos para el correo
         $stmt = $pdo->prepare("
-            SELECT p.concatenado, p.razon_social, s.id_prospect, u.nombre as comercial_nombre
+            SELECT 
+                p.concatenado, 
+                p.razon_social, 
+                s.id_prospect, 
+                u.nombre, 
+                u.apellidoP, 
+                u.apellidoM,
+                u.email AS comercial_email
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
-            LEFT JOIN usuarios u ON p.id_comercial = u.id
+            LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
             WHERE s.id_srvc = ?
         ");
         $stmt->execute([$idSrvc]);
         $prospecto = $stmt->fetch();
 
         if ($prospecto) {
+            // Construir nombre completo del comercial
+            $nombreCompleto = trim("{$prospecto['nombre']} {$prospecto['apellidoP']} {$prospecto['apellidoM']}");
+            if (empty($nombreCompleto)) {
+                $nombreCompleto = 'Comercial asignado';
+            }
+
             // Incluir la función de envío
             require_once __DIR__ . '/enviar_correo_pricing.php';
             $resultado = enviarCorreoPricing(
                 $prospecto['id_prospect'],
                 $prospecto['concatenado'],
                 $prospecto['razon_social'],
-                $prospecto['comercial_nombre'] ?? 'Comercial asignado'
+                $nombreCompleto,
+                $prospecto['comercial_email'] ?? null
             );
             $mensaje .= " ✉️ " . $resultado['message'];
         }
