@@ -1259,28 +1259,30 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         // === FUNCIÓN PRINCIPAL: guardarServicio ===
         function guardarServicio() {
-            console.log('🔍 [SERVICIO] Iniciando guardarServicio');
+            console.log('🔍 [SERVICIO] Iniciando guardarServicio en BD');
             const servicio = document.getElementById('serv_servicio').value.trim();
             if (!servicio) {
-                console.log('⚠️ [SERVICIO] Validación fallida: Servicio es obligatorio');
                 error('Servicio es obligatorio');
                 return;
             }
             const origen = document.getElementById('serv_origen').value;
             const destino = document.getElementById('serv_destino').value;
             if (origen && destino && origen === destino) {
-                console.log('⚠️ [SERVICIO] Validación fallida: Origen y Destino son iguales');
-                error('Origen y Destino no pueden ser el mismo lugar');
+                error('Origen y Destino no pueden ser iguales');
                 return;
             }
 
-            // ✅ Obtener el estado actual del prospecto
-            const estadoProspecto = document.getElementById('estado')?.value || 'Pendiente';
-            const rutCliente = document.getElementById('rut_empresa')?.value.trim();
-            const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
+            const idPpl = document.getElementById('id_prospect_serv')?.value;
+            if (!idPpl || idPpl === '0') {
+                error('Prospecto no válido');
+                return;
+            }
 
-            // ✅ Validar crédito solo si hay RUT y monto > 0
-            if (rutCliente && totalVentaServicio > 0) {
+            const totalVenta = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
+            const rutCliente = document.getElementById('rut_empresa')?.value.trim();
+
+            // Validar crédito si aplica
+            if (rutCliente && totalVenta > 0) {
                 fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
                     .then(r => r.json())
                     .then(data => {
@@ -1288,54 +1290,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             error(data.error);
                             return;
                         }
-                        if (totalVentaServicio > data.saldo_credito) {
-                            error(`Sobregiro detectado: El servicio supera el saldo de crédito disponible (${data.saldo_credito}). 
-                                Solicite un aumento de límite en Ficha Cliente.`);
+                        if (totalVenta > data.saldo_credito) {
+                            error(`Sobregiro: El servicio excede el crédito disponible (${data.saldo_credito}).`);
                             return;
                         }
-                        ejecutarGuardarServicioConIdCorrecto();
+                        enviarServicioABD();
                     })
-                    .catch(err => {
-                        console.error('Error al validar crédito:', err);
-                        error('No se pudo verificar la línea de crédito.');
-                    });
+                    .catch(() => error('Error al verificar crédito'));
             } else {
-                // ✅ Guardar sin validación de crédito ni costos (si estado es Pendiente)
-                ejecutarGuardarServicioConIdCorrecto();
+                enviarServicioABD();
             }
         }
 
-        // === FUNCIÓN AUXILIAR: Ejecuta el guardado con id_srvc válido ===
-        function ejecutarGuardarServicioConIdCorrecto() {
-            const idPpl = document.getElementById('id_prospect_serv')?.value;
-            const concatenado = document.getElementById('concatenado_serv')?.value || document.getElementById('concatenado')?.value;
-
-            let id_srvc;
-
-            if (servicioEnEdicion !== null) {
-                // Editar: mantener el id_srvc existente
-                id_srvc = servicios[servicioEnEdicion].id_srvc;
-                console.log('✏️ Editando servicio existente con id_srvc:', id_srvc);
-            } else {
-                // Nuevo servicio
-                if (idPpl && idPpl !== '0' && concatenado && !concatenado.startsWith('TEMP_')) {
-                    // ✅ Prospecto ya existe → generar id_srvc permanente
-                    id_srvc = generarIdSrvcPermanente(concatenado, servicios.length);
-                    if (!id_srvc) {
-                        error('No se pudo generar un ID de servicio válido');
-                        return;
-                    }
-                    console.log('✅ Generando id_srvc permanente:', id_srvc);
-                } else {
-                    // ❌ Prospecto aún no guardado
-                    id_srvc = `TEMP_${Date.now()}`;
-                    console.log('⏳ Prospecto sin guardar → usando id_srvc temporal:', id_srvc);
-                }
-            }
-
-            const nuevo = {
-                id_srvc: id_srvc,
-                id_prospect: idPpl,
+        function enviarServicioABD() {
+            const data = {
+                id_prospect: document.getElementById('id_prospect_serv').value,
                 servicio: document.getElementById('serv_servicio').value.trim(),
                 trafico: document.getElementById('serv_medio_transporte').value,
                 commodity: document.getElementById('serv_commodity').value,
@@ -1366,102 +1335,36 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
                 costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
                 ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
-                costos: [...costosServicio],
-                gastos_locales: [...gastosLocales],
-                // ✅ Estado de costos: "pendiente" si no hay costos
                 estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
             };
 
-            if (servicioEnEdicion !== null) {
-                servicios[servicioEnEdicion] = nuevo;
-                exito('Servicio actualizado correctamente');
-            } else {
-                servicios.push(nuevo);
-                exito('Servicio agregado correctamente');
-            }
-
-            actualizarTabla();
-            cerrarModalServicio();
-        }
-
-        // === NUEVA FUNCIÓN: Genera id_srvc permanente si el prospecto ya existe ===
-        function ejecutarGuardarServicioConIdSrvcValido() {
-            const idPpl = document.getElementById('id_prospect_serv')?.value;
-            const concatenado = document.getElementById('concatenado_serv')?.value || document.getElementById('concatenado')?.value;
-
-            let id_srvc;
-
-            if (servicioEnEdicion !== null) {
-                // Editar: usar el id_srvc existente
-                id_srvc = servicios[servicioEnEdicion].id_srvc;
-            } else {
-                // Nuevo servicio
-                const idPpl = document.getElementById('id_prospect_serv')?.value;
-                const concatenado = document.getElementById('concatenado_serv')?.value || document.getElementById('concatenado')?.value;
-
-                if (idPpl && idPpl !== '0' && concatenado && !concatenado.startsWith('TEMP_')) {
-                    // ✅ Prospecto ya existe → generar id_srvc permanente
-                    id_srvc = generarIdSrvcPermanente(concatenado, servicios.length);
-                    if (!id_srvc) {
-                        error('No se pudo generar un ID de servicio válido');
-                        return;
-                    }
-                    console.log('✅ id_srvc permanente generado:', id_srvc);
+            fetch('/api/guardar_servicio.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    // ✅ Agregar al array con id_srvc permanente
+                    const nuevoServicio = {
+                        ...data,
+                        id_srvc: res.id_srvc,
+                        costos: [...costosServicio],
+                        gastos_locales: [...gastosLocales]
+                    };
+                    servicios.push(nuevoServicio);
+                    actualizarTabla();
+                    cerrarModalServicio();
+                    exito('Servicio guardado en la base de datos');
                 } else {
-                    // ❌ Prospecto aún no guardado
-                    id_srvc = `TEMP_${Date.now()}`;
-                    console.log('⏳ id_srvc temporal:', id_srvc);
+                    error('Error: ' + (res.message || 'Intente nuevamente'));
                 }
-            }
-
-            const nuevo = {
-                id_srvc: id_srvc,
-                id_prospect: idPpl,
-                servicio: document.getElementById('serv_servicio').value.trim(),
-                trafico: document.getElementById('serv_medio_transporte').value,
-                commodity: document.getElementById('serv_commodity').value,
-                origen: document.getElementById('serv_origen').value,
-                pais_origen: document.getElementById('serv_pais_origen').value,
-                destino: document.getElementById('serv_destino').value,
-                pais_destino: document.getElementById('serv_pais_destino').value,
-                transito: document.getElementById('serv_transito').value,
-                frecuencia: document.getElementById('serv_frecuencia').value,
-                lugar_carga: document.getElementById('serv_lugar_carga').value,
-                sector: document.getElementById('serv_sector').value,
-                mercancia: document.getElementById('serv_mercancia').value,
-                bultos: document.getElementById('serv_bultos').value,
-                peso: document.getElementById('serv_peso').value,
-                volumen: document.getElementById('serv_volumen').value,
-                dimensiones: document.getElementById('serv_dimensiones').value,
-                moneda: document.getElementById('serv_moneda').value,
-                tipo_cambio: document.getElementById('serv_tipo_cambio').value,
-                proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-                desconsolidac: '0',
-                aol: document.getElementById('serv_aol').value,
-                aod: document.getElementById('serv_aod').value,
-                agente: document.getElementById('serv_agente').value,
-                transportador: document.getElementById('serv_transportador').value,
-                incoterm: document.getElementById('serv_incoterm').value,
-                ref_cliente: document.getElementById('serv_ref_cliente').value,
-                costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
-                venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
-                costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
-                ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
-                costos: [...costosServicio],
-                gastos_locales: [...gastosLocales],
-                estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
-            };
-
-            if (servicioEnEdicion !== null) {
-                servicios[servicioEnEdicion] = nuevo;
-                exito('Servicio actualizado correctamente');
-            } else {
-                servicios.push(nuevo);
-                exito('Servicio agregado correctamente');
-            }
-
-            actualizarTabla();
-            cerrarModalServicio();
+            })
+            .catch(err => {
+                console.error('Error al guardar servicio:', err);
+                error('Error de conexión al guardar el servicio');
+            });
         }
 
         // --- Submodales ---

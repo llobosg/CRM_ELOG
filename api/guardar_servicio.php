@@ -1,68 +1,108 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
-require_once '../config.php';
+// api/guardar_servicio.php
+header('Content-Type: application/json');
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/auth_check.php';
 
 try {
-    $id_prospect = (int)($_POST['id_prospect'] ?? 0);
-    $concatenado = $_POST['concatenado_serv'] ?? '';
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (!$data) throw new Exception('Datos inválidos');
 
-    if (!$id_prospect || !$concatenado) {
-        throw new Exception("Datos incompletos: id_prospect o concatenado faltantes");
-    }
+    $id_ppl = (int)($data['id_prospect'] ?? 0);
+    if ($id_ppl <= 0) throw new Exception('ID de prospecto inválido');
 
-    // Verificar que el prospecto exista
-    $stmt_check = $pdo->prepare("SELECT id_ppl FROM prospectos WHERE id_ppl = ?");
-    $stmt_check->execute([$id_prospect]);
-    if (!$stmt_check->fetch()) {
-        throw new Exception("Prospecto no encontrado");
-    }
+    // Obtener el `concatenado` del prospecto
+    $stmt = $pdo->prepare("SELECT concatenado FROM prospectos WHERE id_ppl = ?");
+    $stmt->execute([$id_ppl]);
+    $prospecto = $stmt->fetch();
+    if (!$prospecto) throw new Exception('Prospecto no encontrado');
+    
+    $concatenado = $prospecto['concatenado'];
+    // Extraer base: ej. EXAIR251119-02 → EXAIR251119
+    $base = preg_replace('/-\d+$/', '', $concatenado);
 
-    // Generar id_srvc: concatenado + correlativo
-    $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
-    $stmt_last->execute([$id_prospect]);
-    $last = $stmt_last->fetch();
+    // Obtener siguiente correlativo para el servicio
+    $stmt = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
+    $stmt->execute([$id_ppl]);
+    $last = $stmt->fetch();
     $correlativo = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
-    $id_srvc = "{$concatenado}-{$correlativo}";
+    $id_srvc = "{$base}-{$correlativo}";
 
-    // Insertar servicio
-    $stmt = $pdo->prepare("INSERT INTO servicios (
-        id_srvc, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico,
-        base_calculo, moneda, tarifa, iva, estado, costo, venta,
-        costogastoslocalesdestino, ventasgastoslocalesdestino
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    // Validar campos obligatorios
+    if (empty($data['servicio'])) throw new Exception('Servicio es obligatorio');
+
+    // Preparar inserción (solo campos reales de la tabla `servicios`)
+    $stmt = $pdo->prepare("
+        INSERT INTO servicios (
+            id_srvc, id_prospect, servicio, trafico, 
+            commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
+            lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
+            agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
+            moneda, desconsolidac,
+            costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino,
+            estado_costos, solicitado_por, fecha_solicitado,
+            completado_por, fecha_completado, revisado_por, fecha_revisado
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+            ?, ?, 
+            ?, ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?, ?
+        )
+    ");
 
     $stmt->execute([
         $id_srvc,
-        $id_prospect,
-        $_POST['servicio'] ?? '',
-        $_POST['nombre_corto'] ?? '',
-        $_POST['tipo'] ?? '',
-        $_POST['trafico'] ?? '',
-        $_POST['sub_trafico'] ?? '',
-        $_POST['base_calculo'] ?? '',
-        $_POST['moneda'] ?? 'CLP',
-        $_POST['tarifa'] ?? 0,
-        $_POST['iva'] ?? 19,
-        $_POST['estado'] ?? 'Activo',
-        $_POST['costo'] ?? 0,
-        $_POST['venta'] ?? 0,
-        $_POST['costogastoslocalesdestino'] ?? 0,
-        $_POST['ventasgastoslocalesdestino'] ?? 0,
+        $id_ppl,
+        $data['servicio'] ?? '',
+        $data['trafico'] ?? '',
+        $data['commodity'] ?? '',
+        $data['origen'] ?? '',
+        $data['pais_origen'] ?? '',
+        $data['destino'] ?? '',
+        $data['pais_destino'] ?? '',
+        $data['transito'] ?? '',
+        $data['frecuencia'] ?? '',
+        $data['lugar_carga'] ?? '',
+        $data['sector'] ?? '',
+        $data['mercancia'] ?? '',
+        (int)($data['bultos'] ?? 0),
+        (float)($data['peso'] ?? 0),
+        (string)($data['volumen'] ?? '0.00'),
+        (string)($data['dimensiones'] ?? ''),
+        $data['agente'] ?? '',
+        $data['aol'] ?? '',
+        $data['aod'] ?? '',
+        $data['transportador'] ?? '',
+        $data['incoterm'] ?? '',
+        $data['ref_cliente'] ?? '',
+        $data['proveedor_nac'] ?? '',
+        (float)($data['tipo_cambio'] ?? 1),
+        $data['moneda'] ?? 'CLP',
+        $data['desconsolidac'] ?? '0',
+        (float)($data['costo'] ?? 0),
+        (float)($data['venta'] ?? 0),
+        (float)($data['costogastoslocalesdestino'] ?? 0),
+        (float)($data['ventasgastoslocalesdestino'] ?? 0),
+        $data['estado_costos'] ?? 'pendiente',
+        null, // solicitado_por → se llena al notificar
+        null, // fecha_solicitado
+        null, // completado_por
+        null, // fecha_completado
+        null, // revisado_por
+        null  // fecha_revisado
     ]);
-
-    // Obtener servicios actualizados
-    $stmt_serv = $pdo->prepare("SELECT * FROM servicios WHERE id_prospect = ?");
-    $stmt_serv->execute([$id_prospect]);
-    $servicios = $stmt_serv->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([
         'success' => true,
-        'servicios' => $servicios
+        'id_srvc' => $id_srvc,
+        'message' => 'Servicio creado correctamente'
     ]);
+
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => $e->getMessage()
-    ]);
+    error_log("Error en guardar_servicio.php: " . $e->getMessage());
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
+?>
