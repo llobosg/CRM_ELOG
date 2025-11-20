@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             $fecha_alta = date('Y-m-d');
         }
 
-        // === Generar concatenado ===
+        // === Generar concatenado del prospecto y base para servicios ===
         $operacion = $_POST['operacion'] ?? '';
         $tipo_oper = $_POST['tipo_oper'] ?? '';
 
@@ -61,8 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
 
         $prefijo = $op_abrev . $tipo_abrev;
         $fecha_actual = date('ymd');
-        $correlativo = str_pad($id_prospect + 1, 2, '0', STR_PAD_LEFT);
-        $concatenado = $prefijo . $fecha_actual . '-' . $correlativo;
+        $base_servicio = $prefijo . $fecha_actual; // ✅ Usado para id_srvc
+
+        // Correlativo del prospecto
+        $ultimo = $pdo->query("SELECT MAX(id_prospect) as max_id FROM prospectos")->fetch();
+        $id_prospect = (int)($ultimo['max_id'] ?? 0) + 1;
+        $correlativo_prospecto = str_pad($id_prospect, 2, '0', STR_PAD_LEFT);
+        $concatenado = $base_servicio . '-' . $correlativo_prospecto; // Ej: IMEX241120-01
 
         // === Preparar datos del prospecto ===
         $id_comercial = !empty($_POST['id_comercial']) ? (int)$_POST['id_comercial'] : null;
@@ -129,15 +134,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         // ✅ 1. Recuperar id_srvc del JSON (puede ser TEMP_ o permanente)
                         $id_srvc_json = $s['id_srvc'] ?? null;
 
-                        // ✅ 2. Si es TEMP_ o no existe, generar uno nuevo
+                        // ✅ 2. Genera id_srvc permanente
                         if (!$id_srvc_json || strpos($id_srvc_json, 'TEMP_') === 0) {
                             $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
                             $stmt_last->execute([$id_ppl]);
                             $last = $stmt_last->fetch();
                             $correlativo_srvc = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
-                            $id_srvc = "{$concatenado}-{$correlativo_srvc}";
+                            $id_srvc = "{$base_servicio}-{$correlativo_srvc}"; // ✅ Ej: IMEX241120-01
                         } else {
-                            // ✅ 3. Si ya tiene un id_srvc permanente, usarlo tal cual
                             $id_srvc = $id_srvc_json;
                         }
 
