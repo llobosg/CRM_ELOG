@@ -1,10 +1,24 @@
 <?php
-// === 1. INICIO ABSOLUTO: sin salida, sin HTML ===
+// ==============================================
+// index.php — PUNTO DE ENTRADA PRINCIPAL
+// ==============================================
+
+// 1. INICIO DE SESIÓN ABSOLUTO (debe ser la primera instrucción ejecutable)
+session_start();
+
+// 2. CABECERAS DE SEGURIDAD
 require_once __DIR__ . '/includes/security_headers.php';
-require_once __DIR__ . '/includes/auth_check.php';
+
+// 3. VALIDACIÓN GLOBAL DE SESIÓN
+if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+// 4. CARGA DE CONFIGURACIÓN
 require_once __DIR__ . '/config.php';
 
-// === 2. LISTA DE PÁGINAS VÁLIDAS ===
+// 5. LISTA DE PÁGINAS VÁLIDAS
 $validPages = [
     'agentes',
     'aplicacion_costos',
@@ -25,22 +39,20 @@ $validPages = [
     'facturacion'
 ];
 
-// En index.php, antes de: include "pages/$page.php";
+// 6. OBTENER PÁGINA SOLICITADA
 $page = $_GET['page'] ?? 'dashboard';
+$safePage = in_array($page, $validPages) ? $page : 'dashboard';
 
-// === Protección de páginas por rol ===
+// 7. PROTECCIÓN POR ROL: solo admin_finanzas puede acceder a estas páginas
 $paginas_admin_finanzas = ['ficha_cliente', 'facturacion'];
-
-if (in_array($page, $paginas_admin_finanzas)) {
-    require_once __DIR__ . '/includes/auth_check.php';
+if (in_array($safePage, $paginas_admin_finanzas)) {
     if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin_finanzas') {
         header('Location: ?page=dashboard');
         exit;
     }
 }
-$safePage = in_array($page, $validPages) ? $page : 'dashboard';
 
-// === 3. LISTA DE MANTENEDORES CON LÓGICA (CRUD) ===
+// 8. LISTA DE MANTENEDORES CON LÓGICA
 $mantenedores_con_logica = [
     'agentes',
     'aplicacion_costos',
@@ -57,7 +69,7 @@ $mantenedores_con_logica = [
     'trafico'
 ];
 
-// === 4. PROCESAR LÓGICA DE MANTENEDORES (ANTES DE CUALQUIER SALIDA HTML) ===
+// 9. PROCESAR LÓGICA DE MANTENEDORES (ANTES DE CUALQUIER SALIDA HTML)
 if (in_array($safePage, $mantenedores_con_logica)) {
     $nombre_archivo = ($safePage === 'tservicios') ? 'servicios' : $safePage;
     $logicFile = __DIR__ . "/pages/{$nombre_archivo}_logic.php";
@@ -67,13 +79,13 @@ if (in_array($safePage, $mantenedores_con_logica)) {
     }
 }
 
-// === 5. PROCESAR LÓGICA DE PROSPECTOS (ANTES DE CUALQUIER SALIDA HTML) ===
+// 10. PROCESAR LÓGICA DE PROSPECTOS
 if ($safePage === 'prospectos' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/pages/prospectos_logic.php';
     // prospectos_logic.php hace header() + exit → no sigue
 }
 
-// === 6. PROCESAR LÓGICA DE FICHA CLIENTE ===
+// 11. PROCESAR LÓGICA DE FICHA CLIENTE
 if ($safePage === 'ficha_cliente' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/pages/ficha_cliente_logic.php';
 }
@@ -197,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- === SCRIPT ESPECÍFICO PARA PROSPECTOS (solo si es la página prospectos) === -->
 <?php if ($safePage === 'prospectos'): ?>
 <script>
-    // === VARIABLE GLOBAL DE ROL ===
     const USER_ROLE = '<?php echo htmlspecialchars($_SESSION['rol'] ?? 'comercial'); ?>';
     console.log('✅ Rol cargado:', USER_ROLE);
 </script>
