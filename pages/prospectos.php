@@ -1237,6 +1237,27 @@ require_once __DIR__ . '/../includes/auth_check.php';
             }
         }
 
+        // === FUNCIÓN AUXILIAR: Extrae la base (sin correlativo) desde el concatenado ===
+        function extraerBaseDesdeConcatenado(concatenado) {
+            if (!concatenado || !concatenado.includes('-')) return null;
+            const partes = concatenado.split('-');
+            if (partes.length < 2) return null;
+            // Todo menos el último segmento (que es el correlativo del prospecto)
+            return partes.slice(0, -1).join('-');
+        }
+
+        // === FUNCIÓN AUXILIAR: Genera id_srvc permanente correctamente ===
+        function generarIdSrvcPermanente(concatenado, cantidadServicios) {
+            const base = extraerBaseDesdeConcatenado(concatenado);
+            if (!base) {
+                console.error('❌ No se pudo extraer la base desde el concatenado:', concatenado);
+                return null;
+            }
+            const correlativo = (cantidadServicios + 1).toString().padStart(2, '0');
+            return `${base}-${correlativo}`; // Ej: EXAIR251119-01
+        }
+
+        // === FUNCIÓN PRINCIPAL: guardarServicio ===
         function guardarServicio() {
             console.log('🔍 [SERVICIO] Iniciando guardarServicio');
             const servicio = document.getElementById('serv_servicio').value.trim();
@@ -1253,10 +1274,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 return;
             }
 
+            // ✅ Obtener el estado actual del prospecto
+            const estadoProspecto = document.getElementById('estado')?.value || 'Pendiente';
             const rutCliente = document.getElementById('rut_empresa')?.value.trim();
             const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
 
-            // Validar crédito si aplica
+            // ✅ Validar crédito solo si hay RUT y monto > 0
             if (rutCliente && totalVentaServicio > 0) {
                 fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
                     .then(r => r.json())
@@ -1270,15 +1293,95 @@ require_once __DIR__ . '/../includes/auth_check.php';
                                 Solicite un aumento de límite en Ficha Cliente.`);
                             return;
                         }
-                        ejecutarGuardarServicioConIdSrvcValido();
+                        ejecutarGuardarServicioConIdCorrecto();
                     })
                     .catch(err => {
                         console.error('Error al validar crédito:', err);
                         error('No se pudo verificar la línea de crédito.');
                     });
             } else {
-                ejecutarGuardarServicioConIdSrvcValido();
+                // ✅ Guardar sin validación de crédito ni costos (si estado es Pendiente)
+                ejecutarGuardarServicioConIdCorrecto();
             }
+        }
+
+        // === FUNCIÓN AUXILIAR: Ejecuta el guardado con id_srvc válido ===
+        function ejecutarGuardarServicioConIdCorrecto() {
+            const idPpl = document.getElementById('id_prospect_serv')?.value;
+            const concatenado = document.getElementById('concatenado_serv')?.value || document.getElementById('concatenado')?.value;
+
+            let id_srvc;
+
+            if (servicioEnEdicion !== null) {
+                // Editar: mantener el id_srvc existente
+                id_srvc = servicios[servicioEnEdicion].id_srvc;
+                console.log('✏️ Editando servicio existente con id_srvc:', id_srvc);
+            } else {
+                // Nuevo servicio
+                if (idPpl && idPpl !== '0' && concatenado && !concatenado.startsWith('TEMP_')) {
+                    // ✅ Prospecto ya existe → generar id_srvc permanente
+                    id_srvc = generarIdSrvcPermanente(concatenado, servicios.length);
+                    if (!id_srvc) {
+                        error('No se pudo generar un ID de servicio válido');
+                        return;
+                    }
+                    console.log('✅ Generando id_srvc permanente:', id_srvc);
+                } else {
+                    // ❌ Prospecto aún no guardado
+                    id_srvc = `TEMP_${Date.now()}`;
+                    console.log('⏳ Prospecto sin guardar → usando id_srvc temporal:', id_srvc);
+                }
+            }
+
+            const nuevo = {
+                id_srvc: id_srvc,
+                id_prospect: idPpl,
+                servicio: document.getElementById('serv_servicio').value.trim(),
+                trafico: document.getElementById('serv_medio_transporte').value,
+                commodity: document.getElementById('serv_commodity').value,
+                origen: document.getElementById('serv_origen').value,
+                pais_origen: document.getElementById('serv_pais_origen').value,
+                destino: document.getElementById('serv_destino').value,
+                pais_destino: document.getElementById('serv_pais_destino').value,
+                transito: document.getElementById('serv_transito').value,
+                frecuencia: document.getElementById('serv_frecuencia').value,
+                lugar_carga: document.getElementById('serv_lugar_carga').value,
+                sector: document.getElementById('serv_sector').value,
+                mercancia: document.getElementById('serv_mercancia').value,
+                bultos: document.getElementById('serv_bultos').value,
+                peso: document.getElementById('serv_peso').value,
+                volumen: document.getElementById('serv_volumen').value,
+                dimensiones: document.getElementById('serv_dimensiones').value,
+                moneda: document.getElementById('serv_moneda').value,
+                tipo_cambio: document.getElementById('serv_tipo_cambio').value,
+                proveedor_nac: document.getElementById('serv_proveedor_nac').value,
+                desconsolidac: '0',
+                aol: document.getElementById('serv_aol').value,
+                aod: document.getElementById('serv_aod').value,
+                agente: document.getElementById('serv_agente').value,
+                transportador: document.getElementById('serv_transportador').value,
+                incoterm: document.getElementById('serv_incoterm').value,
+                ref_cliente: document.getElementById('serv_ref_cliente').value,
+                costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
+                venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
+                costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
+                ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
+                costos: [...costosServicio],
+                gastos_locales: [...gastosLocales],
+                // ✅ Estado de costos: "pendiente" si no hay costos
+                estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
+            };
+
+            if (servicioEnEdicion !== null) {
+                servicios[servicioEnEdicion] = nuevo;
+                exito('Servicio actualizado correctamente');
+            } else {
+                servicios.push(nuevo);
+                exito('Servicio agregado correctamente');
+            }
+
+            actualizarTabla();
+            cerrarModalServicio();
         }
 
         // === NUEVA FUNCIÓN: Genera id_srvc permanente si el prospecto ya existe ===
@@ -1289,19 +1392,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
             let id_srvc;
 
             if (servicioEnEdicion !== null) {
-                // Editar: mantener el id_srvc existente
+                // Editar: usar el id_srvc existente
                 id_srvc = servicios[servicioEnEdicion].id_srvc;
             } else {
                 // Nuevo servicio
-                if (idPpl && idPpl !== '0' && concatenado) {
+                const idPpl = document.getElementById('id_prospect_serv')?.value;
+                const concatenado = document.getElementById('concatenado_serv')?.value || document.getElementById('concatenado')?.value;
+
+                if (idPpl && idPpl !== '0' && concatenado && !concatenado.startsWith('TEMP_')) {
                     // ✅ Prospecto ya existe → generar id_srvc permanente
-                    const correlativo = (servicios.length + 1).toString().padStart(2, '0');
-                    id_srvc = `${concatenado}-${correlativo}`;
-                    console.log('✅ Generando id_srvc permanente:', id_srvc);
+                    id_srvc = generarIdSrvcPermanente(concatenado, servicios.length);
+                    if (!id_srvc) {
+                        error('No se pudo generar un ID de servicio válido');
+                        return;
+                    }
+                    console.log('✅ id_srvc permanente generado:', id_srvc);
                 } else {
-                    // ❌ Prospecto aún no existe → usar TEMP (será reemplazado en backend)
+                    // ❌ Prospecto aún no guardado
                     id_srvc = `TEMP_${Date.now()}`;
-                    console.log('⏳ Prospecto sin guardar → usando id_srvc temporal:', id_srvc);
+                    console.log('⏳ id_srvc temporal:', id_srvc);
                 }
             }
 
