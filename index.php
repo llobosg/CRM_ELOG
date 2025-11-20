@@ -3,8 +3,20 @@
 // index.php — PUNTO DE ENTRADA PRINCIPAL
 // ==============================================
 
-// 1. INICIO DE SESIÓN ABSOLUTO (debe ser la primera instrucción ejecutable)
+// Soporte para HTTPS en Railway
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $_SERVER['HTTPS'] = 'on';
+}
+
+// Configuración de sesión para Railway
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS']));
+
 session_start();
+
+// ✅ LOG DE DIAGNÓSTICO
+error_log("📥 [INDEX.PHP] Sesión recibida. user_id = " . ($_SESSION['user_id'] ?? 'NO DEFINIDO'));
+error_log("🔑 [INDEX.PHP] PHPSESSID: " . session_id());
 
 // 2. CABECERAS DE SEGURIDAD
 require_once __DIR__ . '/includes/security_headers.php';
