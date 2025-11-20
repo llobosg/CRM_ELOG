@@ -54,7 +54,7 @@ try {
             SELECT p.concatenado, p.razon_social, s.id_prospect, u.nombre as comercial_nombre
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
-            LEFT JOIN users u ON p.id_comercial = u.id
+            LEFT JOIN usuarios u ON p.id_comercial = u.id
             WHERE s.id_srvc = ?
         ");
         $stmt->execute([$idSrvc]);
