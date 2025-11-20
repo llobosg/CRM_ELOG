@@ -1253,12 +1253,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 return;
             }
 
-            // ✅ Obtener el estado actual del prospecto
-            const estadoProspecto = document.getElementById('estado')?.value || 'Pendiente';
             const rutCliente = document.getElementById('rut_empresa')?.value.trim();
             const totalVentaServicio = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
 
-            // ✅ Validar crédito solo si hay RUT y monto > 0
+            // Validar crédito si aplica
             if (rutCliente && totalVentaServicio > 0) {
                 fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
                     .then(r => r.json())
@@ -1272,25 +1270,45 @@ require_once __DIR__ . '/../includes/auth_check.php';
                                 Solicite un aumento de límite en Ficha Cliente.`);
                             return;
                         }
-                        ejecutarGuardarServicio();
+                        ejecutarGuardarServicioConIdSrvcValido();
                     })
                     .catch(err => {
                         console.error('Error al validar crédito:', err);
                         error('No se pudo verificar la línea de crédito.');
                     });
             } else {
-                // ✅ Guardar sin validación de crédito ni costos (si estado es Pendiente)
-                ejecutarGuardarServicio();
+                ejecutarGuardarServicioConIdSrvcValido();
             }
         }
 
-        // === Función que realiza el guardado real ===
-        function ejecutarGuardarServicio() {
-            const servicio = document.getElementById('serv_servicio').value.trim();
+        // === NUEVA FUNCIÓN: Genera id_srvc permanente si el prospecto ya existe ===
+        function ejecutarGuardarServicioConIdSrvcValido() {
+            const idPpl = document.getElementById('id_prospect_serv')?.value;
+            const concatenado = document.getElementById('concatenado_serv')?.value || document.getElementById('concatenado')?.value;
+
+            let id_srvc;
+
+            if (servicioEnEdicion !== null) {
+                // Editar: mantener el id_srvc existente
+                id_srvc = servicios[servicioEnEdicion].id_srvc;
+            } else {
+                // Nuevo servicio
+                if (idPpl && idPpl !== '0' && concatenado) {
+                    // ✅ Prospecto ya existe → generar id_srvc permanente
+                    const correlativo = (servicios.length + 1).toString().padStart(2, '0');
+                    id_srvc = `${concatenado}-${correlativo}`;
+                    console.log('✅ Generando id_srvc permanente:', id_srvc);
+                } else {
+                    // ❌ Prospecto aún no existe → usar TEMP (será reemplazado en backend)
+                    id_srvc = `TEMP_${Date.now()}`;
+                    console.log('⏳ Prospecto sin guardar → usando id_srvc temporal:', id_srvc);
+                }
+            }
+
             const nuevo = {
-                id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : `TEMP_${Date.now()}`,
-                id_prospect: document.getElementById('id_prospect_serv').value,
-                servicio: servicio,
+                id_srvc: id_srvc,
+                id_prospect: idPpl,
+                servicio: document.getElementById('serv_servicio').value.trim(),
                 trafico: document.getElementById('serv_medio_transporte').value,
                 commodity: document.getElementById('serv_commodity').value,
                 origen: document.getElementById('serv_origen').value,
@@ -1322,7 +1340,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
                 costos: [...costosServicio],
                 gastos_locales: [...gastosLocales],
-                // ✅ Estado de costos: "pendiente" si no hay costos
                 estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
             };
 
@@ -1333,6 +1350,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 servicios.push(nuevo);
                 exito('Servicio agregado correctamente');
             }
+
             actualizarTabla();
             cerrarModalServicio();
         }
