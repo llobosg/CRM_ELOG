@@ -287,8 +287,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 </select>    
                 <input type="text" id="costo_moneda" readonly style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center; width: 80px;" />
                 <input type="number" id="costo_qty" step="0.01" min="0" placeholder="Qty" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right; width: 80px;" />
-                <input type="number" id="costo_costo" step="0.01" min="0" placeholder="Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
-                <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
+                <input type="number" id="costo_costo" step="0.01" min="0" placeholder="Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #787676ff; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
+                <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #787676ff; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
                 <input type="number" id="costo_tarifa" step="0.01" min="0" placeholder="Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
                 <input type="text" id="costo_total_tarifa" readonly placeholder="Total Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
                 <select id="costo_aplica" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
@@ -305,10 +305,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Concepto</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Moneda</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Qty</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #2d2a2aff; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #2d2a2aff; background-color: #fff9db; font-size: 0.92rem;">Total Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #2d2a2aff; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #2d2a2aff; background-color: #e6f7ff; font-size: 0.92rem;">Total Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Total Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Total Tarifa</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Aplica</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Acción</th>
                         </tr>
@@ -598,33 +598,49 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                     // ✅ Validar que el servicio tenga ID permanente
                     if (!servicio.id_srvc || servicio.id_srvc.startsWith('TEMP_')) {
-                        alert('Debe guardar el prospecto primero antes de solicitar costos.');
+                        error('Debe guardar el prospecto primero antes de solicitar costos.');
                         return;
                     }
 
-                    if (confirm('¿Solicitar costos al equipo de Pricing?')) {
-                        fetch('/api/notificar_costos.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                id_srvc: servicio.id_srvc,
-                                estado: 'solicitado',
-                                usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
-                                rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
-                            })
-                        })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) {
-                                servicios[index].estado_costos = 'solicitado';
-                                actualizarTabla();
-                                exito('Notificación enviada a Pricing');
-                            } else {
-                                error('Error: ' + (data.message || 'Intente nuevamente'));
-                            }
-                        })
-                        .catch(() => error('Error de conexión'));
+                    // ✅ Obtener user_id como entero
+                    const userId = <?php echo (int)($_SESSION["user_id"] ?? 0); ?>;
+                    if (userId <= 0) {
+                        console.error('❌ [NOTIFICAR COSTOS] Sesión inválida');
+                        error('Sesión inválida. Por favor, inicie sesión nuevamente.');
+                        return;
                     }
+
+                    if (!confirm('¿Solicitar costos al equipo de Pricing?')) return;
+
+                    fetch('/api/notificar_costos.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id_srvc: servicio.id_srvc,
+                            estado: 'solicitado',
+                            usuario_id: userId
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('✅ [NOTIFICAR COSTOS] Respuesta:', data);
+                        if (data.success) {
+                            // Actualizar estado en memoria
+                            servicios[index].estado_costos = 'solicitado';
+                            servicios[index].solicitado_por = userId;
+                            servicios[index].fecha_solicitado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                            // Refrescar tabla
+                            actualizarTabla();
+                            // Notificar usuario
+                            exito(data.message || 'Solicitud enviada al equipo de Pricing');
+                        } else {
+                            error('Error: ' + (data.message || 'Intente nuevamente'));
+                        }
+                    })
+                    .catch(err => {
+                        console.error('❌ [NOTIFICAR COSTOS] Error de red:', err);
+                        error('No se pudo enviar la solicitud. Verifique su conexión.');
+                    });
                 });
             });
 
@@ -1370,6 +1386,19 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // --- Submodales ---
         function abrirSubmodalCostos() {
             const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+            console.log('🔍 [COSTOS] Rol del usuario:', rolUsuario);
+
+            if (rolUsuario !== 'pricing' && rolUsuario !== 'admin') {
+                console.warn('⚠️ [COSTOS] Acceso denegado: solo pricing puede editar costos');
+                alert('Solo el rol Pricing puede editar costos.');
+                return;
+            }
+
+            if (document.getElementById('modal-servicio').style.display === 'none') {
+                error('Abra primero el modal de Servicio');
+                return;
+            }
+            
             const esPricing = (rolUsuario === 'pricing' || rolUsuario === 'admin');
 
             // Deshabilitar edición si no es Pricing
