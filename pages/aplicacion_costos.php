@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
 
 // === Solo admins ===
 if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
