@@ -1,29 +1,43 @@
 <?php
-// index.php — Punto de entrada principal
+// index.php — con LOGS EXHAUSTIVOS DE SESIÓN
+error_log("📥 [INDEX.PHP] === INICIO DE INDEX.PHP ===");
 
-// Soporte para HTTPS en Railway (proxy inverso)
+// Soporte para HTTPS en Railway
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     $_SERVER['HTTPS'] = 'on';
 }
 
-// Iniciar sesión (solo una vez)
+// Iniciar sesión solo si no está activa
 if (session_status() === PHP_SESSION_NONE) {
+    error_log("ℹ️ [INDEX.PHP] Sesión no iniciada. Configurando e iniciando...");
     ini_set('session.cookie_samesite', 'Lax');
     ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
     session_start();
+    error_log("✅ [INDEX.PHP] Sesión iniciada. ID: " . session_id());
+} else {
+    error_log("⚠️ [INDEX.PHP] Sesión YA ACTIVA al llegar.");
 }
 
-// Validar sesión global
+// Mostrar contenido de la sesión
+error_log("🔍 [INDEX.PHP] Contenido de \$_SESSION: " . print_r($_SESSION, true));
+
+// Validar sesión
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['user'])) {
-    // Evitar loop: si estamos en login, no redirigir
-    $currentFile = basename($_SERVER['SCRIPT_NAME']);
-    if ($currentFile !== 'login.php') {
+    error_log("❌ [INDEX.PHP] Sesión inválida: faltan user_id o user");
+    // Evitar loop si ya estamos en login.php
+    $script = basename($_SERVER['SCRIPT_NAME']);
+    if ($script !== 'login.php') {
+        error_log("➡️ [INDEX.PHP] Redirigiendo a login.php");
         header('Location: login.php');
         exit;
+    } else {
+        error_log("ℹ️ [INDEX.PHP] Ya en login.php → no redirigir (evitar loop)");
     }
+} else {
+    error_log("✅ [INDEX.PHP] Sesión válida. user_id = " . $_SESSION['user_id']);
 }
 
-// Seguridad y configuración
+// Resto del código
 require_once __DIR__ . '/includes/security_headers.php';
 require_once __DIR__ . '/config.php';
 
@@ -42,6 +56,7 @@ $safePage = in_array($page, $validPages) ? $page : 'dashboard';
 $paginas_admin_finanzas = ['ficha_cliente', 'facturacion'];
 if (in_array($safePage, $paginas_admin_finanzas)) {
     if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin_finanzas') {
+        error_log("🔒 [INDEX.PHP] Acceso denegado a página protegida. Redirigiendo a dashboard.");
         header('Location: ?page=dashboard');
         exit;
     }
