@@ -1,6 +1,3 @@
-<?php
-require_once __DIR__ . '/../includes/auth_check.php';
-?>
 <!-- Mini consola de depuración -->
 <div id="debug-trace" style="margin: 1rem; padding: 0.5rem; background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
 

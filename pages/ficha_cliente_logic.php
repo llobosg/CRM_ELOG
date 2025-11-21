@@ -3,7 +3,6 @@
 // Solo accesible por admin_finanzas (debe validarse en el frontend o en auth_check)
 
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
 
 // Validar rol (opcional, pero recomendado)
 if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin_finanzas') {
