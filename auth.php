@@ -49,10 +49,9 @@ try {
 
     if ($usuario && $password_input === $usuario['password']) {
         // Guardar en sesión
-        $_SESSION['user'] = $usuario['email'];
+        $_SESSION['user'] = $usuario['email'] ?: $usuario['nombre'] ?: 'Usuario Sin Nombre';
         $_SESSION['user_id'] = (int)$usuario['id_usr'];
         $_SESSION['rol'] = $usuario['rol'];
-
         error_log("✅ [AUTH.PHP] Login exitoso.");
         error_log("   → user: " . $_SESSION['user']);
         error_log("   → user_id: " . $_SESSION['user_id']);

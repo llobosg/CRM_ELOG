@@ -22,19 +22,14 @@ if (session_status() === PHP_SESSION_NONE) {
 error_log("🔍 [INDEX.PHP] Contenido de \$_SESSION: " . print_r($_SESSION, true));
 
 // Validar sesión
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user'])) {
-    error_log("❌ [INDEX.PHP] Sesión inválida: faltan user_id o user");
-    // Evitar loop si ya estamos en login.php
-    $script = basename($_SERVER['SCRIPT_NAME']);
-    if ($script !== 'login.php') {
-        error_log("➡️ [INDEX.PHP] Redirigiendo a login.php");
+// Validar sesión global
+if (empty($_SESSION['user_id']) || empty($_SESSION['user'])) {
+    // Evitar loop: si ya estamos en login.php, no redirigir
+    $currentFile = basename($_SERVER['SCRIPT_NAME']);
+    if ($currentFile !== 'login.php') {
         header('Location: login.php');
         exit;
-    } else {
-        error_log("ℹ️ [INDEX.PHP] Ya en login.php → no redirigir (evitar loop)");
     }
-} else {
-    error_log("✅ [INDEX.PHP] Sesión válida. user_id = " . $_SESSION['user_id']);
 }
 
 // Resto del código
