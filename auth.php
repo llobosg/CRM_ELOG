@@ -39,7 +39,7 @@ require_once __DIR__ . '/config.php';
 
 try {
     $stmt = $pdo->prepare("
-        SELECT id_usr, email, rol, password 
+        SELECT id_usr, email, nombre, rol, password 
         FROM usuarios 
         WHERE email = ? OR nombre = ?
         LIMIT 1
