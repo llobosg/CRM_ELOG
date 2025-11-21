@@ -28,15 +28,14 @@ if ($_SERVER['HTTP_HOST'] === 'crmelog-qa.up.railway.app') {
 }
 
 // Validar sesión
-// Validar sesión global
-// if (empty($_SESSION['user_id']) || empty($_SESSION['user'])) {
-//     // Evitar loop: si ya estamos en login.php, no redirigir
-//     $currentFile = basename($_SERVER['SCRIPT_NAME']);
-//     if ($currentFile !== 'login.php') {
-//         header('Location: login.php');
-//         exit;
-//     }
-// }
+if (empty($_SESSION['user_id']) || empty($_SESSION['user'])) {
+     // Evitar loop: si ya estamos en login.php, no redirigir
+     $currentFile = basename($_SERVER['SCRIPT_NAME']);
+     if ($currentFile !== 'login.php') {
+         header('Location: login.php');
+         exit;
+     }
+}
 
 // Resto del código
 require_once __DIR__ . '/includes/security_headers.php';
