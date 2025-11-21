@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../config.php';
-require_once './includes/auth_check.php';
 
 // Estadísticas
 $total = $pdo->query("SELECT COUNT(*) as total FROM prospectos")->fetch()['total'];
