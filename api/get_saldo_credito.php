@@ -2,7 +2,6 @@
 // api/get_saldo_credito.php
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
 
 try {
     $rut = $_GET['rut'] ?? '';

@@ -7,7 +7,6 @@ error_reporting(0);
 
 try {
     require_once __DIR__ . '/../config.php';
-    require_once __DIR__ . '/../includes/auth_check.php';
 
     $id = $_GET['id'] ?? null;
     if (!$id) {

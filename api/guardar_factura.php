@@ -1,7 +1,6 @@
 <?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
 
 if (!isset($_SESSION['user_rol']) || $_SESSION['user_rol'] !== 'admin_finanzas') {
     echo json_encode(['success' => false, 'message' => 'Acceso no autorizado']);

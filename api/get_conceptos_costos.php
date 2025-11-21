@@ -1,7 +1,6 @@
 <?php
 // api/get_conceptos_costos.php
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
 
 try {
     $stmt = $pdo->query("SELECT DISTINCT concepto FROM conceptos_costos WHERE concepto IS NOT NULL AND concepto != '' ORDER BY concepto");

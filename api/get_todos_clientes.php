@@ -3,7 +3,6 @@
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
 
 try {
     $stmt = $pdo->query("SELECT rut, razon_social FROM clientes ORDER BY razon_social");
