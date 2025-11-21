@@ -21,6 +21,12 @@ if (session_status() === PHP_SESSION_NONE) {
 // Mostrar contenido de la sesión
 error_log("🔍 [INDEX.PHP] Contenido de \$_SESSION: " . print_r($_SESSION, true));
 
+// Solo en QA: forzar login siempre
+if ($_SERVER['HTTP_HOST'] === 'crmelog-qa.up.railway.app') {
+    session_destroy();
+    session_start();
+}
+
 // Validar sesión
 // Validar sesión global
 if (empty($_SESSION['user_id']) || empty($_SESSION['user'])) {
