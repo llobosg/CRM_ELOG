@@ -35,7 +35,7 @@ function enviarCorreoPricing($prospectoId, $concatenado, $razonSocial) {
         $mail->Username = $_ENV['SMTP_USERNAME'];
         $mail->Password = $_ENV['SMTP_PASSWORD'];
         $fromEmail = $_ENV['SMTP_FROM_EMAIL'];
-        $mail->setFrom($fromEmail, 'CRM_ELOG');
+        $mail->setFrom($fromEmail, 'CRM_ELOG by GLT Comex');
         foreach ($emails as $email) {
             $mail->addAddress($email);
         }

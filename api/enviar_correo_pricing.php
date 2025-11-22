@@ -44,16 +44,16 @@ function enviarCorreoPricing($prospectoId, $concatenado, $razonSocial, $comercia
     try {
         // Configuración SMTP
         $mail->isSMTP();
-        $mail->Host       = $_ENV['SMTP_HOST'] ?? 'mail.elog.cl';
+        $mail->Host       = $_ENV['SMTP_HOST'] ?? 'email.elog.cl';
         $mail->Port       = (int)($_ENV['SMTP_PORT'] ?? 587);
         $mail->SMTPAuth   = true;
-        $mail->Username   = $_ENV['SMTP_USERNAME'] ?? 'crm@elog.cl';
+        $mail->Username   = $_ENV['SMTP_USERNAME'] ?? 'notifica@elog.cl';
         $mail->Password   = $_ENV['SMTP_PASSWORD'] ?? '';
         $mail->SMTPSecure = $mail->Port === 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
 
         // Remitente
-        $fromEmail = $_ENV['SMTP_FROM_EMAIL'] ?? 'crm@elog.cl';
-        $mail->setFrom($fromEmail, 'CRM ELOG - GLT Comex');
+        $fromEmail = $_ENV['SMTP_FROM_EMAIL'] ?? 'notifica@elog.cl';
+        $mail->setFrom($fromEmail, 'CRM_ELOG - Powered by GLT Comex');
 
         // Destinatarios
         foreach ($destinatarios as $dest) {
