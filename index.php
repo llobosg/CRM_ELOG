@@ -1,43 +1,39 @@
 <?php
-// index.php — con LOGS EXHAUSTIVOS DE SESIÓN
-error_log("📥 [INDEX.PHP] === INICIO DE INDEX.PHP ===");
+// index.php — Punto de entrada con sesiones persistentes en Redis
 
-// Soporte para HTTPS en Railway
+// Soporte para HTTPS en Railway (proxy inverso)
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     $_SERVER['HTTPS'] = 'on';
 }
 
-// Iniciar sesión solo si no está activa
-if (session_status() === PHP_SESSION_NONE) {
-    error_log("ℹ️ [INDEX.PHP] Sesión no iniciada. Configurando e iniciando...");
+// === Configurar Redis como manejador de sesiones (¡ANTES de session_start!) ===
+if (isset($_ENV['REDIS_URL'])) {
+    $redisUrl = parse_url($_ENV['REDIS_URL']);
+    $redisHost = $redisUrl['host'];
+    $redisPort = $redisUrl['port'];
+    $redisPassword = $redisUrl['pass'] ?? null;
+
+    ini_set('session.save_handler', 'redis');
+    ini_set('session.save_path', "tcp://{$redisHost}:{$redisPort}");
+    if ($redisPassword) {
+        ini_set('redis.session.auth', $redisPassword);
+    }
+    ini_set('session.name', 'CRMSESSID');
     ini_set('session.cookie_samesite', 'Lax');
     ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
-    session_start();
-    error_log("✅ [INDEX.PHP] Sesión iniciada. ID: " . session_id());
-} else {
-    error_log("⚠️ [INDEX.PHP] Sesión YA ACTIVA al llegar.");
 }
 
-// Mostrar contenido de la sesión
-error_log("🔍 [INDEX.PHP] Contenido de \$_SESSION: " . print_r($_SESSION, true));
+session_start();
 
-// Solo en QA: forzar login siempre
-if ($_SERVER['HTTP_HOST'] === 'crmelog-qa.up.railway.app') {
-    session_destroy();
-    session_start();
-}
-
-// Validar sesión
+// Validación global de sesión
 if (empty($_SESSION['user_id']) || empty($_SESSION['user'])) {
-     // Evitar loop: si ya estamos en login.php, no redirigir
-     $currentFile = basename($_SERVER['SCRIPT_NAME']);
-     if ($currentFile !== 'login.php') {
-         header('Location: login.php');
-         exit;
-     }
+    $currentFile = basename($_SERVER['SCRIPT_NAME']);
+    if ($currentFile !== 'login.php') {
+        header('Location: /login.php');
+        exit;
+    }
 }
 
-// Resto del código
 require_once __DIR__ . '/includes/security_headers.php';
 require_once __DIR__ . '/config.php';
 
@@ -56,7 +52,6 @@ $safePage = in_array($page, $validPages) ? $page : 'dashboard';
 $paginas_admin_finanzas = ['ficha_cliente', 'facturacion'];
 if (in_array($safePage, $paginas_admin_finanzas)) {
     if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin_finanzas') {
-        error_log("🔒 [INDEX.PHP] Acceso denegado a página protegida. Redirigiendo a dashboard.");
         header('Location: ?page=dashboard');
         exit;
     }
@@ -122,14 +117,14 @@ if (file_exists(__DIR__ . '/includes/menu.php')) {
         if (file_exists($viewFile)) {
             include $viewFile;
         } else {
-            echo "<p style='color: #cc0000; text-align: center; padding: 2rem;'>Vista no encontrada para {$safePage}</p>";
+            echo "<p style='color: #cc0000; text-align: center; padding: 2rem;'>Vista no encontrada</p>";
         }
     } else {
         $file = __DIR__ . "/pages/{$safePage}.php";
         if (file_exists($file)) {
             include $file;
         } else {
-            echo "<p style='color: #cc0000; text-align: center; padding: 2rem;'>Página no encontrada: {$safePage}</p>";
+            echo "<p style='color: #cc0000; text-align: center; padding: 2rem;'>Página no encontrada</p>";
         }
     }
     ?>
