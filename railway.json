@@ -1,8 +1,0 @@
-{
-  "build": {
-    "buildCommand": "composer install --no-dev --optimize-autoloader"
-  },
-  "start": {
-    "command": "php -S 0.0.0.0:$PORT -t ."
-  }
-}

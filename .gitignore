@@ -13,4 +13,4 @@ deploy_*.sh
 /vendor/
 
 # XAMPP
-/xamppfiles/.DS_Store
+/xamppfiles/.DS_Store.DS_Store
