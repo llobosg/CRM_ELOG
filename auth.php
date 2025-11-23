@@ -6,22 +6,10 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
     $_SERVER['HTTPS'] = 'on';
 }
 
-// === Configurar Redis (¡ANTES de session_start!) ===
-if (isset($_ENV['REDIS_URL'])) {
-    $redisUrl = parse_url($_ENV['REDIS_URL']);
-    $redisHost = $redisUrl['host'];
-    $redisPort = $redisUrl['port'];
-    $redisPassword = $redisUrl['pass'] ?? null;
-
-    ini_set('session.save_handler', 'redis');
-    ini_set('session.save_path', "tcp://{$redisHost}:{$redisPort}");
-    if ($redisPassword) {
-        ini_set('redis.session.auth', $redisPassword);
-    }
-    ini_set('session.name', 'CRMSESSID');
-    ini_set('session.cookie_samesite', 'Lax');
-    ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
-}
+// Configurar cookies de sesión
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS']));
+ini_set('session.cookie_httponly', 1);
 
 session_start();
 

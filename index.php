@@ -1,15 +1,15 @@
 <?php
 // index.php — Punto de entrada estable para Railway (sin Redis)
 
-// Soporte para HTTPS en Railway (proxy inverso)
+// ✅ Configuración básica de sesión (sin Redis)
+// Soporte para Railway (proxy inverso)
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     $_SERVER['HTTPS'] = 'on';
 }
-
-// ✅ Configuración básica de sesión (sin Redis)
+// Configurar cookies de sesión
 ini_set('session.cookie_samesite', 'Lax');
-ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
-ini_set('session.name', 'CRMSESSID');
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS']));
+ini_set('session.cookie_httponly', 1);
 
 // Evitar error si la sesión ya está iniciada
 if (session_status() === PHP_SESSION_NONE) {
