@@ -1,7 +1,16 @@
 <?php
 // config.php - Compatible con XAMPP local y Railway.app
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+
+// Mostrar errores solo en entorno local
+if (!getenv('APP_ENV') || getenv('APP_ENV') !== 'QA') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+} else {
+    // En Railway (QA o PROD): no mostrar errores en pantalla
+    error_reporting(E_ALL);
+    ini_set('display_errors', 0); // 👈 CAMBIO CLAVE
+    ini_set('log_errors', 1);
+}
 
 if (getenv('MYSQLHOST')) {
     // Entorno Railway
@@ -28,8 +37,11 @@ try {
     ]);
 } catch (PDOException $e) {
     if (getenv('MYSQLHOST')) {
+        // En Railway: no mostrar detalles del error
+        http_response_code(500);
         die("Error: No se pudo conectar a la base de datos.");
     } else {
+        // En local: mostrar error detallado
         die("Error de conexión local: " . $e->getMessage());
     }
 }

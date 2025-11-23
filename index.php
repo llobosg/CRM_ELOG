@@ -1,29 +1,20 @@
 <?php
-// index.php — Punto de entrada con sesiones persistentes en Redis
+// index.php — Punto de entrada estable para Railway (sin Redis)
 
 // Soporte para HTTPS en Railway (proxy inverso)
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     $_SERVER['HTTPS'] = 'on';
 }
 
-// === Configurar Redis como manejador de sesiones (¡ANTES de session_start!) ===
-if (isset($_ENV['REDIS_URL'])) {
-    $redisUrl = parse_url($_ENV['REDIS_URL']);
-    $redisHost = $redisUrl['host'];
-    $redisPort = $redisUrl['port'];
-    $redisPassword = $redisUrl['pass'] ?? null;
+// ✅ Configuración básica de sesión (sin Redis)
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+ini_set('session.name', 'CRMSESSID');
 
-    ini_set('session.save_handler', 'redis');
-    ini_set('session.save_path', "tcp://{$redisHost}:{$redisPort}");
-    if ($redisPassword) {
-        ini_set('redis.session.auth', $redisPassword);
-    }
-    ini_set('session.name', 'CRMSESSID');
-    ini_set('session.cookie_samesite', 'Lax');
-    ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+// Evitar error si la sesión ya está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
-
-session_start();
 
 // Validación global de sesión
 if (empty($_SESSION['user_id']) || empty($_SESSION['user'])) {
@@ -177,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <?php if ($safePage === 'prospectos'): ?>
 <script>
-const USER_ROLE = '<?php echo htmlspecialchars($_SESSION['rol'] ?? 'comercial'); ?>';
+const USER_ROLE = '<?php echo htmlspecialchars($_SESSION["rol"] ?? "comercial"); ?>';
 console.log('✅ Rol cargado:', USER_ROLE);
 </script>
 <?php endif; ?>
