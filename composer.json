@@ -1,7 +1,9 @@
 {
+    "name": "elog/crm",
+    "description": "CRM logístico para gestión de prospectos y servicios",
     "type": "project",
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "phpmailer/phpmailer": "^7.0"
     },
     "license": "MIT"
