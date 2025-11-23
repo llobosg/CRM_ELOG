@@ -2,6 +2,14 @@
 .env
 *.log
 .DS_Store
+crm_elog_backup_20251120.sql
+deploy_qa_to_prod.sh
+dump_produccion.sql
+render.yaml
+.vscode/
+*.sql
+dump_*.sql
+deploy_*.sh
 
 # XAMPP
-/xamppfiles/
+/xamppfiles/.DS_Store
