@@ -640,20 +640,25 @@
                 });
             });
 
-            // Listeners para ícono de "Completado" (solo para Pricing)
+            // Eliminar listeners anteriores para evitar duplicados
+            document.querySelectorAll('#tabla-servicios i.fa-check-circle').forEach(icon => {
+                const newIcon = icon.cloneNode(true);
+                icon.parentNode.replaceChild(newIcon, icon);
+            });
+
+            // Agregar nuevo listener
             document.querySelectorAll('#tabla-servicios i.fa-check-circle').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
                     const servicio = servicios[index];
 
-                    // ✅ Validar que sea Pricing y el estado sea "completado"
                     if (USER_ROLE !== 'pricing') {
-                        error('Solo el rol Pricing puede informar al Comercial.');
+                        error('Solo el rol Pricing puede notificar al Comercial.');
                         return;
                     }
                     if (servicio.estado_costos !== 'completado') {
-                        error('El servicio no tiene costos completados.');
+                        error('El servicio debe tener costos completados.');
                         return;
                     }
 
@@ -663,15 +668,15 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 id_srvc: servicio.id_srvc,
-                                estado: 'revisado', // ← esto notifica al comercial
-                                usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>'
+                                estado: 'revisado',
+                                usuario_id: <?php echo (int)($_SESSION["user_id"] ?? 0); ?>
                             })
                         })
                         .then(r => r.json())
                         .then(data => {
                             if (data.success) {
                                 servicios[index].estado_costos = 'revisado';
-                                servicios[index].revisado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
+                                servicios[index].revisado_por = <?php echo (int)($_SESSION["user_id"] ?? 0); ?>;
                                 servicios[index].fecha_revisado = new Date().toISOString().slice(0, 19).replace('T', ' ');
                                 actualizarTabla();
                                 exito(data.message || 'Notificación enviada al Comercial');

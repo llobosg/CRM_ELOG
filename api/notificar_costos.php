@@ -62,7 +62,7 @@ try {
                 $prospecto['razon_social'],
                 $prospecto['comercial_nombre'] ?? 'Comercial asignado',
                 [],
-                [$prospecto['comercial_email']] // solo al comercial
+                [$prospecto['comercial_email']] // Solo al Comercial
             );
             if ($resultado['success']) {
                 $mensaje .= " ✉️ Notificación enviada al Comercial.";
