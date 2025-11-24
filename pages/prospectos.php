@@ -549,6 +549,7 @@
                 tc += c; tv += v; tgc += gc; tgv += gv;
 
                 // ✅ Solo permitir notificar si el servicio ya fue guardado
+                // ✅ Icono de "Completado" con tooltip y acción
                 let iconoCostos = '';
                 if (s.id_srvc && !s.id_srvc.startsWith('TEMP_')) {
                     if (s.estado_costos === 'pendiente' || (!s.costos || s.costos.length === 0)) {
@@ -556,7 +557,13 @@
                     } else if (s.estado_costos === 'solicitado') {
                         iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos"></i>';
                     } else if (s.estado_costos === 'completado') {
-                        iconoCostos = '<i class="fas fa-envelope-open" style="color: #009966;" title="Costos listos"></i>';
+                        if (USER_ROLE === 'pricing') {
+                            iconoCostos = '<i class="fas fa-check-circle" style="color: #009966; cursor: pointer;" title="Costos listos para informar al Comercial"></i>';
+                        } else {
+                            iconoCostos = '<i class="fas fa-check-circle" style="color: #009966;" title="Costos listos"></i>';
+                        }
+                    } else if (s.estado_costos === 'revisado') {
+                        iconoCostos = '<i class="fas fa-check-double" style="color: #006600;" title="Aprobado por el Comercial"></i>';
                     }
                 }
 
@@ -586,58 +593,97 @@
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
 
-            // Listeners para ícono de notificación
-            document.querySelectorAll('#tabla-servicios i.fa-paper-plane').forEach(icon => {
+            // Listeners para ícono de "Completado" (solo para Pricing)
+            document.querySelectorAll('#tabla-servicios i.fa-check-circle').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const index = Array.from(row.parentNode.children).indexOf(row);
                     const servicio = servicios[index];
 
-                    // ✅ Validar que el servicio tenga ID permanente
-                    if (!servicio.id_srvc || servicio.id_srvc.startsWith('TEMP_')) {
-                        error('Debe guardar el prospecto primero antes de solicitar costos.');
+                    // ✅ Validación: solo Pricing y estado "completado"
+                    if (USER_ROLE !== 'pricing') {
+                        error('Solo el rol Pricing puede notificar al Comercial.');
+                        return;
+                    }
+                    if (servicio.estado_costos !== 'completado') {
+                        error('El servicio debe tener costos completados.');
                         return;
                     }
 
-                    // ✅ Obtener user_id como entero
-                    const userId = <?php echo (int)($_SESSION["user_id"] ?? 0); ?>;
-                    if (userId <= 0) {
-                        console.error('❌ [NOTIFICAR COSTOS] Sesión inválida');
-                        error('Sesión inválida. Por favor, inicie sesión nuevamente.');
-                        return;
-                    }
-
-                    if (!confirm('¿Solicitar costos al equipo de Pricing?')) return;
-
-                    fetch('/api/notificar_costos.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            id_srvc: servicio.id_srvc,
-                            estado: 'solicitado',
-                            usuario_id: userId
+                    if (confirm('¿Notificar al Comercial que los costos están listos?')) {
+                        fetch('/api/notificar_costos.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id_srvc: servicio.id_srvc,
+                                estado: 'revisado',
+                                usuario_id: <?php echo (int)($_SESSION["user_id"] ?? 0); ?>
+                            })
                         })
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        console.log('✅ [NOTIFICAR COSTOS] Respuesta:', data);
-                        if (data.success) {
-                            // Actualizar estado en memoria
-                            servicios[index].estado_costos = 'solicitado';
-                            servicios[index].solicitado_por = userId;
-                            servicios[index].fecha_solicitado = new Date().toISOString().slice(0, 19).replace('T', ' ');
-                            // Refrescar tabla
-                            actualizarTabla();
-                            // Notificar usuario
-                            exito(data.message || 'Solicitud enviada al equipo de Pricing');
-                        } else {
-                            error('Error: ' + (data.message || 'Intente nuevamente'));
-                        }
-                    })
-                    .catch(err => {
-                        console.error('❌ [NOTIFICAR COSTOS] Error de red:', err);
-                        error('No se pudo enviar la solicitud. Verifique su conexión.');
-                    });
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                servicios[index].estado_costos = 'revisado';
+                                servicios[index].revisado_por = <?php echo (int)($_SESSION["user_id"] ?? 0); ?>;
+                                servicios[index].fecha_revisado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                                actualizarTabla();
+                                exito(data.message || 'Notificación enviada al Comercial');
+                            } else {
+                                error('Error: ' + (data.message || 'Intente nuevamente'));
+                            }
+                        })
+                        .catch(err => {
+                            console.error('❌ Error al notificar al Comercial:', err);
+                            error('No se pudo conectar con el servidor');
+                        });
+                    }
+                });
+            });
+
+            // Listeners para ícono de "Completado" (solo para Pricing)
+            document.querySelectorAll('#tabla-servicios i.fa-check-circle').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const index = Array.from(row.parentNode.children).indexOf(row);
+                    const servicio = servicios[index];
+
+                    // ✅ Validar que sea Pricing y el estado sea "completado"
+                    if (USER_ROLE !== 'pricing') {
+                        error('Solo el rol Pricing puede informar al Comercial.');
+                        return;
+                    }
+                    if (servicio.estado_costos !== 'completado') {
+                        error('El servicio no tiene costos completados.');
+                        return;
+                    }
+
+                    if (confirm('¿Notificar al Comercial que los costos están listos?')) {
+                        fetch('/api/notificar_costos.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id_srvc: servicio.id_srvc,
+                                estado: 'revisado', // ← esto notifica al comercial
+                                usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>'
+                            })
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                servicios[index].estado_costos = 'revisado';
+                                servicios[index].revisado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
+                                servicios[index].fecha_revisado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                                actualizarTabla();
+                                exito(data.message || 'Notificación enviada al Comercial');
+                            } else {
+                                error('Error: ' + (data.message || 'Intente nuevamente'));
+                            }
+                        })
+                        .catch(err => {
+                            console.error('❌ Error al notificar al Comercial:', err);
+                            error('No se pudo conectar con el servidor');
+                        });
+                    }
                 });
             });
 

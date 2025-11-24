@@ -41,6 +41,33 @@ try {
         $campos[] = 'fecha_revisado = NOW()';
         $campos[] = 'revisado_por = ?';
         $valores[] = $usuarioId;
+
+        // === Enviar correo al Comercial ===
+        $stmt = $pdo->prepare("
+            SELECT p.concatenado, p.razon_social, s.id_prospect, 
+                u.email as comercial_email, u.nombre as comercial_nombre
+            FROM servicios s
+            JOIN prospectos p ON s.id_prospect = p.id_ppl
+            LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
+            WHERE s.id_srvc = ?
+        ");
+        $stmt->execute([$idSrvc]);
+        $prospecto = $stmt->fetch();
+
+        if ($prospecto && !empty($prospecto['comercial_email'])) {
+            require_once __DIR__ . '/enviar_correo_pricing.php';
+            $resultado = enviarCorreoPricing(
+                $prospecto['id_prospect'],
+                $prospecto['concatenado'],
+                $prospecto['razon_social'],
+                $prospecto['comercial_nombre'] ?? 'Comercial asignado',
+                [],
+                [$prospecto['comercial_email']] // solo al comercial
+            );
+            if ($resultado['success']) {
+                $mensaje .= " ✉️ Notificación enviada al Comercial.";
+            }
+        }
     }
 
     $valores[] = $idSrvc;
