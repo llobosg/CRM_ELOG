@@ -1959,7 +1959,12 @@
                             inp.name = 'servicios_json';
                             form.appendChild(inp);
                         }
-                        inp.value = JSON.stringify(servicios);
+                        // ✅ Filtrar servicios: eliminar campos no deseados como "modo"
+                        const serviciosParaGuardar = servicios.map(s => {
+                            const { modo, costos, gastos_locales, ...servicioLimpio } = s;
+                            return servicioLimpio;
+                        });
+                        inp.value = JSON.stringify(serviciosParaGuardar);
                         console.log('📦 [GRABAR TODO] JSON de servicios:', inp.value);
                     }
 
