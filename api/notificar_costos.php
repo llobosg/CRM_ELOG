@@ -3,8 +3,6 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config.php';
 
-// ✅ Eliminamos auth_check.php porque ya no se incluye (como indicaste)
-
 try {
     $data = json_decode(file_get_contents('php://input'), true);
     $idSrvc = $data['id_srvc'] ?? '';
@@ -25,10 +23,9 @@ try {
         throw new Exception('Estado no permitido');
     }
 
-    // Actualizar servicios
+    // Actualizar en BD
     $campos = ['estado_costos = ?'];
     $valores = [$estado];
-
     if ($estado === 'solicitado') {
         $campos[] = 'fecha_solicitado = NOW()';
         $campos[] = 'solicitado_por = ?';
@@ -38,38 +35,10 @@ try {
         $campos[] = 'completado_por = ?';
         $valores[] = $usuarioId;
     } elseif ($estado === 'revisado') {
-    $campos[] = 'fecha_revisado = NOW()';
-    $campos[] = 'revisado_por = ?';
-    $valores[] = $usuarioId;
-
-    // === Enviar correo al Comercial ===
-    $stmt = $pdo->prepare("
-        SELECT p.concatenado, p.razon_social, s.id_prospect, 
-               u.email as comercial_email, u.nombre as comercial_nombre
-        FROM servicios s
-        JOIN prospectos p ON s.id_prospect = p.id_ppl
-        LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
-        WHERE s.id_srvc = ?
-    ");
-    $stmt->execute([$idSrvc]);
-    $prospecto = $stmt->fetch();
-
-    if ($prospecto && !empty($prospecto['comercial_email'])) {
-        require_once __DIR__ . '/enviar_correo_pricing.php';
-        $resultado = enviarCorreoPricing(
-            $prospecto['id_prospect'],
-            $prospecto['concatenado'],
-            $prospecto['razon_social'],
-            $prospecto['comercial_nombre'] ?? 'Comercial asignado',
-            [],
-            [$prospecto['comercial_email']] // ✅ Solo al Comercial
-        );
-        if ($resultado['success']) {
-            $mensaje .= " ✉️ Notificación enviada al Comercial.";
-        }
+        $campos[] = 'fecha_revisado = NOW()';
+        $campos[] = 'revisado_por = ?';
+        $valores[] = $usuarioId;
     }
-}
-
     $valores[] = $idSrvc;
     $sql = "UPDATE servicios SET " . implode(', ', $campos) . " WHERE id_srvc = ?";
     $stmt = $pdo->prepare($sql);
@@ -82,11 +51,13 @@ try {
         default => 'Estado de costos actualizado.'
     };
 
-    // === ENVIAR CORREO SOLO SI ES "solicitado" ===
-    if ($estado === 'solicitado') {
-        // Obtener datos del prospecto
+    // === ENVIAR CORREO AL COMERCIAL (solo en 'revisado') ===
+    if ($estado === 'revisado') {
+        error_log("[REVISADO] Iniciando envío de correo al Comercial para id_srvc: " . $idSrvc);
+
         $stmt = $pdo->prepare("
-            SELECT p.concatenado, p.razon_social, s.id_prospect, u.nombre as comercial_nombre
+            SELECT p.concatenado, p.razon_social, s.id_prospect, 
+                   u.email as comercial_email, u.nombre as comercial_nombre
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
             LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
@@ -95,39 +66,38 @@ try {
         $stmt->execute([$idSrvc]);
         $prospecto = $stmt->fetch();
 
-        if ($prospecto) {
-            // ✅ Intentar cargar PHPMailer, pero sin romper si falla
-            $correo_ok = false;
-            $error_correo = '';
+        if ($prospecto && !empty($prospecto['comercial_email'])) {
+            error_log("[REVISADO] Comercial encontrado: " . $prospecto['comercial_email']);
 
-            if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
-                try {
-                    require_once __DIR__ . '/../vendor/autoload.php';
-                    require_once __DIR__ . '/enviar_correo_pricing.php';
+            // ✅ Forzar la inclusión del archivo
+            if (file_exists(__DIR__ . '/enviar_correo_pricing.php')) {
+                require_once __DIR__ . '/enviar_correo_pricing.php';
+                if (function_exists('enviarCorreoPricing')) {
                     $resultado = enviarCorreoPricing(
                         $prospecto['id_prospect'],
                         $prospecto['concatenado'],
                         $prospecto['razon_social'],
-                        $prospecto['comercial_nombre'] ?? 'Comercial asignado'
+                        $prospecto['comercial_nombre'] ?? 'Comercial asignado',
+                        [],
+                        [$prospecto['comercial_email']]
                     );
+                    error_log("[REVISADO] Resultado del correo: " . json_encode($resultado));
                     if ($resultado['success']) {
-                        $mensaje .= " ✉️ " . $resultado['message'];
-                        $correo_ok = true;
+                        $mensaje .= " ✉️ Notificación enviada al Comercial.";
                     } else {
-                        $error_correo = $resultado['message'];
+                        $mensaje .= " ⚠️ Error al enviar correo.";
                     }
-                } catch (Exception $e) {
-                    $error_correo = "Error al enviar correo: " . $e->getMessage();
+                } else {
+                    $mensaje .= " ⚠️ Función enviarCorreoPricing no encontrada.";
+                    error_log("[REVISADO] Función enviarCorreoPricing no existe");
                 }
             } else {
-                $error_correo = "PHPMailer no instalado (vendor/ faltante)";
+                $mensaje .= " ⚠️ Archivo enviar_correo_pricing.php no encontrado.";
+                error_log("[REVISADO] Archivo enviar_correo_pricing.php no existe");
             }
-
-            // Registrar en log si falla el correo
-            if (!$correo_ok) {
-                error_log("[NOTIFICAR_COSTOS] Advertencia: " . $error_correo);
-                $mensaje .= " ⚠️ Notificación por correo no enviada.";
-            }
+        } else {
+            $mensaje .= " ⚠️ Comercial no tiene correo.";
+            error_log("[REVISADO] Comercial no encontrado o sin email");
         }
     }
 
