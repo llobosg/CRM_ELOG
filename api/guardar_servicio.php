@@ -1,6 +1,8 @@
 <?php
 // api/guardar_servicio.php
 header('Content-Type: application/json');
+
+// ✅ Eliminamos auth_check.php (validación en index.php)
 require_once __DIR__ . '/../config.php';
 
 try {
@@ -29,20 +31,35 @@ try {
         // === ACTUALIZAR ===
         $sql = "
             UPDATE servicios SET
-                servicio = ?, trafico = ?, commodity = ?, origen = ?, pais_origen = ?,
+                servicio = ?, nombre_corto = ?, tipo = ?, trafico = ?, sub_trafico = ?,
+                base_calculo = ?, moneda = ?, tarifa = ?, iva = ?, estado = ?,
+                costo = ?, venta = ?, costogastoslocalesdestino = ?, ventasgastoslocalesdestino = ?,
+                desconsolidac = ?, commodity = ?, origen = ?, pais_origen = ?,
                 destino = ?, pais_destino = ?, transito = ?, frecuencia = ?, lugar_carga = ?,
                 sector = ?, mercancia = ?, bultos = ?, peso = ?, volumen = ?,
-                dimensiones = ?, moneda = ?, tipo_cambio = ?, proveedor_nac = ?,
-                desconsolidac = ?, aol = ?, aod = ?, agente = ?, transportador = ?,
-                incoterm = ?, ref_cliente = ?,
-                costo = ?, venta = ?, costogastoslocalesdestino = ?, ventasgastoslocalesdestino = ?,
+                dimensiones = ?, agente = ?, aol = ?, aod = ?, transportador = ?,
+                incoterm = ?, ref_cliente = ?, proveedor_nac = ?,
+                tipo_cambio = ?, ciudad = ?, pais = ?, direc_serv = ?,
                 estado_costos = ?
             WHERE id_srvc = ?
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             $data['servicio'] ?? '',
+            $data['nombre_corto'] ?? '',
+            $data['tipo'] ?? '',
             $data['trafico'] ?? '',
+            $data['sub_trafico'] ?? '',
+            $data['base_calculo'] ?? '',
+            $data['moneda'] ?? 'CLP',
+            (float)($data['tarifa'] ?? 0),
+            (int)($data['iva'] ?? 19),
+            $data['estado'] ?? 'Activo',
+            (float)($data['costo'] ?? 0),
+            (float)($data['venta'] ?? 0),
+            (float)($data['costogastoslocalesdestino'] ?? 0),
+            (float)($data['ventasgastoslocalesdestino'] ?? 0),
+            '0',
             $data['commodity'] ?? '',
             $data['origen'] ?? '',
             $data['pais_origen'] ?? '',
@@ -57,20 +74,17 @@ try {
             (float)($data['peso'] ?? 0),
             (string)($data['volumen'] ?? '0.00'),
             (string)($data['dimensiones'] ?? ''),
-            $data['moneda'] ?? 'CLP',
-            (float)($data['tipo_cambio'] ?? 1),
-            $data['proveedor_nac'] ?? '',
-            '0',
+            $data['agente'] ?? '',
             $data['aol'] ?? '',
             $data['aod'] ?? '',
-            $data['agente'] ?? '',
             $data['transportador'] ?? '',
             $data['incoterm'] ?? '',
             $data['ref_cliente'] ?? '',
-            (float)($data['costo'] ?? 0),
-            (float)($data['venta'] ?? 0),
-            (float)($data['costogastoslocalesdestino'] ?? 0),
-            (float)($data['ventasgastoslocalesdestino'] ?? 0),
+            $data['proveedor_nac'] ?? '',
+            (float)($data['tipo_cambio'] ?? 1),
+            $data['ciudad'] ?? '',
+            $data['pais'] ?? '',
+            $data['direc_serv'] ?? '',
             $data['estado_costos'] ?? 'pendiente',
             $id_srvc
         ]);
@@ -85,20 +99,49 @@ try {
 
         $sql = "
             INSERT INTO servicios (
-                id_srvc, id_prospect, servicio, trafico, commodity, origen, pais_origen,
-                destino, pais_destino, transito, frecuencia, lugar_carga, sector, mercancia,
-                bultos, peso, volumen, dimensiones, moneda, tipo_cambio, proveedor_nac,
-                desconsolidac, aol, aod, agente, transportador, incoterm, ref_cliente,
-                costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino,
+                id_srvc, id_ppl, id_prospect,
+                servicio, nombre_corto, tipo, trafico, sub_trafico,
+                base_calculo, moneda, tarifa, iva, estado,
+                costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
+                commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
+                lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
+                agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac,
+                tipo_cambio, ciudad, pais, direc_serv,
                 estado_costos, solicitado_por, fecha_solicitado,
                 completado_por, fecha_completado, revisado_por, fecha_revisado
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (
+                ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?,
+                ?, ?, ?, ?
+            )
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            $id_srvc, $id_ppl,
+            $id_srvc,
+            $id_ppl,
+            $id_ppl,
             $data['servicio'] ?? '',
+            $data['nombre_corto'] ?? '',
+            $data['tipo'] ?? '',
             $data['trafico'] ?? '',
+            $data['sub_trafico'] ?? '',
+            $data['base_calculo'] ?? '',
+            $data['moneda'] ?? 'CLP',
+            (float)($data['tarifa'] ?? 0),
+            (int)($data['iva'] ?? 19),
+            $data['estado'] ?? 'Activo',
+            (float)($data['costo'] ?? 0),
+            (float)($data['venta'] ?? 0),
+            (float)($data['costogastoslocalesdestino'] ?? 0),
+            (float)($data['ventasgastoslocalesdestino'] ?? 0),
+            '0',
             $data['commodity'] ?? '',
             $data['origen'] ?? '',
             $data['pais_origen'] ?? '',
@@ -113,22 +156,20 @@ try {
             (float)($data['peso'] ?? 0),
             (string)($data['volumen'] ?? '0.00'),
             (string)($data['dimensiones'] ?? ''),
-            $data['moneda'] ?? 'CLP',
-            (float)($data['tipo_cambio'] ?? 1),
-            $data['proveedor_nac'] ?? '',
-            '0',
+            $data['agente'] ?? '',
             $data['aol'] ?? '',
             $data['aod'] ?? '',
-            $data['agente'] ?? '',
             $data['transportador'] ?? '',
             $data['incoterm'] ?? '',
             $data['ref_cliente'] ?? '',
-            (float)($data['costo'] ?? 0),
-            (float)($data['venta'] ?? 0),
-            (float)($data['costogastoslocalesdestino'] ?? 0),
-            (float)($data['ventasgastoslocalesdestino'] ?? 0),
+            $data['proveedor_nac'] ?? '',
+            (float)($data['tipo_cambio'] ?? 1),
+            $data['ciudad'] ?? '',
+            $data['pais'] ?? '',
+            $data['direc_serv'] ?? '',
             $data['estado_costos'] ?? 'pendiente',
-            null, null, null, null, null, null
+            null, null,
+            null, null, null, null
         ]);
         $mensaje = 'Servicio creado correctamente';
     }
