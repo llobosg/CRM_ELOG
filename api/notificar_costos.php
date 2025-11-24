@@ -68,33 +68,39 @@ try {
         $stmt->execute([$idSrvc]);
         $prospecto = $stmt->fetch();
 
-        // Obtener también datos del servicio
-        $stmtServ = $pdo->prepare("SELECT origen, destino, incoterm FROM servicios WHERE id_srvc = ?");
-        $stmtServ->execute([$idSrvc]);
-        $servicio = $stmtServ->fetch();
-
         if ($prospecto) {
-            require_once __DIR__ . '/enviar_correo_pricing.php';
+            // ✅ Intentar cargar PHPMailer, pero sin romper si falla
+            $correo_ok = false;
+            $error_correo = '';
 
-            // Extraer tipo_oper desde el prospecto
-            $stmtTipo = $pdo->prepare("SELECT tipo_oper FROM prospectos WHERE id_ppl = ?");
-            $stmtTipo->execute([$prospecto['id_prospect']]);
-            $tipoOper = $stmtTipo->fetchColumn() ?: '—';
+            if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+                try {
+                    require_once __DIR__ . '/../vendor/autoload.php';
+                    require_once __DIR__ . '/enviar_correo_pricing.php';
+                    $resultado = enviarCorreoPricing(
+                        $prospecto['id_prospect'],
+                        $prospecto['concatenado'],
+                        $prospecto['razon_social'],
+                        $prospecto['comercial_nombre'] ?? 'Comercial asignado'
+                    );
+                    if ($resultado['success']) {
+                        $mensaje .= " ✉️ " . $resultado['message'];
+                        $correo_ok = true;
+                    } else {
+                        $error_correo = $resultado['message'];
+                    }
+                } catch (Exception $e) {
+                    $error_correo = "Error al enviar correo: " . $e->getMessage();
+                }
+            } else {
+                $error_correo = "PHPMailer no instalado (vendor/ faltante)";
+            }
 
-            $datosServicio = [
-                'origen' => $servicio['origen'] ?? '—',
-                'destino' => $servicio['destino'] ?? '—',
-                'tipo_oper' => $tipoOper,
-                'incoterm' => $servicio['incoterm'] ?? '—'
-            ];
-
-            $resultado = enviarCorreoPricing(
-                $prospecto['id_prospect'],
-                $prospecto['concatenado'],
-                $prospecto['razon_social'],
-                $prospecto['comercial_nombre'] ?? 'Comercial asignado',
-                $datosServicio
-            );
+            // Registrar en log si falla el correo
+            if (!$correo_ok) {
+                error_log("[NOTIFICAR_COSTOS] Advertencia: " . $error_correo);
+                $mensaje .= " ⚠️ Notificación por correo no enviada.";
+            }
         }
     }
 
