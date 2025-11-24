@@ -1959,13 +1959,32 @@
                             inp.name = 'servicios_json';
                             form.appendChild(inp);
                         }
-                        // ✅ Filtrar servicios: eliminar campos no deseados como "modo"
-                        const serviciosParaGuardar = servicios.map(s => {
-                            const { modo, costos, gastos_locales, ...servicioLimpio } = s;
-                            return servicioLimpio;
+
+                        // ✅ Filtrar SOLO los campos que existen en la tabla `servicios`
+                        const camposValidos = [
+                            'id_srvc', 'id_prospect', 'servicio', 'trafico', 'commodity',
+                            'origen', 'pais_origen', 'destino', 'pais_destino', 'transito',
+                            'frecuencia', 'lugar_carga', 'sector', 'mercancia', 'bultos',
+                            'peso', 'volumen', 'dimensiones', 'moneda', 'tipo_cambio',
+                            'proveedor_nac', 'desconsolidac', 'aol', 'aod', 'agente',
+                            'transportador', 'incoterm', 'ref_cliente', 'costo', 'venta',
+                            'costogastoslocalesdestino', 'ventasgastoslocalesdestino',
+                            'estado_costos', 'solicitado_por', 'fecha_solicitado',
+                            'completado_por', 'fecha_completado', 'revisado_por', 'fecha_revisado'
+                        ];
+
+                        const serviciosLimpio = servicios.map(s => {
+                            const limpio = {};
+                            camposValidos.forEach(campo => {
+                                if (s.hasOwnProperty(campo)) {
+                                    limpio[campo] = s[campo];
+                                }
+                            });
+                            return limpio;
                         });
-                        inp.value = JSON.stringify(serviciosParaGuardar);
-                        console.log('📦 [GRABAR TODO] JSON de servicios:', inp.value);
+
+                        inp.value = JSON.stringify(serviciosLimpio);
+                        console.log('📦 [GRABAR TODO] JSON de servicios (LIMPIO):', inp.value);
                     }
 
                     if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs.')) {
