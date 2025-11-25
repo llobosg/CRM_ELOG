@@ -22,7 +22,8 @@ function enviarCorreoPricing(
     $datosServicio = [],
     $destinatariosPersonalizados = null,
     $costoTotal = null,
-    $pricingNombre = null
+    $pricingNombre = null,
+    $monedaServicio = 'USD'  // ✅ Nueva variable
 ) {
     global $pdo;
 
@@ -137,7 +138,7 @@ function generarHtmlCorreoComercial($razonSocial, $concatenado, $comercialNombre
     $tipoOper = $datosServicio['tipo_oper'] ?? '—';
     $incoterm = $datosServicio['incoterm'] ?? '—';
     $pricing = $pricingNombre ?? 'Equipo de Pricing';
-    $costo = $costoTotal !== null ? number_format($costoTotal, 2) : '—';
+    $costo = $costoTotal !== null ? number_format($costoTotal, 2) . ' ' . htmlspecialchars($monedaServicio) : '—';
 
     return "
         <div style='font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);'>
@@ -159,7 +160,7 @@ function generarHtmlCorreoComercial($razonSocial, $concatenado, $comercialNombre
                     </tr>
                     <tr>
                         <td style='padding: 6px 0; font-weight: 600; color: #495057;'>Costo Total:</td>
-                        <td style='padding: 6px 0; color: #212529;'>$costo USD</td>
+                        <td style='padding: 6px 0; color: #212529;'>$costo</td>
                     </tr>
                 </table>
                 <div style='text-align: center; margin: 30px 0;'>
