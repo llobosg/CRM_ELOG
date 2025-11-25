@@ -57,12 +57,17 @@ try {
         $campos[] = 'solicitado_por = ?';
         $valores[] = $usuarioId;
 
-        // === Enviar correo al equipo de Pricing ===
-        error_log("[NOTIFICAR_COSTOS] Iniciando envío a Pricing para id_srvc: " . $idSrvc);
-
-        // Obtener datos del prospecto
+        // === Obtener TODOS los datos necesarios para el correo ===
         $stmt = $pdo->prepare("
-            SELECT p.concatenado, p.razon_social, s.id_prospect, u.nombre as comercial_nombre
+            SELECT 
+                p.concatenado, 
+                p.razon_social, 
+                p.tipo_oper,
+                s.id_prospect, 
+                s.origen, 
+                s.destino, 
+                s.incoterm,
+                u.nombre as comercial_nombre
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
             LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
@@ -72,12 +77,21 @@ try {
         $prospecto = $stmt->fetch();
 
         if ($prospecto) {
+            // ✅ Preparar datos del servicio
+            $datosServicio = [
+                'origen' => $prospecto['origen'] ?? '—',
+                'destino' => $prospecto['destino'] ?? '—',
+                'tipo_oper' => $prospecto['tipo_oper'] ?? '—',
+                'incoterm' => $prospecto['incoterm'] ?? '—'
+            ];
+
             require_once __DIR__ . '/enviar_correo_pricing.php';
             $resultado = enviarCorreoPricing(
                 $prospecto['id_prospect'],
                 $prospecto['concatenado'],
                 $prospecto['razon_social'],
-                $prospecto['comercial_nombre'] ?? 'Comercial asignado'
+                $prospecto['comercial_nombre'] ?? 'Comercial asignado',
+                $datosServicio  // 👈 PASAR LOS DATOS DEL SERVICIO
             );
             if ($resultado['success']) {
                 $mensaje .= " ✉️ " . $resultado['message'];
@@ -85,7 +99,7 @@ try {
                 error_log("[NOTIFICAR_COSTOS] Error al enviar a Pricing: " . $resultado['message']);
             }
         } else {
-            error_log("[NOTIFICAR_COSTOS] Prospecto no encontrado para id_srvc: " . $idSrvc);
+            error_log("[NOTIFICAR_COSTOS] Prospecto/servicio no encontrado para id_srvc: " . $idSrvc);
         }
     }
 
