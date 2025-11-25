@@ -1771,14 +1771,42 @@
 
         function eliminarServicio(index) {
             if (index < 0 || index >= servicios.length) return;
-            const s = servicios[index];
-            if ((s.costos && s.costos.length > 0) || (s.gastos_locales && s.gastos_locales.length > 0)) {
-                return error('No se puede eliminar: tiene costos o gastos asociados.');
-            }
-            if (confirm('¿Eliminar este servicio?')) {
+
+            const servicio = servicios[index];
+            // ✅ Validar que el servicio tenga un ID permanente
+            if (!servicio.id_srvc || servicio.id_srvc.startsWith('TEMP_')) {
+                // Si es temporal, eliminar localmente sin API
                 servicios.splice(index, 1);
                 actualizarTabla();
                 exito('Servicio eliminado');
+                return;
+            }
+
+            // ✅ Validar que no tenga costos/gastos (opcional, según regla de negocio)
+            if ((servicio.costos && servicio.costos.length > 0) || (servicio.gastos_locales && servicio.gastos_locales.length > 0)) {
+                return error('No se puede eliminar: tiene costos o gastos asociados.');
+            }
+
+            if (confirm('¿Eliminar este servicio de forma permanente?')) {
+                fetch('/api/eliminar_servicio.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_srvc: servicio.id_srvc })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        servicios.splice(index, 1);
+                        actualizarTabla();
+                        exito('Servicio eliminado correctamente');
+                    } else {
+                        error('Error: ' + (data.message || 'Intente nuevamente'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error al eliminar servicio:', err);
+                    error('No se pudo conectar con el servidor');
+                });
             }
         }
 
