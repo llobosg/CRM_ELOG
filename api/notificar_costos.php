@@ -9,21 +9,12 @@ try {
     $estado = $data['estado'] ?? '';
     $usuarioId = (int)($data['usuario_id'] ?? 0);
 
-    // Validaciones
-    if (empty($idSrvc) || !is_string($idSrvc)) {
-        throw new Exception('ID de servicio inválido');
-    }
-    if (strlen($idSrvc) > 50 || !preg_match('/^[a-zA-Z0-9\-_]+$/', $idSrvc)) {
-        throw new Exception('Formato de ID de servicio no válido');
-    }
-    if ($usuarioId <= 0) {
-        throw new Exception('Usuario no autenticado');
-    }
-    if (!in_array($estado, ['solicitado', 'completado', 'revisado'])) {
-        throw new Exception('Estado no permitido');
-    }
+    if (empty($idSrvc) || !is_string($idSrvc)) throw new Exception('ID de servicio inválido');
+    if (strlen($idSrvc) > 50 || !preg_match('/^[a-zA-Z0-9\-_]+$/', $idSrvc)) throw new Exception('Formato de ID no válido');
+    if ($usuarioId <= 0) throw new Exception('Usuario no autenticado');
+    if (!in_array($estado, ['solicitado', 'completado', 'revisado'])) throw new Exception('Estado no permitido');
 
-    // Actualizar en BD
+    // === Actualizar en BD ===
     $campos = ['estado_costos = ?'];
     $valores = [$estado];
     if ($estado === 'solicitado') {
@@ -51,27 +42,14 @@ try {
         default => 'Estado de costos actualizado.'
     };
 
-    // === ENVIAR CORREOS SEGÚN EL ESTADO ===
+    // === ENVIAR CORREO SEGÚN ESTADO ===
     if ($estado === 'solicitado') {
-        $campos[] = 'fecha_solicitado = NOW()';
-        $campos[] = 'solicitado_por = ?';
-        $valores[] = $usuarioId;
-
-        // === Obtener TODOS los datos del prospecto y servicio ===
         $stmt = $pdo->prepare("
-            SELECT 
-                p.id_ppl,
-                p.concatenado, 
-                p.razon_social, 
-                p.tipo_oper,
-                s.id_prospect, 
-                s.origen, 
-                s.destino, 
-                s.incoterm,
-                u.nombre as comercial_nombre
+            SELECT p.id_ppl, p.concatenado, p.razon_social, s.id_prospect,
+                   u_com.nombre as comercial_nombre
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
-            LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
+            LEFT JOIN usuarios u_com ON p.id_comercial = u_com.id_usr
             WHERE s.id_srvc = ?
         ");
         $stmt->execute([$idSrvc]);
@@ -84,99 +62,67 @@ try {
                 'tipo_oper' => $prospecto['tipo_oper'] ?? '—',
                 'incoterm' => $prospecto['incoterm'] ?? '—'
             ];
-
             require_once __DIR__ . '/enviar_correo_pricing.php';
             $resultado = enviarCorreoPricing(
                 $prospecto['id_prospect'],
                 $prospecto['concatenado'],
                 $prospecto['razon_social'],
-                $prospecto['comercial_nombre'] ?? 'Comercial asignado',
+                $prospecto['comercial_nombre'] ?? 'Comercial',
                 $datosServicio,
-                null, // destinatarios por defecto (Pricing)
-                null,
-                null,
-                null,
-                $prospecto['id_ppl'] // ✅ PASAR id_ppl para el enlace
+                null, null, null, null,
+                $prospecto['id_ppl'] // ✅ id_ppl para el enlace
             );
             if ($resultado['success']) {
                 $mensaje .= " ✉️ " . $resultado['message'];
-            } else {
-                error_log("[NOTIFICAR_COSTOS] Error al enviar a Pricing: " . $resultado['message']);
             }
-        } else {
-            error_log("[NOTIFICAR_COSTOS] Prospecto/servicio no encontrado para id_srvc: " . $idSrvc);
         }
     } elseif ($estado === 'revisado') {
-        $campos[] = 'fecha_revisado = NOW()';
-        $campos[] = 'revisado_por = ?';
-        $valores[] = $usuarioId;
-
-        // === Obtener datos completos para el correo al Comercial ===
         $stmt = $pdo->prepare("
-            SELECT 
-                p.id_ppl,
-                p.concatenado, 
-                p.razon_social, 
-                p.tipo_oper,
-                s.id_prospect,
-                s.origen,
-                s.destino,
-                s.incoterm,
-                s.costo as costo_total,
-                s.moneda as moneda_servicio,
-                s.solicitado_por,
-                u_solicitado.nombre as comercial_nombre,
-                u_notifica.nombre as pricing_nombre
+            SELECT p.id_ppl, p.concatenado, p.razon_social, s.id_prospect,
+                   s.origen, s.destino, s.incoterm, p.tipo_oper,
+                   s.solicitado_por, s.costo as costo_total, s.moneda as moneda_servicio
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
-            LEFT JOIN usuarios u_solicitado ON s.solicitado_por = u_solicitado.id_usr
-            LEFT JOIN usuarios u_notifica ON s.completado_por = u_notifica.id_usr
             WHERE s.id_srvc = ?
         ");
         $stmt->execute([$idSrvc]);
         $prospecto = $stmt->fetch();
 
-        if ($prospecto && !empty($prospecto['solicitado_por'])) {
-            // === Obtener email del Comercial ===
-            $stmtEmail = $pdo->prepare("SELECT email FROM usuarios WHERE id_usr = ?");
-            $stmtEmail->execute([$prospecto['solicitado_por']]);
-            $emailComercial = $stmtEmail->fetchColumn();
+        if ($prospecto && $prospecto['solicitado_por']) {
+            // === Obtener email y nombre del Comercial ===
+            $stmtCom = $pdo->prepare("SELECT email, nombre FROM usuarios WHERE id_usr = ?");
+            $stmtCom->execute([$prospecto['solicitado_por']]);
+            $comercial = $stmtCom->fetch();
 
-            if ($emailComercial) {
+            // === Obtener nombre del Pricing que notifica ===
+            $stmtPricing = $pdo->prepare("SELECT nombre FROM usuarios WHERE id_usr = ?");
+            $stmtPricing->execute([$usuarioId]);
+            $pricingNombre = $stmtPricing->fetchColumn() ?: 'Pricing';
+
+            if ($comercial && $comercial['email']) {
                 $datosServicio = [
                     'origen' => $prospecto['origen'] ?? '—',
                     'destino' => $prospecto['destino'] ?? '—',
                     'tipo_oper' => $prospecto['tipo_oper'] ?? '—',
                     'incoterm' => $prospecto['incoterm'] ?? '—'
                 ];
-
-                $costoTotal = (float)($prospecto['costo_total'] ?? 0);
-                $monedaServicio = $prospecto['moneda_servicio'] ?? 'USD';
-                $pricingNombre = $prospecto['pricing_nombre'] ?? 'Pricing';
-
                 require_once __DIR__ . '/enviar_correo_pricing.php';
                 $resultado = enviarCorreoPricing(
                     $prospecto['id_prospect'],
                     $prospecto['concatenado'],
                     $prospecto['razon_social'],
-                    $prospecto['comercial_nombre'] ?? 'Comercial',
+                    $comercial['nombre'] ?? 'Comercial',
                     $datosServicio,
-                    [$emailComercial],
-                    $costoTotal,
+                    [$comercial['email']],
+                    (float)$prospecto['costo_total'],
                     $pricingNombre,
-                    $monedaServicio,
-                    $prospecto['id_ppl'] // ✅ PASAR id_ppl para el enlace
+                    $prospecto['moneda_servicio'] ?? 'USD',
+                    $prospecto['id_ppl'] // ✅ id_ppl para el enlace
                 );
                 if ($resultado['success']) {
                     $mensaje .= " ✉️ Notificación enviada al Comercial.";
-                } else {
-                    error_log("[NOTIFICAR_COSTOS] Error al enviar correo al Comercial: " . $resultado['message']);
                 }
-            } else {
-                error_log("[NOTIFICAR_COSTOS] Comercial sin email para id_usr: " . $prospecto['solicitado_por']);
             }
-        } else {
-            error_log("[NOTIFICAR_COSTOS] Comercial no encontrado para id_srvc: " . $idSrvc);
         }
     }
 

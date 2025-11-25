@@ -90,13 +90,14 @@ try {
         ]);
         $mensaje = 'Servicio actualizado correctamente';
     } else {
-        // === CREAR NUEVO ===
+        // === CREAR SERVICIO ===
         $stmt = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
         $stmt->execute([$id_ppl]);
         $last = $stmt->fetch();
         $correlativo = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
         $id_srvc = "{$base}-{$correlativo}";
 
+        // === INSERT en servicios ===
         $sql = "
             INSERT INTO servicios (
                 id_srvc, id_ppl, id_prospect,
@@ -107,8 +108,10 @@ try {
                 lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
                 agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac,
                 tipo_cambio, ciudad, pais, direc_serv,
-                estado_costos, solicitado_por, fecha_solicitado,
-                completado_por, fecha_completado, revisado_por, fecha_revisado
+                estado_costos,
+                solicitado_por, fecha_solicitado,
+                completado_por, fecha_completado,
+                revisado_por, fecha_revisado
             ) VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -119,53 +122,56 @@ try {
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            $id_srvc,
-            $id_ppl,
-            $id_ppl,
-            $data['servicio'] ?? '',
-            $data['nombre_corto'] ?? '',
-            $data['tipo'] ?? '',
-            $data['trafico'] ?? '',
-            $data['sub_trafico'] ?? '',
-            $data['base_calculo'] ?? '',
-            $data['moneda'] ?? 'CLP',
-            (float)($data['tarifa'] ?? 0),
-            (int)($data['iva'] ?? 19),
-            $data['estado'] ?? 'Activo',
-            (float)($data['costo'] ?? 0),
-            (float)($data['venta'] ?? 0),
-            (float)($data['costogastoslocalesdestino'] ?? 0),
-            (float)($data['ventasgastoslocalesdestino'] ?? 0),
-            '0',
-            $data['commodity'] ?? '',
-            $data['origen'] ?? '',
-            $data['pais_origen'] ?? '',
-            $data['destino'] ?? '',
-            $data['pais_destino'] ?? '',
-            $data['transito'] ?? '',
-            $data['frecuencia'] ?? '',
-            $data['lugar_carga'] ?? '',
-            $data['sector'] ?? '',
-            $data['mercancia'] ?? '',
-            (int)($data['bultos'] ?? 0),
-            (float)($data['peso'] ?? 0),
-            (string)($data['volumen'] ?? '0.00'),
-            (string)($data['dimensiones'] ?? ''),
-            $data['agente'] ?? '',
-            $data['aol'] ?? '',
-            $data['aod'] ?? '',
-            $data['transportador'] ?? '',
-            $data['incoterm'] ?? '',
-            $data['ref_cliente'] ?? '',
-            $data['proveedor_nac'] ?? '',
-            (float)($data['tipo_cambio'] ?? 1),
-            $data['ciudad'] ?? '',
-            $data['pais'] ?? '',
-            $data['direc_serv'] ?? '',
+            $id_srvc, $id_ppl, $id_ppl,
+            $data['servicio'] ?? '', $data['nombre_corto'] ?? '', $data['tipo'] ?? '', $data['trafico'] ?? '', $data['sub_trafico'] ?? '',
+            $data['base_calculo'] ?? '', $data['moneda'] ?? 'CLP', (float)($data['tarifa'] ?? 0), (int)($data['iva'] ?? 19), $data['estado'] ?? 'Activo',
+            $costo, $venta, $costogasto, $ventagasto, '0',
+            $data['commodity'] ?? '', $data['origen'] ?? '', $data['pais_origen'] ?? '', $data['destino'] ?? '', $data['pais_destino'] ?? '', $data['transito'] ?? '', $data['frecuencia'] ?? '',
+            $data['lugar_carga'] ?? '', $data['sector'] ?? '', $data['mercancia'] ?? '', (int)($data['bultos'] ?? 0), (float)($data['peso'] ?? 0), (string)($data['volumen'] ?? '0.00'), (string)($data['dimensiones'] ?? ''),
+            $data['agente'] ?? '', $data['aol'] ?? '', $data['aod'] ?? '', $data['transportador'] ?? '', $data['incoterm'] ?? '', $data['ref_cliente'] ?? '', $data['proveedor_nac'] ?? '',
+            (float)($data['tipo_cambio'] ?? 1), $data['ciudad'] ?? '', $data['pais'] ?? '', $data['direc_serv'] ?? '',
             $data['estado_costos'] ?? 'pendiente',
-            null, null,
-            null, null, null, null
+            null, null, null, null, null, null
         ]);
+
+        // === INSERT en costos_servicios ===
+        if (!empty($data['costos'])) {
+            foreach ($data['costos'] as $c) {
+                $stmtC = $pdo->prepare("
+                    INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmtC->execute([
+                    $id_srvc,
+                    $c['concepto'] ?? '',
+                    $c['moneda'] ?? 'CLP',
+                    (float)($c['qty'] ?? 0),
+                    (float)($c['costo'] ?? 0),
+                    (float)($c['tarifa'] ?? 0),
+                    $c['aplica'] ?? ''
+                ]);
+            }
+        }
+
+        // === INSERT en gastos_locales_detalle ===
+        if (!empty($data['gastos_locales'])) {
+            foreach ($data['gastos_locales'] as $g) {
+                $stmtG = $pdo->prepare("
+                    INSERT INTO gastos_locales_detalle (id_servicio, tipo, gasto, moneda, monto, afecto, iva)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmtG->execute([
+                    $id_srvc,
+                    $g['tipo'] ?? '',
+                    $g['gasto'] ?? '',
+                    $g['moneda'] ?? 'CLP',
+                    (float)($g['monto'] ?? 0),
+                    $g['afecto'] ?? 'NO',
+                    (float)($g['iva'] ?? 0)
+                ]);
+            }
+        }
+
         $mensaje = 'Servicio creado correctamente';
     }
 
