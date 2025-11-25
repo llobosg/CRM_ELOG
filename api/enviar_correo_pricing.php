@@ -1,16 +1,8 @@
 <?php
-// api/enviar_correo_pricing.php
+// api/enviarCorreoPricing.php
 
 /**
  * Envía correo usando la API REST de Brevo.
- * 
- * @param int $prospectoId
- * @param string $concatenado
- * @param string $razonSocial
- * @param string $comercialNombre
- * @param array $datosServicio (opcional)
- * @param array|null $destinatariosPersonalizados Si se proporciona, se usan estos correos en lugar de los de "pricing"
- * @return array ['success' => bool, 'message' => string]
  */
 function enviarCorreoPricing(
     $prospectoId,
@@ -22,14 +14,13 @@ function enviarCorreoPricing(
 ) {
     global $pdo;
 
-    // Si se pasan destinatarios personalizados, usarlos directamente
+    // === Obtener destinatarios ===
     if ($destinatariosPersonalizados !== null) {
         $destinatarios = [];
         foreach ($destinatariosPersonalizados as $email) {
             $destinatarios[] = ['email' => $email, 'nombre' => 'Destinatario'];
         }
     } else {
-        // Obtener destinatarios: usuarios con rol "pricing"
         $stmt = $pdo->prepare("
             SELECT email, nombre 
             FROM usuarios 
@@ -40,23 +31,31 @@ function enviarCorreoPricing(
         ");
         $stmt->execute();
         $destinatarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
         if (empty($destinatarios)) {
-            return ['success' => false, 'message' => 'No hay destinatarios con rol Pricing'];
+            $msg = "No se encontraron usuarios con rol Pricing para notificar";
+            error_log("[CORREO] $msg");
+            return ['success' => false, 'message' => $msg];
         }
     }
 
-    // URL del CRM
+    // === Log de destinatarios ===
+    $emailsDestino = array_column($destinatarios, 'email');
+    error_log("[CORREO] Destinatarios: " . implode(', ', $emailsDestino));
+
+    // === Remitente ===
+    $remitenteEmail = $_ENV['SMTP_FROM_EMAIL'] ?? 'llobos@gltcomex.com';
+    error_log("[CORREO] Remitente: $remitenteEmail");
+
+    // === URL del CRM ===
     $appUrl = $_ENV['APP_URL'] ?? 'https://crmelog-qa.up.railway.app';
     $link = "$appUrl/?page=prospectos&id_ppl=" . urlencode($prospectoId);
 
-    // Extraer datos del servicio (con valores por defecto)
+    // === Cuerpo HTML (igual que antes) ===
     $origen      = $datosServicio['origen']      ?? '—';
     $destino     = $datosServicio['destino']     ?? '—';
     $tipoOper    = $datosServicio['tipo_oper']   ?? '—';
     $incoterm    = $datosServicio['incoterm']    ?? '—';
 
-    // Cuerpo HTML del correo
     $body = "
         <div style='font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);'>
             <div style='background: linear-gradient(135deg, #0066cc, #004080); padding: 30px 20px; text-align: center;'>
@@ -124,16 +123,16 @@ function enviarCorreoPricing(
         </div>
     ";
 
-    // Preparar datos para la API de Brevo
+    // === Preparar datos para Brevo ===
     $to = $destinatarios;
     $data = [
-        'sender' => ['email' => 'notifica@elog.cl', 'name' => 'CRM ELOG'],
+        'sender' => ['email' => $remitenteEmail, 'name' => 'CRM ELOG - GLT Comex'],
         'to' => $to,
         'subject' => "🔔 Nueva solicitud de costos: $concatenado",
         'htmlContent' => $body
     ];
 
-    // Enviar vía API de Brevo
+    // === Enviar vía API de Brevo ===
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, 'https://api.brevo.com/v3/smtp/email');
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -148,13 +147,18 @@ function enviarCorreoPricing(
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $errorMsg = curl_error($ch);
     curl_close($ch);
 
+    // === Log de respuesta de Brevo ===
+    error_log("[CORREO] HTTP $httpCode | Response: " . substr($response, 0, 200) . "..." . (strlen($response) > 200 ? "" : ""));
+
     if ($httpCode === 201) {
-        return ['success' => true, 'message' => 'Correo enviado a ' . count($destinatarios) . ' destinatario(s)'];
+        return ['success' => true, 'message' => 'Correo enviado a ' . count($destinatarios) . ' usuario(s) de Pricing'];
     } else {
-        error_log("Error Brevo API: HTTP $httpCode, Response: $response");
-        return ['success' => false, 'message' => "Error al enviar correo (HTTP $httpCode)"];
+        $msgError = "Error al enviar correo: HTTP $httpCode";
+        error_log("[CORREO] $msgError | cURL: $errorMsg");
+        return ['success' => false, 'message' => $msgError];
     }
 }
 ?>
