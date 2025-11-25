@@ -51,6 +51,44 @@ try {
         default => 'Estado de costos actualizado.'
     };
 
+    // === ENVIAR CORREO AL PRICING (solo en 'solicitado') ===
+    if ($estado === 'solicitado') {
+        $campos[] = 'fecha_solicitado = NOW()';
+        $campos[] = 'solicitado_por = ?';
+        $valores[] = $usuarioId;
+
+        // === Enviar correo al equipo de Pricing ===
+        error_log("[NOTIFICAR_COSTOS] Iniciando envío a Pricing para id_srvc: " . $idSrvc);
+
+        // Obtener datos del prospecto
+        $stmt = $pdo->prepare("
+            SELECT p.concatenado, p.razon_social, s.id_prospect, u.nombre as comercial_nombre
+            FROM servicios s
+            JOIN prospectos p ON s.id_prospect = p.id_ppl
+            LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
+            WHERE s.id_srvc = ?
+        ");
+        $stmt->execute([$idSrvc]);
+        $prospecto = $stmt->fetch();
+
+        if ($prospecto) {
+            require_once __DIR__ . '/enviar_correo_pricing.php';
+            $resultado = enviarCorreoPricing(
+                $prospecto['id_prospect'],
+                $prospecto['concatenado'],
+                $prospecto['razon_social'],
+                $prospecto['comercial_nombre'] ?? 'Comercial asignado'
+            );
+            if ($resultado['success']) {
+                $mensaje .= " ✉️ " . $resultado['message'];
+            } else {
+                error_log("[NOTIFICAR_COSTOS] Error al enviar a Pricing: " . $resultado['message']);
+            }
+        } else {
+            error_log("[NOTIFICAR_COSTOS] Prospecto no encontrado para id_srvc: " . $idSrvc);
+        }
+    }
+
     // === ENVIAR CORREO AL COMERCIAL (solo en 'revisado') ===
     if ($estado === 'revisado') {
         error_log("[REVISADO] Iniciando envío de correo al Comercial para id_srvc: " . $idSrvc);
