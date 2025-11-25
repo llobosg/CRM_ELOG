@@ -121,7 +121,7 @@ function generarHtmlCorreoPricing($razonSocial, $concatenado, $comercialNombre, 
                 </p>
                 " . generarTablaServicio($razonSocial, $concatenado, $comercialNombre, $origen, $destino, $tipoOper, $incoterm) . "
                 <div style='text-align: center; margin: 30px 0;'>
-                    <a href='https://crmelog-qa.up.railway.app/?page=prospectos&id_ppl=" . ($idPpl ?? $prospectoId) . "' 
+                    <a href='https://crmelog-qa.up.railway.app/?page=prospectos&id_ppl=" . urlencode($idPpl ?? $prospectoId) . "'
                        style='background: linear-gradient(135deg, #0066cc, #004080); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 8px rgba(0,102,204,0.3);'>
                         Ir al Prospecto en CRM
                     </a>
@@ -165,7 +165,7 @@ function generarHtmlCorreoComercial($razonSocial, $concatenado, $comercialNombre
                     </tr>
                 </table>
                 <div style='text-align: center; margin: 30px 0;'>
-                    <a href='https://crmelog-qa.up.railway.app/?page=prospectos&id_ppl=" . ($idPpl ?? $prospectoId) . "' 
+                    <a href='https://crmelog-qa.up.railway.app/?page=prospectos&id_ppl=" . urlencode($idPpl ?? $prospectoId) . "' 
                        style='background: linear-gradient(135deg, #0066cc, #004080); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 8px rgba(0,102,204,0.3);'>
                         Revisar en el CRM
                     </a>

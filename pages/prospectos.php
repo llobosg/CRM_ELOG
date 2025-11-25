@@ -556,22 +556,14 @@
                     const puedeNotificar = (rolUsuario === 'comercial' || rolUsuario === 'admin');
 
                     if (s.estado_costos === 'pendiente' || (!s.costos || s.costos.length === 0)) {
-                        if (puedeNotificar) {
                             iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
-                        } else {
-                            iconoCostos = '<i class="fas fa-paper-plane" style="color: #cccccc; cursor: not-allowed;" title="Solo el rol Comercial puede notificar a Pricing"></i>';
-                        }
-                    } else if (s.estado_costos === 'solicitado') {
-                        iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos"></i>';
-                    } else if (s.estado_costos === 'completado') {
-                        if (rolUsuario === 'pricing') {
+                        } else if (s.estado_costos === 'solicitado') {
+                            iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos"></i>';
+                        } else if (s.estado_costos === 'completado') {
                             iconoCostos = '<i class="fas fa-check-circle" style="color: #009966; cursor: pointer;" title="Costos listos para informar al Comercial"></i>';
-                        } else {
-                            iconoCostos = '<i class="fas fa-check-circle" style="color: #009966;" title="Costos listos"></i>';
+                        } else if (s.estado_costos === 'revisado') {
+                            iconoCostos = '<i class="fas fa-check-double" style="color: #006600;" title="Aprobado por el Comercial"></i>';
                         }
-                    } else if (s.estado_costos === 'revisado') {
-                        iconoCostos = '<i class="fas fa-check-double" style="color: #006600;" title="Aprobado por el Comercial"></i>';
-                    }
                 }
 
                 const tr = document.createElement('tr');
