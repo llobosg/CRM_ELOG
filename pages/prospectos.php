@@ -1474,41 +1474,19 @@
 
         // --- Submodales ---
         function abrirSubmodalCostos() {
-            const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
-            console.log('🔍 [COSTOS] Rol del usuario:', rolUsuario);
-
-            if (rolUsuario !== 'pricing' && rolUsuario !== 'admin') {
-                console.warn('⚠️ [COSTOS] Acceso denegado: solo pricing puede editar costos');
-                alert('Solo el rol Pricing puede editar costos.');
-                return;
-            }
-
             if (document.getElementById('modal-servicio').style.display === 'none') {
-                error('Abra primero el modal de Servicio');
-                return;
-            }
-            
-            const esPricing = (rolUsuario === 'pricing' || rolUsuario === 'admin');
-
-            // Deshabilitar edición si no es Pricing
-            document.getElementById('costo_qty').disabled = !esPricing;
-            document.getElementById('costo_costo').disabled = !esPricing;
-            document.getElementById('costo_tarifa').disabled = !esPricing;
-            document.getElementById('costo_concepto').disabled = !esPricing;
-            document.getElementById('costo_aplica').disabled = !esPricing;
-
-            // Ocultar botón "Agregar" si no es Pricing
-            const btnAgregar = document.querySelector('#submodal-costos button[onclick="guardarCosto()"]');
-            if (btnAgregar) {
-                btnAgregar.style.display = esPricing ? 'flex' : 'none';
+                return error('Abra primero el modal de Servicio');
             }
 
-            // Continúa proceso normal
-            if (document.getElementById('modal-servicio').style.display === 'none') return error('Abra primero el modal de Servicio');
+            // ✅ Cargar datos actuales del servicio
             if (servicioEnEdicion !== null) {
                 costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) ? [...servicios[servicioEnEdicion].costos] : [];
             }
+
+            // ✅ Establecer moneda
             document.getElementById('costo_moneda').value = document.getElementById('serv_moneda')?.value || 'USD';
+
+            // ✅ Cargar conceptos y aplicaciones
             fetch('/api/get_conceptos_costos.php')
                 .then(r => r.json())
                 .then(data => {
@@ -1523,6 +1501,7 @@
                         });
                     }
                 });
+
             const medio = document.getElementById('serv_medio_transporte')?.value || '';
             fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
                 .then(r => r.json())
@@ -1541,6 +1520,23 @@
                         });
                     }
                 });
+
+            // ✅ Determinar permisos por rol
+            const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+            const esPricingOAdmin = (rolUsuario === 'pricing' || rolUsuario === 'admin');
+
+            // ✅ Deshabilitar campos de costo (solo edición para Pricing/Admin)
+            const camposCosto = ['costo_concepto', 'costo_qty', 'costo_costo', 'costo_aplica'];
+            camposCosto.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = !esPricingOAdmin;
+            });
+
+            // ✅ El campo "tarifa" siempre editable
+            const campoTarifa = document.getElementById('costo_tarifa');
+            if (campoTarifa) campoTarifa.disabled = false;
+
+            // ✅ Actualizar tabla y mostrar modal
             actualizarTablaCostos();
             document.getElementById('submodal-costos').style.display = 'block';
         }
@@ -2149,17 +2145,6 @@
                 // Limpiar la URL para evitar recargas innecesarias
                 history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
             }
-
-            // === Restringir edición de costos por rol ===
-            const originalAbrirSubmodalCostos = abrirSubmodalCostos;
-            window.abrirSubmodalCostos = function() {
-                const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
-                if (rolUsuario !== 'pricing' && rolUsuario !== 'admin') {
-                    alert('Solo el rol Pricing puede editar costos.');
-                    return;
-                }
-                originalAbrirSubmodalCostos();
-            };
         });
 
         // Exponer funciones globales
