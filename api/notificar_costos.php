@@ -104,52 +104,44 @@ try {
     }
 
     // === ENVIAR CORREO AL COMERCIAL (solo en 'revisado') ===
-    if ($estado === 'revisado') {
-        error_log("[REVISADO] Iniciando envío de correo al Comercial para id_srvc: " . $idSrvc);
+    } elseif ($estado === 'revisado') {
+        $campos[] = 'fecha_revisado = NOW()';
+        $campos[] = 'revisado_por = ?';
+        $valores[] = $usuarioId;
 
+        // === Enviar correo al Comercial (usando solicitado_por del servicio) ===
         $stmt = $pdo->prepare("
-            SELECT p.concatenado, p.razon_social, s.id_prospect, 
-                   u.email as comercial_email, u.nombre as comercial_nombre
+            SELECT 
+                p.concatenado, 
+                p.razon_social, 
+                s.id_prospect,
+                u.email as comercial_email,
+                u.nombre as comercial_nombre
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
-            LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
+            LEFT JOIN usuarios u ON s.solicitado_por = u.id_usr  -- ✅ ¡CORREGIDO!
             WHERE s.id_srvc = ?
         ");
         $stmt->execute([$idSrvc]);
         $prospecto = $stmt->fetch();
 
         if ($prospecto && !empty($prospecto['comercial_email'])) {
-            error_log("[REVISADO] Comercial encontrado: " . $prospecto['comercial_email']);
-
-            // ✅ Forzar la inclusión del archivo
-            if (file_exists(__DIR__ . '/enviar_correo_pricing.php')) {
-                require_once __DIR__ . '/enviar_correo_pricing.php';
-                if (function_exists('enviarCorreoPricing')) {
-                    $resultado = enviarCorreoPricing(
-                        $prospecto['id_prospect'],
-                        $prospecto['concatenado'],
-                        $prospecto['razon_social'],
-                        $prospecto['comercial_nombre'] ?? 'Comercial asignado',
-                        [],
-                        [$prospecto['comercial_email']]
-                    );
-                    error_log("[REVISADO] Resultado del correo: " . json_encode($resultado));
-                    if ($resultado['success']) {
-                        $mensaje .= " ✉️ Notificación enviada al Comercial.";
-                    } else {
-                        $mensaje .= " ⚠️ Error al enviar correo.";
-                    }
-                } else {
-                    $mensaje .= " ⚠️ Función enviarCorreoPricing no encontrada.";
-                    error_log("[REVISADO] Función enviarCorreoPricing no existe");
-                }
+            require_once __DIR__ . '/enviar_correo_pricing.php';
+            $resultado = enviarCorreoPricing(
+                $prospecto['id_prospect'],
+                $prospecto['concatenado'],
+                $prospecto['razon_social'],
+                $prospecto['comercial_nombre'] ?? 'Comercial asignado',
+                [],
+                [$prospecto['comercial_email']]
+            );
+            if ($resultado['success']) {
+                $mensaje .= " ✉️ Notificación enviada al Comercial.";
             } else {
-                $mensaje .= " ⚠️ Archivo enviar_correo_pricing.php no encontrado.";
-                error_log("[REVISADO] Archivo enviar_correo_pricing.php no existe");
+                error_log("[NOTIFICAR_COSTOS] Error al enviar correo al Comercial: " . $resultado['message']);
             }
         } else {
-            $mensaje .= " ⚠️ Comercial no tiene correo.";
-            error_log("[REVISADO] Comercial no encontrado o sin email");
+            error_log("[NOTIFICAR_COSTOS] Comercial no encontrado o sin email para id_srvc: " . $idSrvc);
         }
     }
 
