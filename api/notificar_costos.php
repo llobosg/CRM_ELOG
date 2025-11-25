@@ -51,13 +51,9 @@ try {
         default => 'Estado de costos actualizado.'
     };
 
-    // === ENVIAR CORREO AL PRICING (solo en 'solicitado') ===
+    // === ENVIAR CORREOS SEGÚN EL ESTADO ===
     if ($estado === 'solicitado') {
-        $campos[] = 'fecha_solicitado = NOW()';
-        $campos[] = 'solicitado_por = ?';
-        $valores[] = $usuarioId;
-
-        // === Obtener TODOS los datos necesarios para el correo ===
+        // === Enviar correo al equipo de Pricing ===
         $stmt = $pdo->prepare("
             SELECT 
                 p.concatenado, 
@@ -77,7 +73,6 @@ try {
         $prospecto = $stmt->fetch();
 
         if ($prospecto) {
-            // ✅ Preparar datos del servicio
             $datosServicio = [
                 'origen' => $prospecto['origen'] ?? '—',
                 'destino' => $prospecto['destino'] ?? '—',
@@ -91,7 +86,7 @@ try {
                 $prospecto['concatenado'],
                 $prospecto['razon_social'],
                 $prospecto['comercial_nombre'] ?? 'Comercial asignado',
-                $datosServicio  // 👈 PASAR LOS DATOS DEL SERVICIO
+                $datosServicio
             );
             if ($resultado['success']) {
                 $mensaje .= " ✉️ " . $resultado['message'];
@@ -101,15 +96,8 @@ try {
         } else {
             error_log("[NOTIFICAR_COSTOS] Prospecto/servicio no encontrado para id_srvc: " . $idSrvc);
         }
-    }
-
-    // === ENVIAR CORREO AL COMERCIAL (solo en 'revisado') ===
     } elseif ($estado === 'revisado') {
-        $campos[] = 'fecha_revisado = NOW()';
-        $campos[] = 'revisado_por = ?';
-        $valores[] = $usuarioId;
-
-        // === Enviar correo al Comercial (usando solicitado_por del servicio) ===
+        // === Enviar correo al Comercial ===
         $stmt = $pdo->prepare("
             SELECT 
                 p.concatenado, 
@@ -119,7 +107,7 @@ try {
                 u.nombre as comercial_nombre
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
-            LEFT JOIN usuarios u ON s.solicitado_por = u.id_usr  -- ✅ ¡CORREGIDO!
+            LEFT JOIN usuarios u ON s.solicitado_por = u.id_usr
             WHERE s.id_srvc = ?
         ");
         $stmt->execute([$idSrvc]);
