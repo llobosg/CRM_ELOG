@@ -640,54 +640,83 @@
                 });
             });
 
-            // Eliminar listeners anteriores para evitar duplicados
-            document.querySelectorAll('#tabla-servicios i.fa-check-circle').forEach(icon => {
+            // Listeners mejorados para ícono de notificación (✉️)
+            document.querySelectorAll('#tabla-servicios i.fa-paper-plane').forEach(icon => {
+                // Eliminar listener anterior para evitar duplicados
                 const newIcon = icon.cloneNode(true);
                 icon.parentNode.replaceChild(newIcon, icon);
-            });
+                newIcon.addEventListener('click', function() {
+                    console.log('🔍 [ENVIAR] Clic detectado en ícono de notificación');
 
-            // Agregar nuevo listener
-            document.querySelectorAll('#tabla-servicios i.fa-check-circle').forEach(icon => {
-                icon.addEventListener('click', function() {
                     const row = this.closest('tr');
+                    if (!row) {
+                        console.error('❌ [ENVIAR] No se encontró la fila del servicio');
+                        return;
+                    }
                     const index = Array.from(row.parentNode.children).indexOf(row);
+                    if (index < 0 || index >= servicios.length) {
+                        console.error('❌ [ENVIAR] Índice de servicio inválido:', index);
+                        return;
+                    }
                     const servicio = servicios[index];
+                    console.log('📄 [ENVIAR] Servicio seleccionado:', servicio);
 
-                    if (USER_ROLE !== 'pricing') {
-                        error('Solo el rol Pricing puede notificar al Comercial.');
+                    // ✅ Validación 1: ID permanente
+                    if (!servicio.id_srvc || servicio.id_srvc.startsWith('TEMP_')) {
+                        console.warn('⚠️ [ENVIAR] Servicio tiene ID temporal. Se requiere guardar primero.');
+                        alert('Debe guardar el prospecto primero antes de solicitar costos.');
                         return;
                     }
-                    if (servicio.estado_costos !== 'completado') {
-                        error('El servicio debe tener costos completados.');
+
+                    // ✅ Validación 2: Rol del usuario
+                    const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+                    if (rolUsuario !== 'comercial' && rolUsuario !== 'admin') {
+                        console.warn('⚠️ [ENVIAR] Rol no autorizado:', rolUsuario);
+                        alert('Solo el rol Comercial puede solicitar costos a Pricing.');
                         return;
                     }
 
-                    if (confirm('¿Notificar al Comercial que los costos están listos?')) {
+                    // ✅ Validación 3: Estado actual
+                    if (servicio.estado_costos === 'solicitado' || servicio.estado_costos === 'completado') {
+                        console.warn('⚠️ [ENVIAR] El servicio ya fue notificado:', servicio.estado_costos);
+                        alert('El servicio ya está en estado "' + servicio.estado_costos + '".');
+                        return;
+                    }
+
+                    if (confirm('¿Solicitar costos al equipo de Pricing?')) {
+                        console.log('📤 [ENVIAR] Enviando solicitud a API...');
+
                         fetch('/api/notificar_costos.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 id_srvc: servicio.id_srvc,
-                                estado: 'revisado',
-                                usuario_id: <?php echo (int)($_SESSION["user_id"] ?? 0); ?>
+                                estado: 'solicitado',
+                                usuario_id: <?php echo (int)($_SESSION['user_id'] ?? 0); ?>
                             })
                         })
-                        .then(r => r.json())
+                        .then(response => {
+                            console.log('📨 [ENVIAR] Respuesta recibida. Status:', response.status);
+                            return response.json();
+                        })
                         .then(data => {
+                            console.log('✅ [ENVIAR] Respuesta de la API:', data);
                             if (data.success) {
-                                servicios[index].estado_costos = 'revisado';
-                                servicios[index].revisado_por = <?php echo (int)($_SESSION["user_id"] ?? 0); ?>;
-                                servicios[index].fecha_revisado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                                servicios[index].estado_costos = 'solicitado';
+                                servicios[index].solicitado_por = <?php echo (int)($_SESSION['user_id'] ?? 0); ?>;
+                                servicios[index].fecha_solicitado = new Date().toISOString().slice(0, 19).replace('T', ' ');
                                 actualizarTabla();
-                                exito(data.message || 'Notificación enviada al Comercial');
+                                exito('Notificación enviada a Pricing');
                             } else {
                                 error('Error: ' + (data.message || 'Intente nuevamente'));
                             }
                         })
                         .catch(err => {
-                            console.error('❌ Error al notificar al Comercial:', err);
+                            console.error('💥 [ENVIAR] Error de red:', err);
                             error('No se pudo conectar con el servidor');
                         });
+                    } else {
+                        console.log('ℹ️ [ENVIAR] Acción cancelada por el usuario');
                     }
                 });
             });
