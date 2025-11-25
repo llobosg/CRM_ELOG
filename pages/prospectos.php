@@ -552,12 +552,19 @@
                 // ✅ Icono de "Completado" con tooltip y acción
                 let iconoCostos = '';
                 if (s.id_srvc && !s.id_srvc.startsWith('TEMP_')) {
+                    const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+                    const puedeNotificar = (rolUsuario === 'comercial' || rolUsuario === 'admin');
+
                     if (s.estado_costos === 'pendiente' || (!s.costos || s.costos.length === 0)) {
-                        iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
+                        if (puedeNotificar) {
+                            iconoCostos = '<i class="fas fa-paper-plane" style="color: #0066cc; cursor: pointer;" title="Notificar a Pricing"></i>';
+                        } else {
+                            iconoCostos = '<i class="fas fa-paper-plane" style="color: #cccccc; cursor: not-allowed;" title="Solo el rol Comercial puede notificar a Pricing"></i>';
+                        }
                     } else if (s.estado_costos === 'solicitado') {
                         iconoCostos = '<i class="fas fa-envelope" style="color: #ff9900;" title="Esperando costos"></i>';
                     } else if (s.estado_costos === 'completado') {
-                        if (USER_ROLE === 'pricing') {
+                        if (rolUsuario === 'pricing') {
                             iconoCostos = '<i class="fas fa-check-circle" style="color: #009966; cursor: pointer;" title="Costos listos para informar al Comercial"></i>';
                         } else {
                             iconoCostos = '<i class="fas fa-check-circle" style="color: #009966;" title="Costos listos"></i>';
@@ -672,7 +679,7 @@
                     const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
                     if (rolUsuario !== 'comercial' && rolUsuario !== 'admin') {
                         console.warn('⚠️ [ENVIAR] Rol no autorizado:', rolUsuario);
-                        alert('Solo el rol Comercial puede solicitar costos a Pricing.');
+                        alert('Acción no permitida. Solo el rol "Comercial" puede solicitar costos al equipo de Pricing.');
                         return;
                     }
 
