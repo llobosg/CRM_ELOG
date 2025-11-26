@@ -6,6 +6,9 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../config.php';
 
 try {
+    // Iniciar transacción
+    $pdo->beginTransaction();
+
     $data = json_decode(file_get_contents('php://input'), true);
     if (!$data) throw new Exception('Datos inválidos');
 
@@ -28,7 +31,7 @@ try {
         $stmt->execute([$id_srvc, $id_ppl]);
         if (!$stmt->fetch()) throw new Exception('Servicio no encontrado o no autorizado');
 
-        // === ACTUALIZAR ===
+        // === ACTUALIZAR SERVICIO ===
         $sql = "
             UPDATE servicios SET
                 servicio = ?, nombre_corto = ?, tipo = ?, trafico = ?, sub_trafico = ?,
@@ -88,16 +91,59 @@ try {
             $data['estado_costos'] ?? 'pendiente',
             $id_srvc
         ]);
+
+        // === ELIMINAR y REINSERTAR costos y gastos ===
+        $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio = ?")->execute([$id_srvc]);
+        $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio = ?")->execute([$id_srvc]);
+
+        // === INSERTAR COSTOS ===
+        if (!empty($data['costos'])) {
+            foreach ($data['costos'] as $c) {
+                $stmtC = $pdo->prepare("
+                    INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmtC->execute([
+                    $id_srvc,
+                    $c['concepto'] ?? '',
+                    $c['moneda'] ?? 'CLP',
+                    (float)($c['qty'] ?? 0),
+                    (float)($c['costo'] ?? 0),
+                    (float)($c['tarifa'] ?? 0),
+                    $c['aplica'] ?? ''
+                ]);
+            }
+        }
+
+        // === INSERTAR GASTOS ===
+        if (!empty($data['gastos_locales'])) {
+            foreach ($data['gastos_locales'] as $g) {
+                $stmtG = $pdo->prepare("
+                    INSERT INTO gastos_locales_detalle (id_servicio, tipo, gasto, moneda, monto, afecto, iva)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmtG->execute([
+                    $id_srvc,
+                    $g['tipo'] ?? '',
+                    $g['gasto'] ?? '',
+                    $g['moneda'] ?? 'CLP',
+                    (float)($g['monto'] ?? 0),
+                    $g['afecto'] ?? 'NO',
+                    (float)($g['iva'] ?? 0)
+                ]);
+            }
+        }
+
         $mensaje = 'Servicio actualizado correctamente';
     } else {
-        // === CREAR SERVICIO ===
+        // === CREAR NUEVO SERVICIO ===
         $stmt = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
         $stmt->execute([$id_ppl]);
         $last = $stmt->fetch();
         $correlativo = str_pad(($last['max_id'] ?? 0) + 1, 2, '0', STR_PAD_LEFT);
         $id_srvc = "{$base}-{$correlativo}";
 
-        // === INSERT en servicios ===
+        // === INSERT EN servicios ===
         $sql = "
             INSERT INTO servicios (
                 id_srvc, id_ppl, id_prospect,
@@ -125,7 +171,7 @@ try {
             $id_srvc, $id_ppl, $id_ppl,
             $data['servicio'] ?? '', $data['nombre_corto'] ?? '', $data['tipo'] ?? '', $data['trafico'] ?? '', $data['sub_trafico'] ?? '',
             $data['base_calculo'] ?? '', $data['moneda'] ?? 'CLP', (float)($data['tarifa'] ?? 0), (int)($data['iva'] ?? 19), $data['estado'] ?? 'Activo',
-            $costo, $venta, $costogasto, $ventagasto, '0',
+            (float)($data['costo'] ?? 0), (float)($data['venta'] ?? 0), (float)($data['costogastoslocalesdestino'] ?? 0), (float)($data['ventasgastoslocalesdestino'] ?? 0), '0',
             $data['commodity'] ?? '', $data['origen'] ?? '', $data['pais_origen'] ?? '', $data['destino'] ?? '', $data['pais_destino'] ?? '', $data['transito'] ?? '', $data['frecuencia'] ?? '',
             $data['lugar_carga'] ?? '', $data['sector'] ?? '', $data['mercancia'] ?? '', (int)($data['bultos'] ?? 0), (float)($data['peso'] ?? 0), (string)($data['volumen'] ?? '0.00'), (string)($data['dimensiones'] ?? ''),
             $data['agente'] ?? '', $data['aol'] ?? '', $data['aod'] ?? '', $data['transportador'] ?? '', $data['incoterm'] ?? '', $data['ref_cliente'] ?? '', $data['proveedor_nac'] ?? '',
@@ -134,7 +180,7 @@ try {
             null, null, null, null, null, null
         ]);
 
-        // === INSERT en costos_servicios ===
+        // === INSERTAR COSTOS ===
         if (!empty($data['costos'])) {
             foreach ($data['costos'] as $c) {
                 $stmtC = $pdo->prepare("
@@ -153,7 +199,7 @@ try {
             }
         }
 
-        // === INSERT en gastos_locales_detalle ===
+        // === INSERTAR GASTOS ===
         if (!empty($data['gastos_locales'])) {
             foreach ($data['gastos_locales'] as $g) {
                 $stmtG = $pdo->prepare("
@@ -175,6 +221,8 @@ try {
         $mensaje = 'Servicio creado correctamente';
     }
 
+    $pdo->commit();
+
     echo json_encode([
         'success' => true,
         'id_srvc' => $id_srvc,
@@ -182,6 +230,7 @@ try {
     ]);
 
 } catch (Exception $e) {
+    $pdo->rollback();
     error_log("Error en guardar_servicio.php: " . $e->getMessage());
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
