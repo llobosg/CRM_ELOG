@@ -97,41 +97,43 @@ try {
         $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio = ?")->execute([$id_srvc]);
 
         // === INSERTAR COSTOS ===
-        if (!empty($data['costos'])) {
-            foreach ($data['costos'] as $c) {
-                $stmtC = $pdo->prepare("
-                    INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ");
-                $stmtC->execute([
-                    $id_srvc,
-                    $c['concepto'] ?? '',
-                    $c['moneda'] ?? 'CLP',
-                    (float)($c['qty'] ?? 0),
-                    (float)($c['costo'] ?? 0),
-                    (float)($c['tarifa'] ?? 0),
-                    $c['aplica'] ?? ''
-                ]);
-            }
+        $costos = $data['costos'] ?? [];
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para id_srvc: $id_srvc");
+        foreach ($costos as $c) {
+            error_log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
+            $stmtC = $pdo->prepare("
+                INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmtC->execute([
+                $id_srvc,
+                $c['concepto'] ?? '',
+                $c['moneda'] ?? 'CLP',
+                (float)($c['qty'] ?? 0),
+                (float)($c['costo'] ?? 0),
+                (float)($c['tarifa'] ?? 0),
+                $c['aplica'] ?? ''
+            ]);
         }
 
         // === INSERTAR GASTOS ===
-        if (!empty($data['gastos_locales'])) {
-            foreach ($data['gastos_locales'] as $g) {
-                $stmtG = $pdo->prepare("
-                    INSERT INTO gastos_locales_detalle (id_servicio, tipo, gasto, moneda, monto, afecto, iva)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ");
-                $stmtG->execute([
-                    $id_srvc,
-                    $g['tipo'] ?? '',
-                    $g['gasto'] ?? '',
-                    $g['moneda'] ?? 'CLP',
-                    (float)($g['monto'] ?? 0),
-                    $g['afecto'] ?? 'NO',
-                    (float)($g['iva'] ?? 0)
-                ]);
-            }
+        $gastos = $data['gastos_locales'] ?? [];
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($gastos) . " gastos para id_srvc: $id_srvc");
+        foreach ($gastos as $g) {
+            error_log("[GUARDAR_SERVICIO] Gasto: " . json_encode($g));
+            $stmtG = $pdo->prepare("
+                INSERT INTO gastos_locales_detalle (id_servicio, tipo, gasto, moneda, monto, afecto, iva)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmtG->execute([
+                $id_srvc,
+                $g['tipo'] ?? '',
+                $g['gasto'] ?? '',
+                $g['moneda'] ?? 'CLP',
+                (float)($g['monto'] ?? 0),
+                $g['afecto'] ?? 'NO',
+                (float)($g['iva'] ?? 0)
+            ]);
         }
 
         $mensaje = 'Servicio actualizado correctamente';
@@ -164,6 +166,7 @@ try {
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+
             )
         ";
         $stmt = $pdo->prepare($sql);
@@ -181,41 +184,43 @@ try {
         ]);
 
         // === INSERTAR COSTOS ===
-        if (!empty($data['costos'])) {
-            foreach ($data['costos'] as $c) {
-                $stmtC = $pdo->prepare("
-                    INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ");
-                $stmtC->execute([
-                    $id_srvc,
-                    $c['concepto'] ?? '',
-                    $c['moneda'] ?? 'CLP',
-                    (float)($c['qty'] ?? 0),
-                    (float)($c['costo'] ?? 0),
-                    (float)($c['tarifa'] ?? 0),
-                    $c['aplica'] ?? ''
-                ]);
-            }
+        $costos = $data['costos'] ?? [];
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para nuevo servicio: $id_srvc");
+        foreach ($costos as $c) {
+            error_log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
+            $stmtC = $pdo->prepare("
+                INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmtC->execute([
+                $id_srvc,
+                $c['concepto'] ?? '',
+                $c['moneda'] ?? 'CLP',
+                (float)($c['qty'] ?? 0),
+                (float)($c['costo'] ?? 0),
+                (float)($c['tarifa'] ?? 0),
+                $c['aplica'] ?? ''
+            ]);
         }
 
         // === INSERTAR GASTOS ===
-        if (!empty($data['gastos_locales'])) {
-            foreach ($data['gastos_locales'] as $g) {
-                $stmtG = $pdo->prepare("
-                    INSERT INTO gastos_locales_detalle (id_servicio, tipo, gasto, moneda, monto, afecto, iva)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ");
-                $stmtG->execute([
-                    $id_srvc,
-                    $g['tipo'] ?? '',
-                    $g['gasto'] ?? '',
-                    $g['moneda'] ?? 'CLP',
-                    (float)($g['monto'] ?? 0),
-                    $g['afecto'] ?? 'NO',
-                    (float)($g['iva'] ?? 0)
-                ]);
-            }
+        $gastos = $data['gastos_locales'] ?? [];
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($gastos) . " gastos para nuevo servicio: $id_srvc");
+        foreach ($gastos as $g) {
+            error_log("[GUARDAR_SERVICIO] Gasto: " . json_encode($g));
+            $stmtG = $pdo->prepare("
+                INSERT INTO gastos_locales_detalle (id_servicio, tipo, gasto, moneda, monto, afecto, iva)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmtG->execute([
+                $id_srvc,
+                $g['tipo'] ?? '',
+                $g['gasto'] ?? '',
+                $g['moneda'] ?? 'CLP',
+                (float)($g['monto'] ?? 0),
+                $g['afecto'] ?? 'NO',
+                (float)($g['iva'] ?? 0)
+            ]);
         }
 
         $mensaje = 'Servicio creado correctamente';

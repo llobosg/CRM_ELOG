@@ -2005,46 +2005,31 @@
                     const concatenado = document.getElementById('concatenado')?.value;
                     const estado = document.getElementById('estado')?.value || 'Pendiente';
 
-                    console.log('📋 [GRABAR TODO] Valores:', { rut, razon, operacion, tipoOper, concatenado, estado });
-
-                    if (!rut || !razon) {
-                        console.log('❌ [GRABAR TODO] Error: RUT o Razón Social vacíos');
-                        error('RUT y Razón Social son obligatorios');
-                        return;
-                    }
-                    if (!operacion || !tipoOper) {
-                        console.log('❌ [GRABAR TODO] Error: Operación o Tipo Operación vacíos');
-                        error('Operación y Tipo Operación son obligatorios');
-                        return;
-                    }
-                    if (!concatenado) {
-                        console.log('❌ [GRABAR TODO] Error: Concatenado vacío');
-                        error('El campo Concatenado no puede estar vacío');
-                        return;
-                    }
+                    if (!rut || !razon) return error('RUT y Razón Social son obligatorios');
+                    if (!operacion || !tipoOper) return error('Operación y Tipo Operación son obligatorios');
+                    if (!concatenado) return error('El campo Concatenado no puede estar vacío');
 
                     const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
-                    if (!validarRut(rutLimpio)) {
-                        console.log('❌ [GRABAR TODO] Error: RUT inválido');
-                        error('RUT inválido');
-                        return;
-                    }
+                    if (!validarRut(rutLimpio)) return error('RUT inválido');
 
-                    // ✅ Validación condicional: solo si estado es Enviado o CerradoOK
+                    // ✅ Validación condicional
                     if (estado === 'Enviado' || estado === 'CerradoOK') {
                         const tieneServiciosSinCostos = servicios.some(s => !s.costos || s.costos.length === 0);
-                        if (tieneServiciosSinCostos) {
-                            console.log('❌ [GRABAR TODO] Error: Servicios sin costos en estado final');
-                            error('No se puede enviar el prospecto: todos los servicios deben tener costos asociados.');
-                            return;
-                        }
+                        if (tieneServiciosSinCostos) return error('No se puede enviar el prospecto: todos los servicios deben tener costos asociados.');
                     }
 
                     const form = document.getElementById('form-prospecto');
                     const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
-                    console.log('📤 [GRABAR TODO] Modo:', modo);
 
-                    // Asegurar campos ocultos
+                    // ✅ Asegurar que cada servicio incluya costos y gastos
+                    const serviciosConDatos = servicios.map(s => ({
+                        ...s,
+                        costos: s.costos || [],
+                        gastos_locales: s.gastos_locales || []
+                    }));
+
+                    console.log('📦 [GRABAR TODO] Servicios con costos/gastos:', serviciosConDatos);
+
                     let inp = form.querySelector('input[name="modo"]');
                     if (!inp) {
                         inp = document.createElement('input');
@@ -2062,39 +2047,14 @@
                             inp.name = 'servicios_json';
                             form.appendChild(inp);
                         }
-
-                        // ✅ Filtrar SOLO los campos que existen en la tabla `servicios`
-                        const camposValidos = [
-                            'id_srvc', 'id_prospect', 'servicio', 'trafico', 'commodity',
-                            'origen', 'pais_origen', 'destino', 'pais_destino', 'transito',
-                            'frecuencia', 'lugar_carga', 'sector', 'mercancia', 'bultos',
-                            'peso', 'volumen', 'dimensiones', 'moneda', 'tipo_cambio',
-                            'proveedor_nac', 'desconsolidac', 'aol', 'aod', 'agente',
-                            'transportador', 'incoterm', 'ref_cliente', 'costo', 'venta',
-                            'costogastoslocalesdestino', 'ventasgastoslocalesdestino',
-                            'estado_costos', 'solicitado_por', 'fecha_solicitado',
-                            'completado_por', 'fecha_completado', 'revisado_por', 'fecha_revisado'
-                        ];
-
-                        const serviciosLimpio = servicios.map(s => {
-                            const limpio = {};
-                            camposValidos.forEach(campo => {
-                                if (s.hasOwnProperty(campo)) {
-                                    limpio[campo] = s[campo];
-                                }
-                            });
-                            return limpio;
-                        });
-
-                        inp.value = JSON.stringify(serviciosLimpio);
-                        console.log('📦 [GRABAR TODO] JSON de servicios (LIMPIO):', inp.value);
+                        inp.value = JSON.stringify(serviciosConDatos);
+                        console.log('📤 [GRABAR TODO] Enviando JSON a backend:', inp.value);
                     }
 
                     if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs.')) {
-                        console.log('✅ [GRABAR TODO] ¡Formulario enviado!');
+                        console.log('✅ [GRABAR TODO] Formulario enviado');
                         form.submit();
                     } else {
-                        console.log('⚠️ [GRABAR TODO] Envío cancelado por el usuario');
                         error('Envío cancelado');
                     }
                 });
