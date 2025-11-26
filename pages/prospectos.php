@@ -1395,82 +1395,84 @@
         }
 
         function enviarServicioABD() {
-        // ✅ Determinar si es edición o creación
-        const esEdicion = (servicioEnEdicion !== null);
+            const idPpl = document.getElementById('id_prospect_serv')?.value;
+            const concatenado = document.getElementById('concatenado_serv')?.value;
 
-        const data = {
-            modo: esEdicion ? 'editar' : 'crear',
-            id_srvc: esEdicion ? servicios[servicioEnEdicion].id_srvc : null,
-            id_prospect: document.getElementById('id_prospect_serv').value,
-            servicio: document.getElementById('serv_servicio').value.trim(),
-            trafico: document.getElementById('serv_medio_transporte').value,
-            commodity: document.getElementById('serv_commodity').value,
-            origen: document.getElementById('serv_origen').value,
-            pais_origen: document.getElementById('serv_pais_origen').value,
-            destino: document.getElementById('serv_destino').value,
-            pais_destino: document.getElementById('serv_pais_destino').value,
-            transito: document.getElementById('serv_transito').value,
-            frecuencia: document.getElementById('serv_frecuencia').value,
-            lugar_carga: document.getElementById('serv_lugar_carga').value,
-            sector: document.getElementById('serv_sector').value,
-            mercancia: document.getElementById('serv_mercancia').value,
-            bultos: document.getElementById('serv_bultos').value,
-            peso: document.getElementById('serv_peso').value,
-            volumen: document.getElementById('serv_volumen').value,
-            dimensiones: document.getElementById('serv_dimensiones').value,
-            moneda: document.getElementById('serv_moneda').value,
-            tipo_cambio: document.getElementById('serv_tipo_cambio').value,
-            proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-            desconsolidac: '0',
-            aol: document.getElementById('serv_aol').value,
-            aod: document.getElementById('serv_aod').value,
-            agente: document.getElementById('serv_agente').value,
-            transportador: document.getElementById('serv_transportador').value,
-            incoterm: document.getElementById('serv_incoterm').value,
-            ref_cliente: document.getElementById('serv_ref_cliente').value,
-            costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
-            venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
-            costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
-            ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
-            estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
-        };
-
-        fetch('/api/guardar_servicio.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                const servicioGuardado = {
-                    ...data,
-                    id_srvc: res.id_srvc,
-                    costos: [...costosServicio],
-                    gastos_locales: [...gastosLocales]
-                };
-
-                if (esEdicion) {
-                    // ✅ ACTUALIZAR en lugar de agregar
-                    servicios[servicioEnEdicion] = servicioGuardado;
-                    exito('Servicio actualizado en la base de datos');
-                } else {
-                    // ✅ CREAR nuevo
-                    servicios.push(servicioGuardado);
-                    exito('Servicio guardado en la base de datos');
-                }
-
-                actualizarTabla();
-                cerrarModalServicio();
-            } else {
-                error('Error: ' + (res.message || 'Intente nuevamente'));
+            if (!idPpl || idPpl === '0' || !concatenado) {
+                error('Prospecto no válido');
+                return;
             }
-        })
-        .catch(err => {
-            console.error('Error al guardar servicio:', err);
-            error('Error de conexión al guardar el servicio');
-        });
-    }
+
+            // ✅ Incluir costos y gastos en el objeto de datos
+            const data = {
+                modo: servicioEnEdicion !== null ? 'editar' : 'crear',
+                id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : null,
+                id_prospect: document.getElementById('id_prospect_serv').value,
+                servicio: document.getElementById('serv_servicio').value.trim(),
+                trafico: document.getElementById('serv_medio_transporte').value,
+                commodity: document.getElementById('serv_commodity').value,
+                origen: document.getElementById('serv_origen').value,
+                pais_origen: document.getElementById('serv_pais_origen').value,
+                destino: document.getElementById('serv_destino').value,
+                pais_destino: document.getElementById('serv_pais_destino').value,
+                transito: document.getElementById('serv_transito').value,
+                frecuencia: document.getElementById('serv_frecuencia').value,
+                lugar_carga: document.getElementById('serv_lugar_carga').value,
+                sector: document.getElementById('serv_sector').value,
+                mercancia: document.getElementById('serv_mercancia').value,
+                bultos: document.getElementById('serv_bultos').value,
+                peso: document.getElementById('serv_peso').value,
+                volumen: document.getElementById('serv_volumen').value,
+                dimensiones: document.getElementById('serv_dimensiones').value,
+                moneda: document.getElementById('serv_moneda').value,
+                tipo_cambio: document.getElementById('serv_tipo_cambio').value,
+                proveedor_nac: document.getElementById('serv_proveedor_nac').value,
+                desconsolidac: '0',
+                aol: document.getElementById('serv_aol').value,
+                aod: document.getElementById('serv_aod').value,
+                agente: document.getElementById('serv_agente').value,
+                transportador: document.getElementById('serv_transportador').value,
+                incoterm: document.getElementById('serv_incoterm').value,
+                ref_cliente: document.getElementById('serv_ref_cliente').value,
+                costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
+                venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
+                costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
+                ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
+                // ✅ ¡ESTAS SON LAS LÍNEAS CLAVE!
+                costos: [...costosServicio],
+                gastos_locales: [...gastosLocales],
+                estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
+            };
+
+            fetch('/api/guardar_servicio.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    const servicioGuardado = {
+                        ...data,
+                        id_srvc: res.id_srvc
+                    };
+                    if (servicioEnEdicion !== null) {
+                        servicios[servicioEnEdicion] = servicioGuardado;
+                    } else {
+                        servicios.push(servicioGuardado);
+                    }
+                    actualizarTabla();
+                    cerrarModalServicio();
+                    exito('Servicio guardado en la base de datos');
+                } else {
+                    error('Error: ' + (res.message || 'Intente nuevamente'));
+                }
+            })
+            .catch(err => {
+                console.error('Error al guardar servicio:', err);
+                error('Error de conexión al guardar el servicio');
+            });
+        }
 
         // --- Submodales ---
         function abrirSubmodalCostos() {
