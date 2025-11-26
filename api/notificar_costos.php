@@ -44,9 +44,18 @@ try {
 
     // === ENVIAR CORREO SEGÚN ESTADO ===
     if ($estado === 'solicitado') {
+        // === CONSULTA COMPLETA: incluye campos del servicio y del prospecto ===
         $stmt = $pdo->prepare("
-            SELECT p.id_ppl, p.concatenado, p.razon_social, s.id_prospect,
-                   u_com.nombre as comercial_nombre
+            SELECT 
+                p.id_ppl,
+                p.concatenado, 
+                p.razon_social, 
+                p.tipo_oper,
+                s.id_prospect,
+                s.origen, 
+                s.destino, 
+                s.incoterm,
+                u_com.nombre as comercial_nombre
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
             LEFT JOIN usuarios u_com ON p.id_comercial = u_com.id_usr
@@ -70,17 +79,27 @@ try {
                 $prospecto['comercial_nombre'] ?? 'Comercial',
                 $datosServicio,
                 null, null, null, null,
-                $prospecto['id_ppl'] // ✅ id_ppl para el enlace
+                $prospecto['id_ppl'] // ✅ PASAR id_ppl al correo
             );
             if ($resultado['success']) {
                 $mensaje .= " ✉️ " . $resultado['message'];
             }
         }
     } elseif ($estado === 'revisado') {
+        // === CONSULTA COMPLETA PARA EL COMERCIAL ===
         $stmt = $pdo->prepare("
-            SELECT p.id_ppl, p.concatenado, p.razon_social, s.id_prospect,
-                   s.origen, s.destino, s.incoterm, p.tipo_oper,
-                   s.solicitado_por, s.costo as costo_total, s.moneda as moneda_servicio
+            SELECT 
+                p.id_ppl,
+                p.concatenado, 
+                p.razon_social, 
+                p.tipo_oper,
+                s.id_prospect,
+                s.origen, 
+                s.destino, 
+                s.incoterm,
+                s.solicitado_por,
+                s.costo as costo_total,
+                s.moneda as moneda_servicio
             FROM servicios s
             JOIN prospectos p ON s.id_prospect = p.id_ppl
             WHERE s.id_srvc = ?
@@ -117,7 +136,7 @@ try {
                     (float)$prospecto['costo_total'],
                     $pricingNombre,
                     $prospecto['moneda_servicio'] ?? 'USD',
-                    $prospecto['id_ppl'] // ✅ id_ppl para el enlace
+                    $prospecto['id_ppl'] // ✅ PASAR id_ppl al correo
                 );
                 if ($resultado['success']) {
                     $mensaje .= " ✉️ Notificación enviada al Comercial.";
