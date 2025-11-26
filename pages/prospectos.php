@@ -1230,7 +1230,13 @@
                     servicioEnEdicion = index;
                     const s = servicios[index];
                     costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
-                    gastosLocales = Array.isArray(s.gastos_locales) ? [...s.gastos_locales] : [];
+                    gastosLocales = Array.isArray(s.gastos_locales) 
+                        ? s.gastos_locales.map(g => ({
+                            ...g,
+                            monto: parseFloat(g.monto) || 0,
+                            iva: parseFloat(g.iva) || 0
+                        }))
+                        : [];
 
                     // Rellenar campos básicos
                     document.getElementById('serv_servicio').value = s.servicio || '';
