@@ -1,6 +1,6 @@
 <?php
 // api/enviar_correo_pricing.php
-// ✅ Versión usando API de Brevo con manejo de errores robusto
+// ✅ Versión usando API de Brevo con manejo de errores robusto y logging detallado
 
 /**
  * Envía correo usando la API REST de Brevo.
@@ -35,7 +35,7 @@ function enviarCorreoPricing(
         // === NOTIFICACIÓN AL COMERCIAL ===
         $destinatarios = [];
         foreach ($destinatariosPersonalizados as $email) {
-            $destinatarios[] = ['email' => $email, 'nombre' => 'Comercial'];
+            $destinatarios[] = ['email' => $email, 'name' => 'Comercial']; // Brevo espera 'name'
         }
         $subject = "Solicitud de costos completada por Pricing";
         $htmlContent = generarHtmlCorreoComercial(
@@ -63,6 +63,11 @@ function enviarCorreoPricing(
         if (empty($destinatarios)) {
             return ['success' => false, 'message' => 'No hay destinatarios con rol Pricing'];
         }
+        // Asegurar que 'name' esté presente para Brevo
+        $destinatarios = array_map(function($d) {
+            return ['email' => $d['email'], 'name' => $d['nombre'] ?? 'Pricing'];
+        }, $destinatarios);
+
         $subject = "🔔 Nueva solicitud de costos: $concatenado";
         $htmlContent = generarHtmlCorreoPricing(
             $razonSocial,
@@ -73,6 +78,17 @@ function enviarCorreoPricing(
         );
     }
 
+    // Datos para la API de Brevo
+    $postData = [
+        'sender' => [
+            'email' => $_ENV['SMTP_FROM_EMAIL'] ?? 'notifica@elog.cl', // Usar la variable SMTP_FROM_EMAIL como remitente
+            'name' => 'CRM ELOG - GLT Comex'
+        ],
+        'to' => $destinatarios,
+        'subject' => $subject,
+        'htmlContent' => $htmlContent
+    ];
+
     // Enviar vía API de Brevo
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, 'https://api.brevo.com/v3/smtp/email');
@@ -82,33 +98,32 @@ function enviarCorreoPricing(
         'api-key: ' . ($_ENV['BREVO_API_KEY'] ?? '') // Asegúrate que esta variable esté en Railway PROD
     ]);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-        'sender' => [
-            'email' => $_ENV['SMTP_FROM_EMAIL'] ?? 'notifica@elog.cl', // Usar la variable SMTP_FROM_EMAIL como remitente
-            'name' => 'CRM ELOG - GLT Comex'
-        ],
-        'to' => $destinatarios,
-        'subject' => $subject,
-        'htmlContent' => $htmlContent
-    ]));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData)); // Enviar el array PHP codificado
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15); // Aumentar timeout a 15 segundos
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Verificar certificado SSL
-    curl_setopt($ch, CURLOPT_USERAGENT, 'CRM_ELOG/1.0'); // Añadir user agent
+    curl_setopt($ch, CURLOPT_TIMEOUT, 20); // Aumentar timeout
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'CRM_ELOG/1.0');
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch); // Capturar error de cURL
-    $curlErrno = curl_errno($ch); // Capturar número de error de cURL
+    $curlError = curl_error($ch);
+    $curlErrno = curl_errno($ch);
     curl_close($ch);
 
-    // Registrar detalles de la solicitud para diagnóstico
-    error_log("[EMAIL_BREVO_DEBUG] HTTP Code: $httpCode, cURL Error: $curlErrno - $curlError, Response: $response");
+    // Registrar detalles de la solicitud y respuesta para diagnóstico
+    $logDetails = [
+        'request_data' => $postData,
+        'response_body' => $response,
+        'http_code' => $httpCode,
+        'curl_error' => $curlError,
+        'curl_errno' => $curlErrno
+    ];
+    error_log("[EMAIL_BREVO_DEBUG] Detalles envío correo: " . json_encode($logDetails, JSON_PRETTY_PRINT));
 
-    if ($httpCode === 201) {
+    if ($httpCode >= 200 && $httpCode < 300) {
         // Log de éxito
-        error_log("[EMAIL_LOG] Correo enviado exitosamente a " . count($destinatarios) . " destinatario(s) via Brevo API para prospecto $concatenado");
-        return ['success' => true, 'message' => 'Correo enviado a ' . count($destinatarios) . ' destinatario(s)'];
+        error_log("[EMAIL_LOG] Correo enviado exitosamente a " . count($destinatarios) . " destinatario(s) via Brevo API para prospecto $concatenado. HTTP: $httpCode");
+        return ['success' => true, 'message' => "Correo enviado a " . count($destinatarios) . " destinatario(s)."];
     } else {
         // Log de error detallado
         $errorMessage = "Error al enviar correo via Brevo API (HTTP $httpCode)";
@@ -121,13 +136,7 @@ function enviarCorreoPricing(
         error_log("[EMAIL_ERROR] $errorMessage");
 
         // Devolver un error que pueda ser manejado por el frontend
-        // Es importante no interrumpir completamente el flujo si solo falla el correo
-        // Se podría devolver success = true y un mensaje de error interno solo para logs
-        // Pero para que el frontend lo sepa:
         return ['success' => false, 'message' => $errorMessage];
-        // Opcional: Devolver éxito para no interrumpir el flujo principal, pero loguear el fallo
-        // error_log("... pero se continúa el proceso.");
-        // return ['success' => true, 'message' => 'Correo no enviado (ver logs), pero proceso continúa'];
     }
 }
 
