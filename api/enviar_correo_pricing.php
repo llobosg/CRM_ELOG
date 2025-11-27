@@ -1,5 +1,6 @@
 <?php
-// api/enviarCorreoPricing.php
+// api/enviar_correo_pricing.php
+// ✅ Versión usando API de Brevo con manejo de errores robusto
 
 /**
  * Envía correo usando la API REST de Brevo.
@@ -12,6 +13,8 @@
  * @param array|null $destinatariosPersonalizados Si se proporciona, se asume que es notificación al Comercial
  * @param float|null $costoTotal (solo para notificación al Comercial)
  * @param string|null $pricingNombre (solo para notificación al Comercial)
+ * @param string|null $monedaServicio (solo para notificación al Comercial)
+ * @param int|null $idPpl (solo para notificación al Comercial)
  * @return array
  */
 function enviarCorreoPricing(
@@ -24,7 +27,7 @@ function enviarCorreoPricing(
     $costoTotal = null,
     $pricingNombre = null,
     $monedaServicio = 'USD',
-    $idPpl = null  // ✅ NUEVO PARÁMETRO
+    $idPpl = null
 ) {
     global $pdo;
 
@@ -41,7 +44,9 @@ function enviarCorreoPricing(
             $comercialNombre,
             $datosServicio,
             $pricingNombre,
-            $costoTotal
+            $costoTotal,
+            $monedaServicio,
+            $idPpl ?? $prospectoId
         );
     } else {
         // === NOTIFICACIÓN AL EQUIPO DE PRICING ===
@@ -63,7 +68,8 @@ function enviarCorreoPricing(
             $razonSocial,
             $concatenado,
             $comercialNombre,
-            $datosServicio
+            $datosServicio,
+            $idPpl ?? $prospectoId
         );
     }
 
@@ -73,12 +79,12 @@ function enviarCorreoPricing(
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'accept: application/json',
         'content-type: application/json',
-        'api-key: ' . ($_ENV['BREVO_API_KEY'] ?? '')
+        'api-key: ' . ($_ENV['BREVO_API_KEY'] ?? '') // Asegúrate que esta variable esté en Railway PROD
     ]);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
         'sender' => [
-            'email' => $_ENV['SMTP_FROM_EMAIL'] ?? 'llobos@gltcomex.com',
+            'email' => $_ENV['SMTP_FROM_EMAIL'] ?? 'notifica@elog.cl', // Usar la variable SMTP_FROM_EMAIL como remitente
             'name' => 'CRM ELOG - GLT Comex'
         ],
         'to' => $destinatarios,
@@ -86,26 +92,55 @@ function enviarCorreoPricing(
         'htmlContent' => $htmlContent
     ]));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15); // Aumentar timeout a 15 segundos
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Verificar certificado SSL
+    curl_setopt($ch, CURLOPT_USERAGENT, 'CRM_ELOG/1.0'); // Añadir user agent
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch); // Capturar error de cURL
+    $curlErrno = curl_errno($ch); // Capturar número de error de cURL
     curl_close($ch);
 
+    // Registrar detalles de la solicitud para diagnóstico
+    error_log("[EMAIL_BREVO_DEBUG] HTTP Code: $httpCode, cURL Error: $curlErrno - $curlError, Response: $response");
+
     if ($httpCode === 201) {
+        // Log de éxito
+        error_log("[EMAIL_LOG] Correo enviado exitosamente a " . count($destinatarios) . " destinatario(s) via Brevo API para prospecto $concatenado");
         return ['success' => true, 'message' => 'Correo enviado a ' . count($destinatarios) . ' destinatario(s)'];
     } else {
-        error_log("Error Brevo API: HTTP $httpCode, Response: $response");
-        return ['success' => false, 'message' => "Error al enviar correo (HTTP $httpCode)"];
+        // Log de error detallado
+        $errorMessage = "Error al enviar correo via Brevo API (HTTP $httpCode)";
+        if ($curlError) {
+            $errorMessage .= " - cURL Error: $curlErrno - $curlError";
+        }
+        if ($response) {
+            $errorMessage .= " - Response Body: $response";
+        }
+        error_log("[EMAIL_ERROR] $errorMessage");
+
+        // Devolver un error que pueda ser manejado por el frontend
+        // Es importante no interrumpir completamente el flujo si solo falla el correo
+        // Se podría devolver success = true y un mensaje de error interno solo para logs
+        // Pero para que el frontend lo sepa:
+        return ['success' => false, 'message' => $errorMessage];
+        // Opcional: Devolver éxito para no interrumpir el flujo principal, pero loguear el fallo
+        // error_log("... pero se continúa el proceso.");
+        // return ['success' => true, 'message' => 'Correo no enviado (ver logs), pero proceso continúa'];
     }
 }
 
 // === PLANTILLA PARA PRICING ===
-function generarHtmlCorreoPricing($razonSocial, $concatenado, $comercialNombre, $datosServicio) {
+function generarHtmlCorreoPricing($razonSocial, $concatenado, $comercialNombre, $datosServicio, $idPpl) {
     $origen = $datosServicio['origen'] ?? '—';
     $destino = $datosServicio['destino'] ?? '—';
     $tipoOper = $datosServicio['tipo_oper'] ?? '—';
     $incoterm = $datosServicio['incoterm'] ?? '—';
+
+    // URL del CRM (debería ser la de PROD si este archivo está en PROD)
+    $appUrl = $_ENV['APP_URL'] ?? 'https://crmelog-production.up.railway.app'; // Asegúrate que sea la URL correcta de PROD
+    $link = "$appUrl/?page=prospectos&id_ppl=" . urlencode($idPpl);
 
     return "
         <div style='font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);'>
@@ -121,7 +156,7 @@ function generarHtmlCorreoPricing($razonSocial, $concatenado, $comercialNombre, 
                 </p>
                 " . generarTablaServicio($razonSocial, $concatenado, $comercialNombre, $origen, $destino, $tipoOper, $incoterm) . "
                 <div style='text-align: center; margin: 30px 0;'>
-                    <a href='https://crmelog-qa.up.railway.app/?page=prospectos&id_ppl=" . urlencode($idPpl ?? $prospectoId) . "'
+                    <a href='$link'
                        style='background: linear-gradient(135deg, #0066cc, #004080); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 8px rgba(0,102,204,0.3);'>
                         Ir al Prospecto en CRM
                     </a>
@@ -133,13 +168,17 @@ function generarHtmlCorreoPricing($razonSocial, $concatenado, $comercialNombre, 
 }
 
 // === PLANTILLA PARA COMERCIAL ===
-function generarHtmlCorreoComercial($razonSocial, $concatenado, $comercialNombre, $datosServicio, $pricingNombre, $costoTotal) {
+function generarHtmlCorreoComercial($razonSocial, $concatenado, $comercialNombre, $datosServicio, $pricingNombre, $costoTotal, $monedaServicio, $idPpl) {
     $origen = $datosServicio['origen'] ?? '—';
     $destino = $datosServicio['destino'] ?? '—';
     $tipoOper = $datosServicio['tipo_oper'] ?? '—';
     $incoterm = $datosServicio['incoterm'] ?? '—';
     $pricing = $pricingNombre ?? 'Equipo de Pricing';
     $costo = $costoTotal !== null ? number_format($costoTotal, 2) . ' ' . htmlspecialchars($monedaServicio) : '—';
+
+    // URL del CRM (debería ser la de PROD si este archivo está en PROD)
+    $appUrl = $_ENV['APP_URL'] ?? 'https://crmelog-production.up.railway.app'; // Asegúrate que sea la URL correcta de PROD
+    $link = "$appUrl/?page=prospectos&id_ppl=" . urlencode($idPpl);
 
     return "
         <div style='font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);'>
@@ -165,7 +204,7 @@ function generarHtmlCorreoComercial($razonSocial, $concatenado, $comercialNombre
                     </tr>
                 </table>
                 <div style='text-align: center; margin: 30px 0;'>
-                    <a href='https://crmelog-qa.up.railway.app/?page=prospectos&id_ppl=" . urlencode($idPpl ?? $prospectoId) . "' 
+                    <a href='$link' 
                        style='background: linear-gradient(135deg, #0066cc, #004080); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 8px rgba(0,102,204,0.3);'>
                         Revisar en el CRM
                     </a>
