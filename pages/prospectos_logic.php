@@ -120,6 +120,116 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             }
         }
 
+        // === Procesar servicios (si se envían) ===
+        // Este bloque debe agregarse ANTES del $pdo->commit();
+        if (isset($_POST['servicios_json']) && !empty($_POST['servicios_json'])) {
+            $servicios_data = json_decode($_POST['servicios_json'], true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception('Error al decodificar servicios JSON: ' . json_last_error_msg());
+            }
+
+            if (is_array($servicios_data) && !empty($servicios_data)) {
+                // 1. Eliminar servicios anteriores (y sus costos/gastos asociados) para este prospecto
+                $pdo->prepare("DELETE FROM servicios WHERE id_prospect = ?")->execute([$id_ppl]);
+                $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
+                $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio IN (SELECT id_srvc FROM servicios WHERE id_prospect = ?)")->execute([$id_ppl]);
+
+                // Generar base para los IDs de servicios
+                $base_servicio = preg_replace('/-\d+$/', '', $concatenado); // Quitar el correlativo final del prospecto
+
+                foreach ($servicios_data as $s) {
+                    // --- Asegurar valores numéricos ---
+                    $costo = (float)($s['costo'] ?? 0);
+                    $venta = (float)($s['venta'] ?? 0);
+                    $costogasto = (float)($s['costogastoslocalesdestino'] ?? 0);
+                    $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
+
+                    // --- Generar ID de servicio ---
+                    // Extraer ID del JSON o generar nuevo correlativo
+                    $id_srvc_json = $s['id_srvc'] ?? null;
+                    if (!$id_srvc_json || strpos($id_srvc_json, 'TEMP_') === 0) {
+                        // Si es temporal o no existe, generar nuevo ID
+                        $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
+                        $stmt_last->execute([$id_ppl]);
+                        $last = $stmt_last->fetch();
+                        $correlativo_srvc = str_pad(((int)($last['max_id'] ?? 0) + 1), 2, '0', STR_PAD_LEFT);
+                        $id_srvc = "{$base_servicio}-{$correlativo_srvc}";
+                    } else {
+                        // Usar el ID existente del JSON
+                        $id_srvc = $id_srvc_json;
+                    }
+
+                    // --- Insertar Servicio ---
+                    $stmt_serv = $pdo->prepare("
+                        INSERT INTO servicios (
+                            id_srvc, id_ppl, id_prospect,
+                            servicio, nombre_corto, tipo, trafico, sub_trafico,
+                            base_calculo, moneda, tarifa, iva, estado,
+                            costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
+                            commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
+                            lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
+                            agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac,
+                            tipo_cambio, ciudad, pais, direc_serv,
+                            estado_costos, nota_srvc, -- ✅ Añadido
+                            solicitado_por, fecha_solicitado,
+                            completado_por, fecha_completado,
+                            revisado_por, fecha_revisado
+                        ) VALUES (
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,......
+                        )
+                    ");
+                    $stmt_serv->execute([
+                        $id_srvc, $id_ppl, $id_ppl, // id_srvc generado, id_ppl, id_prospect
+                        $s['servicio'] ?? '', $s['nombre_corto'] ?? '', $s['tipo'] ?? '', $s['trafico'] ?? '', $s['sub_trafico'] ?? '',
+                        $s['base_calculo'] ?? '', $s['moneda'] ?? 'CLP', (float)($s['tarifa'] ?? 0), (int)($s['iva'] ?? 19), $s['estado'] ?? 'Activo',
+                        $costo, $venta, $costogasto, $ventagasto, '0',
+                        $s['commodity'] ?? '', $s['origen'] ?? '', $s['pais_origen'] ?? '', $s['destino'] ?? '', $s['pais_destino'] ?? '', $s['transito'] ?? '', $s['frecuencia'] ?? '',
+                        $s['lugar_carga'] ?? '', $s['sector'] ?? '', $s['mercancia'] ?? '', (int)($s['bultos'] ?? 0), (float)($s['peso'] ?? 0), (string)($s['volumen'] ?? '0.00'), (string)($s['dimensiones'] ?? ''),
+                        $s['agente'] ?? '', $s['aol'] ?? '', $s['aod'] ?? '', $s['transportador'] ?? '', $s['incoterm'] ?? '', $s['ref_cliente'] ?? '', $s['proveedor_nac'] ?? '',
+                        (float)($s['tipo_cambio'] ?? 1), $s['ciudad'] ?? '', $s['pais'] ?? '', $s['direc_serv'] ?? '',
+                        $s['estado_costos'] ?? 'pendiente', $s['nota_srvc'] ?? '', -- ✅ Valor de nota_srvc del JSON
+                        $s['solicitado_por'] ?? null, $s['fecha_solicitado'] ?? null, $s['completado_por'] ?? null, $s['fecha_completado'] ?? null, $s['revisado_por'] ?? null, $s['fecha_revisado'] ?? null
+                    ]);
+
+                    // --- Insertar Costos (si existen en el JSON) ---
+                    $costos = $s['costos'] ?? [];
+                    foreach ($costos as $c) {
+                        $stmtC = $pdo->prepare("
+                            INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ");
+                        $stmtC->execute([
+                            $id_srvc,
+                            $c['concepto'] ?? '',
+                            $c['moneda'] ?? 'CLP',
+                            (float)($c['qty'] ?? 0),
+                            (float)($c['costo'] ?? 0),
+                            (float)($c['tarifa'] ?? 0),
+                            $c['aplica'] ?? ''
+                        ]);
+                    }
+
+                    // --- Insertar Gastos Locales (si existen en el JSON) ---
+                    $gastos_locales = $s['gastos_locales'] ?? [];
+                    foreach ($gastos_locales as $g) {
+                        $stmtG = $pdo->prepare("
+                            INSERT INTO gastos_locales_detalle (id_servicio, tipo, gasto, moneda, monto, afecto, iva)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ");
+                        $stmtG->execute([
+                            $id_srvc,
+                            $g['tipo'] ?? '',
+                            $g['gasto'] ?? '',
+                            $g['moneda'] ?? 'CLP',
+                            (float)($g['monto'] ?? 0),
+                            $g['afecto'] ?? 'NO',
+                            (float)($g['iva'] ?? 0)
+                        ]);
+                    }
+                }
+            }
+        } // Fin del if servicios_json
+
         $pdo->commit();
 
         $mensaje_exito = $modo_update

@@ -1542,6 +1542,7 @@
                 nota_srvc: servicios[servicioEnEdicion]?.nota_srvc || '' // Tomar la nota del servicio en edición o vacío si es nuevo
             };
 
+            console.log('✅ [SERVICIO] Datos a enviar:', data);
             fetch('/api/guardar_servicio.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
