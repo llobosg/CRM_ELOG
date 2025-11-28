@@ -393,6 +393,22 @@
         </div>
     </div>
 
+    <!-- Nuevo Submodal Notas del Servicio -->
+    <div id="submodal-notas-servicio" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 650px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <h3><i class="fas fa-sticky-note"></i> Notas del Servicio</h3>
+            <span class="close" onclick="cerrarSubmodalNotasServicio()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+            <div style="margin: 1.2rem 0;">
+                <label for="nota_servicio_textarea">Comentarios:</label>
+                <textarea id="nota_servicio_textarea" rows="6" placeholder="Ingrese notas o comentarios para este servicio..."></textarea>
+            </div>
+            <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: flex-end; align-items: center;">
+                <button type="button" onclick="cerrarSubmodalNotasServicio()">Cerrar</button>
+                <button type="button" onclick="guardarNotasServicio()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast de notificaciones -->
     <div id="toast" class="toast" style="display:none;">
         <i class="fas fa-info-circle"></i> 
@@ -578,10 +594,13 @@
                     <td>${v.toFixed(2)}</td>
                     <td>${gc.toFixed(2)}</td>
                     <td>${gv.toFixed(2)}</td>
+                    <td>${iconoCostos}</td>
                     <td>
-                        ${iconoCostos}
-                        <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
-                        <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
+                        <i class="fas fa-edit btn-edit-servicio" data-index="${index}" title="Editar Servicio" style="cursor: pointer; color: #007bff; margin-right: 0.5rem;"></i>
+                        <i class="fas fa-trash btn-delete-servicio" data-index="${index}" title="Eliminar Servicio" style="cursor: pointer; color: #dc3545; margin-right: 0.5rem;"></i>
+                        <!-- Nuevo ícono para notas -->
+                        <i class="fas fa-sticky-note nota-servicio-icono" data-index="${index}" title="Notas del Servicio"></i>
+                        ${notaPreview}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -591,6 +610,35 @@
             document.getElementById('total-venta').textContent = tv.toFixed(2);
             document.getElementById('total-costogasto').textContent = tgc.toFixed(2);
             document.getElementById('total-ventagasto').textContent = tgv.toFixed(2);
+
+            // Asignar listeners después de generar la tabla
+            asignarListenersTabla();
+
+            function asignarListenersTabla() {
+                // Editar servicio
+                document.querySelectorAll('.btn-edit-servicio').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        editarServicio(index);
+                    });
+                });
+
+                // Eliminar servicio
+                document.querySelectorAll('.btn-delete-servicio').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        eliminarServicio(index);
+                    });
+                });
+
+                // Abrir submodal de notas
+                document.querySelectorAll('.nota-servicio-icono').forEach(icon => {
+                    icon.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        abrirSubmodalNotasServicio(index);
+                    });
+                });
+            }
 
             // Listeners para ícono de "Completado" (solo para Pricing)
             document.querySelectorAll('#tabla-servicios i.fa-check-circle').forEach(icon => {
@@ -1039,6 +1087,56 @@
                 });
         }
 
+        // --- Submodal Notas Servicio ---
+        function abrirSubmodalNotasServicio(index = -1) {
+            servicioIndexActual = index; // Guardar el índice del servicio actual
+            if (index >= 0 && index < servicios.length) {
+                // Cargar la nota existente
+                document.getElementById('nota_servicio_textarea').value = servicios[index].nota_srvc || '';
+            } else {
+                // Limpiar si es para un nuevo servicio (aunque no se usa directamente aquí, por si acaso)
+                document.getElementById('nota_servicio_textarea').value = '';
+            }
+            document.getElementById('submodal-notas-servicio').style.display = 'block';
+        }
+
+        function cerrarSubmodalNotasServicio() {
+            document.getElementById('submodal-notas-servicio').style.display = 'none';
+        }
+
+        function guardarNotasServicio() {
+            const nuevaNota = document.getElementById('nota_servicio_textarea').value.trim();
+
+            if (servicioIndexActual >= 0 && servicioIndexActual < servicios.length) {
+                // Actualizar el servicio existente en el array
+                servicios[servicioIndexActual].nota_srvc = nuevaNota;
+                // Actualizar la vista previa en la tabla
+                const icono = document.querySelector(`.nota-servicio-icono[data-index="${servicioIndexActual}"]`);
+                if (icono) {
+                    let previewCell = icono.parentElement.querySelector('.nota-preview');
+                    if (!previewCell) {
+                        // Si no encuentra el span, lo creamos
+                        previewCell = document.createElement('span');
+                        previewCell.className = 'nota-preview';
+                        icono.parentElement.appendChild(document.createTextNode(' ')); // Espacio
+                        icono.parentElement.appendChild(previewCell);
+                    }
+                    previewCell.textContent = nuevaNota ? nuevaNota : '(Sin notas)';
+                    previewCell.title = nuevaNota; // Actualizar el título del tooltip
+                }
+                exito('Notas del servicio guardadas');
+            } else {
+                // Si no hay un índice válido, podría ser para un nuevo servicio en edición
+                // En este contexto, solo actualizamos el array si se está editando un servicio ya abierto
+                // Si se llama desde el submodal de costos/gastos, el servicio aún no está en `servicios[]`
+                // Por lo tanto, solo actualizamos la variable local si es necesario
+                // Pero para este flujo, asumimos que siempre se llama con un índice válido
+                error('Índice de servicio no válido para guardar notas.');
+                return; // No cerrar si hay error
+            }
+            cerrarSubmodalNotasServicio();
+        }
+
         // ===================================================================
         // === 4. MANEJO DE PROSPECTOS ===
         // ===================================================================
@@ -1447,7 +1545,9 @@
                 // ✅ ¡ESTAS SON LAS LÍNEAS CLAVE!
                 costos: [...costosServicio],
                 gastos_locales: [...gastosLocales],
-                estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente'
+                estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente',
+                // Notas servicio
+                nota_srvc: servicioIndexActual >= 0 && servicioIndexActual < servicios.length ? servicios[servicioIndexActual].nota_srvc || '' : '' // Tomar la nota del servicio actual si se está editando
             };
 
             fetch('/api/guardar_servicio.php', {
@@ -2119,5 +2219,13 @@
         window.guardarServicio = guardarServicio;
         window.abrirModalServicio = abrirModalServicio;
         window.eliminarServicio = eliminarServicio;
+        window.abrirModalComercial = abrirModalComercial;
+        window.cerrarModalComercial = cerrarModalComercial;
+        window.abrirModalOperaciones = abrirModalOperaciones;
+        window.cerrarModalOperaciones = cerrarModalOperaciones;
+        window.cerrarModalServicio = cerrarModalServicio;
+        window.abrirSubmodalNotasServicio = abrirSubmodalNotasServicio;
+        window.cerrarSubmodalNotasServicio = cerrarSubmodalNotasServicio;
+        window.guardarNotasServicio = guardarNotasServicio;
     </script>
 </form>

@@ -514,3 +514,50 @@ table tr:hover {
     background-color: #f8f9fa;
     color: #333;
 }
+
+/* Estilos para el ícono de nota */
+.nota-servicio-icono {
+    cursor: pointer;
+    color: #6c757d;
+    margin-right: 0.5rem;
+    transition: color 0.2s ease;
+}
+.nota-servicio-icono:hover {
+    color: #007bff;
+}
+/* Estilos para la vista previa de la nota */
+.nota-preview {
+    display: inline-block;
+    max-width: 150px; /* Ajusta según sea necesario */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+/* Estilos para el submodal de notas */
+#submodal-notas-servicio {
+    display: none;
+    position: fixed;
+    z-index: 10000; /* Asegura que esté encima de otros modales */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+#submodal-notas-servicio .modal-content {
+    max-width: 650px;
+    margin: 5% auto;
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    position: relative;
+}
+#submodal-notas-servicio .close {
+    cursor: pointer;
+    font-size: 1.8rem;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
