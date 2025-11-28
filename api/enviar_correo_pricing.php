@@ -1,6 +1,7 @@
 <?php
 // api/enviar_correo_pricing.php
 // ✅ Versión usando API de Brevo con manejo de errores robusto y logging detallado
+// ✅ REMITENTE CAMBIADO A llobos@gltcomex.com
 
 /**
  * Envía correo usando la API REST de Brevo.
@@ -81,7 +82,8 @@ function enviarCorreoPricing(
     // Datos para la API de Brevo
     $postData = [
         'sender' => [
-            'email' => $_ENV['SMTP_FROM_EMAIL'] ?? 'notifica@elog.cl', // Usar la variable SMTP_FROM_EMAIL como remitente
+            // ✅ CAMBIADO EL REMITENTE AQUÍ
+            'email' => 'llobos@gltcomex.com', // Cambiado de $_ENV['SMTP_FROM_EMAIL'] ?? 'notifica@elog.cl'
             'name' => 'CRM ELOG - GLT Comex'
         ],
         'to' => $destinatarios,
