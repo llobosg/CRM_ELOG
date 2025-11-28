@@ -6,30 +6,51 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../config.php';
 
 try {
+    error_log("[GUARDAR_SERVICIO] Iniciando proceso...");
     // Iniciar transacción
     $pdo->beginTransaction();
+    error_log("[GUARDAR_SERVICIO] Transacción iniciada.");
 
     $data = json_decode(file_get_contents('php://input'), true);
-    if (!$data) throw new Exception('Datos inválidos');
+    if (!$data) {
+        error_log("[GUARDAR_SERVICIO] ERROR: Datos inválidos recibidos.");
+        throw new Exception('Datos inválidos');
+    }
+    error_log("[GUARDAR_SERVICIO] Datos recibidos: " . print_r($data, true)); // Log del array completo
 
     $modo = $data['modo'] ?? 'crear';
     $id_srvc = $data['id_srvc'] ?? null;
     $id_ppl = (int)($data['id_prospect'] ?? 0);
-    if ($id_ppl <= 0) throw new Exception('ID de prospecto inválido');
+    if ($id_ppl <= 0) {
+        error_log("[GUARDAR_SERVICIO] ERROR: ID de prospecto inválido ({$id_ppl}).");
+        throw new Exception('ID de prospecto inválido');
+    }
+    error_log("[GUARDAR_SERVICIO] Modo: {$modo}, ID Servicio: {$id_srvc}, ID Prospecto: {$id_ppl}");
 
     // Obtener concatenado del prospecto
     $stmt = $pdo->prepare("SELECT concatenado FROM prospectos WHERE id_ppl = ?");
     $stmt->execute([$id_ppl]);
     $prospecto = $stmt->fetch();
-    if (!$prospecto) throw new Exception('Prospecto no encontrado');
+    if (!$prospecto) {
+        error_log("[GUARDAR_SERVICIO] ERROR: Prospecto no encontrado para id_ppl: {$id_ppl}");
+        throw new Exception('Prospecto no encontrado');
+    }
     $base = preg_replace('/-\d+$/', '', $prospecto['concatenado']);
+    error_log("[GUARDAR_SERVICIO] Base de ID calculada: {$base}");
 
     if ($modo === 'editar') {
+        error_log("[GUARDAR_SERVICIO] Modo edición.");
         // === VALIDAR que el servicio exista y pertenezca al prospecto ===
-        if (!$id_srvc) throw new Exception('ID de servicio requerido para edición');
+        if (!$id_srvc) {
+            error_log("[GUARDAR_SERVICIO] ERROR: ID de servicio requerido para edición pero no provisto.");
+            throw new Exception('ID de servicio requerido para edición');
+        }
         $stmt = $pdo->prepare("SELECT id_srvc FROM servicios WHERE id_srvc = ? AND id_prospect = ?");
         $stmt->execute([$id_srvc, $id_ppl]);
-        if (!$stmt->fetch()) throw new Exception('Servicio no encontrado o no autorizado');
+        if (!$stmt->fetch()) {
+            error_log("[GUARDAR_SERVICIO] ERROR: Servicio no encontrado o no autorizado ({$id_srvc}, {$id_ppl}).");
+            throw new Exception('Servicio no encontrado o no autorizado');
+        }
 
         // === ACTUALIZAR SERVICIO ===
         $sql = "
@@ -50,7 +71,7 @@ try {
             WHERE id_srvc = ?
         ";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([
+        $params = [
             $data['servicio'] ?? '',
             $data['nombre_corto'] ?? '',
             $data['tipo'] ?? '',
@@ -100,11 +121,16 @@ try {
             $data['revisado_por'] ?? null,
             $data['fecha_revisado'] ?? null,
             $id_srvc
-        ]);
+        ];
+
+        error_log("[GUARDAR_SERVICIO] Parámetros para UPDATE: " . print_r($params, true)); // Log de parámetros
+        $stmt->execute($params);
+        error_log("[GUARDAR_SERVICIO] UPDATE ejecutado. Filas afectadas: " . $stmt->rowCount());
 
         // === ELIMINAR y REINSERTAR costos y gastos ===
         $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio = ?")->execute([$id_srvc]);
         $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio = ?")->execute([$id_srvc]);
+        error_log("[GUARDAR_SERVICIO] Costos y gastos antiguos eliminados para id_srvc: {$id_srvc}");
 
         // === INSERTAR COSTOS ===
         $costos = $data['costos'] ?? [];
@@ -148,6 +174,7 @@ try {
 
         $mensaje = 'Servicio actualizado correctamente';
     } else {
+        error_log("[GUARDAR_SERVICIO] Modo creación.");
         // === CREAR NUEVO SERVICIO ===
         $stmt = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
         $stmt->execute([$id_ppl]);
@@ -158,24 +185,28 @@ try {
         // === INSERT EN servicios ===
         $sql = "
             INSERT INTO servicios (
-                id_srvc, id_ppl, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico, base_calculo, moneda, 
-                tarifa, iva, estado, costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac, commodity, origen,
-                pais_origen, destino, pais_destino, transito, frecuencia,lugar_carga, sector, mercancia, bultos, peso,
-                volumen, dimensiones, agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
-                ciudad, pais, direc_serv, estado_costos, nota_srvc, solicitado_por, fecha_solicitado, completado_por, fecha_completado, revisado_por,
-                fecha_revisado
+                id_srvc, id_ppl, id_prospect,
+                servicio, nombre_corto, tipo, trafico, sub_trafico,
+                base_calculo, moneda, tarifa, iva, estado,
+                costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
+                commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
+                lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
+                agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac,
+                tipo_cambio, ciudad, pais, direc_serv,
+                estado_costos, nota_srvc, -- ✅ Añadido nota_srvc
+                solicitado_por, fecha_solicitado,
+                completado_por, fecha_completado,
+                revisado_por, fecha_revisado
             ) VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
         ";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([
+        $params = [
             $id_srvc, $data['id_ppl'] ?? $id_ppl, $id_ppl,
             $data['servicio'] ?? '', $data['nombre_corto'] ?? '', $data['tipo'] ?? '', $data['trafico'] ?? '', $data['sub_trafico'] ?? '',
             $data['base_calculo'] ?? '', $data['moneda'] ?? 'CLP', (float)($data['tarifa'] ?? 0), (int)($data['iva'] ?? 19), $data['estado'] ?? 'Activo',
@@ -186,7 +217,11 @@ try {
             (float)($data['tipo_cambio'] ?? 1), $data['ciudad'] ?? '', $data['pais'] ?? '', $data['direc_serv'] ?? '',
             $data['estado_costos'] ?? 'pendiente', $data['nota_srvc'] ?? '', -- ✅ Valor de nota_srvc del JSON
             $data['solicitado_por'] ?? null, $data['fecha_solicitado'] ?? null, $data['completado_por'] ?? null, $data['fecha_completado'] ?? null, $data['revisado_por'] ?? null, $data['fecha_revisado'] ?? null
-        ]);
+        ];
+
+        error_log("[GUARDAR_SERVICIO] Parámetros para INSERT: " . print_r($params, true)); // Log de parámetros
+        $stmt->execute($params);
+        error_log("[GUARDAR_SERVICIO] INSERT ejecutado. Filas afectadas: " . $stmt->rowCount());
 
         // === INSERTAR COSTOS ===
         $costos = $data['costos'] ?? [];
@@ -232,6 +267,7 @@ try {
     }
 
     $pdo->commit();
+    error_log("[GUARDAR_SERVICIO] Transacción confirmada. Mensaje: {$mensaje}");
 
     echo json_encode([
         'success' => true,
@@ -241,7 +277,8 @@ try {
 
 } catch (Exception $e) {
     $pdo->rollback();
-    error_log("Error en guardar_servicio.php: " . $e->getMessage());
+    error_log("[GUARDAR_SERVICIO] ERROR: " . $e->getMessage());
+    error_log("[GUARDAR_SERVICIO] Trace: " . $e->getTraceAsString());
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
