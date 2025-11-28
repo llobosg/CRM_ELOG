@@ -6,47 +6,47 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../config.php';
 
 try {
-    console.log('[GUARDAR_SERVICIO] Iniciando proceso...');
+    error_log('[GUARDAR_SERVICIO] Iniciando proceso...');
     // Iniciar transacción
     $pdo->beginTransaction();
 
     $data = json_decode(file_get_contents('php://input'), true);
     if (!$data) {
-        console.log("[GUARDAR_SERVICIO] ERROR: Datos inválidos recibidos.");
+        error_log("[GUARDAR_SERVICIO] ERROR: Datos inválidos recibidos.");
         throw new Exception('Datos inválidos');
     }
-    console.log("[GUARDAR_SERVICIO] Datos recibidos: " . print_r($data, true)); // Log del array completo
+    error_log("[GUARDAR_SERVICIO] Datos recibidos: " . print_r($data, true)); // Log del array completo
 
     $modo = $data['modo'] ?? 'crear';
     $id_srvc = $data['id_srvc'] ?? null;
     $id_ppl = (int)($data['id_prospect'] ?? 0);
     if ($id_ppl <= 0) {
-        console.log("[GUARDAR_SERVICIO] ERROR: ID de prospecto inválido ({$id_ppl}).");
+        error_log("[GUARDAR_SERVICIO] ERROR: ID de prospecto inválido ({$id_ppl}).");
         throw new Exception('ID de prospecto inválido');
     }
-    console.log("[GUARDAR_SERVICIO] Modo: {$modo}, ID Servicio: {$id_srvc}, ID Prospecto: {$id_ppl}");
+    error_log("[GUARDAR_SERVICIO] Modo: {$modo}, ID Servicio: {$id_srvc}, ID Prospecto: {$id_ppl}");
 
     // Obtener concatenado del prospecto
     $stmt = $pdo->prepare("SELECT concatenado FROM prospectos WHERE id_ppl = ?");
     $stmt->execute([$id_ppl]);
     $prospecto = $stmt->fetch();
     if (!$prospecto) {
-        console.log("[GUARDAR_SERVICIO] ERROR: Prospecto no encontrado para id_ppl: {$id_ppl}");
+        error_log("[GUARDAR_SERVICIO] ERROR: Prospecto no encontrado para id_ppl: {$id_ppl}");
         throw new Exception('Prospecto no encontrado');
     }
     $base = preg_replace('/-\d+$/', '', $prospecto['concatenado']);
-    console.log("[GUARDAR_SERVICIO] Base de ID calculada: {$base}");
+    error_log("[GUARDAR_SERVICIO] Base de ID calculada: {$base}");
     if ($modo === 'editar') {
-        console.log("[GUARDAR_SERVICIO] Modo edición.");
+        error_log("[GUARDAR_SERVICIO] Modo edición.");
         // === VALIDAR que el servicio exista y pertenezca al prospecto ===
         if (!$id_srvc) {
-            console.log("[GUARDAR_SERVICIO] ERROR: ID de servicio requerido para edición pero no provisto.");
+            error_log("[GUARDAR_SERVICIO] ERROR: ID de servicio requerido para edición pero no provisto.");
             throw new Exception('ID de servicio requerido para edición');
         }
         $stmt = $pdo->prepare("SELECT id_srvc FROM servicios WHERE id_srvc = ? AND id_prospect = ?");
         $stmt->execute([$id_srvc, $id_ppl]);
         if (!$stmt->fetch()) {
-            console.log("[GUARDAR_SERVICIO] ERROR: Servicio no encontrado o no autorizado ({$id_srvc}, {$id_ppl}).");
+            error_log("[GUARDAR_SERVICIO] ERROR: Servicio no encontrado o no autorizado ({$id_srvc}, {$id_ppl}).");
             throw new Exception('Servicio no encontrado o no autorizado');
         }
 
@@ -121,20 +121,20 @@ try {
             $id_srvc
         ];
 
-        console.log("[GUARDAR_SERVICIO] Parámetros para UPDATE: " . print_r($params, true)); // Log de parámetros
+        error_log("[GUARDAR_SERVICIO] Parámetros para UPDATE: " . print_r($params, true)); // Log de parámetros
         $stmt->execute($params);
-        console.log("[GUARDAR_SERVICIO] UPDATE ejecutado. Filas afectadas: " . $stmt->rowCount());
+        error_log("[GUARDAR_SERVICIO] UPDATE ejecutado. Filas afectadas: " . $stmt->rowCount());
 
         // === ELIMINAR y REINSERTAR costos y gastos ===
         $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio = ?")->execute([$id_srvc]);
         $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio = ?")->execute([$id_srvc]);
-        console.log("[GUARDAR_SERVICIO] Costos y gastos antiguos eliminados para id_srvc: {$id_srvc}");
+        error_log("[GUARDAR_SERVICIO] Costos y gastos antiguos eliminados para id_srvc: {$id_srvc}");
 
         // === INSERTAR COSTOS ===
         $costos = $data['costos'] ?? [];
-        console.log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para id_srvc: $id_srvc");
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para id_srvc: $id_srvc");
         foreach ($costos as $c) {
-            console.log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
+            error_log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
             $stmtC = $pdo->prepare("
                 INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -152,9 +152,9 @@ try {
 
         // === INSERTAR GASTOS ===
         $gastos = $data['gastos_locales'] ?? [];
-        console.log("[GUARDAR_SERVICIO] Insertando " . count($gastos) . " gastos para id_srvc: $id_srvc");
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($gastos) . " gastos para id_srvc: $id_srvc");
         foreach ($gastos as $g) {
-            console.log("[GUARDAR_SERVICIO] Gasto: " . json_encode($g));
+            error_log("[GUARDAR_SERVICIO] Gasto: " . json_encode($g));
             $stmtG = $pdo->prepare("
                 INSERT INTO gastos_locales_detalle (id_servicio, tipo, gasto, moneda, monto, afecto, iva)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -172,7 +172,7 @@ try {
 
         $mensaje = 'Servicio actualizado correctamente';
     } else {
-        console.log("[GUARDAR_SERVICIO] Modo creación.");
+        error_log("[GUARDAR_SERVICIO] Modo creación.");
         // === CREAR NUEVO SERVICIO ===
         $stmt = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
         $stmt->execute([$id_ppl]);
@@ -217,15 +217,15 @@ try {
             $data['solicitado_por'] ?? null, $data['fecha_solicitado'] ?? null, $data['completado_por'] ?? null, $data['fecha_completado'] ?? null, $data['revisado_por'] ?? null, $data['fecha_revisado'] ?? null
         ];
 
-        console.log("[GUARDAR_SERVICIO] Parámetros para INSERT: " . print_r($params, true)); // Log de parámetros
+        error_log("[GUARDAR_SERVICIO] Parámetros para INSERT: " . print_r($params, true)); // Log de parámetros
         $stmt->execute($params);
-        console.log("[GUARDAR_SERVICIO] INSERT ejecutado. Filas afectadas: " . $stmt->rowCount());
+        error_log("[GUARDAR_SERVICIO] INSERT ejecutado. Filas afectadas: " . $stmt->rowCount());
 
         // === INSERTAR COSTOS ===
         $costos = $data['costos'] ?? [];
-        console.log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para nuevo servicio: $id_srvc");
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para nuevo servicio: $id_srvc");
         foreach ($costos as $c) {
-            console.log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
+            error_log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
             $stmtC = $pdo->prepare("
                 INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -243,9 +243,9 @@ try {
 
         // === INSERTAR GASTOS ===
         $gastos = $data['gastos_locales'] ?? [];
-        console.log("[GUARDAR_SERVICIO] Insertando " . count($gastos) . " gastos para nuevo servicio: $id_srvc");
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($gastos) . " gastos para nuevo servicio: $id_srvc");
         foreach ($gastos as $g) {
-            console.log("[GUARDAR_SERVICIO] Gasto: " . json_encode($g));
+            error_log("[GUARDAR_SERVICIO] Gasto: " . json_encode($g));
             $stmtG = $pdo->prepare("
                 INSERT INTO gastos_locales_detalle (id_servicio, tipo, gasto, moneda, monto, afecto, iva)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -265,7 +265,7 @@ try {
     }
 
     $pdo->commit();
-    console.log("[GUARDAR_SERVICIO] Transacción confirmada. Mensaje: {$mensaje}");
+    error_log("[GUARDAR_SERVICIO] Transacción confirmada. Mensaje: {$mensaje}");
 
     echo json_encode([
         'success' => true,
