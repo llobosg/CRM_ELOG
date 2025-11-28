@@ -43,7 +43,10 @@ try {
                 dimensiones = ?, agente = ?, aol = ?, aod = ?, transportador = ?,
                 incoterm = ?, ref_cliente = ?, proveedor_nac = ?,
                 tipo_cambio = ?, ciudad = ?, pais = ?, direc_serv = ?,
-                estado_costos = ?
+                estado_costos = ?, nota_srvc = ?, -- ✅ Añadido nota_srvc
+                solicitado_por = ?, fecha_solicitado = ?,
+                completado_por = ?, fecha_completado = ?,
+                revisado_por = ?, fecha_revisado = ?
             WHERE id_srvc = ?
         ";
         $stmt = $pdo->prepare($sql);
@@ -89,6 +92,13 @@ try {
             $data['pais'] ?? '',
             $data['direc_serv'] ?? '',
             $data['estado_costos'] ?? 'pendiente',
+            $data['nota_srvc'] ?? '', -- ✅ Valor de nota_srvc del JSON
+            $data['solicitado_por'] ?? null,
+            $data['fecha_solicitado'] ?? null,
+            $data['completado_por'] ?? null,
+            $data['fecha_completado'] ?? null,
+            $data['revisado_por'] ?? null,
+            $data['fecha_revisado'] ?? null,
             $id_srvc
         ]);
 
@@ -148,30 +158,25 @@ try {
         // === INSERT EN servicios ===
         $sql = "
             INSERT INTO servicios (
-                id_srvc, id_ppl, id_prospect,
-                servicio, nombre_corto, tipo, trafico, sub_trafico,
-                base_calculo, moneda, tarifa, iva, estado,
-                costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
-                commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
-                lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
-                agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac,
-                tipo_cambio, ciudad, pais, direc_serv,
-                estado_costos,
-                solicitado_por, fecha_solicitado,
-                completado_por, fecha_completado,
-                revisado_por, fecha_revisado
+                id_srvc, id_ppl, id_prospect, servicio, nombre_corto, tipo, trafico, sub_trafico, base_calculo, moneda, 
+                tarifa, iva, estado, costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac, commodity, origen,
+                pais_origen, destino, pais_destino, transito, frecuencia,lugar_carga, sector, mercancia, bultos, peso,
+                volumen, dimensiones, agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac, tipo_cambio,
+                ciudad, pais, direc_serv, estado_costos, nota_srvc, solicitado_por, fecha_solicitado, completado_por, fecha_completado, revisado_por,
+                fecha_revisado
             ) VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?
             )
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            $id_srvc, $id_ppl, $id_ppl,
+            $id_srvc, $data['id_ppl'] ?? $id_ppl, $id_ppl,
             $data['servicio'] ?? '', $data['nombre_corto'] ?? '', $data['tipo'] ?? '', $data['trafico'] ?? '', $data['sub_trafico'] ?? '',
             $data['base_calculo'] ?? '', $data['moneda'] ?? 'CLP', (float)($data['tarifa'] ?? 0), (int)($data['iva'] ?? 19), $data['estado'] ?? 'Activo',
             (float)($data['costo'] ?? 0), (float)($data['venta'] ?? 0), (float)($data['costogastoslocalesdestino'] ?? 0), (float)($data['ventasgastoslocalesdestino'] ?? 0), '0',
@@ -179,8 +184,8 @@ try {
             $data['lugar_carga'] ?? '', $data['sector'] ?? '', $data['mercancia'] ?? '', (int)($data['bultos'] ?? 0), (float)($data['peso'] ?? 0), (string)($data['volumen'] ?? '0.00'), (string)($data['dimensiones'] ?? ''),
             $data['agente'] ?? '', $data['aol'] ?? '', $data['aod'] ?? '', $data['transportador'] ?? '', $data['incoterm'] ?? '', $data['ref_cliente'] ?? '', $data['proveedor_nac'] ?? '',
             (float)($data['tipo_cambio'] ?? 1), $data['ciudad'] ?? '', $data['pais'] ?? '', $data['direc_serv'] ?? '',
-            $data['estado_costos'] ?? 'pendiente',
-            null, null, null, null, null, null
+            $data['estado_costos'] ?? 'pendiente', $data['nota_srvc'] ?? '', -- ✅ Valor de nota_srvc del JSON
+            $data['solicitado_por'] ?? null, $data['fecha_solicitado'] ?? null, $data['completado_por'] ?? null, $data['fecha_completado'] ?? null, $data['revisado_por'] ?? null, $data['fecha_revisado'] ?? null
         ]);
 
         // === INSERTAR COSTOS ===
