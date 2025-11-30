@@ -1730,6 +1730,7 @@
                 }
 
                 const tr = document.createElement('tr');
+                // Después
                 tr.innerHTML = `
                     <td>${g.tipo}</td>
                     <td>${g.gasto}</td>
@@ -1739,7 +1740,7 @@
                     <td style="text-align:right;">${iva.toFixed(2)}</td>
                     <td style="text-align:right;">${subtotal.toFixed(2)}</td>
                     <td style="text-align: center;">
-                        <i class="fas fa-edit edit-gasto-icon" data-index="${i}" style="cursor: pointer; color: #007bff; margin-right: 0.5rem;" title="Editar Gasto"></i>
+                        <i class="fas fa-pencil-alt edit-gasto-icon" data-index="${i}" style="cursor: pointer; color: #007bff; margin-right: 0.5rem;" title="Editar Gasto"></i>
                         <button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button>
                     </td>
                 `;
@@ -1928,22 +1929,36 @@
 
             // Cargar los valores en los campos del formulario
             document.getElementById('gasto_tipo').value = gasto.tipo || '';
-            document.getElementById('gasto_gasto').value = gasto.gasto || '';
-            document.getElementById('gasto_moneda').value = gasto.moneda || 'USD'; // Asumiendo USD por defecto
+            // --- CORRECCIÓN: Seleccionar la opción correcta en el select gasto_gasto ---
+            const gastoSelect = document.getElementById('gasto_gasto');
+            gastoSelect.value = gasto.gasto || ''; // Intentar seleccionar por valor
+            // Opcional: Si el valor no coincide exactamente con alguna opción, buscar por texto o dejar vacío
+            // if (!gastoSelect.options[gastoSelect.selectedIndex] || gastoSelect.options[gastoSelect.selectedIndex].value !== gasto.gasto) {
+            //     // Si no se seleccionó una opción válida, puedes dejarlo vacío o mostrar un mensaje
+            //     gastoSelect.selectedIndex = 0; // Seleccionar primera opción (vacía)
+            //     // O lanzar un error si es estricto: error('Gasto no encontrado en las opciones disponibles.');
+            // }
+            // --- FIN CORRECCIÓN ---
+            document.getElementById('gasto_moneda').value = gasto.moneda || 'USD';
             document.getElementById('gasto_monto').value = gasto.monto || '';
-            document.getElementById('gasto_afecto').value = gasto.afecto || 'NO'; // Asumiendo NO por defecto
+            document.getElementById('gasto_afecto').value = gasto.afecto || 'NO';
             document.getElementById('gasto_iva').value = gasto.iva || '';
 
-            // Opcional: Mostrar una notificación o resaltar el campo para indicar que está en modo edición
-            // Por ejemplo, podrías añadir una clase CSS temporal o un placeholder en el botón "Agregar"
+            // Cambiar el botón "Agregar" a "Actualizar" temporalmente
             const btnAgregar = document.querySelector('#submodal-gastos-locales button[onclick="guardarGastoLocal()"]');
             if (btnAgregar) {
-                btnAgregar.textContent = 'Actualizar'; // Cambiar texto temporalmente
+                btnAgregar.textContent = 'Actualizar';
+                // Almacenar el índice del gasto que se está editando en un lugar accesible
+                window.indiceGastoEdicion = index;
+
+                // Cambiar la acción del botón para que actualice en lugar de agregar
                 btnAgregar.onclick = function() {
-                    actualizarGastoLocal(index); // Cambiar la acción del botón
+                    actualizarGastoLocal(window.indiceGastoEdicion);
                     // Restaurar botón a su estado original después de actualizar
-                    btnAgregar.textContent = 'Agregar'; // Volver al texto original
-                    btnAgregar.onclick = function() { guardarGastoLocal(); }; // Volver a la función original
+                    btnAgregar.textContent = 'Agregar';
+                    btnAgregar.onclick = function() { guardarGastoLocal(); };
+                    // Limpiar la variable global
+                    delete window.indiceGastoEdicion;
                 };
             }
         }
