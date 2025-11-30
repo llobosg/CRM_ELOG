@@ -396,8 +396,8 @@
             </div>
             <!-- Nueva tabla de totales por moneda (estilo sutil) -->
             <div style="margin: 1.5rem 0;">
-                <h4 style="margin-bottom: 1rem; font-size: 1rem; color: #323436ff;">Totales por Moneda</h4>
-                <table style="width: 40%; border-collapse: collapse; border: 1px solid #575e65ff; background-color: #fff;"> <!-- Fondo blanco -->
+                <h4 style="margin-bottom: 1rem; font-size: 1rem; color: #09325cff;">Totales por Moneda</h4>
+                <table style="width: 40%; border-collapse: collapse; border: 1px solid #084888ff; background-color: #fff;"> <!-- Fondo blanco -->
                     <thead>
                         <tr style="background-color: #3f6586ff; font-size: 0.9rem;"> <!-- Color de fondo pastel más suave, tamaño de fuente reducido -->
                             <th style="padding: 0.5rem; text-align: center; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Moneda</th> <!-- Ancho fijo, sin bold -->
