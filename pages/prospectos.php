@@ -394,40 +394,40 @@
                     <tbody id="gastos-locales-body"></tbody>
                 </table>
             </div>
-            <!-- Nueva tabla de totales por moneda -->
+            <!-- Nueva tabla de totales por moneda (estilo sutil) -->
             <div style="margin: 1.5rem 0;">
-                <h4 style="margin-bottom: 1rem;">Totales por Moneda</h4>
-                <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+                <h4 style="margin-bottom: 1rem; font-size: 1rem; color: #495057;">Totales por Moneda</h4>
+                <table style="width: 100%; border-collapse: collapse; border: 1px solid #e9ecef; background-color: #fff;"> <!-- Fondo blanco -->
                     <thead>
-                        <tr style="background-color: #f8f9fa;">
-                            <th style="padding: 0.6rem; text-align: left; border: 1px solid #ddd;">Moneda</th>
-                            <th style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">Total Costos</th>
-                            <th style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">Total Ventas</th>
-                            <th style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">Profit Local</th>
-                            <th style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">Profit %</th>
+                        <tr style="background-color: #e9ecef; font-size: 0.9rem;"> <!-- Color de fondo pastel más suave, tamaño de fuente reducido -->
+                            <th style="padding: 0.5rem; text-align: left; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Moneda</th> <!-- Ancho fijo, sin bold -->
+                            <th style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Total Costos</th> <!-- Ancho fijo, sin bold -->
+                            <th style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Total Ventas</th> <!-- Ancho fijo, sin bold -->
+                            <th style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Profit Local</th> <!-- Ancho fijo, sin bold -->
+                            <th style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Profit %</th> <!-- Ancho fijo, sin bold -->
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td style="padding: 0.6rem; border: 1px solid #ddd;">USD</td>
-                            <td id="cgld_usd" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
-                            <td id="vgld_usd" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
-                            <td id="pgld_usd" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
-                            <td id="ppgld_usd" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00 %</td>
+                            <td style="padding: 0.5rem; border: 1px solid #dee2e6; font-size: 0.85rem;">USD</td> <!-- Tamaño de fuente ligeramente más pequeño -->
+                            <td id="cgld_usd" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00</td>
+                            <td id="vgld_usd" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00</td>
+                            <td id="pgld_usd" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00</td>
+                            <td id="ppgld_usd" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00 %</td>
                         </tr>
                         <tr>
-                            <td style="padding: 0.6rem; border: 1px solid #ddd;">EUR</td>
-                            <td id="cgld_eur" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
-                            <td id="vgld_eur" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
-                            <td id="pgld_eur" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
-                            <td id="ppgld_eur" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00 %</td>
+                            <td style="padding: 0.5rem; border: 1px solid #dee2e6; font-size: 0.85rem;">EUR</td>
+                            <td id="cgld_eur" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00</td>
+                            <td id="vgld_eur" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00</td>
+                            <td id="pgld_eur" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00</td>
+                            <td id="ppgld_eur" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00 %</td>
                         </tr>
                         <tr>
-                            <td style="padding: 0.6rem; border: 1px solid #ddd;">CLP</td>
-                            <td id="cgld_clp" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
-                            <td id="vgld_clp" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
-                            <td id="pgld_clp" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
-                            <td id="ppgld_clp" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00 %</td>
+                            <td style="padding: 0.5rem; border: 1px solid #dee2e6; font-size: 0.85rem;">CLP</td>
+                            <td id="cgld_clp" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00</td>
+                            <td id="vgld_clp" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00</td>
+                            <td id="pgld_clp" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00</td>
+                            <td id="ppgld_clp" style="padding: 0.5rem; text-align: right; border: 1px solid #dee2e6; font-size: 0.85rem;">0.00 %</td>
                         </tr>
                     </tbody>
                 </table>
