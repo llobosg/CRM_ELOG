@@ -1814,16 +1814,33 @@
             const tbody = document.getElementById('gastos-locales-body');
             if (!tbody) return;
             tbody.innerHTML = '';
+
             let tv = 0, tc = 0;
             gastosLocales.forEach((g, i) => {
+                // Convertir a número antes de usar toFixed
+                const monto = parseFloat(g.monto) || 0;
+                const iva = parseFloat(g.iva) || 0;
+
+                // Calcular subtotal (monto * (1 + iva/100)) si es afecto
+                const esAfecto = g.afecto === 'SI' || g.afecto === true;
+                const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
+
+                // Acumular totales
+                if (g.tipo === 'Costo') {
+                    tc += subtotal;
+                } else if (g.tipo === 'Ventas') {
+                    tv += subtotal;
+                }
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${g.tipo}</td>
-                    <td>${g.gasto}</td>
-                    <td>${g.moneda}</td>
-                    <td style="text-align:right;">${g.monto.toFixed(2)}</td>
-                    <td>${g.afecto}</td>
-                    <td style="text-align:right;">${g.iva.toFixed(2)}</td>
+                    <td>${g.tipo || ''}</td>
+                    <td>${g.gasto || ''}</td>
+                    <td>${g.moneda || ''}</td>
+                    <td style="text-align:right;">${monto.toFixed(2)}</td> <!-- Usar 'monto' convertido -->
+                    <td>${g.afecto || ''}</td>
+                    <td style="text-align:right;">${iva.toFixed(2)}</td>   <!-- Usar 'iva' convertido -->
+                    <td style="text-align:right;">${subtotal.toFixed(2)}</td> <!-- Mostrar subtotal calculado -->
                     <td><button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button></td>
                 `;
                 tbody.appendChild(tr);
