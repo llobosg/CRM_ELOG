@@ -1,22 +1,32 @@
 <?php
 // api/guardar_servicio.php
+
+// Capturar cualquier salida previa (por si acaso)
+ob_start();
+
+// Establecer encabezado de JSON de antemano (aunque se puede sobrescribir si hay error fatal)
 header('Content-Type: application/json');
 
-// ✅ Eliminamos auth_check.php (validación en index.php)
-require_once __DIR__ . '/../config.php';
-
-// --- Verificación crítica de la conexión ---
-if (!isset($pdo) || !$pdo instanceof PDO) {
-    $errorMessage = "Error crítico: No se pudo establecer la conexión a la base de datos (PDO).";
-    error_log("[GUARDAR_SERVICIO] ERROR FATAL: " . $errorMessage);
-    http_response_code(500); // Error interno del servidor
-    echo json_encode(['success' => false, 'message' => $errorMessage]);
-    exit; // Detener la ejecución inmediatamente
-}
-// --- Fin verificación ---
+// Opcional: Subir el nivel de error_reporting para ver más detalles en los logs
+// error_reporting(E_ALL);
+// ini_set('display_errors', 0); // Asegúrate que display_errors esté en 0 en producción para no enviar HTML
 
 try {
+    // Incluir config y verificar PDO inmediatamente
+    require_once __DIR__ . '/../config.php';
+
+    // --- Verificación crítica de la conexión ---
+    if (!isset($pdo) || !$pdo instanceof PDO) {
+        $errorMessage = "Error crítico: No se pudo establecer la conexión a la base de datos (PDO).";
+        error_log("[GUARDAR_SERVICIO] ERROR FATAL: " . $errorMessage);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $errorMessage]);
+        exit;
+    }
+    // --- Fin verificación ---
+
     error_log('[GUARDAR_SERVICIO] Iniciando proceso...');
+
     // Iniciar transacción
     $pdo->beginTransaction();
 
@@ -25,7 +35,7 @@ try {
         error_log("[GUARDAR_SERVICIO] ERROR: Datos inválidos recibidos.");
         throw new Exception('Datos inválidos');
     }
-    error_log("[GUARDAR_SERVICIO] Datos recibidos: " . print_r($data, true)); // Log del array completo
+    error_log("[GUARDAR_SERVICIO] Datos recibidos: " . print_r($data, true));
 
     $modo = $data['modo'] ?? 'crear';
     $id_srvc = $data['id_srvc'] ?? null;
@@ -46,6 +56,7 @@ try {
     }
     $base = preg_replace('/-\d+$/', '', $prospecto['concatenado']);
     error_log("[GUARDAR_SERVICIO] Base de ID calculada: {$base}");
+
     if ($modo === 'editar') {
         error_log("[GUARDAR_SERVICIO] Modo edición.");
         // === VALIDAR que el servicio exista y pertenezca al prospecto ===
@@ -131,7 +142,7 @@ try {
             $id_srvc
         ];
 
-        error_log("[GUARDAR_SERVICIO] Parámetros para UPDATE: " . print_r($params, true)); // Log de parámetros
+        error_log("[GUARDAR_SERVICIO] Parámetros para UPDATE: " . print_r($params, true));
         $stmt->execute($params);
         error_log("[GUARDAR_SERVICIO] UPDATE ejecutado. Filas afectadas: " . $stmt->rowCount());
 
@@ -227,7 +238,7 @@ try {
             $data['solicitado_por'] ?? null, $data['fecha_solicitado'] ?? null, $data['completado_por'] ?? null, $data['fecha_completado'] ?? null, $data['revisado_por'] ?? null, $data['fecha_revisado'] ?? null
         ];
 
-        error_log("[GUARDAR_SERVICIO] Parámetros para INSERT: " . print_r($params, true)); // Log de parámetros
+        error_log("[GUARDAR_SERVICIO] Parámetros para INSERT: " . print_r($params, true));
         $stmt->execute($params);
         error_log("[GUARDAR_SERVICIO] INSERT ejecutado. Filas afectadas: " . $stmt->rowCount());
 
@@ -277,6 +288,9 @@ try {
     $pdo->commit();
     error_log("[GUARDAR_SERVICIO] Transacción confirmada. Mensaje: {$mensaje}");
 
+    // Limpiar cualquier salida previa antes de enviar JSON
+    ob_clean();
+
     echo json_encode([
         'success' => true,
         'id_srvc' => $id_srvc,
@@ -284,10 +298,18 @@ try {
     ]);
 
 } catch (Exception $e) {
+    // Limpiar buffer en caso de error para asegurar solo JSON
+    if (ob_get_level()) {
+        ob_clean();
+    }
     $pdo->rollback();
     error_log("[GUARDAR_SERVICIO] ERROR: " . $e->getMessage());
     error_log("[GUARDAR_SERVICIO] Trace: " . $e->getTraceAsString());
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
+
+// Terminar la ejecución limpiamente
+exit;
+
 ?>
