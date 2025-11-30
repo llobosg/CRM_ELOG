@@ -387,6 +387,7 @@
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Monto</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Afecto</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">IVA %</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Total</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd;">Acción</th>
                         </tr>
                     </thead>
