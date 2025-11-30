@@ -394,15 +394,43 @@
                     <tbody id="gastos-locales-body"></tbody>
                 </table>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(4, max-content); gap: 1.5rem 2rem; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px; justify-content: start; align-items: center;">
-                <div><strong>TOTAL VENTA:</strong></div>
-                <div id="total-venta-gastos" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
-                <div><strong>TOTAL COSTO:</strong></div>
-                <div id="total-costo-gastos" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
-                <div><strong>PROFIT LOCAL:</strong></div>
-                <div id="profit-local" style="font-weight: bold; text-align: right; min-width: 80px;">0.00</div>
-                <div><strong>PROFIT %:</strong></div>
-                <div id="profit-porcentaje" style="font-weight: bold; text-align: right; min-width: 80px;">0.00 %</div>
+            <!-- Nueva tabla de totales por moneda -->
+            <div style="margin: 1.5rem 0;">
+                <h4 style="margin-bottom: 1rem;">Totales por Moneda</h4>
+                <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+                    <thead>
+                        <tr style="background-color: #f8f9fa;">
+                            <th style="padding: 0.6rem; text-align: left; border: 1px solid #ddd;">Moneda</th>
+                            <th style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">Total Costos</th>
+                            <th style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">Total Ventas</th>
+                            <th style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">Profit Local</th>
+                            <th style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">Profit %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 0.6rem; border: 1px solid #ddd;">USD</td>
+                            <td id="cgld_usd" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
+                            <td id="vgld_usd" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
+                            <td id="pgld_usd" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
+                            <td id="ppgld_usd" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00 %</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.6rem; border: 1px solid #ddd;">EUR</td>
+                            <td id="cgld_eur" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
+                            <td id="vgld_eur" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
+                            <td id="pgld_eur" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
+                            <td id="ppgld_eur" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00 %</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.6rem; border: 1px solid #ddd;">CLP</td>
+                            <td id="cgld_clp" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
+                            <td id="vgld_clp" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
+                            <td id="pgld_clp" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00</td>
+                            <td id="ppgld_clp" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">0.00 %</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             <div style="text-align: right; margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.8rem;">
                 <button type="button" onclick="cerrarSubmodalGastosLocales()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
@@ -1707,34 +1735,36 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            // Inicializar totales como números
-            let tv = 0;
-            let tc = 0;
+            // Inicializar totales por moneda
+            let totales = {
+                'USD': { costo: 0, venta: 0 },
+                'EUR': { costo: 0, venta: 0 },
+                'CLP': { costo: 0, venta: 0 }
+            };
 
             gastosLocales.forEach((g, i) => {
                 // Asegurar que monto e iva sean números antes de usarlos
                 const monto = parseFloat(g.monto) || 0;
                 const iva = parseFloat(g.iva) || 0;
                 const tipo = g.tipo || '';
+                const moneda = g.moneda || 'CLP'; // Valor por defecto
 
                 // Calcular subtotal (monto * (1 + iva/100)) si es afecto
                 const esAfecto = g.afecto === 'SI' || g.afecto === true;
                 const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
 
-                // Acumular totales
-                // Usar toLowerCase() o comparaciones estrictas para mayor seguridad
+                // Acumular totales por tipo y moneda
                 if (tipo.toLowerCase() === 'costo') {
-                    tc += subtotal;
-                } else if (tipo.toLowerCase() === 'ventas') {
-                    tv += subtotal;
+                    totales[moneda.toUpperCase()].costo += subtotal;
+                } else if (tipo.toLowerCase() === 'ventas') { // O 'sales' si se usa inglés
+                    totales[moneda.toUpperCase()].venta += subtotal;
                 }
 
                 const tr = document.createElement('tr');
-                // Después
                 tr.innerHTML = `
-                    <td>${g.tipo}</td>
+                    <td>${tipo}</td>
                     <td>${g.gasto}</td>
-                    <td>${g.moneda}</td>
+                    <td>${moneda}</td>
                     <td style="text-align:right;">${monto.toFixed(2)}</td>
                     <td>${g.afecto}</td>
                     <td style="text-align:right;">${iva.toFixed(2)}</td>
@@ -1747,8 +1777,39 @@
                 tbody.appendChild(tr);
             });
 
+            // Calcular profit y profit % por moneda
+            for (const moneda in totales) {
+                const t = totales[moneda];
+                t.profit = t.venta - t.costo;
+                t.profit_pct = t.venta > 0 ? ((t.venta - t.costo) / t.venta * 100) : 0;
+            }
+
+            // Actualizar los elementos HTML con los totales calculados
+            document.getElementById('cgld_usd').textContent = totales['USD'].costo.toFixed(2);
+            document.getElementById('vgld_usd').textContent = totales['USD'].venta.toFixed(2);
+            document.getElementById('pgld_usd').textContent = totales['USD'].profit.toFixed(2);
+            document.getElementById('ppgld_usd').textContent = totales['USD'].profit_pct.toFixed(2) + ' %';
+
+            document.getElementById('cgld_eur').textContent = totales['EUR'].costo.toFixed(2);
+            document.getElementById('vgld_eur').textContent = totales['EUR'].venta.toFixed(2);
+            document.getElementById('pgld_eur').textContent = totales['EUR'].profit.toFixed(2);
+            document.getElementById('ppgld_eur').textContent = totales['EUR'].profit_pct.toFixed(2) + ' %';
+
+            document.getElementById('cgld_clp').textContent = totales['CLP'].costo.toFixed(2);
+            document.getElementById('vgld_clp').textContent = totales['CLP'].venta.toFixed(2);
+            document.getElementById('pgld_clp').textContent = totales['CLP'].profit.toFixed(2);
+            document.getElementById('ppgld_clp').textContent = totales['CLP'].profit_pct.toFixed(2) + ' %';
+
+            // Opcional: Actualizar también los totales antiguos si se usan en otro lugar
+            // const tv = totales['USD'].venta + totales['EUR'].venta + totales['CLP'].venta;
+            // const tc = totales['USD'].costo + totales['EUR'].costo + totales['CLP'].costo;
+            // document.getElementById('total-venta-gastos').textContent = tv.toFixed(2);
+            // document.getElementById('total-costo-gastos').textContent = tc.toFixed(2);
+            // document.getElementById('profit-local').textContent = (tv - tc).toFixed(2);
+            // const pct = tv > 0 ? ((tv - tc) / tv * 100) : 0;
+            // document.getElementById('profit-porcentaje').textContent = pct.toFixed(2) + ' %';
+
             // --- Añadir listeners para los íconos de edición ---
-            // Esperar un tick para asegurar que el DOM esté completamente renderizado
             setTimeout(() => {
                 document.querySelectorAll('.edit-gasto-icon').forEach(icon => {
                     icon.addEventListener('click', function() {
@@ -1757,13 +1818,6 @@
                     });
                 });
             }, 0);
-
-            // Mostrar totales finales (asegurando que también sean números antes de toFixed)
-            document.getElementById('total-ventagasto').textContent = tv.toFixed(2);
-            document.getElementById('total-costogasto').textContent = tc.toFixed(2);
-            // Calcular y mostrar porcentaje de ganancia (si aplica)
-            const pct = tv > 0 ? ((tv - tc) / tv * 100) : 0;
-            document.getElementById('profit-porcentaje').textContent = pct.toFixed(2) + ' %';
         }
 
         // Mantener también la corrección en eliminarGastoLocal

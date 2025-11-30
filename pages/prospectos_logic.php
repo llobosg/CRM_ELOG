@@ -159,7 +159,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $id_srvc = $id_srvc_json;
                     }
 
-                    // --- Insertar Servicio ---
+                    // --- Cálculo de totales por moneda para gastos locales (dentro del bucle foreach) ---
+                    $cgld_usd = 0; $cgld_eur = 0; $cgld_clp = 0;
+                    $vgld_usd = 0; $vgld_eur = 0; $vgld_clp = 0;
+
+                    $gastos_locales_servicio = $s['gastos_locales'] ?? [];
+                    foreach ($gastos_locales_servicio as $g) {
+                        $monto = (float)($g['monto'] ?? 0);
+                        $tipo = $g['tipo'] ?? '';
+                        $moneda = $g['moneda'] ?? 'CLP';
+
+                        $esAfecto = ($g['afecto'] ?? 'NO') === 'SI';
+                        $iva = (float)($g['iva'] ?? 0);
+                        $subtotal = $esAfecto ? $monto * (1 + $iva / 100) : $monto;
+
+                        if ($tipo === 'Costo') {
+                            switch (strtoupper($moneda)) {
+                                case 'USD':
+                                    $cgld_usd += $subtotal;
+                                    break;
+                                case 'EUR':
+                                    $cgld_eur += $subtotal;
+                                    break;
+                                case 'CLP':
+                                default:
+                                    $cgld_clp += $subtotal;
+                                    break;
+                            }
+                        } elseif ($tipo === 'Ventas') {
+                            switch (strtoupper($moneda)) {
+                                case 'USD':
+                                    $vgld_usd += $subtotal;
+                                    break;
+                                case 'EUR':
+                                    $vgld_eur += $subtotal;
+                                    break;
+                                case 'CLP':
+                                default:
+                                    $vgld_clp += $subtotal;
+                                    break;
+                            }
+                        }
+                    }
+
+                    // Calcular profit y profit % por moneda
+                    $pgld_usd = $vgld_usd - $cgld_usd;
+                    $ppgld_usd = $vgld_usd > 0 ? (($vgld_usd - $cgld_usd) / $vgld_usd * 100) : 0;
+
+                    $pgld_eur = $vgld_eur - $cgld_eur;
+                    $ppgld_eur = $vgld_eur > 0 ? (($vgld_eur - $cgld_eur) / $vgld_eur * 100) : 0;
+
+                    $pgld_clp = $vgld_clp - $cgld_clp;
+                    $ppgld_clp = $vgld_clp > 0 ? (($vgld_clp - $cgld_clp) / $vgld_clp * 100) : 0;
+
+                    // --- Fin cálculo ---
+
+                    // --- INSERT EN servicios (dentro del bucle foreach) ---
                     $stmt_serv = $pdo->prepare("
                         INSERT INTO servicios (
                             id_srvc, id_ppl, id_prospect,
@@ -170,35 +225,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
                             agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac,
                             tipo_cambio, ciudad, pais, direc_serv,
-                            estado_costos, nota_srvc, -- ✅ Añadido
+                            estado_costos, nota_srvc,
+                            -- Campos nuevos para gastos locales por moneda
+                            cgld_usd, cgld_eur, cgld_clp,
+                            vgld_usd, vgld_eur, vgld_clp,
+                            pgld_usd, pgld_eur, pgld_clp,
+                            ppgld_usd, ppgld_eur, ppgld_clp,
+                            --
                             solicitado_por, fecha_solicitado,
                             completado_por, fecha_completado,
                             revisado_por, fecha_revisado
                         ) VALUES (
-                            ?, ?, ?,
-                            ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?,
-                            ?, ?,
-                            ?, ?,
-                            ?, ?,
-                            ?, ?
-                        )
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?
+                            )
                     ");
                     $stmt_serv->execute([
-                        $id_srvc, $id_ppl, $id_ppl, // id_srvc generado, id_ppl, id_prospect
+                        $id_srvc, $id_ppl, $id_ppl,
                         $s['servicio'] ?? '', $s['nombre_corto'] ?? '', $s['tipo'] ?? '', $s['trafico'] ?? '', $s['sub_trafico'] ?? '',
                         $s['base_calculo'] ?? '', $s['moneda'] ?? 'CLP', (float)($s['tarifa'] ?? 0), (int)($s['iva'] ?? 19), $s['estado'] ?? 'Activo',
-                        $costo, $venta, $costogasto, $ventagasto, '0',
+                        (float)($s['costo'] ?? 0), (float)($s['venta'] ?? 0), (float)($s['costogastoslocalesdestino'] ?? 0), (float)($s['ventasgastoslocalesdestino'] ?? 0), '0',
                         $s['commodity'] ?? '', $s['origen'] ?? '', $s['pais_origen'] ?? '', $s['destino'] ?? '', $s['pais_destino'] ?? '', $s['transito'] ?? '', $s['frecuencia'] ?? '',
                         $s['lugar_carga'] ?? '', $s['sector'] ?? '', $s['mercancia'] ?? '', (int)($s['bultos'] ?? 0), (float)($s['peso'] ?? 0), (string)($s['volumen'] ?? '0.00'), (string)($s['dimensiones'] ?? ''),
                         $s['agente'] ?? '', $s['aol'] ?? '', $s['aod'] ?? '', $s['transportador'] ?? '', $s['incoterm'] ?? '', $s['ref_cliente'] ?? '', $s['proveedor_nac'] ?? '',
                         (float)($s['tipo_cambio'] ?? 1), $s['ciudad'] ?? '', $s['pais'] ?? '', $s['direc_serv'] ?? '',
                         $s['estado_costos'] ?? 'pendiente', $s['nota_srvc'] ?? '',
+                        // Valores calculados para nuevos campos
+                        $cgld_usd, $cgld_eur, $cgld_clp,
+                        $vgld_usd, $vgld_eur, $vgld_clp,
+                        $pgld_usd, $pgld_eur, $pgld_clp,
+                        $ppgld_usd, $ppgld_eur, $ppgld_clp,
+                        // ---
                         $s['solicitado_por'] ?? null, $s['fecha_solicitado'] ?? null, $s['completado_por'] ?? null, $s['fecha_completado'] ?? null, $s['revisado_por'] ?? null, $s['fecha_revisado'] ?? null
                     ]);
 
