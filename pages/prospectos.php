@@ -1642,11 +1642,29 @@
             document.getElementById('submodal-costos').style.display = 'block';
         }
 
+        // --- Submodal Gastos Locales ---
         function abrirSubmodalGastosLocales() {
             if (document.getElementById('modal-servicio').style.display === 'none') return error('Abra primero el modal de Servicio');
+
+            // Cargar datos actuales del servicio (si está en edición)
+            // Asegurar que gastosLocales sea un array y que sus valores numéricos sean números
             if (servicioEnEdicion !== null) {
-                gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) ? [...servicios[servicioEnEdicion].gastos_locales] : [];
+                gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) ? servicios[servicioEnEdicion].gastos_locales.map(g => ({
+                    ...g,
+                    // Asegurar que monto e iva sean números, con 0 como valor por defecto si no lo son
+                    monto: parseFloat(g.monto) || 0,
+                    iva: parseFloat(g.iva) || 0
+                })) : [];
+            } else {
+                // Si no está en edición, asegurar que gastosLocales sea un array vacío o el que esté en el estado actual
+                gastosLocales = Array.isArray(gastosLocales) ? gastosLocales.map(g => ({
+                    ...g,
+                    monto: parseFloat(g.monto) || 0,
+                    iva: parseFloat(g.iva) || 0
+                })) : [];
             }
+
+            // Cargar tipos de gastos (si aplica)
             const tipo = document.getElementById('gasto_tipo')?.value;
             if (tipo) {
                 fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
@@ -1654,16 +1672,20 @@
                     .then(data => {
                         const sel = document.getElementById('gasto_gasto');
                         if (sel) {
-                            sel.innerHTML = '<option value="">Gastos</option>';
-                            (data.gastos || []).forEach(g => {
-                                const opt = document.createElement('option');
-                                opt.value = g;
-                                opt.textContent = g;
-                                sel.appendChild(opt);
+                            sel.innerHTML = '<option value="">Seleccionar gasto</option>';
+                            (Array.isArray(data) ? data : (data.gastos_locales || [])).forEach(item => {
+                                const val = typeof item === 'string' ? item : (item.gasto || item);
+                                if (val) {
+                                    const opt = document.createElement('option');
+                                    opt.value = val;
+                                    opt.textContent = val;
+                                    sel.appendChild(opt);
+                                }
                             });
                         }
                     });
             }
+            // Actualizar tabla y mostrar modal
             actualizarTablaGastosLocales();
             document.getElementById('submodal-gastos-locales').style.display = 'block';
         }
@@ -1678,6 +1700,78 @@
                 document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
             });
         });
+
+        function actualizarTablaGastosLocales() {
+            const tbody = document.getElementById('gastos-locales-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            // Inicializar totales como números
+            let tv = 0;
+            let tc = 0;
+
+            gastosLocales.forEach((g, i) => {
+                // Asegurar que monto e iva sean números antes de usarlos
+                const monto = parseFloat(g.monto) || 0;
+                const iva = parseFloat(g.iva) || 0;
+                const tipo = g.tipo || '';
+
+                // Calcular subtotal (monto * (1 + iva/100)) si es afecto
+                const esAfecto = g.afecto === 'SI' || g.afecto === true;
+                const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
+
+                // Acumular totales
+                // Usar toLowerCase() o comparaciones estrictas para mayor seguridad
+                if (tipo.toLowerCase() === 'costo') {
+                    tc += subtotal;
+                } else if (tipo.toLowerCase() === 'ventas') {
+                    tv += subtotal;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${tipo}</td>
+                    <td>${g.gasto || ''}</td>
+                    <td>${g.moneda || ''}</td>
+                    <td style="text-align:right;">${monto.toFixed(2)}</td>
+                    <td>${g.afecto || ''}</td>
+                    <td style="text-align:right;">${iva.toFixed(2)}</td>
+                    <td style="text-align:right;">${subtotal.toFixed(2)}</td>
+                    <td><button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Mostrar totales finales (asegurando que también sean números antes de toFixed)
+            document.getElementById('total-ventagasto').textContent = tv.toFixed(2);
+            document.getElementById('total-costogasto').textContent = tc.toFixed(2);
+            // Calcular y mostrar porcentaje de ganancia (si aplica)
+            const pct = tv > 0 ? ((tv - tc) / tv * 100) : 0;
+            document.getElementById('profit-porcentaje').textContent = pct.toFixed(2) + ' %';
+        }
+
+        // Mantener también la corrección en eliminarGastoLocal
+        function eliminarGastoLocal(i) {
+            if (confirm('¿Eliminar este gasto?')) {
+                gastosLocales.splice(i, 1);
+                actualizarTablaGastosLocales(); // Actualizar tabla y totales
+                exito('Gasto eliminado');
+            }
+        }
+
+        // Y en cerrarSubmodalGastosLocales
+        function cerrarSubmodalGastosLocales() {
+            if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+                // Asegurar que los gastos locales se actualicen en el objeto servicio
+                // y que los valores numéricos se mantengan como números
+                servicios[servicioEnEdicion].gastos_locales = gastosLocales.map(g => ({
+                    ...g,
+                    monto: parseFloat(g.monto) || 0,
+                    iva: parseFloat(g.iva) || 0
+                }));
+            }
+            document.getElementById('submodal-gastos-locales').style.display = 'none';
+        }
 
         function guardarCosto() {
             const concepto = document.getElementById('costo_concepto').value;
@@ -1808,65 +1902,6 @@
                 }
             });
             exito('Gasto local agregado');
-        }
-
-        function actualizarTablaGastosLocales() {
-            const tbody = document.getElementById('gastos-locales-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            let tv = 0, tc = 0;
-            gastosLocales.forEach((g, i) => {
-                // Convertir a número antes de usar toFixed
-                const monto = parseFloat(g.monto) || 0;
-                const iva = parseFloat(g.iva) || 0;
-
-                // Calcular subtotal (monto * (1 + iva/100)) si es afecto
-                const esAfecto = g.afecto === 'SI' || g.afecto === true;
-                const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
-
-                // Acumular totales
-                if (g.tipo === 'Costo') {
-                    tc += subtotal;
-                } else if (g.tipo === 'Ventas') {
-                    tv += subtotal;
-                }
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${g.tipo || ''}</td>
-                    <td>${g.gasto || ''}</td>
-                    <td>${g.moneda || ''}</td>
-                    <td style="text-align:right;">${monto.toFixed(2)}</td> <!-- Usar 'monto' convertido -->
-                    <td>${g.afecto || ''}</td>
-                    <td style="text-align:right;">${iva.toFixed(2)}</td>   <!-- Usar 'iva' convertido -->
-                    <td style="text-align:right;">${subtotal.toFixed(2)}</td> <!-- Mostrar subtotal calculado -->
-                    <td><button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button></td>
-                `;
-                tbody.appendChild(tr);
-                if (g.tipo === 'Ventas') tv += g.monto;
-                if (g.tipo === 'Costo') tc += g.monto;
-            });
-            document.getElementById('total-venta-gastos').textContent = tv.toFixed(2);
-            document.getElementById('total-costo-gastos').textContent = tc.toFixed(2);
-            document.getElementById('profit-local').textContent = (tv - tc).toFixed(2);
-            const pct = tv > 0 ? ((tv - tc) / tv * 100) : 0;
-            document.getElementById('profit-porcentaje').textContent = pct.toFixed(2) + ' %';
-        }
-
-        function eliminarGastoLocal(i) {
-            if (confirm('¿Eliminar este gasto?')) {
-                gastosLocales.splice(i, 1);
-                actualizarTablaGastosLocales();
-                exito('Gasto eliminado');
-            }
-        }
-
-        function cerrarSubmodalGastosLocales() {
-            if (servicioEnEdicion !== null) {
-                servicios[servicioEnEdicion].gastos_locales = [...gastosLocales];
-            }
-            document.getElementById('submodal-gastos-locales').style.display = 'none';
         }
 
         // === FUNCIONES DE SERVICIOS ===
