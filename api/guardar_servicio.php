@@ -5,6 +5,16 @@ header('Content-Type: application/json');
 // ✅ Eliminamos auth_check.php (validación en index.php)
 require_once __DIR__ . '/../config.php';
 
+// --- Verificación crítica de la conexión ---
+if (!isset($pdo) || !$pdo instanceof PDO) {
+    $errorMessage = "Error crítico: No se pudo establecer la conexión a la base de datos (PDO).";
+    error_log("[GUARDAR_SERVICIO] ERROR FATAL: " . $errorMessage);
+    http_response_code(500); // Error interno del servidor
+    echo json_encode(['success' => false, 'message' => $errorMessage]);
+    exit; // Detener la ejecución inmediatamente
+}
+// --- Fin verificación ---
+
 try {
     error_log('[GUARDAR_SERVICIO] Iniciando proceso...');
     // Iniciar transacción
