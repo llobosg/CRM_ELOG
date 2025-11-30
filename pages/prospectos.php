@@ -399,11 +399,11 @@
                 <h4 style="margin-bottom: 1rem; font-size: 1rem; color: #606263ff;">Totales por Moneda</h4>
                 <table style="width: 40%; border-collapse: collapse; border: 1px solid #e9ecef; background-color: #fff;"> <!-- Fondo blanco -->
                     <thead>
-                        <tr style="background-color: #c3cad0ff; font-size: 0.9rem;"> <!-- Color de fondo pastel más suave, tamaño de fuente reducido -->
+                        <tr style="background-color: #1386eaff; font-size: 0.9rem;"> <!-- Color de fondo pastel más suave, tamaño de fuente reducido -->
                             <th style="padding: 0.5rem; text-align: center; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Moneda</th> <!-- Ancho fijo, sin bold -->
-                            <th style="padding: 0.5rem; text-align: center; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Total Costos</th> <!-- Ancho fijo, sin bold -->
-                            <th style="padding: 0.5rem; text-align: center; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Total Ventas</th> <!-- Ancho fijo, sin bold -->
-                            <th style="padding: 0.5rem; text-align: center; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Profit Local</th> <!-- Ancho fijo, sin bold -->
+                            <th style="padding: 0.5rem; text-align: center; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Costos</th> <!-- Ancho fijo, sin bold -->
+                            <th style="padding: 0.5rem; text-align: center; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Ventas</th> <!-- Ancho fijo, sin bold -->
+                            <th style="padding: 0.5rem; text-align: center; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Profit</th> <!-- Ancho fijo, sin bold -->
                             <th style="padding: 0.5rem; text-align: center; border: 1px solid #dee2e6; width: 15ch; font-weight: normal;">Profit %</th> <!-- Ancho fijo, sin bold -->
                         </tr>
                     </thead>
