@@ -1731,17 +1731,31 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${tipo}</td>
-                    <td>${g.gasto || ''}</td>
-                    <td>${g.moneda || ''}</td>
+                    <td>${g.tipo}</td>
+                    <td>${g.gasto}</td>
+                    <td>${g.moneda}</td>
                     <td style="text-align:right;">${monto.toFixed(2)}</td>
-                    <td>${g.afecto || ''}</td>
+                    <td>${g.afecto}</td>
                     <td style="text-align:right;">${iva.toFixed(2)}</td>
                     <td style="text-align:right;">${subtotal.toFixed(2)}</td>
-                    <td><button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button></td>
+                    <td style="text-align: center;">
+                        <i class="fas fa-edit edit-gasto-icon" data-index="${i}" style="cursor: pointer; color: #007bff; margin-right: 0.5rem;" title="Editar Gasto"></i>
+                        <button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+
+            // --- Añadir listeners para los íconos de edición ---
+            // Esperar un tick para asegurar que el DOM esté completamente renderizado
+            setTimeout(() => {
+                document.querySelectorAll('.edit-gasto-icon').forEach(icon => {
+                    icon.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        editarGastoLocal(index);
+                    });
+                });
+            }, 0);
 
             // Mostrar totales finales (asegurando que también sean números antes de toFixed)
             document.getElementById('total-ventagasto').textContent = tv.toFixed(2);
@@ -1903,6 +1917,69 @@
                 }
             });
             exito('Gasto local agregado');
+        }
+
+        function editarGastoLocal(index) {
+            const gasto = gastosLocales[index];
+            if (!gasto) {
+                error('Gasto no encontrado.');
+                return;
+            }
+
+            // Cargar los valores en los campos del formulario
+            document.getElementById('gasto_tipo').value = gasto.tipo || '';
+            document.getElementById('gasto_gasto').value = gasto.gasto || '';
+            document.getElementById('gasto_moneda').value = gasto.moneda || 'USD'; // Asumiendo USD por defecto
+            document.getElementById('gasto_monto').value = gasto.monto || '';
+            document.getElementById('gasto_afecto').value = gasto.afecto || 'NO'; // Asumiendo NO por defecto
+            document.getElementById('gasto_iva').value = gasto.iva || '';
+
+            // Opcional: Mostrar una notificación o resaltar el campo para indicar que está en modo edición
+            // Por ejemplo, podrías añadir una clase CSS temporal o un placeholder en el botón "Agregar"
+            const btnAgregar = document.querySelector('#submodal-gastos-locales button[onclick="guardarGastoLocal()"]');
+            if (btnAgregar) {
+                btnAgregar.textContent = 'Actualizar'; // Cambiar texto temporalmente
+                btnAgregar.onclick = function() {
+                    actualizarGastoLocal(index); // Cambiar la acción del botón
+                    // Restaurar botón a su estado original después de actualizar
+                    btnAgregar.textContent = 'Agregar'; // Volver al texto original
+                    btnAgregar.onclick = function() { guardarGastoLocal(); }; // Volver a la función original
+                };
+            }
+        }
+
+        function actualizarGastoLocal(index) {
+            const tipo = document.getElementById('gasto_tipo').value;
+            const gasto_nombre = document.getElementById('gasto_gasto').value;
+            const moneda = document.getElementById('gasto_moneda').value;
+            const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
+            const afecto = document.getElementById('gasto_afecto').value;
+            const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
+
+            if (!tipo || !gasto_nombre) {
+                error('Tipo y Gasto son obligatorios');
+                return;
+            }
+
+            // Actualizar el objeto en el array
+            gastosLocales[index] = { tipo, gasto: gasto_nombre, moneda, monto, afecto, iva };
+
+            // Actualizar la tabla visual
+            actualizarTablaGastosLocales();
+
+            // Limpiar campos (opcional, puedes dejar los valores si prefieres que sea como un "update & add next")
+            ['gasto_tipo', 'gasto_gasto', 'gasto_moneda', 'gasto_monto', 'gasto_afecto', 'gasto_iva'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (el.tagName === 'SELECT') {
+                        el.selectedIndex = 0; // Seleccionar primera opción
+                    } else {
+                        el.value = '';
+                    }
+                }
+            });
+
+            exito('Gasto local actualizado');
         }
 
         // === FUNCIONES DE SERVICIOS ===
