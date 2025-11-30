@@ -212,7 +212,7 @@ try {
                 lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
                 agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac,
                 tipo_cambio, ciudad, pais, direc_serv,
-                estado_costos, nota_srvc, -- ✅ Añadido nota_srvc
+                estado_costos, nota_srvc,
                 solicitado_por, fecha_solicitado,
                 completado_por, fecha_completado,
                 revisado_por, fecha_revisado
@@ -234,7 +234,7 @@ try {
             $data['lugar_carga'] ?? '', $data['sector'] ?? '', $data['mercancia'] ?? '', (int)($data['bultos'] ?? 0), (float)($data['peso'] ?? 0), (string)($data['volumen'] ?? '0.00'), (string)($data['dimensiones'] ?? ''),
             $data['agente'] ?? '', $data['aol'] ?? '', $data['aod'] ?? '', $data['transportador'] ?? '', $data['incoterm'] ?? '', $data['ref_cliente'] ?? '', $data['proveedor_nac'] ?? '',
             (float)($data['tipo_cambio'] ?? 1), $data['ciudad'] ?? '', $data['pais'] ?? '', $data['direc_serv'] ?? '',
-            $data['estado_costos'] ?? 'pendiente', $data['nota_srvc'] ?? '', -- ✅ Valor de nota_srvc del JSON
+            $data['estado_costos'] ?? 'pendiente', $data['nota_srvc'] ?? '',
             $data['solicitado_por'] ?? null, $data['fecha_solicitado'] ?? null, $data['completado_por'] ?? null, $data['fecha_completado'] ?? null, $data['revisado_por'] ?? null, $data['fecha_revisado'] ?? null
         ];
 
