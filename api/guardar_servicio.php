@@ -132,7 +132,7 @@ try {
             $data['pais'] ?? '',
             $data['direc_serv'] ?? '',
             $data['estado_costos'] ?? 'pendiente',
-            $data['nota_srvc'] ?? '', -- ✅ Valor de nota_srvc del JSON
+            $data['nota_srvc'] ?? '',
             $data['solicitado_por'] ?? null,
             $data['fecha_solicitado'] ?? null,
             $data['completado_por'] ?? null,
