@@ -440,6 +440,19 @@
         </div>
     </div>
 
+    <!-- Agregar al final del <main> o donde consideres apropiado en prospectos.php -->
+    <div id="adjuntos-section" style="position: fixed; top: 100px; right: 20px; width: 300px; background: white; border: 1px solid #ccc; border-radius: 8px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 10000; max-height: 80vh; overflow-y: auto; display: none;">
+        <h4>Adjuntos</h4>
+        <ul id="lista-adjuntos">
+            <!-- Los enlaces a los PDFs generados se pueden añadir aquí dinámicamente si se almacenan temporalmente -->
+            <!-- Por ahora, esta sección solo sirve como marcador visual -->
+        </ul>
+        <button onclick="document.getElementById('adjuntos-section').style.display='none';" style="margin-top: 10px;">Cerrar</button>
+    </div>
+
+    <!-- Botón para mostrar la sección de adjuntos (opcional) -->
+    <button onclick="document.getElementById('adjuntos-section').style.display='block';" style="position: fixed; top: 50px; right: 20px; z-index: 10001;">Adjuntos</button>
+
     <!-- Toast de notificaciones -->
     <div id="toast" class="toast" style="display:none;">
         <i class="fas fa-info-circle"></i> 
@@ -631,6 +644,8 @@
                         <button type="button" class="btn-delete-servicio" data-index="${index}">🗑️</button>
                         <i class="fas fa-sticky-note nota-servicio-icono" data-index="${index}" title="Notas del Servicio"></i>
                         <span class="nota-preview" title="${s.nota_srvc || ''}">${s.nota_srvc ? s.nota_srvc : '(Sin notas)'}</span>
+                        <!-- Nueva columna con ícono de PDF -->
+                        <i class="fas fa-file-pdf pdf-servicio-icono" data-index="${index}" style="cursor: pointer; color: #d9534f; margin-left: 0.5rem;" title="Generar Cotización PDF"></i>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -783,13 +798,246 @@
                 });
             });
 
-                // Abrir submodal de notas
+            // Abrir submodal de notas
             document.querySelectorAll('.nota-servicio-icono').forEach(icon => {
                 icon.addEventListener('click', function() {
                     const index = parseInt(this.getAttribute('data-index'));
                     abrirSubmodalNotasServicio(index);
                 });
             });
+
+            // NUEVO: Generar PDF
+            document.querySelectorAll('.pdf-servicio-icono').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    generarPDFCotizacion(index);
+                });
+            });
+
+        } // Fin de actualizarTabla()
+
+        // --- Función para generar el PDF (definida fuera del bucle forEach) ---
+        function generarPDFCotizacion(servicioIndex) {
+            const servicio = servicios[servicioIndex];
+            if (!servicio) {
+                error('Servicio no encontrado.');
+                return;
+            }
+
+            // Crear un contenedor temporal para el HTML del PDF
+            const pdfContainer = document.createElement('div');
+            pdfContainer.id = 'pdf-content';
+            pdfContainer.style.display = 'none'; // Oculto
+            pdfContainer.style.width = '210mm'; // A4
+            pdfContainer.style.minHeight = '297mm';
+            pdfContainer.style.padding = '15mm';
+            pdfContainer.style.boxSizing = 'border-box';
+            pdfContainer.style.backgroundColor = 'white';
+            pdfContainer.style.fontFamily = 'Arial, sans-serif';
+            pdfContainer.style.fontSize = '10pt';
+            pdfContainer.style.lineHeight = '1.2';
+
+            // Obtener datos del prospecto (asumiendo que están disponibles en variables globales o se pueden acceder)
+            // Necesitas asegurarte de tener acceso a los datos del prospecto principal (razon_social, direccion, etc.)
+            // Aquí se asume que tienes acceso a variables como razonSocialProspecto, direccionProspecto, etc.
+            // Debes adaptar esta parte para obtener los datos correctamente desde tu interfaz o estado.
+            const prospectoData = { /* Obtén los datos del prospecto principal aquí */ };
+            // Ejemplo (debes reemplazar con la forma correcta de obtener estos datos):
+            const razonSocialProspecto = document.querySelector('#razon_social_select')?.selectedOptions[0]?.text || '';
+            const direccionProspecto = document.getElementById('direccion')?.value || '';
+            const notasComerciales = document.getElementById('notas_comerciales_input')?.value || '';
+            const notasOperaciones = document.getElementById('notas_operaciones_input')?.value || '';
+
+            // Construir el HTML del PDF
+            pdfContainer.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10mm;">
+                    <div style="flex: 1;">
+                        <img src="/assets/logo.png" alt="Logo" style="height: 20mm; margin-bottom: 2mm;"> <!-- Cambia la ruta -->
+                        <div style="font-size: 14pt; font-weight: bold; margin-top: 2mm;">NÚMERO DE COTIZACIÓN: ${servicio.concatenado || servicio.id_srvc || 'N/A'}</div>
+                    </div>
+                    <div style="text-align: right; width: 40%;">
+                        <div><strong>TIPO CAMBIO CLIENTE:</strong></div>
+                        <div><strong>AGENTE / OFICINA:</strong> ${servicio.agente || ''}</div>
+                        <div><strong>PO # REFERENCIA CLIENTE:</strong> ${servicio.ref_cliente || ''}</div>
+                        <div><strong>PROVEEDOR NACIONAL:</strong> ${servicio.proveedor_nac || ''}</div>
+                        <div><strong>TERRESTRE:</strong></div>
+                        <div><strong>DESCONSOLIDACIÓN:</strong> ${servicio.desconsolidac || ''}</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; margin-bottom: 5mm;">
+                    <div style="flex: 1; padding-right: 5mm;">
+                        <div><strong>SHIPPER:</strong> ${razonSocialProspecto}</div>
+                        <div><strong>DIRECCIÓN:</strong> ${direccionProspecto}</div>
+                    </div>
+                    <div style="flex: 1; padding-left: 5mm;">
+                        <div><strong>CONSIGNATARIO:</strong></div>
+                        <div><strong>DIRECCIÓN:</strong></div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 5mm;">
+                    <div><strong>INCOTERM:</strong> ${servicio.incoterm || ''}</div>
+                    <div><strong>COMMODITY:</strong> ${servicio.commodity || ''}</div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div><strong>PESO BRUTO:</strong> ${servicio.peso || '0.00'} kg</div>
+                        <div><strong>UNIDADES FCL:</strong></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div><strong>CANTIDAD UNIDADES:</strong> ${servicio.bultos || '0'}</div>
+                        <div><strong>POL:</strong> ${servicio.origen || ''}</div>
+                        <div><strong>POD:</strong> ${servicio.destino || ''}</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div><strong>NAVIERA:</strong></div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 5mm;">
+                    <div style="font-weight: bold; text-decoration: underline;">NOTAS COMERCIALES</div>
+                    <div>${notasComerciales}</div>
+                </div>
+
+                <div style="margin-bottom: 5mm;">
+                    <div style="font-weight: bold;">PROFIT SHARE</div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">CONCEPTO</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">MONEDA</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">QTY</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">COSTO</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">VENTA</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">TOTAL</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">APLICA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filas de servicios -->
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 2px;">${servicio.servicio || ''}</td>
+                                <td style="border: 1px solid #000; padding: 2px;">${servicio.moneda || ''}</td>
+                                <td style="border: 1px solid #000; padding: 2px;">1</td> <!-- Asumiendo 1 unidad por servicio -->
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.costo || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.venta || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.costo || 0).toFixed(2)}</td> <!-- Total Costo -->
+                                <td style="border: 1px solid #000; padding: 2px;">${servicio.tipo || ''}</td>
+                            </tr>
+                            <!-- Agregar filas para costos y gastos locales si es necesario -->
+                            ${servicio.costos && Array.isArray(servicio.costos) ? servicio.costos.map(c => `
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 2px;">${c.concepto || ''}</td>
+                                <td style="border: 1px solid #000; padding: 2px;">${c.moneda || ''}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">${c.qty || '1'}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(c.costo || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(c.tarifa || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(c.total_costo || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px;">${c.aplica || ''}</td>
+                            </tr>
+                            `).join('') : ''}
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight: bold;">
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;" colspan="3">TOTALES:</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.costo || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.venta || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.costo || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                            </tr>
+                            <tr style="font-weight: bold;">
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;" colspan="5">TOTAL PROFIT:</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${((servicio.venta || 0) - (servicio.costo || 0)).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                            </tr>
+                            <tr style="font-weight: bold;">
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;" colspan="5">TOTAL PROFIT %:</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.venta > 0 ? (((servicio.venta || 0) - (servicio.costo || 0)) / (servicio.venta || 0) * 100) : 0).toFixed(2)}%</td>
+                                <td style="border: 1px solid #000; padding: 2px;"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Costos y Gastos Locales (similar a la tabla de costos) -->
+                ${servicio.gastos_locales && Array.isArray(servicio.gastos_locales) && servicio.gastos_locales.length > 0 ? `
+                <div style="margin-bottom: 5mm;">
+                    <div style="font-weight: bold;">GASTOS VENTAS LOCALES</div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">TIPO</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">GASTOS</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">MONEDA</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">MONTO</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">AFECTO</th>
+                                <th style="border: 1px solid #000; padding: 2px; text-align: center;">IVA%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${servicio.gastos_locales.map(g => `
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 2px;">${g.tipo || ''}</td>
+                                <td style="border: 1px solid #000; padding: 2px;">${g.gasto || ''}</td>
+                                <td style="border: 1px solid #000; padding: 2px;">${g.moneda || ''}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(g.monto || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px;">${g.afecto || ''}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(g.iva || 0).toFixed(2)}%</td>
+                            </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ` : ''}
+
+                <div style="margin-top: 5mm;">
+                    <div style="font-weight: bold; text-decoration: underline;">NOTAS A OPERACIONES</div>
+                    <div>${notasOperaciones}</div>
+                </div>
+            `;
+
+            // Añadir el contenedor al body temporalmente
+            document.body.appendChild(pdfContainer);
+
+            // Usar html2canvas para capturar el contenedor como imagen
+            html2canvas(pdfContainer, { scale: 2 }) // Escala 2 para mejor calidad
+                .then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4'); // 'p' = portrait, 'mm' = milímetros, 'a4' = tamaño
+                    const imgWidth = 210; // Ancho A4 en mm
+                    const pageHeight = 297; // Alto A4 en mm
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = 0;
+
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+
+                    // Si la imagen es más larga que una página, agregar nuevas páginas
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+
+                    // Abrir el PDF en una nueva pestaña/ventana para visualización o descarga
+                    // Opcional: pdf.autoPrint(); // Si deseas que se imprima automáticamente
+                    const pdfBlob = pdf.output('blob');
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+                    window.open(pdfUrl, '_blank');
+
+                    // Limpiar: eliminar el contenedor temporal y liberar el objeto URL
+                    document.body.removeChild(pdfContainer);
+                    URL.revokeObjectURL(pdfUrl);
+                })
+                .catch(err => {
+                    console.error('Error al generar el PDF:', err);
+                    error('No se pudo generar el PDF.');
+                    // Asegurarse de limpiar el contenedor en caso de error
+                    if (document.body.contains(pdfContainer)) {
+                        document.body.removeChild(pdfContainer);
+                    }
+                });
         }
 
         // === NUEVA FUNCIÓN: Gestión de notificaciones de costos ===
