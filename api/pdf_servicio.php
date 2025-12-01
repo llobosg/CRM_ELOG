@@ -172,6 +172,25 @@ $style = '
     .right { text-align: right; }
 </style>
 ';
+// --- NUEVAS VARIABLES NECESARIAS PARA EL NUEVO BLOQUE ---
+$contacto = sanitizeText($servicio['nombre'] ?? ''); // Asumiendo que 'nombre' es el contacto en la tabla servicios o prospectos
+// Si el contacto proviene de otra tabla (como contactos), necesitas hacer una consulta aquí.
+// Ejemplo (si ya tienes el RUT del cliente en $servicio['rut_empresa']):
+// $stmt_contacto = $pdo->prepare("SELECT nom_contacto FROM contactos WHERE rut_cliente = ? AND primario = 'S' LIMIT 1");
+// $stmt_contacto->execute([$servicio['rut_empresa']]);
+// $contacto_row = $stmt_contacto->fetch();
+// $contacto = sanitizeText($contacto_row['nom_contacto'] ?? '');
+
+$tipoTrafico = strtolower($servicio_datos['trafico'] ?? ''); // Asumiendo que 'trafico' define el tipo
+if (strpos($tipoTrafico, 'mar') !== false) {
+    $tipoTransporteTexto = 'NAVIERA';
+} elseif (strpos($tipoTrafico, 'aer') !== false) {
+    $tipoTransporteTexto = 'AEROLÍNEA';
+} elseif (strpos($tipoTrafico, 'ter') !== false || strpos($tipoTrafico, 'land') !== false) {
+    $tipoTransporteTexto = 'TRANSPORTE';
+} else {
+    $tipoTransporteTexto = 'TRANSPORTE'; // Valor por defecto
+}
 
 $html = $style;
 
@@ -187,6 +206,108 @@ $html .= '
         <col style="width:25%;">
         <col style="width:25%;">
     </colgroup>
+
+    <!-- Spacer -->
+    <tr><td colspan="5" style="height:4mm;"></td></tr>
+
+    <!-- NUEVO BLOQUE: Información del Cliente y Servicio -->
+    <tr>
+        <td colspan="5" style="padding-bottom: 4mm;">
+            <div style="font-size: 10pt; line-height: 1.4;">
+                <strong>Atención:</strong> <span style="font-style: italic;">' . sanitizeText($contacto) . '</span> <!-- Campo contacto -->
+                <br>
+                <strong>Empresa:</strong> ' . sanitizeText($razonSocialProspecto) . '
+                <br><br>
+                Informamos a ustedes la cotización solicitada según los datos a continuación:
+            </div>
+        </td>
+    </tr>
+
+    <tr>
+        <td style="vertical-align: top;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+                <tr>
+                    <td style="padding-right: 2mm; white-space: nowrap;"><strong>INCOTERM:</strong></td>
+                    <td style="text-align: right;">' . $servicio_datos['incoterm'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>COMMODITY:</strong></td>
+                    <td style="text-align: right;">' . $servicio_datos['commodity'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>UNIDADES FCL:</strong></td>
+                    <td style="text-align: right;">' . $servicio_datos['bultos'] . '</td> <!-- Asumiendo bultos como unidades FCL -->
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>VOLUMEN:</strong></td>
+                    <td style="text-align: right;">' . number_format($servicio['volumen'] ?? 0, 2) . '</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>POL:</strong></td>
+                    <td style="text-align: right;">' . $servicio_datos['origen'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>POD:</strong></td>
+                    <td style="text-align: right;">' . $servicio_datos['destino'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>TIPO:</strong></td> <!-- Etiqueta calculada -->
+                    <td style="text-align: right;">' . $tipoTransporteTexto . '</td> <!-- Valor calculado -->
+                </tr>
+            </table>
+        </td>
+        <td style="vertical-align: top;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+                <tr>
+                    <td style="padding-right: 2mm; white-space: nowrap;"><strong>Nº COTIZACIÓN:</strong></td>
+                    <td style="text-align: right;">' . $servicio_datos['concatenado'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>REF. CLIENTE:</strong></td>
+                    <td style="text-align: right;">' . $servicio_datos['ref_cliente'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>PESO BRUTO:</strong></td>
+                    <td style="text-align: right;">' . number_format($servicio_datos['peso'], 2) . ' kg</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>CANTIDAD/BULTOS:</strong></td>
+                    <td style="text-align: right;">' . $servicio_datos['bultos'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"><strong>AGENTE:</strong></td>
+                    <td style="text-align: right;">' . $servicio_datos['agente'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"></td> <!-- Celda vacía para alinear -->
+                    <td style="text-align: right;"></td> <!-- Celda vacía para alinear -->
+                </tr>
+                <tr>
+                    <td style="padding-right: 2mm;"></td> <!-- Celda vacía para alinear -->
+                    <td style="text-align: right;"></td> <!-- Celda vacía para alinear -->
+                </tr>
+            </table>
+        </td>
+        <td></td> <!-- Columna vacía central -->
+        <td colspan="2" style="vertical-align: top;">
+            <div style="margin-bottom: 2mm;"><strong>NOTAS SERVICIO</strong></div>
+            <div style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; min-height: 30px; background-color: #fafafa; font-size: 8.5pt; line-height: 1.3;">
+                ' . nl2br(sanitizeText($servicio_datos['nota_srvc'])) . '
+            </div>
+        </td>
+    </tr>
+
+    <!-- Spacer antes de la siguiente sección -->
+    <tr><td colspan="5" style="height:4mm;"></td></tr>
+
+    <!-- Row: Tipo cambio / Agente (viejo código continúa aquí) -->
+    <tr>
+        <td><span class="label">TIPO CAMBIO:</span><div class="muted small">&nbsp;</div></td>
+        <td><span class="label">AGENTE:</span><div class="value">' . $servicio_datos['agente'] . '</div></td>
+        <td></td>
+        <td><span class="label">PO # REF. CLIENTE:</span><div class="value">' . $servicio_datos['ref_cliente'] . '</div></td>
+        <td><span class="label">PROVEEDOR NAC:</span><div class="value">' . $servicio_datos['proveedor_nac'] . '</div></td>
+    </tr>
 
     <!-- Row: Tipo cambio / Agente -->
     <tr>
