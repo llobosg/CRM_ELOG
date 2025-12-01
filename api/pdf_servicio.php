@@ -5,7 +5,7 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config.php';
 
-// NO ES NECESARIO: use TCPDF; // Quitar esta línea para evitar el warning
+// No es necesario usar 'use TCPDF;' si se instancia con \TCPDF
 
 function sanitizeText($text) {
     if ($text === null) return '';
@@ -48,7 +48,7 @@ try {
     $notasComerciales = $servicio['notas_comerciales'] ?? '';
     $notasOperaciones = $servicio['notas_operaciones'] ?? '';
     $concatenadoServicio = $servicio['concatenado'] ?? 'N/A';
-    $rutClienteParaContacto = $servicio['rut_empresa'] ?? null; // Usar rut_empresa del prospecto
+    $rutClienteParaContacto = $servicio['rut_empresa'] ?? null;
 
     // --- Cargar Contacto Primario ---
     $contacto_nombre = '';
@@ -95,7 +95,29 @@ $servicio_datos = [
     'origen' => sanitizeText($servicio['origen']),
     'destino' => sanitizeText($servicio['destino']),
     'concatenado' => $concatenadoServicio,
-    'nota_srvc' => sanitizeText($servicio['nota_srvc']), // Asegurar que se obtiene la nota
+    'nota_srvc' => sanitizeText($servicio['nota_srvc']),
+    // --- AÑADIDO: Transportador ---
+    'transportador' => sanitizeText($servicio['transportador']),
+    // Asegurar otros campos necesarios
+    'aol' => sanitizeText($servicio['aol']),
+    'aod' => sanitizeText($servicio['aod']),
+    'nombre_corto' => sanitizeText($servicio['nombre_corto']),
+    'tipo' => sanitizeText($servicio['tipo']),
+    'sub_trafico' => sanitizeText($servicio['sub_trafico']),
+    'base_calculo' => sanitizeText($servicio['base_calculo']),
+    'estado' => sanitizeText($servicio['estado']),
+    'desconsolidac' => sanitizeText($servicio['desconsolidac']),
+    'tipo_cambio' => (float)($servicio['tipo_cambio'] ?? 1),
+    'ciudad' => sanitizeText($servicio['ciudad']),
+    'pais' => sanitizeText($servicio['pais']),
+    'direc_serv' => sanitizeText($servicio['direc_serv']),
+    'estado_costos' => sanitizeText($servicio['estado_costos']),
+    'solicitado_por' => (int)($servicio['solicitado_por'] ?? null),
+    'fecha_solicitado' => $servicio['fecha_solicitado'],
+    'completado_por' => (int)($servicio['completado_por'] ?? null),
+    'fecha_completado' => $servicio['fecha_completado'],
+    'revisado_por' => (int)($servicio['revisado_por'] ?? null),
+    'fecha_revisado' => $servicio['fecha_revisado'],
 ];
 
 $costos_datos = array_map(function($c) {
@@ -122,7 +144,6 @@ $gastos_datos = array_map(function($g) {
 }, $gastos_locales);
 
 // --- Crear PDF ---
-// Instanciar TCPDF directamente sin usar el alias
 $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
 // Configuración del documento (tamaño de letra base reducido un 10%)
@@ -132,6 +153,7 @@ $pdf->SetHeaderData('', 0, '', '');
 $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', 9)); // Reducido de 10 a 9 (10% menos)
 $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', 8)); // Reducido de 9 a 8 (aprox 10% menos)
 $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+// Margen izquierdo aumentado ligeramente para compensar el logo
 $pdf->SetMargins(20, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT); // Ajuste de margen izquierdo
 $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
 $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
@@ -144,13 +166,24 @@ $pdf->AddPage();
 // --- Ruta al logo (ajusta la ruta) ---
 $logoPath = __DIR__ . '/../assets/logo.png';
 
+// --- Calcular texto de tipo de transporte ---
+$tipoTrafico = strtolower($servicio_datos['trafico'] ?? '');
+$tipoTransporteTexto = 'TRANSPORTE';
+if (strpos($tipoTrafico, 'mar') !== false) {
+    $tipoTransporteTexto = 'NAVIERA';
+} elseif (strpos($tipoTrafico, 'aer') !== false) {
+    $tipoTransporteTexto = 'AEROLÍNEA';
+} elseif (strpos($tipoTrafico, 'ter') !== false || strpos($tipoTrafico, 'land') !== false) {
+    $tipoTransporteTexto = 'TRANSPORTE';
+}
+
 // --- Contenido del PDF (estructurado en tabla de 4 columnas) ---
 $html = '';
 
 // Tabla principal de 4 columnas
 $html .= '<table cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
 
-// Fila 1: Logo y Número de Cotización + Fecha
+// Fila 1: Logo y Número de Cotización
 $html .= '<tr>';
 $html .= '<td style="width: 25%; vertical-align: top; border: none;">';
 if (file_exists($logoPath)) {
@@ -182,15 +215,6 @@ $html .= '<tr><td style="border: none;"><strong>AGENTE / OFICINA:</strong></td><
 $html .= '<tr><td style="border: none;"><strong>PROVEEDOR NAC:</strong></td><td style="border: none;">' . $servicio_datos['proveedor_nac'] . '</td><td style="border: none;"></td><td style="border: none;"></td></tr>';
 
 // Fila 7: Texto calculado / Transportador
-$tipoTrafico = strtolower($servicio_datos['trafico'] ?? '');
-$tipoTransporteTexto = 'TRANSPORTE';
-if (strpos($tipoTrafico, 'mar') !== false) {
-    $tipoTransporteTexto = 'NAVIERA';
-} elseif (strpos($tipoTrafico, 'aer') !== false) {
-    $tipoTransporteTexto = 'AEROLÍNEA';
-} elseif (strpos($tipoTrafico, 'ter') !== false || strpos($tipoTrafico, 'land') !== false) {
-    $tipoTransporteTexto = 'TRANSPORTE';
-}
 $html .= '<tr><td style="border: none;"><strong>' . $tipoTransporteTexto . ':</strong></td><td style="border: none;">' . $servicio_datos['transportador'] . '</td><td style="border: none;"></td><td style="border: none;"></td></tr>';
 
 // Fila 8: Espacio
@@ -225,7 +249,7 @@ $html .= '<tr>';
 $html .= '<td style="padding-right: 2mm;"><strong>UNIDADES FCL:</strong></td>';
 $html .= '<td style="text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
 $html .= '<td style="padding-right: 2mm;"><strong>VOLUMEN:</strong></td>';
-$html .= '<td style="text-align: left;">' . number_format($servicio['volumen'] ?? 0, 2) . '</td>'; // Alineado a la izquierda
+$html .= '<td style="text-align: left;">' . number_format($servicio_datos['volumen'], 2) . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 3
@@ -242,23 +266,6 @@ $html .= '<td style="padding-right: 2mm;"><strong>POL:</strong></td>';
 $html .= '<td style="text-align: left;">' . $servicio_datos['origen'] . '</td>'; // Alineado a la izquierda
 $html .= '<td style="padding-right: 2mm;"><strong>POD:</strong></td>';
 $html .= '<td style="text-align: left;">' . $servicio_datos['destino'] . '</td>'; // Alineado a la izquierda
-$html .= '</tr>';
-
-// Fila interna 5 - Calcular tipo de transporte
-$tipoTrafico = strtolower($servicio_datos['trafico'] ?? '');
-$tipoTransporteTexto = 'TRANSPORTE';
-if (strpos($tipoTrafico, 'mar') !== false) {
-    $tipoTransporteTexto = 'NAVIERA';
-} elseif (strpos($tipoTrafico, 'aer') !== false) {
-    $tipoTransporteTexto = 'AEROLÍNEA';
-} elseif (strpos($tipoTrafico, 'ter') !== false || strpos($tipoTrafico, 'land') !== false) {
-    $tipoTransporteTexto = 'TRANSPORTE';
-}
-$html .= '<tr>';
-$html .= '<td style="padding-right: 2mm;"><strong>' . $tipoTransporteTexto . ':</strong></td>';
-$html .= '<td style="text-align: left;">&nbsp;</td>'; // Campo vacío o lógica para nombre real si se tiene
-$html .= '<td style="padding-right: 2mm;"></td>'; // Celda vacía
-$html .= '<td style="text-align: left;"></td>'; // Celda vacía
 $html .= '</tr>';
 
 $html .= '</table>';
@@ -319,8 +326,7 @@ foreach ($costos_datos as $c) {
 $html .= '</tbody>';
 $html .= '<tfoot>';
 $html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTALES:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_costos, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_total_costo, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
-// Filas sin borde inferior para TOTAL PROFIT y %
-$html .= '<tr style="font-weight: bold;"><td style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-top: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT:</td><td style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-top: 1px solid #ddd; text-align: right;">' . number_format($total_venta - $total_costos, 2) . '</td><td style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-top: 1px solid #ddd;"></td></tr>';
+$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta - $total_costos, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
 $html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT %:</td><td style="border: 1px solid #ddd; text-align: right;">' . ($total_venta > 0 ? number_format((($total_venta - $total_costos) / $total_venta) * 100, 2) : 0) . '%</td><td style="border: 1px solid #ddd;"></td></tr>';
 $html .= '</tfoot>';
 $html .= '</table>';
@@ -343,15 +349,15 @@ if (!empty($gastos_datos)) {
         $html .= '</tr>';
     }
     $html .= '</tbody>';
-        $html .= '</table>';
-    $html .= '</div>';
-
-    // === NUEVO: Notas Comerciales ===
-    $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
-    $html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS COMERCIALES</h3>'; // Tamaño de título ligeramente menor
-    $html .= nl2br(sanitizeText($notasComerciales));
+    $html .= '</table>';
     $html .= '</div>';
 }
+
+// --- NUEVO: Notas Comerciales ---
+$html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
+$html .= '<h3 style="font-size: 10pt; text-decoration: underline; margin-bottom: 2mm;">NOTAS COMERCIALES</h3>'; // Tamaño de título ligeramente menor
+$html .= nl2br(sanitizeText($notasComerciales));
+$html .= '</div>';
 
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
 $html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>'; // Tamaño de título ligeramente menor
