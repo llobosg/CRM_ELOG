@@ -816,44 +816,51 @@
 
         } // Fin de actualizarTabla()
 
-        // --- Función para generar el PDF (definida fuera del bucle forEach) ---
-        // Cargar el logo como Base64 o Blob (esto se puede hacer una vez al cargar la página)
-        let logoBase64 = null;
-        let logoLoaded = false;
-        let logoLoadError = null;
+        // --- Función para generar el PDF (v2 - intenta resolver el problema de imagen corrupta) ---
+        // Cargar el logo como Base64 al inicio (puedes hacerlo una vez cuando se carga la página)
+        let logoBase64Global = null;
+        let logoCargado = false;
 
-        function loadLogo() {
-            if (logoLoaded || logoLoadError) return Promise.resolve(); // Ya se intentó cargar
+        function cargarLogoBase64() {
+            if (logoCargado || logoBase64Global !== null) {
+                // Ya está cargado o en proceso
+                return Promise.resolve(logoBase64Global);
+            }
 
             return new Promise((resolve, reject) => {
                 const img = new Image();
-                img.crossOrigin = 'Anonymous'; // Intentar cargar sin CORS si es posible
+                // Importante: usar crossOrigin para evitar problemas CORS si la imagen está en otro dominio
+                // Aunque para archivos locales en el mismo servidor, no debería ser estrictamente necesario,
+                // es buena práctica incluirlo.
+                img.crossOrigin = 'Anonymous';
                 img.onload = function() {
                     try {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
-                        canvas.height = img.height;
                         canvas.width = img.width;
+                        canvas.height = img.height;
                         ctx.drawImage(img, 0, 0);
-                        logoBase64 = canvas.toDataURL('image/png'); // Convertir a Base64
-                        logoLoaded = true;
-                        console.log("✅ Logo cargado y convertido a Base64");
-                        resolve();
+                        logoBase64Global = canvas.toDataURL('image/png'); // Convertir a Base64
+                        logoCargado = true;
+                        console.log("✅ Logo cargado y convertido a Base64 global.");
+                        resolve(logoBase64Global);
                     } catch (e) {
                         console.error("❌ Error al dibujar o convertir el logo a Base64:", e);
-                        logoLoadError = e;
                         reject(e);
                     }
                 };
                 img.onerror = function() {
                     console.error("❌ Error al cargar la imagen del logo:", img.src);
-                    logoLoadError = new Error("No se pudo cargar la imagen del logo.");
-                    reject(logoLoadError);
+                    // Devolver un placeholder o rechazar la promesa
+                    const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UwZTZmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPltMb2dvXTwvdGV4dD48L3N2Zz4='; // SVG Base64 placeholder
+                    logoBase64Global = placeholder;
+                    logoCargado = true;
+                    console.warn("⚠️ Usando placeholder para el logo.");
+                    resolve(placeholder);
                 };
                 img.src = '/assets/logo.png'; // Asegúrate de que esta ruta sea correcta
             });
         }
-
 
         function generarPDFCotizacion(servicioIndex) {
             const servicio = servicios[servicioIndex];
@@ -862,35 +869,20 @@
                 return;
             }
 
-            // Cargar el logo si no está ya cargado
-            loadLogo()
-                .then(() => {
+            // Cargar el logo (devuelve una promesa que resuelve al Base64)
+            cargarLogoBase64()
+                .then(logoBase64 => {
                     // Continuar con la generación del PDF ahora que el logo está listo
-                    _generarPDFCotizacionInternal(servicio, logoBase64);
+                    _generarPDFInterno(servicio, logoBase64);
                 })
                 .catch(err => {
-                    console.error("Error al cargar el logo, generando PDF sin él:", err);
-                    // Opcional: Continuar sin el logo
-                    _generarPDFCotizacionInternal(servicio, null); // Pasar null si no se pudo cargar
+                    console.error("Error fatal al cargar el logo para el PDF:", err);
+                    error('No se pudo generar el PDF: Error al cargar el logo.');
                 });
         }
 
-        // Función interna que hace el trabajo pesado, ya con el logo cargado
-        function _generarPDFCotizacionInternal(servicio, logoSrc) {
-            // Crear un contenedor temporal para el HTML del PDF
-            const pdfContainer = document.createElement('div');
-            pdfContainer.id = 'pdf-content';
-            pdfContainer.style.display = 'none'; // Oculto
-            pdfContainer.style.width = '210mm'; // A4
-            pdfContainer.style.minHeight = '297mm';
-            pdfContainer.style.padding = '15mm';
-            pdfContainer.style.boxSizing = 'border-box';
-            pdfContainer.style.backgroundColor = 'white';
-            pdfContainer.style.fontFamily = 'Arial, sans-serif';
-            pdfContainer.style.fontSize = '10pt';
-            pdfContainer.style.lineHeight = '1.2';
-
-            // Obtener datos del prospecto (asumiendo que están disponibles en variables globales o se pueden acceder)
+        // Función interna que hace la generación real del PDF
+        function _generarPDFInterno(servicio, logoBase64) {
             const razonSocialProspecto = document.querySelector('#razon_social_select')?.selectedOptions[0]?.text || '';
             const direccionProspecto = document.getElementById('direccion')?.value || '';
             const notasComerciales = document.getElementById('notas_comerciales_input')?.value || '';
@@ -913,14 +905,14 @@
                 iva: parseFloat(g.iva) || 0
             }));
 
-            // Construir el HTML del PDF
-            // Usar logoSrc (Base64) o un placeholder si no se pudo cargar
-            const logoHtml = logoSrc ? `<img src="${logoSrc}" alt="Logo" style="height: 20mm; margin-bottom: 2mm;">` : '<div style="height: 20mm; margin-bottom: 2mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
+            // --- Construir el HTML con el logo Base64 ya incrustado ---
+            // Usar el logoBase64 (puede ser el real o el placeholder)
+            const logoHtml = `<img src="${logoBase64}" alt="Logo" style="height: 20mm; margin-bottom: 2mm;">`;
 
-            pdfContainer.innerHTML = `
+            const htmlContent = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10mm;">
                     <div style="flex: 1;">
-                        ${logoHtml} <!-- Usar el HTML del logo -->
+                        ${logoHtml}
                         <div style="font-size: 14pt; font-weight: bold; margin-top: 2mm;">NÚMERO DE COTIZACIÓN: ${servicio.concatenado || servicio.id_srvc || 'N/A'}</div>
                     </div>
                     <div style="text-align: right; width: 40%;">
@@ -1060,48 +1052,79 @@
                 </div>
             `;
 
+            // Crear un contenedor temporal para el HTML del PDF
+            const pdfContainer = document.createElement('div');
+            pdfContainer.id = 'pdf-content-temp';
+            // Importante: Mostrarlo temporalmente con tamaño fijo y estilos claros para html2canvas
+            pdfContainer.style.position = 'absolute';
+            pdfContainer.style.left = '-9999px'; // Fuera de la vista
+            pdfContainer.style.top = '0';
+            pdfContainer.style.width = '210mm'; // A4
+            pdfContainer.style.minHeight = '297mm';
+            pdfContainer.style.padding = '15mm';
+            pdfContainer.style.boxSizing = 'border-box';
+            pdfContainer.style.backgroundColor = 'white';
+            pdfContainer.style.fontFamily = 'Arial, sans-serif';
+            pdfContainer.style.fontSize = '10pt';
+            pdfContainer.style.lineHeight = '1.2';
+            pdfContainer.style.visibility = 'hidden'; // Asegura que no sea visible pero esté renderizado
+            // pdfContainer.style.display = 'none'; // <-- Evitar display: none si causa problemas
+
+            pdfContainer.innerHTML = htmlContent;
+
             // Añadir el contenedor al body temporalmente
             document.body.appendChild(pdfContainer);
 
             // Usar html2canvas para capturar el contenedor como imagen
-            html2canvas(pdfContainer, { scale: 2 }) // Escala 2 para mejor calidad
-                .then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    const imgWidth = 210; // Ancho A4 en mm
-                    const pageHeight = 297; // Alto A4 en mm
-                    const imgHeight = canvas.height * imgWidth / canvas.width;
-                    let heightLeft = imgHeight;
-                    let position = 0;
+            // Asegurarse de esperar a que la imagen (logo) se haya cargado completamente dentro del div
+            // html2canvas debería manejar esto internamente, pero la espera previa del logo ayuda.
+            html2canvas(pdfContainer, {
+                scale: 2, // Escala 2 para mejor calidad
+                // Opcional: forzar el renderizado de imágenes
+                ignoreElements: (element) => element.classList.contains('ignore-for-canvas'), // Si necesitas ignorar algo
+                useCORS: true, // Intentar usar CORS para imágenes externas si aplica (aunque aquí es Base64)
+                allowTaint: true // Permitir que el canvas se "contamine" si carga imágenes externas (menos seguro, pero a veces necesario)
+            })
+            .then(canvas => {
+                // Remover el contenedor temporal después de que html2canvas lo haya procesado
+                document.body.removeChild(pdfContainer);
 
+                const imgData = canvas.toDataURL('image/png'); // Asegurar formato PNG
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210; // Ancho A4 en mm
+                const pageHeight = 297; // Alto A4 en mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // Agregar la primera página
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                // Si la imagen es más larga que una página, agregar nuevas páginas
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
                     pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
                     heightLeft -= pageHeight;
+                }
 
-                    // Si la imagen es más larga que una página, agregar nuevas páginas
-                    while (heightLeft >= 0) {
-                        position = heightLeft - imgHeight;
-                        pdf.addPage();
-                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                        heightLeft -= pageHeight;
-                    }
+                // Abrir el PDF en una nueva pestaña/ventana para visualización o descarga
+                const pdfBlob = pdf.output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                window.open(pdfUrl, '_blank');
 
-                    // Abrir el PDF en una nueva pestaña/ventana para visualización o descarga
-                    const pdfBlob = pdf.output('blob');
-                    const pdfUrl = URL.createObjectURL(pdfBlob);
-                    window.open(pdfUrl, '_blank');
-
-                    // Limpiar: eliminar el contenedor temporal y liberar el objeto URL
+                // Limpiar el objeto URL
+                URL.revokeObjectURL(pdfUrl);
+            })
+            .catch(err => {
+                // Asegurarse de remover el contenedor en caso de error de html2canvas
+                if (document.body.contains(pdfContainer)) {
                     document.body.removeChild(pdfContainer);
-                    URL.revokeObjectURL(pdfUrl);
-                })
-                .catch(err => {
-                    console.error('Error al generar el PDF con html2canvas:', err);
-                    error('No se pudo generar el PDF (html2canvas).');
-                    // Asegurarse de limpiar el contenedor en caso de error
-                    if (document.body.contains(pdfContainer)) {
-                        document.body.removeChild(pdfContainer);
-                    }
-                });
+                }
+                console.error('Error al generar el PDF con html2canvas:', err);
+                error('No se pudo generar el PDF (html2canvas). Detalles: ' + err.message);
+            });
         }
 
         // === NUEVA FUNCIÓN: Gestión de notificaciones de costos ===
