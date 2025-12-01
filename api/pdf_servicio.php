@@ -138,14 +138,14 @@ class ServicePDF extends \TCPDF {
 /* -------------------- Instanciar PDF -------------------- */
 $pdf = new ServicePDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 $pdf->SetCreator(PDF_CREATOR);
-$pdf->SetAuthor('CRM');
+$pdf->SetAuthor('CRM-ELOG by GLTComex');
 $pdf->SetTitle('Cotización - ' . $servicio_datos['concatenado']);
 $pdf->SetMargins(18, 36, 18); // left, top, right (top accommodate header)
 $pdf->SetAutoPageBreak(TRUE, 22);
 $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 $pdf->SetFont('helvetica', '', 9);
 
-$logoPath = __DIR__ . '/../assets/logo.png';
+$logoPath = __DIR__ . '/../assets/logoElog2.png';
 $pdf->logoPath = $logoPath;
 $pdf->companyName = 'ELOG'; // Cambia por nombre real si quieres
 
@@ -176,8 +176,7 @@ $style = '
 $html = $style;
 
 /* -------------------- HEADER DEL DOCUMENTO (Título y subtítulo) -------------------- */
-$html .= '<div class="title">COTIZACIÓN</div>';
-$html .= '<div class="subtitle">Número: <strong>' . $servicio_datos['concatenado'] . '</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Fecha: ' . date('Y-m-d') . ' &nbsp;&nbsp;|&nbsp;&nbsp; Tráfico: ' . $servicio_datos['trafico'] . '</div>';
+$html .= '<div class="title">COTIZACIÓN: <strong>' . $servicio_datos['concatenado'] . '</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Fecha: ' . date('Y-m-d') . ' &nbsp;&nbsp;|&nbsp;&nbsp; Tráfico: ' . $servicio_datos['trafico'] . '</div>';
 
 /* -------------------- GRID PRINCIPAL 5 COLUMNAS -------------------- */
 $html .= '
@@ -265,10 +264,10 @@ $html .= '
         <thead>
             <tr>
                 <th style="width:35%; text-align:left;">CONCEPTO</th>
-                <th style="width:8%; text-align:center;">MON</th>
-                <th style="width:8%; text-align:center;">QTY</th>
-                <th style="width:12%; text-align:right;">COSTO</th>
-                <th style="width:12%; text-align:right;">VENTA</th>
+                <th style="width:8%; text-align:center;">MONEDA</th>
+                <th style="width:8%; text-align:center;">CANTIDAD</th>
+                <th style="width:12%; text-align:center;">COSTO</th>
+                <th style="width:12%; text-align:center;">VENTA</th>
                 <th style="width:12%; text-align:right;">TOTAL</th>
                 <th style="width:13%; text-align:center;">APLICA</th>
             </tr>
