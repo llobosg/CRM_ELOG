@@ -169,20 +169,34 @@ $html .= '</tr>';
 // Fila 2: Fecha
 $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA:</strong></td><td style="border: none;">' . date('Y-m-d') . '</td></tr>';
 
-// Fila 3: Espacio
+// Fila 3: PO # REF. CLIENTE
+$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>PO # REF. CLIENTE:</strong></td><td style="border: none;">' . $servicio_datos['ref_cliente'] . '</td></tr>';
+
+// Fila 4: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 4: Tipo de Cambio Cliente (Eliminado - Omitir esta fila)
-// Fila 5: Agente / Oficina y PO # Referencia Cliente
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"><strong>AGENTE / OFICINA:</strong><div class="value">' . $servicio_datos['agente'] . '</div></td><td style="border: none;"></td><td style="border: none;"><strong>PO # REF. CLIENTE:</strong><div class="value">' . $servicio_datos['ref_cliente'] . '</div></td></tr>';
+// Fila 5: Agente / Oficina
+$html .= '<tr><td style="border: none;"><strong>AGENTE / OFICINA:</strong></td><td style="border: none;">' . $servicio_datos['agente'] . '</td><td style="border: none;"></td><td style="border: none;"></td></tr>';
 
-// Fila 6: Proveedor Nacional
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"><strong>PROVEEDOR NAC:</strong><div class="value">' . $servicio_datos['proveedor_nac'] . '</div></td><td style="border: none;"></td><td style="border: none;"><strong>TERRESTRE:</strong><div class="value">&nbsp;</div></td></tr>';
+// Fila 6: Proveedor Nac
+$html .= '<tr><td style="border: none;"><strong>PROVEEDOR NAC:</strong></td><td style="border: none;">' . $servicio_datos['proveedor_nac'] . '</td><td style="border: none;"></td><td style="border: none;"></td></tr>';
 
-// Fila 7: Espacio
+// Fila 7: Texto calculado / Transportador
+$tipoTrafico = strtolower($servicio_datos['trafico'] ?? '');
+$tipoTransporteTexto = 'TRANSPORTE';
+if (strpos($tipoTrafico, 'mar') !== false) {
+    $tipoTransporteTexto = 'NAVIERA';
+} elseif (strpos($tipoTrafico, 'aer') !== false) {
+    $tipoTransporteTexto = 'AEROLÍNEA';
+} elseif (strpos($tipoTrafico, 'ter') !== false || strpos($tipoTrafico, 'land') !== false) {
+    $tipoTransporteTexto = 'TRANSPORTE';
+}
+$html .= '<tr><td style="border: none;"><strong>' . $tipoTransporteTexto . ':</strong></td><td style="border: none;">' . $servicio_datos['transportador'] . '</td><td style="border: none;"></td><td style="border: none;"></td></tr>';
+
+// Fila 8: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 8: Nueva Sección - Atención, Empresa y Mensaje
+// Fila 9: Nueva Sección - Atención, Empresa y Mensaje
 $html .= '<tr><td style="border: none;" colspan="4">';
 $html .= '<div style="font-size: 10pt; line-height: 1.4;">';
 $html .= '<strong>Atención:</strong> <span style="font-style: italic;">' . sanitizeText($contacto_nombre) . '</span> <!-- Campo contacto -->';
@@ -191,10 +205,10 @@ $html .= '<br><br>Informamos a ustedes la cotización solicitada según los dato
 $html .= '</div>';
 $html .= '</td></tr>';
 
-// Fila 9: Espacio
+// Fila 10: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 10: Tabla de Datos del Servicio (4 columnas)
+// Fila 11: Tabla de Datos del Servicio (4 columnas)
 $html .= '<tr><td style="border: none; vertical-align: top;" colspan="4">'; // Celda que ocupa toda la fila
 $html .= '<table style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tabla anidada para los datos del servicio
 
@@ -250,10 +264,10 @@ $html .= '</tr>';
 $html .= '</table>';
 $html .= '</td></tr>';
 
-// Fila 11: Espacio
+// Fila 12: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 12: Notas del Servicio (ocupando 2 columnas de la tabla principal de 4)
+// Fila 13: Notas del Servicio (ocupando 2 columnas de la tabla principal de 4)
 $html .= '<tr>';
 $html .= '<td style="border: none;" colspan="4">'; // Ocupa toda la fila
 $html .= '<div style="margin-bottom: 2px;"><strong>NOTAS SERVICIO</strong></div>';
@@ -329,7 +343,13 @@ if (!empty($gastos_datos)) {
         $html .= '</tr>';
     }
     $html .= '</tbody>';
-    $html .= '</table>';
+        $html .= '</table>';
+    $html .= '</div>';
+
+    // === NUEVO: Notas Comerciales ===
+    $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
+    $html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS COMERCIALES</h3>'; // Tamaño de título ligeramente menor
+    $html .= nl2br(sanitizeText($notasComerciales));
     $html .= '</div>';
 }
 
