@@ -1,29 +1,26 @@
 <?php
 // api/pdf_servicio.php
+// Versión mejorada por ChatGPT - Diseño profesional para TCPDF
 
-// Incluir autoload de Composer
 require_once __DIR__ . '/../vendor/autoload.php';
-
-// Incluir archivos de configuración y utilidades
 require_once __DIR__ . '/../config.php';
 
-// --- Función para sanitizar texto (opcional pero recomendable para PDF) ---
+/**
+ * Sanitizar texto para evitar problemas en PDF
+ */
 function sanitizeText($text) {
-    if ($text === null) {
-        return '';
-    }
+    if ($text === null) return '';
     return htmlspecialchars_decode($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401);
 }
 
-// --- Obtener ID del servicio ---
+/** Obtener ID del servicio */
 $id_srvc = $_GET['id_srvc'] ?? $_POST['id_srvc'] ?? null;
-
 if (!$id_srvc) {
     http_response_code(400);
     die('Error: ID de servicio no proporcionado.');
 }
 
-// --- Obtener datos del servicio y prospecto ---
+/** Cargar datos desde DB */
 try {
     $stmt_serv = $pdo->prepare("
         SELECT s.*, p.razon_social, p.direccion, p.notas_comerciales, p.notas_operaciones, p.concatenado
@@ -59,7 +56,7 @@ try {
     die('Error interno al obtener los datos del servicio.');
 }
 
-// --- Preparar datos ---
+/** Preparar arreglos sanitizados */
 $servicio_datos = [
     'servicio' => sanitizeText($servicio['servicio']),
     'trafico' => sanitizeText($servicio['trafico']),
@@ -105,174 +102,266 @@ $gastos_datos = array_map(function($g) {
     ];
 }, $gastos_locales);
 
-// --- Crear PDF ---
-// Usar TCPDF directamente sin 'use' para evitar el warning si no se usa como alias
-$pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+/* -------------------- Clase TCPDF personalizada (header/footer) -------------------- */
+class ServicePDF extends \TCPDF {
+    public $logoPath = '';
+    public $companyName = '';
 
-// Configuración del documento (tamaño de letra base reducido un 10%)
+    public function Header() {
+        // Logo en la esquina superior izquierda
+        if ($this->logoPath && file_exists($this->logoPath)) {
+            $this->Image($this->logoPath, 15, 8, 26, 0, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+        }
+        // Título en la cabecera (alineado a la derecha)
+        $this->SetFont('helvetica', 'B', 12);
+        $this->SetY(10);
+        $this->Cell(0, 8, $this->companyName, 0, 1, 'R', 0, '', 0, false, 'T', 'M');
+
+        // Línea separadora
+        $this->SetDrawColor(200,200,200);
+        $this->SetLineWidth(0.3);
+        $this->Line(15, 30, $this->getPageWidth() - 15, 30);
+        $this->Ln(4);
+    }
+
+    public function Footer() {
+        $this->SetY(-18);
+        $this->SetFont('helvetica', '', 8);
+        $this->SetTextColor(100,100,100);
+        // Texto de pie - izquierda
+        $this->Cell(0, 6, 'Documento generado por CRM - ' . date('Y-m-d'), 0, 0, 'L');
+        // Número de página - derecha
+        $this->Cell(0, 6, 'Página ' . $this->getAliasNumPage() . '/' . $this->getAliasNbPages(), 0, 0, 'R');
+    }
+}
+
+/* -------------------- Instanciar PDF -------------------- */
+$pdf = new ServicePDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 $pdf->SetCreator(PDF_CREATOR);
+$pdf->SetAuthor('CRM');
 $pdf->SetTitle('Cotización - ' . $servicio_datos['concatenado']);
-$pdf->SetHeaderData('', 0, '', '');
-$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', 9)); // Reducido de 10 a 9 (10% menos)
-$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', 8)); // Reducido de 9 a 8 (aprox 10% menos)
-$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-// Margen izquierdo aumentado ligeramente para compensar el logo
-$pdf->SetMargins(20, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT); // Ajuste de margen izquierdo
-$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+$pdf->SetMargins(18, 36, 18); // left, top, right (top accommodate header)
+$pdf->SetAutoPageBreak(TRUE, 22);
 $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+$pdf->SetFont('helvetica', '', 9);
 
-// Agregar una página
+$logoPath = __DIR__ . '/../assets/logo.png';
+$pdf->logoPath = $logoPath;
+$pdf->companyName = 'Tu Empresa S.A.'; // Cambia por nombre real si quieres
+
 $pdf->AddPage();
 
-// --- Ruta al logo (ajusta la ruta) ---
-$logoPath = __DIR__ . '/../assets/logo.png';
+/* -------------------- Estilos compatibles TCPDF -------------------- */
+/* Nota: TCPDF soporta un subconjunto de CSS. Mantuvimos propiedades simples. */
+$style = '
+<style>
+    body { font-family: helvetica, sans-serif; font-size: 9pt; color: #222; }
+    .title { font-size: 14pt; font-weight: bold; margin-bottom: 2mm; }
+    .subtitle { font-size: 10pt; color:#555; margin-bottom: 3mm; }
+    .muted { color: #666; font-size: 8.5pt; }
+    .section { margin-top:4mm; }
+    table.grid { width:100%; border-collapse:collapse; font-size:9pt; }
+    table.grid td { vertical-align: top; padding: 2px 4px; }
+    .label { font-weight: bold; color:#111; }
+    .value { color:#222; }
+    .hr { background-color:#e9e9e9; height:1px; }
+    .box { border:1px solid #e6e6e6; padding:6px; border-radius:2px; }
+    .small { font-size:8.5pt; color:#444; }
+    .table-stripe thead tr { background-color: #f7f7f7; }
+    .table-stripe td, .table-stripe th { padding:6px; }
+    .right { text-align: right; }
+</style>
+';
 
-// --- Contenido del PDF (estructurado en tabla) ---
-$html = '';
+$html = $style;
 
-// Tabla principal de 5 columnas (ajuste de ancho)
-$html .= '<table cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
+/* -------------------- HEADER DEL DOCUMENTO (Título y subtítulo) -------------------- */
+$html .= '<div class="title">COTIZACIÓN</div>';
+$html .= '<div class="subtitle">Número: <strong>' . $servicio_datos['concatenado'] . '</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Fecha: ' . date('Y-m-d') . ' &nbsp;&nbsp;|&nbsp;&nbsp; Tráfico: ' . $servicio_datos['trafico'] . '</div>';
 
-// Fila 1: Logo y Número de Cotización
-$html .= '<tr>';
-$html .= '<td style="width: 20%; vertical-align: top; border: none;">';
-if (file_exists($logoPath)) {
-    // Ajustar el ancho del logo para que sea un 20% más pequeño
-    $pdf->Image($logoPath, $pdf->GetX()+1, $pdf->GetY()+1, 24, 0, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false); // Ancho original * 0.8 = 30 * 0.8 = 24
-    $pdf->Ln(22); // Ajustar espacio después del logo reducido
-} else {
-    $html .= '<div style="height: 16mm; margin-bottom: 1mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
-}
-$html .= '</td>';
-$html .= '<td style="width: 23%; border: none;"><strong>NÚMERO DE COTIZACIÓN:</strong></td>';
-$html .= '<td style="width: 23%; border: none;">' . $servicio_datos['concatenado'] . '</td>';
-$html .= '<td style="width: 8%; border: none;"></td>';
-$html .= '<td style="width: 23%; border: none;"></td>';
-$html .= '<td style="width: 23%; border: none;"></td>';
-$html .= '</tr>';
+/* -------------------- GRID PRINCIPAL 5 COLUMNAS -------------------- */
+$html .= '
+<table class="grid" cellpadding="0" cellspacing="0">
+    <colgroup>
+        <col style="width:23%;">
+        <col style="width:23%;">
+        <col style="width:8%;">
+        <col style="width:23%;">
+        <col style="width:23%;">
+    </colgroup>
 
-// Fila 2: Espacio
-$html .= '<tr><td style="border: none; height: 3mm;" colspan="5"></td></tr>';
+    <!-- Row: Tipo cambio / Agente -->
+    <tr>
+        <td><span class="label">TIPO CAMBIO CLIENTE:</span><div class="muted small">&nbsp;</div></td>
+        <td><span class="label">AGENTE / OFICINA:</span><div class="value">' . $servicio_datos['agente'] . '</div></td>
+        <td></td>
+        <td><span class="label">PO # REFERENCIA CLIENTE:</span><div class="value">' . $servicio_datos['ref_cliente'] . '</div></td>
+        <td><span class="label">PROVEEDOR NACIONAL:</span><div class="value">' . $servicio_datos['proveedor_nac'] . '</div></td>
+    </tr>
 
-// Fila 3: Tipo de Cambio Cliente (vacío para dejar espacio)
-$html .= '<tr><td style="border: none;"><strong>TIPO CAMBIO CLIENTE:</strong></td><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"><strong>AGENTE / OFICINA:</strong></td><td style="border: none;">' . $servicio_datos['agente'] . '</td></tr>';
+    <!-- Spacer -->
+    <tr><td colspan="5" style="height:4mm;"></td></tr>
 
-// Fila 4: PO # Referencia Cliente
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"><strong>PO # REFERENCIA CLIENTE:</strong></td><td style="border: none;">' . $servicio_datos['ref_cliente'] . '</td></tr>';
+    <!-- Row: Shipper / Consignatario -->
+    <tr>
+        <td><span class="label">SHIPPER:</span><div class="value">' . $razonSocialProspecto . '</div></td>
+        <td colspan="2"><span class="label">DIRECCIÓN:</span><div class="value">' . $direccionProspecto . '</div></td>
+        <td><span class="label">CONSIGNATARIO:</span><div class="value">&nbsp;</div></td>
+        <td><span class="label">DIRECCIÓN:</span><div class="value">&nbsp;</div></td>
+    </tr>
 
-// Fila 5: Proveedor Nacional
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"><strong>PROVEEDOR NACIONAL:</strong></td><td style="border: none;">' . $servicio_datos['proveedor_nac'] . '</td></tr>';
+    <tr><td colspan="5" style="height:3mm;"></td></tr>
 
-// Fila 6: Terrestre (vacío)
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"><strong>TERRESTRE:</strong></td><td style="border: none;"></td></tr>';
+    <!-- Row: Incoterm / Commodity -->
+    <tr>
+        <td><span class="label">INCOTERM:</span><div class="value">' . $servicio_datos['incoterm'] . '</div></td>
+        <td><span class="label">PESO BRUTO:</span><div class="value">' . number_format($servicio_datos['peso'], 2) . ' kg</div></td>
+        <td></td>
+        <td><span class="label">COMMODITY:</span><div class="value">' . $servicio_datos['commodity'] . '</div></td>
+        <td><span class="label">UNIDADES FCL:</span><div class="value">&nbsp;</div></td>
+    </tr>
 
-// Fila 7: Desconsolidación
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"><strong>DESCONSOLIDACIÓN:</strong></td><td style="border: none;">' . $servicio_datos['desconsolidac'] . '</td></tr>';
+    <!-- Row: Cantidad / POL / POD -->
+    <tr>
+        <td><span class="label">CANTIDAD UNIDADES:</span><div class="value">' . $servicio_datos['bultos'] . '</div></td>
+        <td><span class="label">VOLUMEN:</span><div class="value">' . number_format($servicio['volumen'] ?? 0, 2) . '</div></td>
+        <td></td>
+        <td><span class="label">POL:</span><div class="value">' . $servicio_datos['origen'] . '</div></td>
+        <td><span class="label">POD:</span><div class="value">' . $servicio_datos['destino'] . '</div></td>
+    </tr>
 
-// Fila 8: Espacio
-$html .= '<tr><td style="border: none; height: 3mm;" colspan="5"></td></tr>';
+    <tr><td colspan="5" style="height:4mm;"></td></tr>
 
-// Fila 9: Shipper
-$html .= '<tr><td style="border: none;"><strong>SHIPPER:</strong></td><td style="border: none;" colspan="2">' . $razonSocialProspecto . '</td><td style="border: none;"><strong>CONSIGNATARIO:</strong></td><td style="border: none;"></td></tr>';
+    <!-- Row: Naviera / Desconsolidación -->
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><span class="label">NAVIERA:</span><div class="value">&nbsp;</div></td>
+        <td><span class="label">DESCONSOLIDACIÓN:</span><div class="value">' . $servicio_datos['desconsolidac'] . '</div></td>
+    </tr>
 
-// Fila 10: Dirección
-$html .= '<tr><td style="border: none;"><strong>DIRECCIÓN:</strong></td><td style="border: none;" colspan="2">' . $direccionProspecto . '</td><td style="border: none;"><strong>DIRECCIÓN:</strong></td><td style="border: none;"></td></tr>';
+    <tr><td colspan="5" style="height:5mm;"></td></tr>
 
-// Fila 11: Espacio
-$html .= '<tr><td style="border: none; height: 3mm;" colspan="5"></td></tr>';
+    <!-- Notas comerciales (usa columnas 4 y 5 para contenido amplio) -->
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td colspan="2"><span class="label">NOTAS COMERCIALES:</span><div class="box small">' . nl2br(sanitizeText($notasComerciales)) . '</div></td>
+    </tr>
 
-// Fila 12: Incoterm
-$html .= '<tr><td style="border: none;"><strong>INCOTERM:</strong></td><td style="border: none;">' . $servicio_datos['incoterm'] . '</td><td style="border: none;"></td><td style="border: none;"><strong>COMMODITY:</strong></td><td style="border: none;">' . $servicio_datos['commodity'] . '</td></tr>';
+</table>
+';
 
-// Fila 13: Peso Bruto
-$html .= '<tr><td style="border: none;"><strong>PESO BRUTO:</strong></td><td style="border: none;">' . number_format($servicio_datos['peso'], 2) . ' kg</td><td style="border: none;"></td><td style="border: none;"><strong>UNIDADES FCL:</strong></td><td style="border: none;"></td></tr>';
+/* -------------------- Separador visual -------------------- */
+$html .= '<div style="height:6mm;"></div>';
+$html .= '<div class="hr"></div>';
 
-// Fila 14: Cantidad Unidades
-$html .= '<tr><td style="border: none;"><strong>CANTIDAD UNIDADES:</strong></td><td style="border: none;">' . $servicio_datos['bultos'] . '</td><td style="border: none;"></td><td style="border: none;"><strong>POL:</strong></td><td style="border: none;">' . $servicio_datos['origen'] . '</td></tr>';
+/* -------------------- Profit Share (tabla detallada) -------------------- */
+$html .= '
+<div class="section">
+    <div style="font-weight:bold; margin-bottom:3px;">PROFIT SHARE</div>
+    <table class="table-stripe" border="0" cellpadding="0" cellspacing="0" style="width:100%; border-collapse:collapse; font-size:9pt;">
+        <thead>
+            <tr>
+                <th style="width:35%; text-align:left;">CONCEPTO</th>
+                <th style="width:8%; text-align:center;">MON</th>
+                <th style="width:8%; text-align:center;">QTY</th>
+                <th style="width:12%; text-align:right;">COSTO</th>
+                <th style="width:12%; text-align:right;">VENTA</th>
+                <th style="width:12%; text-align:right;">TOTAL</th>
+                <th style="width:13%; text-align:center;">APLICA</th>
+            </tr>
+        </thead>
+        <tbody>
+';
 
-// Fila 15: POD
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"><strong>POD:</strong></td><td style="border: none;">' . $servicio_datos['destino'] . '</td></tr>';
+/* fila principal - servicio */
+$html .= '<tr>
+    <td>' . $servicio_datos['servicio'] . '</td>
+    <td style="text-align:center;">' . $servicio_datos['moneda'] . '</td>
+    <td style="text-align:center;">1</td>
+    <td style="text-align:right;">' . number_format($servicio_datos['costo'], 2) . '</td>
+    <td style="text-align:right;">' . number_format($servicio_datos['venta'], 2) . '</td>
+    <td style="text-align:right;">' . number_format($servicio_datos['costo'], 2) . '</td>
+    <td style="text-align:center;">' . $servicio_datos['trafico'] . '</td>
+</tr>';
 
-// Fila 16: Naviera (espacio reducido)
-$html .= '<tr><td style="border: none; height: 1mm;" colspan="5"></td></tr>'; // Espacio reducido antes de Naviera
+/* filas de costos */
+$total_costos = $servicio_datos['costo'];
+$total_venta = $servicio_datos['venta'];
+$total_total_costo = $servicio_datos['costo'];
 
-// Fila 17: Naviera
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"><strong>NAVIERA:</strong></td><td style="border: none;"></td></tr>';
-
-// Fila 18: Espacio
-$html .= '<tr><td style="border: none; height: 3mm;" colspan="5"></td></tr>';
-
-// Fila 19: Notas Comerciales (Título en columna 4)
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"><strong>NOTAS COMERCIALES:</strong></td><td style="border: none;"></td></tr>';
-
-// Fila 20: Notas Comerciales (Contenido en columnas 4 y 5)
-$html .= '<tr><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;"></td><td style="border: none;" colspan="2">' . nl2br(sanitizeText($notasComerciales)) . '</td></tr>';
-
-$html .= '</table>';
-
-// Tabla para Profit Share (fuera de la principal para mejor manejo de anchos)
-$html .= '<h3 style="font-size: 9pt; margin-top: 3mm;">PROFIT SHARE</h3>'; // Tamaño de título reducido
-$html .= '<table border="1" cellpadding="2" cellspacing="0" style="width: 100%; margin-bottom: 2mm; font-size: 9pt;">'; // Tamaño de fuente reducido
-$html .= '<thead><tr style="background-color: #f2f2f2;"><th style="text-align: center;">CONCEPTO</th><th style="text-align: center;">MONEDA</th><th style="text-align: center;">QTY</th><th style="text-align: center;">COSTO</th><th style="text-align: center;">VENTA</th><th style="text-align: center;">TOTAL</th><th style="text-align: center;">APLICA</th></tr></thead>';
-$html .= '<tbody>';
-$html .= '<tr>';
-$html .= '<td>' . $servicio_datos['servicio'] . '</td>';
-$html .= '<td>' . $servicio_datos['moneda'] . '</td>';
-$html .= '<td>1</td>';
-$html .= '<td style="text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td>';
-$html .= '<td style="text-align: right;">' . number_format($servicio_datos['venta'], 2) . '</td>';
-$html .= '<td style="text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td>';
-$html .= '<td>' . $servicio_datos['trafico'] . '</td>';
-$html .= '</tr>';
 foreach ($costos_datos as $c) {
-    $html .= '<tr>';
-    $html .= '<td>' . $c['concepto'] . '</td>';
-    $html .= '<td>' . $c['moneda'] . '</td>';
-    $html .= '<td style="text-align: center;">' . number_format($c['qty'], 2) . '</td>';
-    $html .= '<td style="text-align: right;">' . number_format($c['costo'], 2) . '</td>';
-    $html .= '<td style="text-align: right;">' . number_format($c['tarifa'], 2) . '</td>';
-    $html .= '<td style="text-align: right;">' . number_format($c['total_costo'], 2) . '</td>';
-    $html .= '<td>' . $c['aplica'] . '</td>';
-    $html .= '</tr>';
-}
-$html .= '</tbody>';
-$html .= '<tfoot>';
-$html .= '<tr style="font-weight: bold;"><td colspan="3" style="text-align: right;">TOTALES:</td><td style="text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td><td style="text-align: right;">' . number_format($servicio_datos['venta'], 2) . '</td><td style="text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td><td></td></tr>';
-$html .= '<tr style="font-weight: bold;"><td colspan="5" style="text-align: right;">TOTAL PROFIT:</td><td style="text-align: right;">' . number_format($servicio_datos['venta'] - $servicio_datos['costo'], 2) . '</td><td></td></tr>';
-$html .= '<tr style="font-weight: bold;"><td colspan="5" style="text-align: right;">TOTAL PROFIT %:</td><td style="text-align: right;">' . ($servicio_datos['venta'] > 0 ? number_format((($servicio_datos['venta'] - $servicio_datos['costo']) / $servicio_datos['venta']) * 100, 2) : 0) . '%</td><td></td></tr>';
-$html .= '</tfoot>';
-$html .= '</table>';
+    $html .= '<tr>
+        <td>' . $c['concepto'] . '</td>
+        <td style="text-align:center;">' . $c['moneda'] . '</td>
+        <td style="text-align:center;">' . number_format($c['qty'], 2) . '</td>
+        <td style="text-align:right;">' . number_format($c['costo'], 2) . '</td>
+        <td style="text-align:right;">' . number_format($c['tarifa'], 2) . '</td>
+        <td style="text-align:right;">' . number_format($c['total_costo'], 2) . '</td>
+        <td style="text-align:center;">' . $c['aplica'] . '</td>
+    </tr>';
 
+    $total_costos += $c['costo'];
+    $total_total_costo += $c['total_costo'];
+    $total_venta += $c['tarifa'];
+}
+
+$html .= '
+        </tbody>
+        <tfoot>
+            <tr style="font-weight:bold;">
+                <td colspan="3" style="text-align:right;">TOTALES:</td>
+                <td style="text-align:right;">' . number_format($total_costos, 2) . '</td>
+                <td style="text-align:right;">' . number_format($total_venta, 2) . '</td>
+                <td style="text-align:right;">' . number_format($total_total_costo, 2) . '</td>
+                <td></td>
+            </tr>
+            <tr style="font-weight:bold;">
+                <td colspan="5" style="text-align:right;">TOTAL PROFIT:</td>
+                <td style="text-align:right;">' . number_format($total_venta - $total_costos, 2) . '</td>
+                <td></td>
+            </tr>
+            <tr style="font-weight:bold;">
+                <td colspan="5" style="text-align:right;">TOTAL PROFIT %:</td>
+                <td style="text-align:right;">' . ($total_venta > 0 ? number_format((($total_venta - $total_costos) / $total_venta) * 100, 2) : '0.00') . '%</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+';
+
+/* -------------------- Gastos ventas locales (si existen) -------------------- */
 if (!empty($gastos_datos)) {
-    $html .= '<h3 style="font-size: 9pt; margin-top: 3mm;">GASTOS VENTAS LOCALES</h3>'; // Tamaño de título reducido
-    $html .= '<table border="1" cellpadding="2" cellspacing="0" style="width: 100%; margin-bottom: 2mm; font-size: 9pt;">'; // Tamaño de fuente reducido
-    $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="text-align: center;">TIPO</th><th style="text-align: center;">GASTOS</th><th style="text-align: center;">MONEDA</th><th style="text-align: center;">MONTO</th><th style="text-align: center;">AFECTO</th><th style="text-align: center;">IVA%</th></tr></thead>';
-    $html .= '<tbody>';
+    $html .= '<div class="section"><div style="font-weight:bold; margin-bottom:3px;">GASTOS VENTAS LOCALES</div>';
+    $html .= '<table border="0" cellpadding="0" cellspacing="0" style="width:100%; border-collapse:collapse; font-size:9pt;">';
+    $html .= '<thead><tr style="background-color:#f7f7f7;"><th>TIPO</th><th>GASTOS</th><th style="width:12%; text-align:center;">MON</th><th style="width:12%; text-align:right;">MONTO</th><th>AFECTO</th><th style="width:10%; text-align:right;">IVA%</th></tr></thead><tbody>';
     foreach ($gastos_datos as $g) {
-        $html .= '<tr>';
-        $html .= '<td>' . $g['tipo'] . '</td>';
-        $html .= '<td>' . $g['gasto'] . '</td>';
-        $html .= '<td>' . $g['moneda'] . '</td>';
-        $html .= '<td style="text-align: right;">' . number_format($g['monto'], 2) . '</td>';
-        $html .= '<td>' . $g['afecto'] . '</td>';
-        $html .= '<td style="text-align: right;">' . number_format($g['iva'], 2) . '%</td>';
-        $html .= '</tr>';
+        $html .= '<tr>
+            <td>' . $g['tipo'] . '</td>
+            <td>' . $g['gasto'] . '</td>
+            <td style="text-align:center;">' . $g['moneda'] . '</td>
+            <td style="text-align:right;">' . number_format($g['monto'], 2) . '</td>
+            <td>' . $g['afecto'] . '</td>
+            <td style="text-align:right;">' . number_format($g['iva'], 2) . '%</td>
+        </tr>';
     }
-    $html .= '</tbody>';
-    $html .= '</table>';
+    $html .= '</tbody></table></div>';
 }
 
-$html .= '<div style="margin-top: 3mm;">'; // Espacio reducido antes de Notas Operaciones
-$html .= '<h3 style="font-size: 9pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>'; // Tamaño de título reducido
-$html .= nl2br(sanitizeText($notasOperaciones));
+/* -------------------- Notas a Operaciones -------------------- */
+$html .= '<div class="section"><div style="font-weight:bold; margin-bottom:3px;">NOTAS A OPERACIONES</div>';
+$html .= '<div class="small box">' . nl2br(sanitizeText($notasOperaciones)) . '</div>';
 $html .= '</div>';
 
-// Salida del PDF
+/* -------------------- Escribir HTML al PDF -------------------- */
 $pdf->writeHTML($html, true, false, true, false, '');
 
-// Configurar encabezados para descarga
-$pdf->Output('Cotizacion_' . $servicio_datos['concatenado'] . '.pdf', 'I'); // 'I' para inline (abrir en navegador), 'D' para descargar
-
+/* -------------------- Salida del PDF -------------------- */
+$filename = 'Cotizacion_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $servicio_datos['concatenado']) . '.pdf';
+$pdf->Output($filename, 'I'); // 'I' inline - abre en navegador
+exit;
 ?>
