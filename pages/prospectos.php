@@ -3,10 +3,27 @@
 
 <!-- Búsqueda inteligente -->
 <div style="height: 4rem;"></div>
-<div style="margin: 1rem 0;">
+<!-- Contenedor padre del input y resultados -->
+<div style="margin: 1rem 0; position: relative;"> <!-- Añadido position: relative al contenedor padre -->
     <label><i class="fas fa-search"></i> Búsqueda Inteligente</label>
+    <!-- El input ocupa el 100% del ancho disponible (hereda del contenedor padre) -->
     <input type="text" id="busqueda-inteligente" placeholder="Buscar por Concatenado, Razón Social, RUT..." style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px;" />
-    <div id="resultados-busqueda" style="position: absolute; background: white; border: 1px solid #ddd; border-radius: 8px; max-height: 300px; overflow-y: auto; width: 95%; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none;"></div>
+    <!-- El contenedor de resultados ahora se posiciona absolutamente respecto al contenedor padre -->
+    <!-- Su ancho será el 100% del contenedor padre (el que tiene el margin), menos el padding del input y bordes -->
+    <div id="resultados-busqueda" style="
+        position: absolute;
+        top: 100%; /* Colocar justo debajo del input */
+        left: 0;   /* Alinear a la izquierda del contenedor padre */
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+        width: 100%; /* ✅ Ancho 100% del contenedor padre (ajustado por padding/border si es necesario) */
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        display: none;
+    "></div>
 </div>
 
 <!-- ==============================================   FORM  ============================================== -->
