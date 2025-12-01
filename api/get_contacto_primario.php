@@ -4,7 +4,6 @@
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php'; // Asegura que el usuario esté autenticado si es necesario
 
 $rut_cliente = $_GET['rut_cliente'] ?? null;
 
