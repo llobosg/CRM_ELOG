@@ -906,7 +906,6 @@
             }));
 
             // --- Construir el HTML con el logo Base64 ya incrustado ---
-            // Usar el logoBase64 (puede ser el real o el placeholder)
             const logoHtml = `<img src="${logoBase64}" alt="Logo" style="height: 20mm; margin-bottom: 2mm;">`;
 
             const htmlContent = `
@@ -1055,10 +1054,10 @@
             // Crear un contenedor temporal para el HTML del PDF
             const pdfContainer = document.createElement('div');
             pdfContainer.id = 'pdf-content-temp';
-            // Importante: Mostrarlo temporalmente con tamaño fijo y estilos claros para html2canvas
+            // Mostrar temporalmente con opacidad 0 (invisible) pero renderizado
             pdfContainer.style.position = 'absolute';
-            pdfContainer.style.left = '-9999px'; // Fuera de la vista
-            pdfContainer.style.top = '0';
+            pdfContainer.style.left = '0';
+            pdfContainer.style.top = '-100vh'; // Fuera de la vista inicial
             pdfContainer.style.width = '210mm'; // A4
             pdfContainer.style.minHeight = '297mm';
             pdfContainer.style.padding = '15mm';
@@ -1067,29 +1066,30 @@
             pdfContainer.style.fontFamily = 'Arial, sans-serif';
             pdfContainer.style.fontSize = '10pt';
             pdfContainer.style.lineHeight = '1.2';
-            pdfContainer.style.visibility = 'hidden'; // Asegura que no sea visible pero esté renderizado
-            // pdfContainer.style.display = 'none'; // <-- Evitar display: none si causa problemas
+            pdfContainer.style.opacity = '0'; // Invisible
+            pdfContainer.style.pointerEvents = 'none'; // Asegura que no interfiera con la UI
+            pdfContainer.style.zIndex = '-1'; // Detrás de otros elementos
 
             pdfContainer.innerHTML = htmlContent;
 
             // Añadir el contenedor al body temporalmente
             document.body.appendChild(pdfContainer);
 
+            // --- FORZAR REFLUJO ---
+            // Leer una propiedad de estilo computado para forzar el renderizado
+            void pdfContainer.offsetWidth;
+
             // Usar html2canvas para capturar el contenedor como imagen
-            // Asegurarse de esperar a que la imagen (logo) se haya cargado completamente dentro del div
-            // html2canvas debería manejar esto internamente, pero la espera previa del logo ayuda.
             html2canvas(pdfContainer, {
                 scale: 2, // Escala 2 para mejor calidad
-                // Opcional: forzar el renderizado de imágenes
-                ignoreElements: (element) => element.classList.contains('ignore-for-canvas'), // Si necesitas ignorar algo
-                useCORS: true, // Intentar usar CORS para imágenes externas si aplica (aunque aquí es Base64)
-                allowTaint: true // Permitir que el canvas se "contamine" si carga imágenes externas (menos seguro, pero a veces necesario)
+                useCORS: true, // Intentar usar CORS para imágenes Base64
+                allowTaint: true // Permitir contaminación si es necesario
             })
             .then(canvas => {
-                // Remover el contenedor temporal después de que html2canvas lo haya procesado
+                // Remover el contenedor temporal DESPUÉS de que html2canvas lo haya procesado
                 document.body.removeChild(pdfContainer);
 
-                const imgData = canvas.toDataURL('image/png'); // Asegurar formato PNG
+                const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const imgWidth = 210; // Ancho A4 en mm
                 const pageHeight = 297; // Alto A4 en mm
