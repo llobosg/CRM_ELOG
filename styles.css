@@ -561,3 +561,23 @@ table tr:hover {
     top: 10px;
     right: 15px;
 }
+
+/* Limitar ancho de resultados de búsqueda inteligente */
+#resultados-busqueda-inteligente {
+    max-width: 100%; /* O el ancho máximo que desees, por ejemplo, 800px */
+    /* Opcional: Si conoces el ID del contenedor principal del formulario */
+    /* max-width: calc(100vw - 40px); /* Ajusta 40px al margen total del body */
+    width: 100%; /* Asegura que use el ancho disponible dentro del max-width */
+    /* Mantener otros estilos existentes */
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+    /* Ajustar según sea necesario */
+    top: 100%;
+    left: 0;
+    overflow-y: auto;
+    max-height: 200px;
+}
