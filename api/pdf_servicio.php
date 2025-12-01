@@ -173,13 +173,11 @@ $style = '
 </style>
 ';
 // --- NUEVAS VARIABLES NECESARIAS PARA EL NUEVO BLOQUE ---
-$contacto = sanitizeText($servicio['nombre'] ?? ''); // Asumiendo que 'nombre' es el contacto en la tabla servicios o prospectos
-// Si el contacto proviene de otra tabla (como contactos), necesitas hacer una consulta aquí.
-// Ejemplo (si ya tienes el RUT del cliente en $servicio['rut_empresa']):
-// $stmt_contacto = $pdo->prepare("SELECT nom_contacto FROM contactos WHERE rut_cliente = ? AND primario = 'S' LIMIT 1");
-// $stmt_contacto->execute([$servicio['rut_empresa']]);
-// $contacto_row = $stmt_contacto->fetch();
-// $contacto = sanitizeText($contacto_row['nom_contacto'] ?? '');
+$contacto = sanitizeText($servicio['nom_contacto'] ?? '');
+$stmt_contacto = $pdo->prepare("SELECT nom_contacto FROM contactos WHERE rut_cliente = ? AND primario = 'S' LIMIT 1");
+$stmt_contacto->execute([$servicio['rut_empresa']]);
+$contacto_row = $stmt_contacto->fetch();
+$contacto = sanitizeText($contacto_row['nom_contacto'] ?? '');
 
 $tipoTrafico = strtolower($servicio_datos['trafico'] ?? ''); // Asumiendo que 'trafico' define el tipo
 if (strpos($tipoTrafico, 'mar') !== false) {
@@ -195,7 +193,7 @@ if (strpos($tipoTrafico, 'mar') !== false) {
 $html = $style;
 
 /* -------------------- HEADER DEL DOCUMENTO (Título y subtítulo) -------------------- */
-$html .= '<div class="title">COTIZACIÓN: <strong>' . $servicio_datos['concatenado'] . '</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Fecha: ' . date('Y-m-d') . ' &nbsp;&nbsp;|&nbsp;&nbsp; Tráfico: ' . $servicio_datos['trafico'] . '</div>';
+$html .= '<div class="title">COTIZACIÓN: <strong>' . $servicio_datos['concatenado'] . '</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Fecha: ' . date('d-m-Y') . ' &nbsp;&nbsp;|&nbsp;&nbsp; Tráfico: ' . $servicio_datos['trafico'] . '</div>';
 
 /* -------------------- GRID PRINCIPAL 5 COLUMNAS -------------------- */
 $html .= '
@@ -288,7 +286,6 @@ $html .= '
                 </tr>
             </table>
         </td>
-        <td></td> <!-- Columna vacía central -->
         <td colspan="2" style="vertical-align: top;">
             <div style="margin-bottom: 2mm;"><strong>NOTAS SERVICIO</strong></div>
             <div style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; min-height: 30px; background-color: #fafafa; font-size: 8.5pt; line-height: 1.3;">
