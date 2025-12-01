@@ -173,5 +173,23 @@ console.log('✅ Rol cargado:', USER_ROLE);
 </script>
 <?php endif; ?>
 
+<!-- En index.php, antes de </body> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    // Inyectar html2canvas en jsPDF
+    window.jspdf.jsPDF.prototype.autoPrint = function() {
+        var iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'data:application/pdf;base64,' + btoa(this.output());
+        document.body.appendChild(iframe);
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        document.body.removeChild(iframe);
+    };
+    // Opcional: Alias para usar directamente
+    const { jsPDF } = window.jspdf;
+</script>
+
 </body>
 </html>
