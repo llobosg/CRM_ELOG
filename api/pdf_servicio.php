@@ -2,15 +2,20 @@
 // api/pdf_servicio.php
 
 // Incluir autoload de Composer
+// Ajusta la ruta ../../ si api/pdf_servicio.php está en ./api/
 require_once __DIR__ . '/../vendor/autoload.php'; // Ajusta la ruta si es necesario
 
 // Incluir archivos de configuración y utilidades
 require_once __DIR__ . '/../config.php'; // Asegúrate de que config.php esté aquí y configure $pdo
 
-use TCPDF;
+use TCPDF; // Asegúrate de que el 'use' esté aquí
 
 // --- Función para sanitizar texto (opcional pero recomendable para PDF) ---
 function sanitizeText($text) {
+    // Proteger contra null
+    if ($text === null) {
+        return '';
+    }
     return htmlspecialchars_decode($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401);
 }
 
@@ -24,9 +29,10 @@ if (!$id_srvc) {
 
 // --- Obtener datos del servicio y prospecto ---
 try {
-    // 1. Obtener datos del servicio
+    // 1. Obtener datos del servicio y el concatenado del prospecto padre
+    // Asegúrate de que el campo 'concatenado' esté en la selección
     $stmt_serv = $pdo->prepare("
-        SELECT s.*, p.razon_social, p.direccion, p.notas_comerciales, p.notas_operaciones
+        SELECT s.*, p.razon_social, p.direccion, p.notas_comerciales, p.notas_operaciones, p.concatenado
         FROM servicios s
         JOIN prospectos p ON s.id_prospect = p.id_ppl
         WHERE s.id_srvc = ?
@@ -54,6 +60,8 @@ try {
     $direccionProspecto = $servicio['direccion'] ?? '';
     $notasComerciales = $servicio['notas_comerciales'] ?? '';
     $notasOperaciones = $servicio['notas_operaciones'] ?? '';
+    // Campo concatenado recuperado del JOIN
+    $concatenadoServicio = $servicio['concatenado'] ?? 'N/A';
 
 } catch (PDOException $e) {
     error_log("Error obteniendo datos para PDF: " . $e->getMessage());
@@ -82,7 +90,7 @@ $servicio_datos = [
     'commodity' => sanitizeText($servicio['commodity']),
     'origen' => sanitizeText($servicio['origen']),
     'destino' => sanitizeText($servicio['destino']),
-    'concatenado' => sanitizeText($servicio['concatenado']), // Asumiendo que este campo existe en servicios o se puede obtener
+    'concatenado' => $concatenadoServicio, // Usar el valor obtenido del JOIN
     // Añadir otros campos necesarios
 ];
 
