@@ -7,8 +7,6 @@ require_once __DIR__ . '/../vendor/autoload.php';
 // Incluir archivos de configuración y utilidades
 require_once __DIR__ . '/../config.php';
 
-use TCPDF;
-
 // --- Función para sanitizar texto (opcional pero recomendable para PDF) ---
 function sanitizeText($text) {
     if ($text === null) {
@@ -108,7 +106,8 @@ $gastos_datos = array_map(function($g) {
 }, $gastos_locales);
 
 // --- Crear PDF ---
-$pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+// Usar TCPDF directamente sin 'use' para evitar el warning si no se usa como alias
+$pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
 // Configuración del documento (tamaño de letra base reducido un 10%)
 $pdf->SetCreator(PDF_CREATOR);
@@ -133,7 +132,7 @@ $logoPath = __DIR__ . '/../assets/logo.png';
 // --- Contenido del PDF (estructurado en tabla) ---
 $html = '';
 
-// Tabla principal de 5 columnas
+// Tabla principal de 5 columnas (ajuste de ancho)
 $html .= '<table cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
 
 // Fila 1: Logo y Número de Cotización
@@ -147,10 +146,11 @@ if (file_exists($logoPath)) {
     $html .= '<div style="height: 16mm; margin-bottom: 1mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
 }
 $html .= '</td>';
-$html .= '<td style="width: 30%; border: none;"></td>'; // Columna vacía
-$html .= '<td style="width: 20%; border: none;"></td>'; // Columna vacía
-$html .= '<td style="width: 15%; border: none;"><strong>NÚMERO DE COTIZACIÓN:</strong></td>';
-$html .= '<td style="width: 15%; border: none;">' . $servicio_datos['concatenado'] . '</td>';
+$html .= '<td style="width: 23%; border: none;"><strong>NÚMERO DE COTIZACIÓN:</strong></td>';
+$html .= '<td style="width: 23%; border: none;">' . $servicio_datos['concatenado'] . '</td>';
+$html .= '<td style="width: 8%; border: none;"></td>';
+$html .= '<td style="width: 23%; border: none;"></td>';
+$html .= '<td style="width: 23%; border: none;"></td>';
 $html .= '</tr>';
 
 // Fila 2: Espacio
