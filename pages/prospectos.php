@@ -73,6 +73,10 @@
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Comercial Asignado</label>
             <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <label>Contacto Primario Clte.</label>
+            <input type="text" name="contacto" id="contacto" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <label>Email</label>
+            <input type="text" name="email" id="email" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
         </div>
     </div>
 
@@ -1300,6 +1304,9 @@
                     tieneServiciosIniciales = servicios.length > 0;
                     actualizarTabla();
 
+                    // NUEVO: Cargar contacto primario basado en el RUT del prospecto cargado
+                    cargarContactoPrimario(p.rut_empresa);
+
                     // ✅✅✅ ASIGNACIONES CLAVE PARA EL BOTÓN "AGREGAR SERVICIO" ✅✅✅
                     const idPplInput = document.getElementById('id_ppl');
                     const concatenadoInput = document.getElementById('concatenado');
@@ -2259,6 +2266,9 @@
                 if (el) el.selectedIndex = 0;
             });
 
+            // NUEVO: Limpiar campos de contacto
+            limpiarCamposContacto();
+
             // Limpiar servicios
             servicios = [];
             actualizarTabla();
@@ -2428,7 +2438,7 @@
                             div.appendChild(d);
                         });
                         div.style.display = 'block';
-                    }
+                    }  
                 } catch (e) {
                     error('Error en búsqueda de prospectos');
                 }
@@ -2446,6 +2456,115 @@
                 history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
             }
         });
+
+        // --- Funciones para manejo de Contactos ---
+
+        // Función para cargar contacto primario basado en rut_empresa
+        function cargarContactoPrimario(rut_empresa) {
+            if (!rut_empresa) {
+                limpiarCamposContacto();
+                return;
+            }
+
+            fetch(`/api/get_contacto_primario.php?rut_cliente=${encodeURIComponent(rut_empresa)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.contacto) {
+                        // Llenar los campos con los datos del contacto primario
+                        document.getElementById('contacto').value = data.contacto.nom_contacto || '';
+                        document.getElementById('email').value = data.contacto.email || '';
+                    } else {
+                        // Si no hay contacto primario o hay un error, limpiar los campos
+                        limpiarCamposContacto();
+                        // Opcional: Mostrar un mensaje informativo
+                        // info('No se encontró contacto primario para este cliente.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar contacto primario:', error);
+                    // En caso de error, limpiar los campos para evitar datos inconsistentes
+                    limpiarCamposContacto();
+                    // Opcional: Mostrar un mensaje de error
+                    // error('Error al cargar el contacto primario.');
+                });
+        }
+
+        // Función para limpiar los campos de contacto
+        function limpiarCamposContacto() {
+            document.getElementById('contacto').value = '';
+            document.getElementById('email').value = '';
+        }
+
+        // --- Modificar funciones existentes para integrar la carga de contactos ---
+
+        // Modificar la función que se llama al seleccionar un cliente en el autocomplete
+        // Suponiendo que tienes una función como 'seleccionarCliente(nombre, rut, ...)'
+        // Agrega la llamada a cargarContactoPrimario al final de esa función
+        // Ejemplo (ajusta según tu código real de autocompletado):
+        /*
+        function seleccionarCliente(nombre, rut, fono, pais, direccion, operacion, tipo_oper, estado, concatenado, booking, incoterm, id_comercial, nombre_comercial, notas_comerciales, notas_operaciones, fecha_alta, fecha_estado) {
+            // ... (código existente para llenar campos) ...
+            document.getElementById('razon_social_select').value = nombre;
+            document.getElementById('rut_empresa').value = rut;
+            // ... (otros campos) ...
+
+            // NUEVO: Cargar contacto primario después de seleccionar el cliente
+            cargarContactoPrimario(rut);
+        }
+        */
+
+        // Modificar la función 'seleccionarProspecto' para que también cargue el contacto
+        // Busca la función 'seleccionarProspecto(id)' y agrega la llamada después de llenar los campos del prospecto
+        // Ejemplo (dentro de la parte exitosa del .then() de la llamada fetch del prospecto):
+        /*
+        // Dentro de seleccionarProspecto, después de llenar campos como razon_social, rut_empresa, etc.
+        document.getElementById('rut_empresa').value = p.rut_empresa; // Asegura que este campo esté lleno
+        // ... (otros campos) ...
+        // NUEVO: Cargar contacto primario basado en el rut del prospecto cargado
+        cargarContactoPrimario(p.rut_empresa);
+        */
+
+        // Modificar la función 'reiniciarFormProspecto' para que limpie también los campos de contacto
+        // Busca la función 'reiniciarFormProspecto' y agrega la limpieza
+        // Ejemplo (al final de la función, antes del return):
+        /*
+        function reiniciarFormProspecto() {
+            // ... (código existente para limpiar campos) ...
+            document.getElementById('rut_empresa').value = '';
+            // ... (otros campos) ...
+
+            // NUEVO: Limpiar campos de contacto
+            limpiarCamposContacto();
+
+            // ... (otros resets) ...
+        }
+        */
+        // La lógica para llamar a cargarContactoPrimario en los lugares correctos depende de cómo se estructura el llenado del formulario.
+        // Lo más probable es que se llame después de que se haya establecido el 'rut_empresa' en el formulario.
+        // Por ejemplo, si el 'rut_empresa' se llena al seleccionar un cliente del autocomplete, o al cargar un prospecto existente.
+        // La llamada debe ser asíncrona y esperar a que 'rut_empresa' tenga un valor válido.
+
+        // --- Integración ---
+        // Suponiendo que tienes una función que se llama inmediatamente después de que 'rut_empresa' se establece (por ejemplo, al seleccionar un cliente o al cargar un prospecto)
+        // Aquí hay un ejemplo de cómo podría integrarse si 'rut_empresa' cambia y quieres disparar la carga:
+        document.getElementById('rut_empresa').addEventListener('change', function() {
+            const rut = this.value.trim();
+            if (rut) {
+                cargarContactoPrimario(rut);
+            } else {
+                limpiarCamposContacto();
+            }
+        });
+
+        // Opcional: También podrías querer disparar la carga si el campo se llena por otros medios (como al cargar un prospecto)
+        // En ese caso, después de llenar 'rut_empresa' en 'seleccionarProspecto', puedes llamar directamente a:
+        // cargarContactoPrimario(document.getElementById('rut_empresa').value);
+
 
         // Exponer funciones globales
         window.guardarServicio = guardarServicio;
