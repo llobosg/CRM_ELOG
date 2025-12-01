@@ -2375,7 +2375,8 @@
                     const serviciosConDatos = servicios.map(s => ({
                         ...s,
                         costos: s.costos || [],
-                        gastos_locales: s.gastos_locales || []
+                        gastos_locales: s.gastos_locales || [],
+                        nota_srvc: s.nota_srvc || ''
                     }));
 
                     console.log('📦 [GRABAR TODO] Servicios con costos/gastos:', serviciosConDatos);

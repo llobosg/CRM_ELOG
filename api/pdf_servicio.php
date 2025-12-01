@@ -292,7 +292,7 @@ $html .= '
         <td colspan="2" style="vertical-align: top;">
             <div style="margin-bottom: 2mm;"><strong>NOTAS SERVICIO</strong></div>
             <div style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; min-height: 30px; background-color: #fafafa; font-size: 8.5pt; line-height: 1.3;">
-                ' . nl2br(sanitizeText($servicio_datos['nota_srvc'])) . '
+                ' . sanitizeText($servicio_datos['nota_srvc'] ?? '') . '
             </div>
         </td>
     </tr>
