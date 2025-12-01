@@ -121,7 +121,7 @@ class ServicePDF extends \TCPDF {
         $this->SetDrawColor(200,200,200);
         $this->SetLineWidth(0.3);
         $this->Line(15, 30, $this->getPageWidth() - 15, 30);
-        $this->Ln(4);
+        $this->Ln(5);
     }
 
     public function Footer() {
@@ -129,7 +129,7 @@ class ServicePDF extends \TCPDF {
         $this->SetFont('helvetica', '', 8);
         $this->SetTextColor(100,100,100);
         // Texto de pie - izquierda
-        $this->Cell(0, 6, 'Documento generado por CRM - ' . date('Y-m-d'), 0, 0, 'L');
+        $this->Cell(0, 6, 'Documento generado por CRM-ELOG by GLTComex- ' . date('Y-m-d'), 0, 0, 'L');
         // Número de página - derecha
         $this->Cell(0, 6, 'Página ' . $this->getAliasNumPage() . '/' . $this->getAliasNbPages(), 0, 0, 'R');
     }
@@ -147,7 +147,7 @@ $pdf->SetFont('helvetica', '', 9);
 
 $logoPath = __DIR__ . '/../assets/logo.png';
 $pdf->logoPath = $logoPath;
-$pdf->companyName = 'Tu Empresa S.A.'; // Cambia por nombre real si quieres
+$pdf->companyName = 'ELOG'; // Cambia por nombre real si quieres
 
 $pdf->AddPage();
 
@@ -181,22 +181,21 @@ $html .= '<div class="subtitle">Número: <strong>' . $servicio_datos['concatenad
 
 /* -------------------- GRID PRINCIPAL 5 COLUMNAS -------------------- */
 $html .= '
-<table class="grid" cellpadding="0" cellspacing="0">
+<table cellpadding="3" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9.5pt;">
     <colgroup>
-        <col style="width:23%;">
-        <col style="width:23%;">
-        <col style="width:8%;">
-        <col style="width:23%;">
-        <col style="width:23%;">
+        <col style="width:25%;">
+        <col style="width:25%;">
+        <col style="width:25%;">
+        <col style="width:25%;">
     </colgroup>
 
     <!-- Row: Tipo cambio / Agente -->
     <tr>
-        <td><span class="label">TIPO CAMBIO CLIENTE:</span><div class="muted small">&nbsp;</div></td>
-        <td><span class="label">AGENTE / OFICINA:</span><div class="value">' . $servicio_datos['agente'] . '</div></td>
+        <td><span class="label">TIPO CAMBIO:</span><div class="muted small">&nbsp;</div></td>
+        <td><span class="label">AGENTE:</span><div class="value">' . $servicio_datos['agente'] . '</div></td>
         <td></td>
-        <td><span class="label">PO # REFERENCIA CLIENTE:</span><div class="value">' . $servicio_datos['ref_cliente'] . '</div></td>
-        <td><span class="label">PROVEEDOR NACIONAL:</span><div class="value">' . $servicio_datos['proveedor_nac'] . '</div></td>
+        <td><span class="label">PO # REF. CLIENTE:</span><div class="value">' . $servicio_datos['ref_cliente'] . '</div></td>
+        <td><span class="label">PROVEEDOR NAC:</span><div class="value">' . $servicio_datos['proveedor_nac'] . '</div></td>
     </tr>
 
     <!-- Spacer -->
@@ -223,7 +222,7 @@ $html .= '
 
     <!-- Row: Cantidad / POL / POD -->
     <tr>
-        <td><span class="label">CANTIDAD UNIDADES:</span><div class="value">' . $servicio_datos['bultos'] . '</div></td>
+        <td><span class="label">CANTIDAD:</span><div class="value">' . $servicio_datos['bultos'] . '</div></td>
         <td><span class="label">VOLUMEN:</span><div class="value">' . number_format($servicio['volumen'] ?? 0, 2) . '</div></td>
         <td></td>
         <td><span class="label">POL:</span><div class="value">' . $servicio_datos['origen'] . '</div></td>
@@ -245,10 +244,10 @@ $html .= '
 
     <!-- Notas comerciales (usa columnas 4 y 5 para contenido amplio) -->
     <tr>
-        <td></td>
-        <td></td>
-        <td></td>
         <td colspan="2"><span class="label">NOTAS COMERCIALES:</span><div class="box small">' . nl2br(sanitizeText($notasComerciales)) . '</div></td>
+        <td></td>
+        <td></td>
+        <td></td>
     </tr>
 
 </table>
