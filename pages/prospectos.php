@@ -848,6 +848,23 @@
             const notasComerciales = document.getElementById('notas_comerciales_input')?.value || '';
             const notasOperaciones = document.getElementById('notas_operaciones_input')?.value || '';
 
+            // --- Procesar Costos (asegurar valores numéricos) ---
+            const costosProcesados = (servicio.costos || []).map(c => ({
+                ...c,
+                qty: parseFloat(c.qty) || 0,
+                costo: parseFloat(c.costo) || 0,
+                tarifa: parseFloat(c.tarifa) || 0,
+                total_costo: parseFloat(c.total_costo) || 0,
+                total_tarifa: parseFloat(c.total_tarifa) || 0
+            }));
+
+            // --- Procesar Gastos Locales (asegurar valores numéricos) ---
+            const gastosProcesados = (servicio.gastos_locales || []).map(g => ({
+                ...g,
+                monto: parseFloat(g.monto) || 0,
+                iva: parseFloat(g.iva) || 0
+            }));
+
             // Construir el HTML del PDF
             pdfContainer.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10mm;">
@@ -923,18 +940,18 @@
                                 <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.costo || 0).toFixed(2)}</td> <!-- Total Costo -->
                                 <td style="border: 1px solid #000; padding: 2px;">${servicio.tipo || ''}</td>
                             </tr>
-                            <!-- Agregar filas para costos y gastos locales si es necesario -->
-                            ${servicio.costos && Array.isArray(servicio.costos) ? servicio.costos.map(c => `
+                            <!-- Agregar filas para costos procesados -->
+                            ${costosProcesados.map(c => `
                             <tr>
                                 <td style="border: 1px solid #000; padding: 2px;">${c.concepto || ''}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${c.moneda || ''}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">${c.qty || '1'}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(c.costo || 0).toFixed(2)}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(c.tarifa || 0).toFixed(2)}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(c.total_costo || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">${c.qty.toFixed(2)}</td> <!-- Asegurado como número -->
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${c.costo.toFixed(2)}</td> <!-- Asegurado como número -->
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${c.tarifa.toFixed(2)}</td> <!-- Asegurado como número -->
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${c.total_costo.toFixed(2)}</td> <!-- Asegurado como número -->
                                 <td style="border: 1px solid #000; padding: 2px;">${c.aplica || ''}</td>
                             </tr>
-                            `).join('') : ''}
+                            `).join('')}
                         </tbody>
                         <tfoot>
                             <tr style="font-weight: bold;">
@@ -959,7 +976,7 @@
                 </div>
 
                 <!-- Costos y Gastos Locales (similar a la tabla de costos) -->
-                ${servicio.gastos_locales && Array.isArray(servicio.gastos_locales) && servicio.gastos_locales.length > 0 ? `
+                ${gastosProcesados.length > 0 ? `
                 <div style="margin-bottom: 5mm;">
                     <div style="font-weight: bold;">GASTOS VENTAS LOCALES</div>
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
@@ -974,14 +991,14 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${servicio.gastos_locales.map(g => `
+                            ${gastosProcesados.map(g => `
                             <tr>
                                 <td style="border: 1px solid #000; padding: 2px;">${g.tipo || ''}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${g.gasto || ''}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${g.moneda || ''}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(g.monto || 0).toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${g.monto.toFixed(2)}</td> <!-- Asegurado como número -->
                                 <td style="border: 1px solid #000; padding: 2px;">${g.afecto || ''}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(g.iva || 0).toFixed(2)}%</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${g.iva.toFixed(2)}%</td> <!-- Asegurado como número -->
                             </tr>
                             `).join('')}
                         </tbody>
