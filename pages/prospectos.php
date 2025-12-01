@@ -817,6 +817,44 @@
         } // Fin de actualizarTabla()
 
         // --- Función para generar el PDF (definida fuera del bucle forEach) ---
+        // Cargar el logo como Base64 o Blob (esto se puede hacer una vez al cargar la página)
+        let logoBase64 = null;
+        let logoLoaded = false;
+        let logoLoadError = null;
+
+        function loadLogo() {
+            if (logoLoaded || logoLoadError) return Promise.resolve(); // Ya se intentó cargar
+
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // Intentar cargar sin CORS si es posible
+                img.onload = function() {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.height = img.height;
+                        canvas.width = img.width;
+                        ctx.drawImage(img, 0, 0);
+                        logoBase64 = canvas.toDataURL('image/png'); // Convertir a Base64
+                        logoLoaded = true;
+                        console.log("✅ Logo cargado y convertido a Base64");
+                        resolve();
+                    } catch (e) {
+                        console.error("❌ Error al dibujar o convertir el logo a Base64:", e);
+                        logoLoadError = e;
+                        reject(e);
+                    }
+                };
+                img.onerror = function() {
+                    console.error("❌ Error al cargar la imagen del logo:", img.src);
+                    logoLoadError = new Error("No se pudo cargar la imagen del logo.");
+                    reject(logoLoadError);
+                };
+                img.src = '/assets/logo.png'; // Asegúrate de que esta ruta sea correcta
+            });
+        }
+
+
         function generarPDFCotizacion(servicioIndex) {
             const servicio = servicios[servicioIndex];
             if (!servicio) {
@@ -824,6 +862,21 @@
                 return;
             }
 
+            // Cargar el logo si no está ya cargado
+            loadLogo()
+                .then(() => {
+                    // Continuar con la generación del PDF ahora que el logo está listo
+                    _generarPDFCotizacionInternal(servicio, logoBase64);
+                })
+                .catch(err => {
+                    console.error("Error al cargar el logo, generando PDF sin él:", err);
+                    // Opcional: Continuar sin el logo
+                    _generarPDFCotizacionInternal(servicio, null); // Pasar null si no se pudo cargar
+                });
+        }
+
+        // Función interna que hace el trabajo pesado, ya con el logo cargado
+        function _generarPDFCotizacionInternal(servicio, logoSrc) {
             // Crear un contenedor temporal para el HTML del PDF
             const pdfContainer = document.createElement('div');
             pdfContainer.id = 'pdf-content';
@@ -838,11 +891,6 @@
             pdfContainer.style.lineHeight = '1.2';
 
             // Obtener datos del prospecto (asumiendo que están disponibles en variables globales o se pueden acceder)
-            // Necesitas asegurarte de tener acceso a los datos del prospecto principal (razon_social, direccion, etc.)
-            // Aquí se asume que tienes acceso a variables como razonSocialProspecto, direccionProspecto, etc.
-            // Debes adaptar esta parte para obtener los datos correctamente desde tu interfaz o estado.
-            const prospectoData = { /* Obtén los datos del prospecto principal aquí */ };
-            // Ejemplo (debes reemplazar con la forma correcta de obtener estos datos):
             const razonSocialProspecto = document.querySelector('#razon_social_select')?.selectedOptions[0]?.text || '';
             const direccionProspecto = document.getElementById('direccion')?.value || '';
             const notasComerciales = document.getElementById('notas_comerciales_input')?.value || '';
@@ -866,10 +914,13 @@
             }));
 
             // Construir el HTML del PDF
+            // Usar logoSrc (Base64) o un placeholder si no se pudo cargar
+            const logoHtml = logoSrc ? `<img src="${logoSrc}" alt="Logo" style="height: 20mm; margin-bottom: 2mm;">` : '<div style="height: 20mm; margin-bottom: 2mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
+
             pdfContainer.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10mm;">
                     <div style="flex: 1;">
-                        <img src="/assets/logo.png" alt="Logo" style="height: 20mm; margin-bottom: 2mm;"> <!-- Cambia la ruta -->
+                        ${logoHtml} <!-- Usar el HTML del logo -->
                         <div style="font-size: 14pt; font-weight: bold; margin-top: 2mm;">NÚMERO DE COTIZACIÓN: ${servicio.concatenado || servicio.id_srvc || 'N/A'}</div>
                     </div>
                     <div style="text-align: right; width: 40%;">
@@ -930,25 +981,23 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Filas de servicios -->
                             <tr>
                                 <td style="border: 1px solid #000; padding: 2px;">${servicio.servicio || ''}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${servicio.moneda || ''}</td>
-                                <td style="border: 1px solid #000; padding: 2px;">1</td> <!-- Asumiendo 1 unidad por servicio -->
+                                <td style="border: 1px solid #000; padding: 2px;">1</td>
                                 <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.costo || 0).toFixed(2)}</td>
                                 <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.venta || 0).toFixed(2)}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.costo || 0).toFixed(2)}</td> <!-- Total Costo -->
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${(servicio.costo || 0).toFixed(2)}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${servicio.tipo || ''}</td>
                             </tr>
-                            <!-- Agregar filas para costos procesados -->
                             ${costosProcesados.map(c => `
                             <tr>
                                 <td style="border: 1px solid #000; padding: 2px;">${c.concepto || ''}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${c.moneda || ''}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">${c.qty.toFixed(2)}</td> <!-- Asegurado como número -->
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${c.costo.toFixed(2)}</td> <!-- Asegurado como número -->
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${c.tarifa.toFixed(2)}</td> <!-- Asegurado como número -->
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${c.total_costo.toFixed(2)}</td> <!-- Asegurado como número -->
+                                <td style="border: 1px solid #000; padding: 2px; text-align: center;">${c.qty.toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${c.costo.toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${c.tarifa.toFixed(2)}</td>
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${c.total_costo.toFixed(2)}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${c.aplica || ''}</td>
                             </tr>
                             `).join('')}
@@ -975,7 +1024,6 @@
                     </table>
                 </div>
 
-                <!-- Costos y Gastos Locales (similar a la tabla de costos) -->
                 ${gastosProcesados.length > 0 ? `
                 <div style="margin-bottom: 5mm;">
                     <div style="font-weight: bold;">GASTOS VENTAS LOCALES</div>
@@ -996,9 +1044,9 @@
                                 <td style="border: 1px solid #000; padding: 2px;">${g.tipo || ''}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${g.gasto || ''}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${g.moneda || ''}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${g.monto.toFixed(2)}</td> <!-- Asegurado como número -->
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${g.monto.toFixed(2)}</td>
                                 <td style="border: 1px solid #000; padding: 2px;">${g.afecto || ''}</td>
-                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${g.iva.toFixed(2)}%</td> <!-- Asegurado como número -->
+                                <td style="border: 1px solid #000; padding: 2px; text-align: right;">${g.iva.toFixed(2)}%</td>
                             </tr>
                             `).join('')}
                         </tbody>
@@ -1019,7 +1067,7 @@
             html2canvas(pdfContainer, { scale: 2 }) // Escala 2 para mejor calidad
                 .then(canvas => {
                     const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jsPDF('p', 'mm', 'a4'); // 'p' = portrait, 'mm' = milímetros, 'a4' = tamaño
+                    const pdf = new jsPDF('p', 'mm', 'a4');
                     const imgWidth = 210; // Ancho A4 en mm
                     const pageHeight = 297; // Alto A4 en mm
                     const imgHeight = canvas.height * imgWidth / canvas.width;
@@ -1038,7 +1086,6 @@
                     }
 
                     // Abrir el PDF en una nueva pestaña/ventana para visualización o descarga
-                    // Opcional: pdf.autoPrint(); // Si deseas que se imprima automáticamente
                     const pdfBlob = pdf.output('blob');
                     const pdfUrl = URL.createObjectURL(pdfBlob);
                     window.open(pdfUrl, '_blank');
@@ -1048,8 +1095,8 @@
                     URL.revokeObjectURL(pdfUrl);
                 })
                 .catch(err => {
-                    console.error('Error al generar el PDF:', err);
-                    error('No se pudo generar el PDF.');
+                    console.error('Error al generar el PDF con html2canvas:', err);
+                    error('No se pudo generar el PDF (html2canvas).');
                     // Asegurarse de limpiar el contenedor en caso de error
                     if (document.body.contains(pdfContainer)) {
                         document.body.removeChild(pdfContainer);
