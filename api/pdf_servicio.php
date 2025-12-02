@@ -159,15 +159,16 @@ $pdf->setPrintFooter(false);
 // Configuración del documento (tamaño de letra base reducido un 10%)
 $pdf->SetCreator(PDF_CREATOR);
 $pdf->SetTitle('Cotización - ' . $servicio_datos['concatenado']);
-$pdf->SetHeaderData('', 0, '', '');
-$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', 9)); // Reducido de 10 a 9 (10% menos)
-$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', 8)); // Reducido de 9 a 8 (aprox 10% menos)
+//$pdf->SetHeaderData('', 0, '', '');
+//$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', 9)); // Reducido de 10 a 9 (10% menos)
+//$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', 8)); // Reducido de 9 a 8 (aprox 10% menos)
 $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
 // Margen izquierdo aumentado ligeramente para compensar el logo
-$pdf->SetMargins(20, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT); // Ajuste de margen izquierdo
-$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+//$pdf->SetMargins(20, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT); // Ajuste de margen izquierdo
+$pdf->SetMargins(20, 28, 20); // Ajuste de margen izquierdo
+//$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+//$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+$pdf->SetAutoPageBreak(TRUE, 15);
 $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 
 // Agregar una página
@@ -198,7 +199,8 @@ $html .= '<tr>';
 $html .= '<td style="width: 25%; vertical-align: top; border: none;">';
 if (file_exists($logoPath)) {
     // Ajustar el ancho del logo para que sea un 20% más pequeño
-    $pdf->Image($logoPath, $pdf->GetX()+1, $pdf->GetY()+1, 24, 0, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false); // Ancho original * 0.8 = 30 * 0.8 = 24
+    //$pdf->Image($logoPath, $pdf->GetX()+1, $pdf->GetY()+1, 24, 0, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false); // Ancho original * 0.8 = 30 * 0.8 = 24
+    $pdf->Image($logoPath, 12, 8, 26, 0, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false); // Ancho original * 0.8 = 30 * 0.8 = 24
     $pdf->Ln(18); // Ajustar espacio después del logo reducido (subió 2mm)
 } else {
     $html .= '<div style="height: 16mm; margin-bottom: 1mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
