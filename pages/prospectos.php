@@ -1497,9 +1497,24 @@
                 const newMedioSel = medioSel.cloneNode(true);
                 medioSel.parentNode.replaceChild(newMedioSel, medioSel);
                 newMedioSel.addEventListener('change', function() {
-                    const medio = this.value;
-                    if (medio) {
-                        cargarLugaresPorMedio(medio); // Sin origen → cargar todos
+                    const medioSeleccionado = this.value;
+                    if (medioSeleccionado) {
+                        // --- CORRECCIÓN: Mapear medios específicos al genérico ---
+                        let medioParaCarga = medioSeleccionado;
+                        if (medioSeleccionado === 'Marítimo FCL' || medioSeleccionado === 'Marítimo LCL') {
+                            medioParaCarga = 'Marítimo';
+                        }
+                        // Puedes añadir más mapeos aquí si aplica para Aéreo o Terrestre en el futuro
+                        // else if (medioSeleccionado === 'Aéreo Internacional' || medioSeleccionado === 'Aéreo Nacional') {
+                        //     medioParaCarga = 'Aéreo';
+                        // }
+                        // else if (medioSeleccionado === 'Terrestre Regional') {
+                        //     medioParaCarga = 'Terrestre';
+                        // }
+                        // --- FIN CORRECCIÓN ---
+
+                        // Llamar a la función con el valor mapeado
+                        cargarLugaresPorMedio(medioParaCarga); // Sin origen → cargar todos
                     } else {
                         document.getElementById('serv_origen').innerHTML = '<option value="">Seleccionar</option>';
                         document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>';
