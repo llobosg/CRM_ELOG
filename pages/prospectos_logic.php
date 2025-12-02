@@ -254,14 +254,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $s['lugar_carga'] ?? '', $s['sector'] ?? '', $s['mercancia'] ?? '', (int)($s['bultos'] ?? 0), (float)($s['peso'] ?? 0), (string)($s['volumen'] ?? '0.00'), (string)($s['dimensiones'] ?? ''),
                         $s['agente'] ?? '', $s['aol'] ?? '', $s['aod'] ?? '', $s['transportador'] ?? '', $s['incoterm'] ?? '', $s['ref_cliente'] ?? '', $s['proveedor_nac'] ?? '',
                         (float)($s['tipo_cambio'] ?? 1), $s['ciudad'] ?? '', $s['pais'] ?? '', $s['direc_serv'] ?? '',
-                        $s['estado_costos'] ?? 'pendiente', $s['nota_srvc'] ?? '', $s['validez'] ?? null,
+                        $s['estado_costos'] ?? 'pendiente', $s['nota_srvc'] ?? '',
                         // Valores calculados para nuevos campos
                         $cgld_usd, $cgld_eur, $cgld_clp,
                         $vgld_usd, $vgld_eur, $vgld_clp,
                         $pgld_usd, $pgld_eur, $pgld_clp,
                         $ppgld_usd, $ppgld_eur, $ppgld_clp,
                         // ---
-                        $s['solicitado_por'] ?? null, $s['fecha_solicitado'] ?? null, $s['completado_por'] ?? null, $s['fecha_completado'] ?? null, $s['revisado_por'] ?? null, $s['fecha_revisado'] ?? null
+                        $s['solicitado_por'] ?? null, $s['fecha_solicitado'] ?? null, $s['completado_por'] ?? null, $s['fecha_completado'] ?? null, $s['revisado_por'] ?? null, $s['fecha_revisado'] ?? null, $s['validez'] ?? null,
                     ]);
 
                     // --- Insertar Costos (si existen en el JSON) ---

@@ -147,7 +147,9 @@ try {
                 --
                 solicitado_por = ?, fecha_solicitado = ?,
                 completado_por = ?, fecha_completado = ?,
-                revisado_por = ?, fecha_revisado = ?
+                revisado_por = ?, fecha_revisado = ?,
+                --
+                validez = ?
             WHERE id_srvc = ?
         ";
         $stmt = $pdo->prepare($sql);
@@ -206,7 +208,8 @@ try {
             $data['fecha_completado'] ?? null,
             $data['revisado_por'] ?? null,
             $data['fecha_revisado'] ?? null,
-            $id_srvc
+            $id_srvc,
+            $data['validez'] ?? null
         ];
 
         error_log("[GUARDAR_SERVICIO] Parámetros para UPDATE: " . print_r($params, true));
@@ -287,7 +290,7 @@ try {
                 --
                 solicitado_por, fecha_solicitado,
                 completado_por, fecha_completado,
-                revisado_por, fecha_revisado
+                revisado_por, fecha_revisado, validez
             ) VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -295,7 +298,7 @@ try {
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?
+                ?, ?, ?, ?
                 )
         ";
         $stmt = $pdo->prepare($sql);
@@ -308,7 +311,7 @@ try {
             $data['lugar_carga'] ?? '', $data['sector'] ?? '', $data['mercancia'] ?? '', (int)($data['bultos'] ?? 0), (float)($data['peso'] ?? 0), (string)($data['volumen'] ?? '0.00'), (string)($data['dimensiones'] ?? ''),
             $data['agente'] ?? '', $data['aod'] ?? '', $data['aol'] ?? '', $data['transportador'] ?? '', $data['incoterm'] ?? '', $data['ref_cliente'] ?? '', $data['proveedor_nac'] ?? '',
             (float)($data['tipo_cambio'] ?? 1), $data['ciudad'] ?? '', $data['pais'] ?? '', $data['direc_serv'] ?? '',
-            $data['estado_costos'] ?? 'pendiente', $data['nota_srvc'] ?? '',
+            $data['estado_costos'] ?? 'pendiente', $data['nota_srvc'] ?? '', $data['validez'] ?? null,
             // Valores calculados para nuevos campos
             $cgld_usd, $cgld_eur, $cgld_clp,
             $vgld_usd, $vgld_eur, $vgld_clp,
