@@ -150,8 +150,25 @@ $gastos_datos = array_map(function($g) {
     ];
 }, $gastos_locales);
 
+class PDFSinLineas extends TCPDF {
+    // Desactiva header completamente
+    public function Header() {}
+
+    // Pie de página SOLO con número de página
+    public function Footer() {
+        // Posicionar 15 mm desde el fondo
+        $this->SetY(-15);
+
+        $this->SetFont('helvetica', '', 8);
+
+        // Número de página centrado
+        $this->Cell(0, 10, 'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages(),
+            0, 0, 'C');
+    }
+}
+
 // --- Crear PDF ---
-$pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+$pdf = new PDFSinLineas(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 // 🔥 DESACTIVAR HEADER Y FOOTER (tu requerimiento)
 $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
