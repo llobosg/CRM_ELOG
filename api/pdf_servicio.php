@@ -207,13 +207,10 @@ $html .= '</td>';
 $html .= '</tr>';
 
 // Fila 2: Fecha
-$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA:</strong></td><td style="border: none;">' . date('d-m-Y') . '</td></tr>';
+$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA COTIZACIÓN:</strong></td><td style="border: none;">' . date('d-m-Y') . '</td></tr>';
 
-// Fila 3: PO # REF. CLIENTE
-$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>PO # REF. CLIENTE:</strong></td><td style="border: none;">' . $servicio_datos['ref_cliente'] . '</td></tr>';
-
-// Fila 4: Fecha vigencia cotización 30 días desde hoy
-$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>VALIDEZ COTIZACIÓN:</strong></td><td style="border: none;">' . $servicio_datos['validez'] . '</td></tr>';
+// Fila 4: Fecha vigencia cotización
+$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>VALIDEZ COTIZACIÓN:</strong></td><td style="border: none;"><strong>' . $servicio_datos['validez'] . '</strong></td></tr>';
 
 // Fila 5: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
@@ -238,11 +235,17 @@ $html .= '<table style="width: 100%; border-collapse: collapse; font-size: 9pt;"
 $html .= '<tr>';
     $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>INCOTERM:</strong></td>';
     $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['incoterm'] . '</td>'; // Alineado a la izquierda
-    $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>COMMODITY:</strong></td>';
-    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>PO # REF. CLIENTE:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['ref_cliente'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 2
+$html .= '<tr>';
+    $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>COMMODITY:</strong></td>';
+    $html .= '<td style="width: 75%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
+$html .= '</tr>';
+
+// Fila interna 3
 $html .= '<tr>';
     $html .= '<td style="padding-right: 2mm;"><strong>UNIDADES FCL:</strong></td>';
     $html .= '<td style="text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
