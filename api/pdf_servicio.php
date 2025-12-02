@@ -200,21 +200,18 @@ if (file_exists($logoPath)) {
 // Mover cursor debajo del logo
 $pdf->SetY(15);
 
-// Tabla principal
-$html .= '<table cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
-
-// Fila 1
-$html .= '<tr>';
-
-// Celda vacía porque el logo ya NO va dentro de la tabla
-$html .= '<td style="width: 25%; vertical-align: top; border: none;"></td>';
-
-$html .= '<td style="width: 25%; border: none;"><strong>NÚMERO DE COTIZACIÓN:</strong></td>';
-$html .= '<td style="width: 25%; border: none;">' . $servicio_datos['concatenado'] . '</td>';
-
-$html .= '</tr>';
-$html .= '</table>';
-
+// Fila 1: Número de cotización
+$html .= '
+<table cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+    <thead></thead>
+    <tbody>
+        <tr>
+            <td style="width: 25%; border: none;"></td>
+            <td style="width: 25%; border: none;"><strong>NÚMERO DE COTIZACIÓN:</strong></td>
+            <td style="width: 25%; border: none;">' . $servicio_datos['concatenado'] . '</td>
+        </tr>
+    </tbody>
+</table>';
 
 // Fila 2: Fecha
 $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA COTIZACIÓN:</strong></td><td style="border: none;">' . date('d-m-Y') . '</td></tr>';
