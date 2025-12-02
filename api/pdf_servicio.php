@@ -120,6 +120,12 @@ $servicio_datos = [
     'fecha_revisado' => $servicio['fecha_revisado'],
     'validez' => sanitizeText($servicio['validez'] ?? ''),
 ];
+// === FORMATEAR FECHA DE VALIDEZ ===
+$validezRaw = $servicio['validez'] ?? null;
+$validez = $validezRaw 
+    ? date('d-m-Y', strtotime($validezRaw))
+    : '';  
+$servicio_datos['validez'] = sanitizeText($validez);
 
 $costos_datos = array_map(function($c) {
     return [
@@ -206,16 +212,13 @@ $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none
 // Fila 3: PO # REF. CLIENTE
 $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>PO # REF. CLIENTE:</strong></td><td style="border: none;">' . $servicio_datos['ref_cliente'] . '</td></tr>';
 
-// Fila 4: Espacio
+// Fila 4: Fecha vigencia cotización 30 días desde hoy
+$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>VALIDEZ COTIZACIÓN:</strong></td><td style="border: none;">' . $servicio_datos['validez'] . '</td></tr>';
+
+// Fila 5: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 5: Fecha vigencia cotización 30 días desde hoy
-$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>VALIDEZ COTIZACIÓN:</strong></td><td style="border: none;">' . sanitizeText($servicio_datos['validez'] ?? '') . '</td></tr>';
-
-// Fila 6: Espacio
-$html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
-
-// Fila 7: Nueva Sección - Atención, Empresa y Mensaje
+// Fila 6: Nueva Sección - Atención, Empresa y Mensaje
 $html .= '<tr><td style="border: none;" colspan="4">';
     $html .= '<div style="font-size: 10pt; line-height: 1.4;">';
     $html .= '<strong>Atención:</strong> <span style="font-style: italic;">' . sanitizeText($contacto_nombre) . '</span> <!-- Campo contacto -->';
@@ -224,10 +227,10 @@ $html .= '<tr><td style="border: none;" colspan="4">';
     $html .= '</div>';
 $html .= '</td></tr>';
 
-// Fila 8: Espacio
+// Fila 7: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 9: Tabla de Datos del Servicio (4 columnas)
+// Fila 8: Tabla de Datos del Servicio (4 columnas)
 $html .= '<tr><td style="border: none; vertical-align: top;" colspan="4">'; // Celda que ocupa toda la fila
 $html .= '<table style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tabla anidada para los datos del servicio
 
