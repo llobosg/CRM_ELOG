@@ -192,15 +192,16 @@ $html .= '<table cellpadding="2" cellspacing="0" style="width: 100%; border-coll
 
 // Fila 1: Logo y Número de Cotización
 $html .= '<tr>';
-    $html .= '<td style="width: 25%; vertical-align: top; border: none;">';
-        if (file_exists($logoPath)) {
-            // Ajustar el ancho del logo para que sea un 20% más pequeño
-            $pdf->Image($logoPath, $pdf->GetX()+1, $pdf->GetY()+1, 24, 0, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false); // Ancho original * 0.8 = 30 * 0.8 = 24
-            $pdf->Ln(18); // Ajustar espacio después del logo reducido (subió 2mm)
-        } else {
-            $html .= '<div style="height: 16mm; margin-bottom: 1mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
-        }
-    $html .= '</td>';
+$html .= '<td style="width: 25%; vertical-align: top; border: none;">';
+if (file_exists($logoPath)) {
+    // Ajustar el ancho del logo para que sea un 20% más pequeño
+    $pdf->Image($logoPath, $pdf->GetX()+1, $pdf->GetY()+1, 24, 0, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false); // Ancho original * 0.8 = 30 * 0.8 = 24
+    $pdf->Ln(18); // Ajustar espacio después del logo reducido (subió 2mm)
+} else {
+    $html .= '<div style="height: 16mm; margin-bottom: 1mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
+}
+$html .= '</td>';
+    $html .= '<td style="width: 25%; border: none;"></td>'; // Columna vacía
     $html .= '<td style="width: 25%; border: none;"><strong>NÚMERO DE COTIZACIÓN:</strong></td>';
     $html .= '<td style="width: 25%; border: none;">' . $servicio_datos['concatenado'] . '</td>';
 $html .= '</tr>';
