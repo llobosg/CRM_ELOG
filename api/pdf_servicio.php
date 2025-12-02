@@ -242,7 +242,7 @@ $html .= '</tr>';
 // Fila interna 2
 $html .= '<tr>';
     $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>COMMODITY:</strong></td>';
-    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 50%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 3
@@ -255,32 +255,32 @@ $html .= '</tr>';
 
 // Fila interna 3
 $html .= '<tr>';
-    $html .= '<td style="padding-right: 2mm;"><strong>PESO BRUTO:</strong></td>';
-    $html .= '<td style="text-align: left;">' . number_format($servicio_datos['peso'], 2) . ' kg</td>'; // Alineado a la izquierda
-    $html .= '<td style="padding-right: 2mm;"><strong>CANTIDAD/BULTOS:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>PESO BRUTO:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . number_format($servicio_datos['peso'], 2) . ' kg</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>CANTIDAD/BULTOS:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 4
 $html .= '<tr>';
-    $html .= '<td style="padding-right: 2mm;"><strong>POL:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['origen'] . '</td>'; // Alineado a la izquierda
-    $html .= '<td style="padding-right: 2mm;"><strong>POD:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['destino'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>POL:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['origen'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>POD:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['destino'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 5
 $html .= '<tr>';
-    $html .= '<td style="padding-right: 2mm;"><strong>AGENTE/OFICINA:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['agente'] . '</td>'; // Alineado a la izquierda
-    $html .= '<td style="padding-right: 2mm;"><strong>' . $tipoTransporteTexto . ':</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['transportador'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>AGENTE/OFICINA:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['agente'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>' . $tipoTransporteTexto . ':</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['transportador'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 6
 $html .= '<tr>';
-    $html .= '<td style="padding-right: 2mm;"><strong>PROVEEDOR NAC:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['proveedor_nac'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>PROVEEDOR NAC:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['proveedor_nac'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 $html .= '</table>';
