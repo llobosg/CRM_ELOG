@@ -194,13 +194,13 @@ if (file_exists($logoPath)) {
     $html .= '<div style="height: 16mm; margin-bottom: 1mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
 }
 $html .= '</td>';
-$html .= '<td style="width: 25%; border: none;"></td>'; // Columna vacía
-$html .= '<td style="width: 25%; border: none;"><strong>NÚMERO DE COTIZACIÓN:</strong></td>';
-$html .= '<td style="width: 25%; border: none;">' . $servicio_datos['concatenado'] . '</td>';
+    $html .= '<td style="width: 25%; border: none;"></td>'; // Columna vacía
+    $html .= '<td style="width: 25%; border: none;"><strong>NÚMERO DE COTIZACIÓN:</strong></td>';
+    $html .= '<td style="width: 25%; border: none;">' . $servicio_datos['concatenado'] . '</td>';
 $html .= '</tr>';
 
 // Fila 2: Fecha
-$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA:</strong></td><td style="border: none;">' . date('Y-m-d') . '</td></tr>';
+$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA:</strong></td><td style="border: none;">' . date('d-m-Y') . '</td></tr>';
 
 // Fila 3: PO # REF. CLIENTE
 $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>PO # REF. CLIENTE:</strong></td><td style="border: none;">' . $servicio_datos['ref_cliente'] . '</td></tr>';
@@ -208,80 +208,88 @@ $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none
 // Fila 4: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 5: Agente / Oficina
-$html .= '<tr><td style="border: none;"><strong>AGENTE / OFICINA:</strong></td><td style="border: none;">' . $servicio_datos['agente'] . '</td><td style="border: none;"></td><td style="border: none;"></td></tr>';
+// Fila 5: Fecha vigencia cotización 30 días desde hoy
+$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA VIGENCIA COTIZACIÓN:</strong></td><td style="border: none;">' . date('d-m-Y', strtotime('+30 days')) . '</td></tr>';
 
-// Fila 6: Proveedor Nac
-$html .= '<tr><td style="border: none;"><strong>PROVEEDOR NAC:</strong></td><td style="border: none;">' . $servicio_datos['proveedor_nac'] . '</td><td style="border: none;"></td><td style="border: none;"></td></tr>';
+// Fila 6: Espacio
+$html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 7: Texto calculado / Transportador
-$html .= '<tr><td style="border: none;"><strong>' . $tipoTransporteTexto . ':</strong></td><td style="border: none;">' . $servicio_datos['transportador'] . '</td><td style="border: none;"></td><td style="border: none;"></td></tr>';
+// Fila 7: Nueva Sección - Atención, Empresa y Mensaje
+$html .= '<tr><td style="border: none;" colspan="4">';
+    $html .= '<div style="font-size: 10pt; line-height: 1.4;">';
+    $html .= '<strong>Atención:</strong> <span style="font-style: italic;">' . sanitizeText($contacto_nombre) . '</span> <!-- Campo contacto -->';
+    $html .= '<br><strong>Empresa:</strong> ' . sanitizeText($razonSocialProspecto);
+    $html .= '<br><br>Informamos a ustedes la cotización solicitada según los datos a continuación:';
+    $html .= '</div>';
+$html .= '</td></tr>';
 
 // Fila 8: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 9: Nueva Sección - Atención, Empresa y Mensaje
-$html .= '<tr><td style="border: none;" colspan="4">';
-$html .= '<div style="font-size: 10pt; line-height: 1.4;">';
-$html .= '<strong>Atención:</strong> <span style="font-style: italic;">' . sanitizeText($contacto_nombre) . '</span> <!-- Campo contacto -->';
-$html .= '<br><strong>Empresa:</strong> ' . sanitizeText($razonSocialProspecto);
-$html .= '<br><br>Informamos a ustedes la cotización solicitada según los datos a continuación:';
-$html .= '</div>';
-$html .= '</td></tr>';
-
-// Fila 10: Espacio
-$html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
-
-// Fila 11: Tabla de Datos del Servicio (4 columnas)
+// Fila 9: Tabla de Datos del Servicio (4 columnas)
 $html .= '<tr><td style="border: none; vertical-align: top;" colspan="4">'; // Celda que ocupa toda la fila
 $html .= '<table style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tabla anidada para los datos del servicio
 
 // Fila interna 1 de la tabla de datos
 $html .= '<tr>';
-$html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>INCOTERM:</strong></td>';
-$html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['incoterm'] . '</td>'; // Alineado a la izquierda
-$html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>COMMODITY:</strong></td>';
-$html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>INCOTERM:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['incoterm'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>COMMODITY:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 2
 $html .= '<tr>';
-$html .= '<td style="padding-right: 2mm;"><strong>UNIDADES FCL:</strong></td>';
-$html .= '<td style="text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
-$html .= '<td style="padding-right: 2mm;"><strong>VOLUMEN:</strong></td>';
-$html .= '<td style="text-align: left;">' . number_format($servicio_datos['volumen'], 2) . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="padding-right: 2mm;"><strong>UNIDADES FCL:</strong></td>';
+    $html .= '<td style="text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="padding-right: 2mm;"><strong>VOLUMEN:</strong></td>';
+    $html .= '<td style="text-align: left;">' . number_format($servicio_datos['volumen'], 2) . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 3
 $html .= '<tr>';
-$html .= '<td style="padding-right: 2mm;"><strong>PESO BRUTO:</strong></td>';
-$html .= '<td style="text-align: left;">' . number_format($servicio_datos['peso'], 2) . ' kg</td>'; // Alineado a la izquierda
-$html .= '<td style="padding-right: 2mm;"><strong>CANTIDAD/BULTOS:</strong></td>';
-$html .= '<td style="text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="padding-right: 2mm;"><strong>PESO BRUTO:</strong></td>';
+    $html .= '<td style="text-align: left;">' . number_format($servicio_datos['peso'], 2) . ' kg</td>'; // Alineado a la izquierda
+    $html .= '<td style="padding-right: 2mm;"><strong>CANTIDAD/BULTOS:</strong></td>';
+    $html .= '<td style="text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 4
 $html .= '<tr>';
-$html .= '<td style="padding-right: 2mm;"><strong>POL:</strong></td>';
-$html .= '<td style="text-align: left;">' . $servicio_datos['origen'] . '</td>'; // Alineado a la izquierda
-$html .= '<td style="padding-right: 2mm;"><strong>POD:</strong></td>';
-$html .= '<td style="text-align: left;">' . $servicio_datos['destino'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="padding-right: 2mm;"><strong>POL:</strong></td>';
+    $html .= '<td style="text-align: left;">' . $servicio_datos['origen'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="padding-right: 2mm;"><strong>POD:</strong></td>';
+    $html .= '<td style="text-align: left;">' . $servicio_datos['destino'] . '</td>'; // Alineado a la izquierda
+$html .= '</tr>';
+
+// Fila interna 5
+$html .= '<tr>';
+    $html .= '<td style="padding-right: 2mm;"><strong>AGENTE/OFICINA:</strong></td>';
+    $html .= '<td style="text-align: left;">' . $servicio_datos['agente'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="padding-right: 2mm;"><strong>' . $tipoTransporteTexto . ':</strong></td>';
+    $html .= '<td style="text-align: left;">' . $servicio_datos['transportador'] . '</td>'; // Alineado a la izquierda
+$html .= '</tr>';
+
+// Fila interna 6
+$html .= '<tr>';
+    $html .= '<td style="padding-right: 2mm;"><strong>PROVEEDOR NAC:</strong></td>';
+    $html .= '<td style="text-align: left;">' . $servicio_datos['proveedor_nac'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 $html .= '</table>';
 $html .= '</td></tr>';
 
-// Fila 12: Espacio
+// Fila interna 7: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
-// Fila 13: Notas del Servicio (ocupando 2 columnas de la tabla principal de 4)
+// Fila 8: Notas del Servicio (ocupando 2 columnas de la tabla principal de 4)
 $html .= '<tr>';
-$html .= '<td style="border: none;" colspan="4">'; // Ocupa toda la fila
-$html .= '<div style="margin-bottom: 2px;"><strong>NOTAS SERVICIO</strong></div>';
-$html .= '<div style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; min-height: 30px; background-color: #fafafa; font-size: 8.5pt; line-height: 1.3;">';
-$html .= nl2br(sanitizeText($servicio_datos['nota_srvc'])); // Mostrar la nota del servicio
-$html .= '</div>';
-$html .= '</td>';
+    $html .= '<td style="border: none;" colspan="4">'; // Ocupa toda la fila
+    $html .= '<div style="margin-bottom: 2px;"><strong>NOTAS SERVICIO</strong></div>';
+    $html .= '<div style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; min-height: 30px; background-color: #fafafa; font-size: 8.5pt; line-height: 1.3;">';
+    $html .= nl2br(sanitizeText($servicio_datos['nota_srvc'])); // Mostrar la nota del servicio
+    $html .= '</div>';
+    $html .= '</td>';
 $html .= '</tr>';
 
 $html .= '</table>';
@@ -292,44 +300,44 @@ $html .= '<div style="background-color: #e9ecef; height: 1px;"></div>';
 
 // --- Continuar con Profit Share y demás ---
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor para secciones posteriores
-$html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">PROFIT SHARE</h3>'; // Tamaño de título ligeramente menor
-$html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
-$html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">CONCEPTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">QTY</th><th style="border: 1px solid #ddd; text-align: right;">COSTO</th><th style="border: 1px solid #ddd; text-align: right;">VENTA</th><th style="border: 1px solid #ddd; text-align: right;">TOTAL</th><th style="border: 1px solid #ddd; text-align: center;">APLICA</th></tr></thead>';
-$html .= '<tbody>';
-$html .= '<tr>';
-$html .= '<td style="border: 1px solid #ddd;">' . $servicio_datos['servicio'] . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $servicio_datos['moneda'] . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: center;">1</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($servicio_datos['venta'], 2) . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $servicio_datos['trafico'] . '</td>';
-$html .= '</tr>';
-$total_costos = $servicio_datos['costo'];
-$total_venta = $servicio_datos['venta'];
-$total_total_costo = $servicio_datos['costo'];
+    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">PROFIT SHARE</h3>'; // Tamaño de título ligeramente menor
+    $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
+        $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">CONCEPTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">QTY</th><th style="border: 1px solid #ddd; text-align: right;">COSTO</th><th style="border: 1px solid #ddd; text-align: right;">VENTA</th><th style="border: 1px solid #ddd; text-align: right;">TOTAL</th><th style="border: 1px solid #ddd; text-align: center;">APLICA</th></tr></thead>';
+        $html .= '<tbody>';
+        $html .= '<tr>';
+            $html .= '<td style="border: 1px solid #ddd;">' . $servicio_datos['servicio'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $servicio_datos['moneda'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: center;">1</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($servicio_datos['venta'], 2) . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $servicio_datos['trafico'] . '</td>';
+        $html .= '</tr>';
+        $total_costos = $servicio_datos['costo'];
+        $total_venta = $servicio_datos['venta'];
+        $total_total_costo = $servicio_datos['costo'];
 
-foreach ($costos_datos as $c) {
-    $html .= '<tr>';
-    $html .= '<td style="border: 1px solid #ddd;">' . $c['concepto'] . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['moneda'] . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . number_format($c['qty'], 2) . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($c['costo'], 2) . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($c['tarifa'], 2) . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($c['total_costo'], 2) . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['aplica'] . '</td>';
-    $html .= '</tr>';
-    $total_costos += $c['costo'];
-    $total_total_costo += $c['total_costo'];
-    $total_venta += $c['tarifa'];
-}
-$html .= '</tbody>';
-$html .= '<tfoot>';
-$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTALES:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_costos, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_total_costo, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
-$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta - $total_costos, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
-$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT %:</td><td style="border: 1px solid #ddd; text-align: right;">' . ($total_venta > 0 ? number_format((($total_venta - $total_costos) / $total_venta) * 100, 2) : 0) . '%</td><td style="border: 1px solid #ddd;"></td></tr>';
-$html .= '</tfoot>';
-$html .= '</table>';
+        foreach ($costos_datos as $c) {
+            $html .= '<tr>';
+                $html .= '<td style="border: 1px solid #ddd;">' . $c['concepto'] . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['moneda'] . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . number_format($c['qty'], 2) . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($c['costo'], 2) . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($c['tarifa'], 2) . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($c['total_costo'], 2) . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['aplica'] . '</td>';
+            $html .= '</tr>';
+            $total_costos += $c['costo'];
+            $total_total_costo += $c['total_costo'];
+            $total_venta += $c['tarifa'];
+        }
+        $html .= '</tbody>';
+        $html .= '<tfoot>';
+            $html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTALES:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_costos, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_total_costo, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
+            $html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta - $total_costos, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
+            $html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT %:</td><td style="border: 1px solid #ddd; text-align: right;">' . ($total_venta > 0 ? number_format((($total_venta - $total_costos) / $total_venta) * 100, 2) : 0) . '%</td><td style="border: 1px solid #ddd;"></td></tr>';
+        $html .= '</tfoot>';
+    $html .= '</table>';
 $html .= '</div>';
 
 if (!empty($gastos_datos)) {
@@ -355,13 +363,13 @@ if (!empty($gastos_datos)) {
 
 // --- NUEVO: Notas Comerciales ---
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
-$html .= '<h3 style="font-size: 10pt; text-decoration: underline; margin-bottom: 2mm;">NOTAS COMERCIALES</h3>'; // Tamaño de título ligeramente menor
-$html .= nl2br(sanitizeText($notasComerciales));
+    $html .= '<h3 style="font-size: 10pt; text-decoration: underline; margin-bottom: 2mm;">NOTAS COMERCIALES</h3>'; // Tamaño de título ligeramente menor
+    $html .= nl2br(sanitizeText($notasComerciales));
 $html .= '</div>';
 
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
-$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>'; // Tamaño de título ligeramente menor
-$html .= nl2br(sanitizeText($notasOperaciones));
+    $html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>'; // Tamaño de título ligeramente menor
+    $html .= nl2br(sanitizeText($notasOperaciones));
 $html .= '</div>';
 
 // Salida del PDF
