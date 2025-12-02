@@ -1444,6 +1444,7 @@
                     document.getElementById('serv_aol').value = s.aol || '';
                     document.getElementById('serv_aod').value = s.aod || '';
                     document.getElementById('serv_agente').value = s.agente || '';
+                    document.getElementById('serv_validez').value = s.validez || '';
 
                     // Cargar lugares si hay medio guardado
                     const medioGuardado = (s.trafico || '').trim();
@@ -2053,13 +2054,6 @@
             // --- CORRECCIÓN: Seleccionar la opción correcta en el select gasto_gasto ---
             const gastoSelect = document.getElementById('gasto_gasto');
             gastoSelect.value = gasto.gasto || ''; // Intentar seleccionar por valor
-            // Opcional: Si el valor no coincide exactamente con alguna opción, buscar por texto o dejar vacío
-            // if (!gastoSelect.options[gastoSelect.selectedIndex] || gastoSelect.options[gastoSelect.selectedIndex].value !== gasto.gasto) {
-            //     // Si no se seleccionó una opción válida, puedes dejarlo vacío o mostrar un mensaje
-            //     gastoSelect.selectedIndex = 0; // Seleccionar primera opción (vacía)
-            //     // O lanzar un error si es estricto: error('Gasto no encontrado en las opciones disponibles.');
-            // }
-            // --- FIN CORRECCIÓN ---
             document.getElementById('gasto_moneda').value = gasto.moneda || 'USD';
             document.getElementById('gasto_monto').value = gasto.monto || '';
             document.getElementById('gasto_afecto').value = gasto.afecto || 'NO';
