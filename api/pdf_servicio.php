@@ -242,7 +242,7 @@ $html .= '</tr>';
 // Fila interna 2
 $html .= '<tr>';
     $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>COMMODITY:</strong></td>';
-    $html .= '<td style="width: 75%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 50%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
 $html .= '</tr>';
 
 // Fila interna 3
