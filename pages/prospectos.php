@@ -1634,7 +1634,8 @@
                 costos: [...costosServicio],
                 gastos_locales: [...gastosLocales],
                 estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente',
-                nota_srvc: servicios[servicioEnEdicion]?.nota_srvc || '' // Tomar la nota del servicio en edición o vacío si es nuevo
+                nota_srvc: servicios[servicioEnEdicion]?.nota_srvc || '', // Tomar la nota del servicio en edición o vacío si es nuevo
+                validez: document.getElementById('serv_validez').value
             };
 
             console.log('✅ [SERVICIO] Datos a enviar:', data);
