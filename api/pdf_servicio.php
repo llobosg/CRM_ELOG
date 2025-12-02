@@ -233,6 +233,9 @@
     // Fila 4: Fecha vigencia cotización
     $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>VALIDEZ COTIZACIÓN:</strong></td><td style="border: none;"><strong>' . $servicio_datos['validez'] . '</strong></td></tr>';
 
+    // Fila 5: Tráfico
+    $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>TRÁFICO:</strong></td><td style="border: none;"><strong>' . $servicio_datos['trafico'] . '</strong></td></tr>';
+
     // Fila 5: Espacio
     $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
