@@ -153,25 +153,34 @@ $gastos_datos = array_map(function($g) {
 // --- Crear PDF ---
 $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-// Configuración del documento (tamaño de letra base reducido un 10%)
+// 🔥 DESACTIVAR HEADER Y FOOTER (tu requerimiento)
+$pdf->setPrintHeader(false);
+$pdf->setPrintFooter(false);
+
 $pdf->SetCreator(PDF_CREATOR);
 $pdf->SetTitle('Cotización - ' . $servicio_datos['concatenado']);
-$pdf->SetHeaderData('', 0, '', '');
-$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', 9)); // Reducido de 10 a 9 (10% menos)
-$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', 8)); // Reducido de 9 a 8 (aprox 10% menos)
 $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-// Margen izquierdo aumentado ligeramente para compensar el logo
-$pdf->SetMargins(20, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT); // Ajuste de margen izquierdo
-$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+// Márgenes (ajustados para dejar espacio al logo arriba)
+$pdf->SetMargins(20, 28, 20);  // margen superior aumentado para no pisar el logo
+$pdf->SetAutoPageBreak(TRUE, 15);
 $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 
-// Agregar una página
+// Agregar página
 $pdf->AddPage();
 
 // --- Ruta al logo (ajusta la ruta) ---
 $logoPath = __DIR__ . '/../assets/logo.png';
+
+// --- LOGO ARRIBA DE TODO ---
+if (file_exists($logoPath)) {
+    // Logo en esquina superior izquierda, tamaño ajustado
+    $pdf->Image($logoPath, 12, 8, 26, 0, 'PNG');
+    $pdf->Ln(20); // espacio después del logo
+} else {
+    $html .= '<div style="height: 16mm; margin-bottom: 1mm; background-color: #eee; 
+        display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
+}
 
 // --- Calcular texto de tipo de transporte ---
 $tipoTrafico = strtolower($servicio_datos['trafico'] ?? '');
@@ -190,16 +199,7 @@ $html = '';
 // Tabla principal de 4 columnas
 $html .= '<table cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
 
-// Fila 1: Logo y Número de Cotización
-$html .= '<tr>';
-$html .= '<td style="width: 25%; vertical-align: top; border: none;">';
-if (file_exists($logoPath)) {
-    // Ajustar el ancho del logo para que sea un 20% más pequeño
-    $pdf->Image($logoPath, $pdf->GetX()+1, $pdf->GetY()+1, 24, 0, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false); // Ancho original * 0.8 = 30 * 0.8 = 24
-    $pdf->Ln(18); // Ajustar espacio después del logo reducido (subió 2mm)
-} else {
-    $html .= '<div style="height: 16mm; margin-bottom: 1mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>';
-}
+// Fila 1: Número de cotización
 $html .= '</td>';
     $html .= '<td style="width: 25%; border: none;"></td>'; // Columna vacía
     $html .= '<td style="width: 25%; border: none;"><strong>NÚMERO DE COTIZACIÓN:</strong></td>';
