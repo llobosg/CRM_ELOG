@@ -171,7 +171,7 @@ class PDFSinLineas extends TCPDF {
 $pdf = new PDFSinLineas(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 // 🔥 DESACTIVAR HEADER Y FOOTER (tu requerimiento)
 $pdf->setPrintHeader(false);
-$pdf->setPrintFooter(false);
+$pdf->setPrintFooter(true);
 
 // Configuración del documento (tamaño de letra base reducido un 10%)
 $pdf->SetCreator(PDF_CREATOR);
@@ -192,7 +192,7 @@ $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 $pdf->AddPage();
 
 // --- Ruta al logo (ajusta la ruta) ---
-$logoPath = __DIR__ . '/../assets/logo.png';
+$logoPath = __DIR__ . '/../assets/logoelog2.png';
 
 // --- Calcular texto de tipo de transporte ---
 $tipoTrafico = strtolower($servicio_datos['trafico'] ?? '');
