@@ -234,7 +234,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             --
                             solicitado_por, fecha_solicitado,
                             completado_por, fecha_completado,
-                            revisado_por, fecha_revisado
+                            revisado_por, fecha_revisado, validez
                         ) VALUES (
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -242,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?
+                            ?, ?, ?, ?
                             )
                     ");
                     $stmt_serv->execute([
@@ -254,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $s['lugar_carga'] ?? '', $s['sector'] ?? '', $s['mercancia'] ?? '', (int)($s['bultos'] ?? 0), (float)($s['peso'] ?? 0), (string)($s['volumen'] ?? '0.00'), (string)($s['dimensiones'] ?? ''),
                         $s['agente'] ?? '', $s['aol'] ?? '', $s['aod'] ?? '', $s['transportador'] ?? '', $s['incoterm'] ?? '', $s['ref_cliente'] ?? '', $s['proveedor_nac'] ?? '',
                         (float)($s['tipo_cambio'] ?? 1), $s['ciudad'] ?? '', $s['pais'] ?? '', $s['direc_serv'] ?? '',
-                        $s['estado_costos'] ?? 'pendiente', $s['nota_srvc'] ?? '',
+                        $s['estado_costos'] ?? 'pendiente', $s['nota_srvc'] ?? '', $s['validez'] ?? null,
                         // Valores calculados para nuevos campos
                         $cgld_usd, $cgld_eur, $cgld_clp,
                         $vgld_usd, $vgld_eur, $vgld_clp,

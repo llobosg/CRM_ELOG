@@ -118,6 +118,7 @@ $servicio_datos = [
     'fecha_completado' => $servicio['fecha_completado'],
     'revisado_por' => (int)($servicio['revisado_por'] ?? null),
     'fecha_revisado' => $servicio['fecha_revisado'],
+    'validez' => sanitizeText($servicio['validez'] ?? ''),
 ];
 
 $costos_datos = array_map(function($c) {
@@ -209,7 +210,7 @@ $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
 // Fila 5: Fecha vigencia cotización 30 días desde hoy
-$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA VIGENCIA COTIZACIÓN:</strong></td><td style="border: none;">' . date('d-m-Y', strtotime('+30 days')) . '</td></tr>';
+$html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA VIGENCIA COTIZACIÓN:</strong></td><td style="border: none;">' . sanitizeText($servicio_datos['validez'] ?? '') . '</td></tr>';
 
 // Fila 6: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
