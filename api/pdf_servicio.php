@@ -435,7 +435,7 @@
 
     // 4. Añadir las notas condicionales al HTML del PDF (si existen)
     if ($notasCondicionales) {
-        $html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: always;">'; // Nueva página opcional, tamaño de fuente base
+        //$html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: always;">'; // Nueva página opcional, tamaño de fuente base
         $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">Notas adicionales - ' . strtoupper($tipoTrafico) . '</h3>'; // Título con tráfico
         $html .= '<div style="line-height: 1.4;">'; // Contenedor para mejor formato de párrafos
         $html .= nl2br($notasCondicionales); // Asegura saltos de línea
