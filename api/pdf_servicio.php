@@ -418,25 +418,27 @@ if ($tipoTraficoDelServicio) {
 }
 // --- FIN CARGA INTERNA ---
 
-// === Agregar la condición de tráfico al HTML del PDF ===
-if ($condicionTraficoLimpia) {
-    $html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: auto;">'; // Tamaño de fuente base un 10% menor, forzar nueva página si es muy larga
-    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio) . '</h3>'; // Título con tráfico
-    $html .= '<div style="line-height: 1.4; white-space: pre-wrap;">'; // Contenedor para mejor formato de párrafos y preservar saltos de línea
-    $html .= htmlspecialchars($condicionTraficoLimpia, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401); // Escapar HTML pero PRESERVAR saltos de línea y espacios. ENT_NOQUOTES para no escapar " ni '
-    $html .= '</div>';
-    $html .= '</div>';
-}
-
+// --- Notas Comerciales ---
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
 $html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS COMERCIALES</h3>'; // Tamaño de título ligeramente menor
 $html .= nl2br(sanitizeText($notasComerciales));
 $html .= '</div>';
 
+// --- Notas a Operaciones ---
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
 $html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>'; // Tamaño de título ligeramente menor
 $html .= nl2br(sanitizeText($notasOperaciones));
 $html .= '</div>';
+
+// --- Condición de tráfico ---
+if ($condicionTraficoLimpia) {
+    $html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: auto;">'; // Tamaño de fuente base un 10% menor, forzar nueva página si es muy larga
+    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio) . '</h3>'; // Título con tráfico
+    $html .= '<div style="line-height: 1.4; white-space: pre-wrap;">'; // Contenedor para mejor formato de párrafos y preservar saltos de línea
+    $html .= htmlspecialchars(nl2br($condicionTraficoLimpia), ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401); // Escapar HTML, PRESERVAR saltos de línea (convirtiendo \n a <br>) y espacios. ENT_NOQUOTES para no escapar " ni '
+    $html .= '</div>';
+    $html .= '</div>';
+}
 
 // Salida del PDF
 $pdf->writeHTML($html, true, false, true, false, '');
