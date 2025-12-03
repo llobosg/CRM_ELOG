@@ -20,8 +20,9 @@ $registros = $pdo->query("SELECT id, trafico, condicion FROM condiciones_trafico
                 <label>Tipo de Tráfico *</label>
                 <select name="trafico" id="trafico" required style="width: 100%;">
                     <option value="">Seleccionar tipo</option>
-                    <option value="Marítimo">Marítimo</option>
                     <option value="Aéreo">Aéreo</option>
+                    <option value="Marítimo FCL">Marítimo FCL</option>
+                    <option value="Marítimo LCL">Marítimo LCL</option>
                     <option value="Terrestre">Terrestre</option>
                     <!-- Puedes agregar más tipos si es necesario -->
                 </select>
@@ -52,28 +53,28 @@ $registros = $pdo->query("SELECT id, trafico, condicion FROM condiciones_trafico
                     <th style="padding: 0.6rem; text-align: center; width: 10%;">Acciones</th>
                 </tr>
             </thead>
-            <tbody>
-                <?php foreach ($registros as $r): ?>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 0.6rem; font-weight: bold;"><?= htmlspecialchars($r['trafico']) ?></td>
-                    <td style="padding: 0.6rem;"><?= nl2br(htmlspecialchars($r['condicion'])) ?></td> <!-- Mostrar saltos de línea -->
-                    <td style="padding: 0.6rem; text-align: center;">
-                        <a href="#" 
-                           onclick="editarCondicion(<?= $r['id'] ?>, '<?= addslashes($r['trafico']) ?>', '<?= addslashes(str_replace(["\r\n", "\r", "\n"], "\\n", $r['condicion'])) ?>')" <!-- Escapar saltos de línea para JS -->
-                           class="btn-edit" 
-                           style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none; margin-right: 0.5rem;">
-                            ✏️
-                        </a>
-                        <a href="index.php?page=condiciones_trafico&delete=<?= $r['id'] ?>" 
-                           class="btn-delete" 
-                           style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none;"
-                           onclick="return confirm('¿Eliminar esta condición de tráfico?')">
-                            🗑️
-                        </a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
+                <tbody>
+                    <?php foreach ($registros as $r): ?>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 0.6rem; font-weight: bold;"><?= htmlspecialchars($r['trafico']) ?></td>
+                            <td style="padding: 0.6rem;"><?= nl2br(htmlspecialchars($r['condicion'])) ?></td>
+                            <td style="padding: 0.6rem; text-align: center;">
+                                <a href="#" 
+                                onclick="editarCondicion(<?= (int)$r['id'] ?>, '<?= addslashes(htmlspecialchars($r['trafico'], ENT_QUOTES)) ?>', '<?= addslashes(htmlspecialchars(str_replace(["\r\n", "\r", "\n"], "\\n", $r['condicion']), ENT_QUOTES)) ?>')"
+                                class="btn-edit" 
+                                style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none; margin-right: 0.5rem;">
+                                    ✏️
+                                </a>
+                                <a href="index.php?page=condiciones_trafico&amp;delete=<?= (int)$r['id'] ?>" 
+                                class="btn-delete" 
+                                style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none;"
+                                onclick="return confirm('¿Eliminar esta condición de tráfico?')">
+                                    🗑️
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
         </table>
     </div>
 </div>
