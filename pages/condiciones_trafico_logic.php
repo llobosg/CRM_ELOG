@@ -82,12 +82,6 @@ if ($_POST && isset($_POST['modo']) && $_POST['modo'] === 'crear') {
             throw new Exception('Los campos Tipo de Tráfico y Condición son obligatorios');
         }
 
-        // Opcional: Validar que el tipo de tráfico sea uno de los permitidos
-        $tiposValidos = ['Marítimo FCL', 'Marítimo LCL', 'Aéreo', 'Terrestre']; // Ajusta según tus tipos
-        if (!in_array($trafico, $tiposValidos)) {
-             throw new Exception('Tipo de tráfico no válido');
-        }
-
         // --- LIMPIEZA DEL TEXTO DE CONDICIÓN ---
         $condicionLimpia = limpiarTextoCondicion($condicion);
         // --- FIN LIMPIEZA ---
