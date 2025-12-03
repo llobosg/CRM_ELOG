@@ -419,6 +419,21 @@
             if ($fila_condicion) {
                 // 3. Si se encuentra, asignar el texto
                 $notasCondicionales = sanitizeText($fila_condicion['condicion']);
+                if ($notasCondicionales) {
+                // --- LIMPIEZA AL RECUPERAR ---
+                $condicion_desde_db = $notasCondicionales;
+                // 1. Asegurar codificación UTF-8
+                $condicion_utf8 = mb_convert_encoding($condicion_desde_db, 'UTF-8', 'auto');
+                // 2. Eliminar caracteres de control no deseados
+                $condicion_limpia = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $condicion_utf8);
+                // 3. Opcional: Ajustar espacios
+                $condicion_limpia = trim(preg_replace('/\s+/', ' ', $condicion_limpia));
+                // --- FIN LIMPIEZA ---
+
+                echo json_encode(['success' => true, 'condicion' => $condicion_limpia]);
+                } else {
+                    echo json_encode(['success' => true, 'condicion' => '']); // O un mensaje predeterminado
+                }
             } else {
                 // Opcional: Si no se encuentra una condición específica, dejar vacío o poner un mensaje
                 $notasCondicionales = ''; // O un mensaje como "(No hay condiciones específicas para este tráfico)"
@@ -434,11 +449,11 @@
     }
 
     // 4. Añadir las notas condicionales al HTML del PDF (si existen)
-    if ($notasCondicionales) {
+    if ($condicion_limpia) {
         //$html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: always;">'; // Nueva página opcional, tamaño de fuente base
         $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">Notas adicionales - ' . strtoupper($tipoTrafico) . '</h3>'; // Título con tráfico
         $html .= '<div style="line-height: 1.4;">'; // Contenedor para mejor formato de párrafos
-        $html .= nl2br($notasCondicionales); // Asegura saltos de línea
+        $html .= nl2br($condicion_limpia); // Asegura saltos de línea
         $html .= '</div>';
         $html .= '</div>';
     }
