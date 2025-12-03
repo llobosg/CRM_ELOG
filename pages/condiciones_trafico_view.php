@@ -18,7 +18,7 @@ $registros = $pdo->query("SELECT id, trafico, condicion FROM condiciones_trafico
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.2rem;">
             <div class="form-group">
                 <label>Tipo de Tráfico *</label>
-                <select name="trafico" id="trafico" required style="width: 100%;">
+                <select name="trafico" id="trafico" required style="width: 50%;">
                     <option value="">Seleccionar tipo</option>
                     <option value="Aéreo">Aéreo</option>
                     <option value="Marítimo FCL">Marítimo FCL</option>

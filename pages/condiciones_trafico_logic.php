@@ -83,7 +83,7 @@ if ($_POST && isset($_POST['modo']) && $_POST['modo'] === 'crear') {
         }
 
         // Opcional: Validar que el tipo de tráfico sea uno de los permitidos
-        $tiposValidos = ['Marítimo', 'Aéreo', 'Terrestre']; // Ajusta según tus tipos
+        $tiposValidos = ['Marítimo FCL', 'Marítimo LCL', 'Aéreo', 'Terrestre']; // Ajusta según tus tipos
         if (!in_array($trafico, $tiposValidos)) {
              throw new Exception('Tipo de tráfico no válido');
         }
