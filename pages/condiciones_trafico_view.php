@@ -29,7 +29,7 @@ $registros = $pdo->query("SELECT id, trafico, condicion FROM condiciones_trafico
             </div>
             <div class="form-group">
                 <label>Condición *</label>
-                <textarea name="condicion" id="condicion" required rows="3" style="width: 100%; resize: vertical;"></textarea>
+                <textarea name="condicion" id="condicion" required rows="40" style="width: 100%; resize: vertical;"></textarea>
             </div>
         </div>
         <button type="submit" id="btn-guardar-condicion" class="btn-primary">Guardar</button>
