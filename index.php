@@ -33,7 +33,7 @@ $validPages = [
     'agentes', 'aplicacion_costos', 'comerciales', 'commoditys', 'conceptos',
     'contactos', 'incoterm', 'lugares', 'medios_transporte', 'operacion',
     'proveedor_pnac', 'tservicios', 'trafico', 'dashboard', 'prospectos',
-    'ficha_cliente', 'facturacion'
+    'ficha_cliente', 'facturacion', 'condiciones_trafico'
 ];
 
 $page = $_GET['page'] ?? 'dashboard';
@@ -52,7 +52,7 @@ if (in_array($safePage, $paginas_admin_finanzas)) {
 $mantenedores_con_logica = [
     'agentes', 'aplicacion_costos', 'comerciales', 'commoditys', 'conceptos',
     'contactos', 'incoterm', 'lugares', 'medios_transporte', 'operacion',
-    'proveedor_pnac', 'tservicios', 'trafico'
+    'proveedor_pnac', 'tservicios', 'trafico', 'condiciones_trafico'
 ];
 
 if (in_array($safePage, $mantenedores_con_logica)) {
