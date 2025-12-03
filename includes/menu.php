@@ -23,6 +23,7 @@
                     ['label' => 'Comerciales', 'page' => 'comerciales'],
                     ['label' => 'Commoditys', 'page' => 'commoditys'],
                     ['label' => 'Concéptos', 'page' => 'conceptos'],
+                    ['label' => 'Condiciones Tráfico', 'page' => 'condiciones_trafico'],
                     ['label' => 'Contactos', 'page' => 'contactos'],
                     ['label' => 'Incoterm', 'page' => 'incoterm'],
                     ['label' => 'Lugares', 'page' => 'lugares'],
