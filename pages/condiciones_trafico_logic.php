@@ -110,12 +110,6 @@ if ($_POST && isset($_POST['modo']) && $_POST['modo'] === 'editar') {
             throw new Exception('Datos inválidos para la actualización');
         }
 
-        // Opcional: Validar tipo de tráfico
-        $tiposValidos = ['Marítimo', 'Aéreo', 'Terrestre'];
-        if (!in_array($trafico, $tiposValidos)) {
-             throw new Exception('Tipo de tráfico no válido');
-        }
-
         // --- LIMPIEZA DEL TEXTO DE CONDICIÓN ---
         $condicionLimpia = limpiarTextoCondicion($condicion);
         // --- FIN LIMPIEZA ---
