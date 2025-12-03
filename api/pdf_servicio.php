@@ -404,59 +404,62 @@
         $html .= nl2br(sanitizeText($notasOperaciones));
     $html .= '</div>';
 
+    // === Agregar la condición de tráfico al HTML del PDF ===
+    if ($condicionTraficoLimpia) {
+        $html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: auto;">'; // Tamaño de fuente base un 10% menor, forzar nueva página si es muy larga
+        $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio) . '</h3>'; // Título con tráfico
+        $html .= '<div style="line-height: 1.4; white-space: pre-wrap;">'; // Contenedor para mejor formato de párrafos y preservar saltos de línea
+        $html .= htmlspecialchars($condicionTraficoLimpia, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401); // Escapar HTML pero PRESERVAR saltos de línea y espacios. ENT_NOQUOTES para no escapar " ni '
+        $html .= '</div>';
+        $html .= '</div>';
+    }
+
     // --- Cargar y Agregar Notas Condicionales según Tráfico ---
     // 1. Obtener el tipo de tráfico del servicio actual
     $tipoTrafico = $servicio_datos['trafico'] ?? '';
     $notasCondicionales = ''; // Inicializar variable
 
-    if ($tipoTrafico) {
-        try {
-            // 2. Consultar la tabla condiciones_trafico
-            $stmt_condiciones = $pdo->prepare("SELECT condicion FROM condiciones_trafico WHERE trafico = ?");
-            $stmt_condiciones->execute([trim($tipoTrafico)]);
-            $fila_condicion = $stmt_condiciones->fetch(PDO::FETCH_ASSOC);
+    // --- CARGA INTERNA DE CONDICIONES DE TRÁFICO (dentro de pdf_servicio.php) ---
+    $condicionTraficoLimpia = ''; // Inicializar variable
+    $tipoTraficoDelServicio = $servicio_datos['trafico'] ?? '';
 
-            if ($fila_condicion) {
-                // 3. Si se encuentra, asignar el texto
-                $notasCondicionales = sanitizeText($fila_condicion['condicion']);
-                if ($notasCondicionales) {
-                // --- LIMPIEZA AL RECUPERAR ---
-                $condicion_desde_db = $notasCondicionales;
-                // 1. Asegurar codificación UTF-8
-                $condicion_utf8 = mb_convert_encoding($condicion_desde_db, 'UTF-8', 'auto');
-                // 2. Eliminar caracteres de control no deseados
-                $condicion_limpia = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $condicion_utf8);
-                // 3. Opcional: Ajustar espacios
-                $condicion_limpia = trim(preg_replace('/\s+/', ' ', $condicion_limpia));
+    if ($tipoTraficoDelServicio) {
+        try {
+            $stmt_cond_interna = $pdo->prepare("
+                SELECT condicion
+                FROM condiciones_trafico
+                WHERE trafico = ?
+                LIMIT 1
+            ");
+            $stmt_cond_interna->execute([$tipoTraficoDelServicio]);
+            $fila_cond_interna = $stmt_cond_interna->fetch(PDO::FETCH_ASSOC);
+
+            if ($fila_cond_interna) {
+                $condicion_cruda_interna = $fila_cond_interna['condicion'];
+
+                // --- LIMPIEZA (misma que en la API anterior) ---
+                $condicionTraficoLimpia = mb_convert_encoding($condicion_cruda_interna, 'UTF-8', 'auto');
+                $condicionTraficoLimpia = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $condicionTraficoLimpia);
+                $condicionTraficoLimpia = str_replace(["\xE2\x80\xA2", "\xE2\x80\xA3", "\xE2\x80\xA4", "\xE2\x80\xA5", "\xE2\x80\xA6", "\xEF\x82\xA7", "\xEF\x82\xA8", "\xEF\x82\xA9", "\xEF\x82\xAA", "\xEF\x82\xAB", "\xEF\x82\xAC", "\xEF\x82\xAD", "\xEF\x82\xAE", "\xEF\x82\xAF", "\xEF\x82\xB0", "\xEF\x82\xB1", "\xEF\x82\xB2", "\xEF\x82\xB3", "\xEF\x82\xB4", "\xEF\x82\xB5", "\xEF\x82\xB6", "\xEF\x82\xB7", "\xEF\x82\xB8", "\xEF\x82\xB9", "\xEF\x82\xBA", "\xEF\x82\xBB", "\xEF\x82\xBC", "\xEF\x82\xBD", "\xEF\x82\xBE", "\xEF\x82\xBF"], "• ", $condicionTraficoLimpia);
+                $condicionTraficoLimpia = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $condicionTraficoLimpia);
+                $condicionTraficoLimpia = trim($condicionTraficoLimpia);
                 // --- FIN LIMPIEZA ---
 
-                echo json_encode(['success' => true, 'condicion' => $condicion_limpia]);
-                } else {
-                    echo json_encode(['success' => true, 'condicion' => '']); // O un mensaje predeterminado
-                }
             } else {
-                // Opcional: Si no se encuentra una condición específica, dejar vacío o poner un mensaje
-                $notasCondicionales = ''; // O un mensaje como "(No hay condiciones específicas para este tráfico)"
-                error_log("[PDF_SERVICIO] Advertencia: No se encontraron condiciones para el tráfico '$tipoTrafico'");
+                $condicionTraficoLimpia = '(No hay condiciones definidas para este tipo de tráfico)';
+                error_log("[PDF_SERVICIO] Advertencia: No se encontraron condiciones para el tráfico '$tipoTraficoDelServicio' al generar PDF para servicio {$servicio_datos['id_srvc'] ?? 'N/A'}.");
             }
         } catch (PDOException $e) {
-            // Manejar error de base de datos al buscar condiciones
-            error_log("[PDF_SERVICIO] Error al buscar condiciones de tráfico: " . $e->getMessage());
-            $notasCondicionales = ''; // Dejar vacío en caso de error
-            // Opcional: Mostrar un mensaje de error genérico en el PDF si es crítico
-            // $notasCondicionales = 'Error al cargar condiciones específicas.';
+            // Manejar error de base de datos
+            error_log("[PDF_SERVICIO] Error al buscar condición de tráfico '$tipoTraficoDelServicio' para PDF: " . $e->getMessage());
+            $condicionTraficoLimpia = '(Error al cargar condiciones)';
         }
+    } else {
+        $condicionTraficoLimpia = '(Tipo de tráfico no definido)';
+        error_log("[PDF_SERVICIO] Advertencia: Tipo de tráfico vacío, no se puede cargar la condición al generar PDF para servicio {$servicio_datos['id_srvc'] ?? 'N/A'}.");
     }
+    // --- FIN CARGA INTERNA ---
 
-    // 4. Añadir las notas condicionales al HTML del PDF (si existen)
-    if ($condicion_limpia) {
-        //$html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: always;">'; // Nueva página opcional, tamaño de fuente base
-        $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">Notas adicionales - ' . strtoupper($tipoTrafico) . '</h3>'; // Título con tráfico
-        $html .= '<div style="line-height: 1.4;">'; // Contenedor para mejor formato de párrafos
-        $html .= nl2br($condicion_limpia); // Asegura saltos de línea
-        $html .= '</div>';
-        $html .= '</div>';
-    }
 
     // Salida del PDF
     $pdf->writeHTML($html, true, false, true, false, '');
