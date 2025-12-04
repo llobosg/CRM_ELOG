@@ -167,16 +167,11 @@
                 0, 0, 'C');
         }
     }
-     // Número de página alineado a la derecha
-    $this->Cell(0, 10,
-        'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages() .
-        '   Cotización: ' . $GLOBALS['servicio_datos']['concatenado'],
-        0, 0, 'R'
-    );
 
     // --- Crear PDF ---
     // Usar TCPDF directamente sin 'use' para evitar el warning si no se usa como alias
-    $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+    $pdf = new PDFSinLineas(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
 
     // Configuración del documento (tamaño de letra base reducido un 10%)
     $pdf->SetCreator(PDF_CREATOR);
