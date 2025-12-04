@@ -74,16 +74,14 @@ $order = in_array($order, $allowed_order) ? $order : 'id_ppl';
 $dir = $dir === 'asc' ? 'ASC' : 'DESC';
 $order_clause = "ORDER BY p.$order $dir";
 
-// Consulta para la tabla (SELECT con JOIN)
-$sql_tabla_base = "SELECT p.concatenado, p.razon_social, p.rut_empresa, p.pais, p.estado, p.fecha_alta FROM prospectos p ";
-// Opcional: Si necesitas un JOIN con clientes para obtener datos como el nombre del comercial, lo harías aquí
-// $sql_tabla_base = "SELECT p.concatenado, p.razon_social, p.rut_empresa, p.pais, p.estado, p.fecha_alta, u.nombre as nombre_comercial FROM prospectos p LEFT JOIN usuarios u ON p.id_comercial = u.id ";
-$sql_tabla = $sql_tabla_base . $filtro_sql . " " . $order_clause . " LIMIT 10";
+// === CONSULTA DE LA TABLA PRINCIPAL ===
+// Usar WHERE 1=1 para facilitar la concatenación de filtros condicionales
+$sql_tabla_base = "SELECT p.concatenado, p.razon_social, p.rut_empresa, p.pais, p.estado, p.fecha_alta FROM prospectos p WHERE 1=1 "; // ✅ Añadido WHERE 1=1
+$sql_tabla = $sql_tabla_base . $filtro_sql . " " . $order_clause . " LIMIT 10"; // ✅ Concatenar filtro (puede ser vacío o " AND ...")
 $stmt_tabla = $pdo->prepare($sql_tabla);
-$stmt_tabla->execute($filtro_params);
+$stmt_tabla->execute($filtro_params); // ✅ Usar los parámetros correctos
 
 $prospectos_para_tabla = $stmt_tabla->fetchAll(PDO::FETCH_ASSOC);
-
 ?>
 
 <!DOCTYPE html>
