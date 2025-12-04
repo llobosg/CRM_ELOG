@@ -1,13 +1,13 @@
 <?php
 // pages/dashboard.php
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/auth_check.php'; // Asegura que el usuario esté autenticado
 
 $rol_usuario = $_SESSION['rol'] ?? 'comercial';
 $nombre_usuario = $_SESSION['user'] ?? 'Usuario';
 $id_usuario = (int)($_SESSION['user_id'] ?? 0);
 
-// --- Lógica de Filtro ---
+// --- Lógica de Filtro por Rol ---
 $where_clause = '';
 $params_where = [];
 
@@ -18,38 +18,34 @@ if ($rol_usuario === 'comercial') {
 // Para admin, admin_finanzas, pricing, $where_clause y $params_where quedan vacíos.
 
 // --- Estadísticas ---
-// Consulta para Total Prospectos
-$sql_total = "SELECT COUNT(*) as total FROM prospectos p " . $where_clause; // Asegura el espacio
+$sql_total = "SELECT COUNT(*) as total FROM prospectos p " . $where_clause;
 $stmt_total = $pdo->prepare($sql_total);
 $stmt_total->execute($params_where);
 $total = (int)$stmt_total->fetch()['total'];
 
-// Consulta para Pendientes
-$sql_pendientes = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Pendiente' " . $where_clause; // Asegura el espacio y el alias
-$stmt_pendientes = $pdo->prepare($sql_pendientes);
-$stmt_pendientes->execute($params_where);
-$pendientes = (int)$stmt_pendientes->fetch()['total'];
-
-// Consulta para Enviados
-$sql_enviados = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Enviado' " . $where_clause; // Asegura el espacio y el alias
+// Asumiendo que 'Enviado', 'Pendiente', etc. son estados válidos en tu sistema
+// Ajusta estos estados si es necesario
+$sql_enviados = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Enviado' " . $where_clause;
 $stmt_enviados = $pdo->prepare($sql_enviados);
 $stmt_enviados->execute($params_where);
 $enviados = (int)$stmt_enviados->fetch()['total'];
 
-// Consulta para Devueltos
-$sql_devueltos = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Devuelto_pendiente' " . $where_clause; // Asegura el espacio y el alias
+$sql_pendientes = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Pendiente' " . $where_clause;
+$stmt_pendientes = $pdo->prepare($sql_pendientes);
+$stmt_pendientes->execute($params_where);
+$pendientes = (int)$stmt_pendientes->fetch()['total'];
+
+$sql_devueltos = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Devuelto_pendiente' " . $where_clause;
 $stmt_devueltos = $pdo->prepare($sql_devueltos);
 $stmt_devueltos->execute($params_where);
 $devueltos = (int)$stmt_devueltos->fetch()['total'];
 
-// Consulta para Cerrados OK
-$sql_cerrados = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'CerradoOK' " . $where_clause; // Asegura el espacio y el alias
+$sql_cerrados = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'CerradoOK' " . $where_clause;
 $stmt_cerrados = $pdo->prepare($sql_cerrados);
 $stmt_cerrados->execute($params_where);
 $cerrados = (int)$stmt_cerrados->fetch()['total'];
 
-// Consulta para Rechazados
-$sql_rechazados = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Rechazado' " . $where_clause; // Asegura el espacio y el alias
+$sql_rechazados = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Rechazado' " . $where_clause;
 $stmt_rechazados = $pdo->prepare($sql_rechazados);
 $stmt_rechazados->execute($params_where);
 $rechazados = (int)$stmt_rechazados->fetch()['total'];
@@ -136,6 +132,9 @@ $prospectos_para_tabla = $stmt_tabla->fetchAll(PDO::FETCH_ASSOC);
         <thead>
             <tr>
                 <?php
+                $order = $_GET['order'] ?? 'id_ppl';
+                $dir = $_GET['dir'] ?? 'desc';
+
                 function sortLink($field, $label, $currentOrder, $currentDir) {
                     $newDir = ($currentOrder === $field && $currentDir === 'asc') ? 'desc' : 'asc';
                     $icon = '';
@@ -146,6 +145,10 @@ $prospectos_para_tabla = $stmt_tabla->fetchAll(PDO::FETCH_ASSOC);
                     }
                     return "<a href='?page=dashboard&order=$field&dir=$newDir' style='color: white; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;'>$label$icon</a>";
                 }
+
+                $allowedOrder = ['concatenado', 'razon_social', 'rut_empresa', 'pais', 'estado', 'fecha_alta', 'id_ppl'];
+                $order = in_array($order, $allowedOrder) ? $order : 'id_ppl';
+                $dir = $dir === 'asc' ? 'ASC' : 'DESC';
                 ?>
                 <th><?= sortLink('concatenado', 'Concatenado', $order, $dir) ?></th>
                 <th><?= sortLink('razon_social', 'Razón Social', $order, $dir) ?></th>
@@ -177,8 +180,6 @@ $prospectos_para_tabla = $stmt_tabla->fetchAll(PDO::FETCH_ASSOC);
     </a>
 </div>
 
-</main>
-
 <script>
 function filtrarTabla() {
     const input = document.getElementById('search-dashboard');
@@ -193,6 +194,8 @@ function filtrarTabla() {
     });
 }
 </script>
+
+</main>
 
 </body>
 </html>
