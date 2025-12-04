@@ -410,10 +410,20 @@
                 // --- LIMPIEZA ---
                 $condicionTraficoLimpia = mb_convert_encoding($condicion_cruda_interna, 'UTF-8', 'auto');
                 $condicionTraficoLimpia = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $condicionTraficoLimpia);
+                // Reemplazar viñetas comunes por • (asegura consistencia de símbolo)
                 $condicionTraficoLimpia = str_replace(["\xE2\x80\xA2", "\xE2\x80\xA3", "\xE2\x80\xA4", "\xE2\x80\xA5", "\xE2\x80\xA6", "\xEF\x82\xA7", "\xEF\x82\xA8", "\xEF\x82\xA9", "\xEF\x82\xAA", "\xEF\x82\xAB", "\xEF\x82\xAC", "\xEF\x82\xAD", "\xEF\x82\xAE", "\xEF\x82\xAF", "\xEF\x82\xB0", "\xEF\x82\xB1", "\xEF\x82\xB2", "\xEF\x82\xB3", "\xEF\x82\xB4", "\xEF\x82\xB5", "\xEF\x82\xB6", "\xEF\x82\xB7", "\xEF\x82\xB8", "\xEF\x82\xB9", "\xEF\x82\xBA", "\xEF\x82\xBB", "\xEF\x82\xBC", "\xEF\x82\xBD", "\xEF\x82\xBE", "\xEF\x82\xBF"], "• ", $condicionTraficoLimpia);
                 $condicionTraficoLimpia = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $condicionTraficoLimpia);
                 $condicionTraficoLimpia = trim($condicionTraficoLimpia);
                 // --- FIN LIMPIEZA ---
+
+                // --- PROCESAR FORMATO DE VIÑETAS (buscar • y forzar salto de línea) ---
+                // Busca el patrón: espacio + viñeta + espacio
+                // Y reemplaza por: salto de línea + espacio + viñeta + espacio
+                // Esto separa cada punto en una línea nueva
+                $condicionTraficoLimpia = preg_replace('/\s*•\s*/', "\n• ", $condicionTraficoLimpia);
+                // Opcional: También puedes probar con patrones más generales si hay otros tipos de separadores
+                // $condicionTraficoLimpia = preg_replace('/\s*([•\-–—*+\u2022])\s*/u', "\n$1 ", $condicionTraficoLimpia);
+                // --- FIN PROCESAR FORMATO ---
 
             } else {
                 $condicionTraficoLimpia = '(No hay condiciones definidas para este tipo de tráfico)';
@@ -430,38 +440,40 @@
     }
     // --- FIN CARGA INTERNA ---
 
-    // --- RENDERIZAR LA CONDICIÓN DE TRÁFICO CON MULTICELL (NO HTML) ---
-if (!empty($condicionTraficoLimpia)) {
+    // --- Agregar la condición de tráfico al HTML del PDF (usando tabla con fila por línea procesada) ---
+    if ($condicionTraficoLimpia) {
+        $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
+        $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio) . '</h3>'; // Título con tráfico
 
-    // Título
-    $pdf->Ln(4);
-    $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->Write(0, 'CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio), '', 0, 'L', true);
-    $pdf->Ln(1);
+        // Dividir el texto en líneas, ahora debería haber \n entre viñetas gracias al procesamiento anterior
+        // Usamos preg_split con múltiples delimitadores para mayor robustez
+        $lineas = preg_split('/\r\n|\r|\n/', $condicionTraficoLimpia);
 
-    // Contenido normal
-    $pdf->SetFont('helvetica', '', 9);
+        // Crear una tabla para cada línea
+        $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
+        foreach ($lineas as $linea) {
+            $linea = trim($linea); // Limpiar espacios al inicio y final de cada línea
+            if ($linea !== '') { // Solo procesar líneas no vacías
+                // Opcional: Dar formato específico a líneas que empiezan con viñeta
+                $patronViñeta = '/^([•\-–—*+\xE2\x80\xA2]\s*)(.*)$/u'; // Patrón para viñeta + texto
+                if (preg_match($patronViñeta, $linea, $matches)) {
+                    // Si coincide, formatear como viñeta + texto en celdas separadas
+                    $html .= '<tr>';
+                    $html .= '<td style="padding: 1px 0; vertical-align: top; width: 5%;">' . htmlspecialchars($matches[1], ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td>';
+                    $html .= '<td style="padding: 1px 0; vertical-align: top; width: 95%;">' . htmlspecialchars($matches[2], ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td>';
+                    $html .= '</tr>';
+                } else {
+                    // Si no es viñeta, imprime la línea completa en una celda
+                    $html .= '<tr>';
+                    $html .= '<td style="padding: 1px 0; vertical-align: top; width: 100%;" colspan="2">' . htmlspecialchars($linea, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td>';
+                    $html .= '</tr>';
+                }
+            }
+        }
+        $html .= '</table>';
 
-    // Asegurar que cada "•" tenga salto antes
-    $texto = $condicionTraficoLimpia;
-    $texto = str_replace("•", "\n•", $texto);
-    $texto = preg_replace('/\n+/', "\n", $texto);
-
-    // Limpiar doble espacios
-    $texto = trim($texto);
-
-    // MultiCell respeta saltos y viñetas
-    $pdf->MultiCell(
-        0,          // ancho
-        5,          // alto de línea
-        $texto,     // contenido
-        0,          // sin borde
-        'L',        // alineación
-        false,      // sin fondo
-        1           // mover cursor a siguiente línea
-    );
-}
-
+        $html .= '</div>';
+    }
 
     // Salida del PDF
     $pdf->writeHTML($html, true, false, true, false, '');
