@@ -163,7 +163,7 @@
             $this->SetFont('helvetica', '', 8);
 
             // Número de página centrado
-            $this->Cell(0, 10, 'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages() . ' - Cotización: ' . $GLOBALS['servicio_datos']['concatenado'], 0, false, 'R');
+            $this->Cell(0, 10, 'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages() . ' - Cotización: ' . $GLOBALS['servicio_datos']['concatenado'], 0, false, 'C');
         }
     }
 
@@ -263,35 +263,35 @@
     $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['ref_cliente'] . '</td>'; // Alineado a la izquierda
     $html .= '</tr>';
 
-    // Fila interna 2: Commodity y Peso Bruto
+    // Fila interna 2: Commodity
     $html .= '<tr>';
-    $html .= '<td style="padding-right: 2mm;"><strong>COMMODITY:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>COMMODITY:</strong></td>';
+    $html .= '<td style="width: 50%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
     
     $html .= '</tr>';
 
     // Fila interna 3: Unidades FCL y Cantidad/Bultos
     $html .= '<tr>';
-    $html .= '<td style="padding-right: 2mm;"><strong>UNIDADES FCL:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
-    $html .= '<td style="padding-right: 2mm;"><strong>CANTIDAD/BULTOS:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>UNIDADES FCL:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>CANTIDAD/BULTOS:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['bultos'] . '</td>'; // Alineado a la izquierda
     $html .= '</tr>';
 
     // Fila interna 4: Volumen y Agente
     $html .= '<tr>';
-    $html .= '<td style="padding-right: 2mm;"><strong>VOLUMEN:</strong></td>';
-    $html .= '<td style="text-align: left;">' . number_format($servicio_datos['volumen'], 2) . '</td>'; // Alineado a la izquierda
-    $html .= '<td style="padding-right: 2mm;"><strong>PESO BRUTO:</strong></td>';
-    $html .= '<td style="text-align: left;">' . number_format($servicio_datos['peso'], 2) . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>VOLUMEN:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . number_format($servicio_datos['volumen'], 2) . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>PESO BRUTO:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . number_format($servicio_datos['peso'], 2) . '</td>'; // Alineado a la izquierda
     $html .= '</tr>';
 
     // Fila interna 5: POL y POD
     $html .= '<tr>';
-    $html .= '<td style="padding-right: 2mm;"><strong>POL:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['origen'] . '</td>'; // Alineado a la izquierda
-    $html .= '<td style="padding-right: 2mm;"><strong>POD:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['destino'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>POL:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['origen'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>POD:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['destino'] . '</td>'; // Alineado a la izquierda
     $html .= '</tr>';
 
     // Calcular texto de transporte (Naviera/Aerolínea/Transporte)
@@ -307,10 +307,10 @@
 
     // Fila interna 6: Transportador y Agente
     $html .= '<tr>';
-    $html .= '<td style="padding-right: 2mm;"><strong>' . $textoTransporte . ':</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['transportador'] . '</td>'; // Alineado a la izquierda
-    $html .= '<td style="padding-right: 2mm;"><strong>AGENTE:</strong></td>';
-    $html .= '<td style="text-align: left;">' . $servicio_datos['agente'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>' . $textoTransporte . ':</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['transportador'] . '</td>'; // Alineado a la izquierda
+    $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>AGENTE:</strong></td>';
+    $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['agente'] . '</td>'; // Alineado a la izquierda
     $html .= '</tr>';
 
     $html .= '</table>';
