@@ -430,14 +430,39 @@ $html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS A OPERA
 $html .= nl2br(sanitizeText($notasOperaciones));
 $html .= '</div>';
 
-// --- Condición de tráfico ---
+// === Agregar la condición de tráfico al PDF usando MultiCell ===
 if ($condicionTraficoLimpia) {
-    $html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: auto;">'; // Tamaño de fuente base un 10% menor, forzar nueva página si es muy larga
-    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio) . '</h3>'; // Título con tráfico
-    $html .= '<div style="line-height: 1.4; white-space: pre-wrap;">'; // Contenedor para mejor formato de párrafos y preservar saltos de línea
-    $html .= htmlspecialchars(nl2br($condicionTraficoLimpia), ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401); // Escapar HTML, PRESERVAR saltos de línea (convirtiendo \n a <br>) y espacios. ENT_NOQUOTES para no escapar " ni '
-    $html .= '</div>';
-    $html .= '</div>';
+    // Agregar un salto de página si es necesario para separar visualmente
+    $pdf->Ln(4); // Espacio antes de la sección de condiciones
+
+    // Título
+    $pdf->SetFont('helvetica', 'B', 10); // Fuente Helvetica Bold, tamaño 10
+    $pdf->Cell(0, 5, 'CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio), 0, 1, 'L', 0, '', 0, false, 'T', 'M');
+    $pdf->Ln(1); // Pequeño espacio debajo del título
+
+    // Contenido de la condición usando MultiCell
+    $pdf->SetFont('helvetica', '', 9); // Fuente Helvetica regular, tamaño 9
+    // MultiCell(w, h, txt, border, align, fill, ln, x, y, reseth, stretch, ishtml, autopadding, maxh, valign, fitcell)
+    // w: ancho de la celda (0 = ancho restante de la página)
+    // h: alto de la celda (0 = automático basado en contenido)
+    // txt: texto a imprimir
+    // border: 0 = sin borde
+    // align: 'L', 'C', 'R', 'J' (Justificado)
+    // fill: false = no rellenar
+    // ln: 1 = mover la posición actual al final de la celda
+    // ... otros parámetros ...
+    $pdf->MultiCell(0, 5, $condicionTraficoLimpia, 0, 'L', false, 1, '', '', true, 0, false, true, 0, 'T', false);
+    // Parámetros clave:
+    // - 'L' (align): Alineación izquierda
+    // - true (reseth): Reiniciar la altura de la celda si hay un salto de línea
+    // - 0 (stretch): No estirar
+    // - false (ishtml): Interpretar como texto plano, no HTML. TCPDF manejará \n automáticamente.
+    // - true (autopadding): Usar padding automático
+    // - 'T' (valign): Alineación vertical superior
+    // - false (fitcell): No ajustar el texto al tamaño de la celda
+
+    // Opcional: Añadir un espacio después del bloque de condiciones
+    $pdf->Ln(2);
 }
 
 // Salida del PDF
