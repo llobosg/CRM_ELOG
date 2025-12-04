@@ -1,15 +1,74 @@
 <?php
+// pages/dashboard.php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/auth_check.php'; // Asegura que el usuario esté autenticado
 
-// Estadísticas
-$total = $pdo->query("SELECT COUNT(*) as total FROM prospectos")->fetch()['total'];
-$pendientes = $pdo->query("SELECT COUNT(*) as total FROM prospectos WHERE estado = 'Pendiente'")->fetch()['total'];
-$enviados = $pdo->query("SELECT COUNT(*) as total FROM prospectos WHERE estado = 'Enviado'")->fetch()['total'];
-$devueltos = $pdo->query("SELECT COUNT(*) as total FROM prospectos WHERE estado = 'Devuelto_pendiente'")->fetch()['total'];
-$cerrados = $pdo->query("SELECT COUNT(*) as total FROM prospectos WHERE estado = 'CerradoOK'")->fetch()['total'];
-$rechazados = $pdo->query("SELECT COUNT(*) as total FROM prospectos WHERE estado = 'Rechazado'")->fetch()['total'];
+$rol_usuario = $_SESSION['rol'] ?? 'comercial'; // Rol por defecto si no está definido
+$nombre_usuario = $_SESSION['user'] ?? 'Usuario'; // Nombre del usuario logueado
+$id_usuario = (int)($_SESSION['user_id'] ?? 0); // ID del usuario logueado
+
+$filtro_usuario = "";
+$params_usuario = [];
+
+// Determinar el filtro según el rol
+// Admin, Admin Finanzas y Pricing ven todo
+if ($rol_usuario === 'comercial') {
+    // El comercial solo ve sus prospectos (basado en id_comercial)
+    $filtro_usuario = " WHERE p.id_comercial = ?";
+    $params_usuario = [$id_usuario];
+} elseif ($rol_usuario === 'admin_finanzas') {
+    // Si admin_finanzas tiene un criterio específico, lo defines aquí. Por ahora, ve todo.
+    // $filtro_usuario = ""; // o un filtro específico si aplica
+    // $params_usuario = [];
+} elseif ($rol_usuario === 'pricing') {
+    // Si pricing tiene un criterio específico, lo defines aquí. Por ahora, ve todo.
+    // $filtro_usuario = ""; // o un filtro específico si aplica
+    // $params_usuario = [];
+} elseif ($rol_usuario === 'admin') {
+    // Admin ve todo
+    // $filtro_usuario = ""; // o un filtro específico si aplica
+    // $params_usuario = [];
+}
+// Para 'admin', 'admin_finanzas', 'pricing', el filtro queda vacío, mostrando todos los prospectos.
+
+// --- Estadísticas ---
+$sql_total = "SELECT COUNT(*) as total FROM prospectos p " . $filtro_usuario;
+$stmt_total = $pdo->prepare($sql_total);
+$stmt_total->execute($params_usuario);
+$total = (int)$stmt_total->fetch()['total'];
+
+$sql_pendientes = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'Pendiente' " . $filtro_usuario;
+$stmt_pendientes = $pdo->prepare($sql_pendientes);
+$stmt_pendientes->execute($params_usuario);
+$pendientes = (int)$stmt_pendientes->fetch()['total'];
+
+$sql_enviados = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'Enviado' " . $filtro_usuario;
+$stmt_enviados = $pdo->prepare($sql_enviados);
+$stmt_enviados->execute($params_usuario);
+$enviados = (int)$stmt_enviados->fetch()['total'];
+
+$sql_devueltos = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'Devuelto_pendiente' " . $filtro_usuario;
+$stmt_devueltos = $pdo->prepare($sql_devueltos);
+$stmt_devueltos->execute($params_usuario);
+$devueltos = (int)$stmt_devueltos->fetch()['total'];
+
+$sql_cerrados = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'CerradoOK' " . $filtro_usuario;
+$stmt_cerrados = $pdo->prepare($sql_cerrados);
+$stmt_cerrados->execute($params_usuario);
+$cerrados = (int)$stmt_cerrados->fetch()['total'];
+
+$sql_rechazados = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'Rechazado' " . $filtro_usuario;
+$stmt_rechazados = $pdo->prepare($sql_rechazados);
+$stmt_rechazados->execute($params_usuario);
+$rechazados = (int)$stmt_rechazados->fetch()['total'];
+
 $porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
 ?>
+
+<!-- Saludo personalizado -->
+<div style="margin-bottom: 1.5rem; padding: 0.8rem; background-color: #e9ecef; border-radius: 6px;">
+    <h2 style="margin: 0; font-size: 1.2rem; color: #3a4f63;">Bienvenido/a, <?= htmlspecialchars($nombre_usuario) ?> (Rol: <?= htmlspecialchars($rol_usuario) ?>)</h2>
+</div>
 
 <!-- Tarjetas de estadísticas -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
@@ -87,6 +146,9 @@ $porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
                 $allowedOrder = ['concatenado', 'razon_social', 'rut_empresa', 'pais', 'estado', 'fecha_alta', 'id_ppl'];
                 $order = in_array($order, $allowedOrder) ? $order : 'id_ppl';
                 $dir = $dir === 'asc' ? 'ASC' : 'DESC';
+
+                // Aplicar el mismo filtro al ordenamiento
+                $order_clause = "ORDER BY p.$order $dir";
                 ?>
                 <th><?= sortLink('concatenado', 'Concatenado', $order, $dir) ?></th>
                 <th><?= sortLink('razon_social', 'Razón Social', $order, $dir) ?></th>
@@ -98,15 +160,18 @@ $porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
         </thead>
         <tbody>
             <?php
-            $stmt = $pdo->prepare("
-                SELECT concatenado, razon_social, rut_empresa, pais, estado, fecha_alta 
-                FROM prospectos 
-                ORDER BY $order $dir 
+            // Consulta principal para la tabla
+            $sql_principal = "
+                SELECT p.concatenado, p.razon_social, p.rut_empresa, p.pais, p.estado, p.fecha_alta 
+                FROM prospectos p 
+                $filtro_usuario 
+                $order_clause 
                 LIMIT 10
-            ");
-            $stmt->execute();
+            ";
+            $stmt_principal = $pdo->prepare($sql_principal);
+            $stmt_principal->execute($params_usuario);
 
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)):
+            while ($row = $stmt_principal->fetch(PDO::FETCH_ASSOC)):
             ?>
             <tr>
                 <td><?= htmlspecialchars($row['concatenado']) ?></td>
@@ -128,7 +193,7 @@ $porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
     </a>
 </div>
 
-</div>
+</main>
 
 <script>
 function filtrarTabla() {

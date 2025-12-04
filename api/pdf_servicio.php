@@ -383,10 +383,10 @@
         $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
             // Anchos ajustados para encabezados: MONEDA (-20%), AFECTO (-20%), IVA (-40%), TOTAL (nueva)
         $html .= '<thead><tr style="background-color: #f2f2f2;">
-            <th style="border: 1px solid #ddd; text-align: center; width: 9%;">TIPO</th>
-            <th style="border: 1px solid #ddd; text-align: center; width: 15%;">GASTOS</th>
-            <th style="border: 1px solid #ddd; text-align: center; width: 9%;">MONEDA</th> <!-- -20% -->
-            <th style="border: 1px solid #ddd; text-align: right; width: 20%;">MONTO</th>    <!-- Ancho fijo para alinear contenido -->
+            <th style="border: 1px solid #ddd; text-align: center; width: 12%;">TIPO</th>
+            <th style="border: 1px solid #ddd; text-align: center; width: 24%;">GASTOS</th>
+            <th style="border: 1px solid #ddd; text-align: center; width: 12%;">MONEDA</th> <!-- -20% -->
+            <th style="border: 1px solid #ddd; text-align: right; width: 15%;">MONTO</th>    <!-- Ancho fijo para alinear contenido -->
             <th style="border: 1px solid #ddd; text-align: center; width: 12%;">AFECTO</th>  <!-- -20% -->
             <th style="border: 1px solid #ddd; text-align: right; width: 10%;">IVA%</th>    <!-- -40% -->
             <th style="border: 1px solid #ddd; text-align: right; width: 15%;">TOTAL</th>   <!-- Ancho para nueva columna -->
@@ -401,10 +401,10 @@
             $subtotal = $esAfecto ? $monto * (1 + $iva / 100) : $monto;
             // --- Fin cálculo ---
             $html .= '<tr>';
-                $html .= '<td style="border: 1px solid #ddd; width: 9%;">' . $g['tipo'] . '</td>';
-                $html .= '<td style="border: 1px solid #ddd; width: 15%;">' . $g['gasto'] . '</td>';
-                $html .= '<td style="border: 1px solid #ddd; text-align: center; width: 9%;">' . $g['moneda'] . '</td>';
-                $html .= '<td style="border: 1px solid #ddd; text-align: right; width: 20%;">' . number_format($g['monto'], 2) . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; width: 12%;">' . $g['tipo'] . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; width: 24%;">' . $g['gasto'] . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; text-align: center; width: 12%;">' . $g['moneda'] . '</td>';
+                $html .= '<td style="border: 1px solid #ddd; text-align: right; width: 15%;">' . number_format($g['monto'], 2) . '</td>';
                 $html .= '<td style="border: 1px solid #ddd; text-align: center; width: 12%;">' . $g['afecto'] . '</td>';
                 $html .= '<td style="border: 1px solid #ddd; text-align: right; width: 10%;">' . number_format($g['iva'], 2) . '%</td>';
                 // Nueva celda para el TOTAL calculado
