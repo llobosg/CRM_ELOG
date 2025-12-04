@@ -1,68 +1,75 @@
 <?php
 // pages/dashboard.php
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php'; // Asegura que el usuario esté autenticado
+require_once __DIR__ . '/../includes/auth_check.php';
 
-$rol_usuario = $_SESSION['rol'] ?? 'comercial'; // Rol por defecto si no está definido
-$nombre_usuario = $_SESSION['user'] ?? 'Usuario'; // Nombre del usuario logueado
-$id_usuario = (int)($_SESSION['user_id'] ?? 0); // ID del usuario logueado
+$rol_usuario = $_SESSION['rol'] ?? 'comercial';
+$nombre_usuario = $_SESSION['user'] ?? 'Usuario';
+$id_usuario = (int)($_SESSION['user_id'] ?? 0);
 
-$filtro_usuario = "";
-$params_usuario = [];
+// --- Lógica de Filtro ---
+$where_clause = '';
+$params_where = [];
 
-// Determinar el filtro según el rol
-// Admin, Admin Finanzas y Pricing ven todo
 if ($rol_usuario === 'comercial') {
-    // El comercial solo ve sus prospectos (basado en id_comercial)
-    $filtro_usuario = " WHERE p.id_comercial = ?";
-    $params_usuario = [$id_usuario];
-} elseif ($rol_usuario === 'admin_finanzas') {
-    // Si admin_finanzas tiene un criterio específico, lo defines aquí. Por ahora, ve todo.
-    // $filtro_usuario = ""; // o un filtro específico si aplica
-    // $params_usuario = [];
-} elseif ($rol_usuario === 'pricing') {
-    // Si pricing tiene un criterio específico, lo defines aquí. Por ahora, ve todo.
-    // $filtro_usuario = ""; // o un filtro específico si aplica
-    // $params_usuario = [];
-} elseif ($rol_usuario === 'admin') {
-    // Admin ve todo
-    // $filtro_usuario = ""; // o un filtro específico si aplica
-    // $params_usuario = [];
+    $where_clause = " WHERE p.id_comercial = ?";
+    $params_where = [$id_usuario];
 }
-// Para 'admin', 'admin_finanzas', 'pricing', el filtro queda vacío, mostrando todos los prospectos.
+// Para admin, admin_finanzas, pricing, $where_clause y $params_where quedan vacíos.
 
 // --- Estadísticas ---
-$sql_total = "SELECT COUNT(*) as total FROM prospectos p " . $filtro_usuario;
+// Consulta para Total Prospectos
+$sql_total = "SELECT COUNT(*) as total FROM prospectos p " . $where_clause; // Asegura el espacio
 $stmt_total = $pdo->prepare($sql_total);
-$stmt_total->execute($params_usuario);
+$stmt_total->execute($params_where);
 $total = (int)$stmt_total->fetch()['total'];
 
-$sql_pendientes = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'Pendiente' " . $filtro_usuario;
+// Consulta para Pendientes
+$sql_pendientes = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Pendiente' " . $where_clause; // Asegura el espacio y el alias
 $stmt_pendientes = $pdo->prepare($sql_pendientes);
-$stmt_pendientes->execute($params_usuario);
+$stmt_pendientes->execute($params_where);
 $pendientes = (int)$stmt_pendientes->fetch()['total'];
 
-$sql_enviados = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'Enviado' " . $filtro_usuario;
+// Consulta para Enviados
+$sql_enviados = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Enviado' " . $where_clause; // Asegura el espacio y el alias
 $stmt_enviados = $pdo->prepare($sql_enviados);
-$stmt_enviados->execute($params_usuario);
+$stmt_enviados->execute($params_where);
 $enviados = (int)$stmt_enviados->fetch()['total'];
 
-$sql_devueltos = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'Devuelto_pendiente' " . $filtro_usuario;
+// Consulta para Devueltos
+$sql_devueltos = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Devuelto_pendiente' " . $where_clause; // Asegura el espacio y el alias
 $stmt_devueltos = $pdo->prepare($sql_devueltos);
-$stmt_devueltos->execute($params_usuario);
+$stmt_devueltos->execute($params_where);
 $devueltos = (int)$stmt_devueltos->fetch()['total'];
 
-$sql_cerrados = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'CerradoOK' " . $filtro_usuario;
+// Consulta para Cerrados OK
+$sql_cerrados = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'CerradoOK' " . $where_clause; // Asegura el espacio y el alias
 $stmt_cerrados = $pdo->prepare($sql_cerrados);
-$stmt_cerrados->execute($params_usuario);
+$stmt_cerrados->execute($params_where);
 $cerrados = (int)$stmt_cerrados->fetch()['total'];
 
-$sql_rechazados = "SELECT COUNT(*) as total FROM prospectos p WHERE estado = 'Rechazado' " . $filtro_usuario;
+// Consulta para Rechazados
+$sql_rechazados = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Rechazado' " . $where_clause; // Asegura el espacio y el alias
 $stmt_rechazados = $pdo->prepare($sql_rechazados);
-$stmt_rechazados->execute($params_usuario);
+$stmt_rechazados->execute($params_where);
 $rechazados = (int)$stmt_rechazados->fetch()['total'];
 
-$porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
+$porcentaje_cierre = $total > 0 ? round(($cerrados / $total) * 100, 1) : 0;
+
+// --- Carga de datos para la tabla ---
+$order = $_GET['order'] ?? 'id_ppl';
+$dir = $_GET['dir'] ?? 'desc';
+$allowed_order = ['concatenado', 'razon_social', 'rut_empresa', 'pais', 'estado', 'fecha_alta', 'id_ppl'];
+$order = in_array($order, $allowed_order) ? $order : 'id_ppl';
+$dir = $dir === 'asc' ? 'ASC' : 'DESC';
+$order_clause = "ORDER BY p.$order $dir";
+
+$sql_tabla = "SELECT p.concatenado, p.razon_social, p.rut_empresa, p.pais, p.estado, p.fecha_alta FROM prospectos p " . $where_clause . " " . $order_clause . " LIMIT 10";
+$stmt_tabla = $pdo->prepare($sql_tabla);
+$stmt_tabla->execute($params_where);
+
+$prospectos_para_tabla = $stmt_tabla->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!-- Saludo personalizado -->
@@ -83,7 +90,7 @@ $porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
     <div style="background: #fff8f0; padding: 1.2rem; border-radius: 10px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border: 1px solid #e9ecef;">
         <h3 style="margin: 0 0 0.8rem 0; color: #d97706; font-size: 1rem; font-weight: 600;">Pendiente</h3>
         <p style="font-size: 2rem; font-weight: bold; color: #d97706; margin: 0;"><?= $pendientes ?></p>
-    </div> 
+    </div>
     <div style="background: #fdecee; padding: 1.2rem; border-radius: 10px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border: 1px solid #e9ecef;">
         <h3 style="margin: 0 0 0.8rem 0; color: #7c2d12; font-size: 1rem; font-weight: 600;">Devuelto</h3>
         <p style="font-size: 2rem; font-weight: bold; color: #7c2d12; margin: 0;"><?= $devueltos ?></p>
@@ -104,10 +111,10 @@ $porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
 
 <!-- Búsqueda en tiempo real -->
 <div style="margin-bottom: 1.5rem;">
-    <input 
-        type="text" 
-        id="search-dashboard" 
-        placeholder="Buscar en prospectos..." 
+    <input
+        type="text"
+        id="search-dashboard"
+        placeholder="Buscar en prospectos..."
         style="
             width: 100%;
             max-width: 400px;
@@ -129,26 +136,16 @@ $porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
         <thead>
             <tr>
                 <?php
-                $order = $_GET['order'] ?? 'id_ppl';
-                $dir = $_GET['dir'] ?? 'desc';
-
                 function sortLink($field, $label, $currentOrder, $currentDir) {
                     $newDir = ($currentOrder === $field && $currentDir === 'asc') ? 'desc' : 'asc';
                     $icon = '';
                     if ($currentOrder === $field) {
-                        $icon = $currentDir === 'asc' 
-                            ? ' <i class="fas fa-sort-up"></i>' 
+                        $icon = $currentDir === 'asc'
+                            ? ' <i class="fas fa-sort-up"></i>'
                             : ' <i class="fas fa-sort-down"></i>';
                     }
                     return "<a href='?page=dashboard&order=$field&dir=$newDir' style='color: white; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;'>$label$icon</a>";
                 }
-
-                $allowedOrder = ['concatenado', 'razon_social', 'rut_empresa', 'pais', 'estado', 'fecha_alta', 'id_ppl'];
-                $order = in_array($order, $allowedOrder) ? $order : 'id_ppl';
-                $dir = $dir === 'asc' ? 'ASC' : 'DESC';
-
-                // Aplicar el mismo filtro al ordenamiento
-                $order_clause = "ORDER BY p.$order $dir";
                 ?>
                 <th><?= sortLink('concatenado', 'Concatenado', $order, $dir) ?></th>
                 <th><?= sortLink('razon_social', 'Razón Social', $order, $dir) ?></th>
@@ -159,20 +156,7 @@ $porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
             </tr>
         </thead>
         <tbody>
-            <?php
-            // Consulta principal para la tabla
-            $sql_principal = "
-                SELECT p.concatenado, p.razon_social, p.rut_empresa, p.pais, p.estado, p.fecha_alta 
-                FROM prospectos p 
-                $filtro_usuario 
-                $order_clause 
-                LIMIT 10
-            ";
-            $stmt_principal = $pdo->prepare($sql_principal);
-            $stmt_principal->execute($params_usuario);
-
-            while ($row = $stmt_principal->fetch(PDO::FETCH_ASSOC)):
-            ?>
+            <?php foreach ($prospectos_para_tabla as $row): ?>
             <tr>
                 <td><?= htmlspecialchars($row['concatenado']) ?></td>
                 <td><?= htmlspecialchars($row['razon_social']) ?></td>
@@ -181,7 +165,7 @@ $porcentaje_cierre = $total ? round(($cerrados / $total) * 100, 1) : 0;
                 <td><?= htmlspecialchars($row['estado']) ?></td>
                 <td><?= date('d-m-Y', strtotime($row['fecha_alta'])) ?></td>
             </tr>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         </tbody>
     </table>
 </div>
@@ -202,7 +186,7 @@ function filtrarTabla() {
     const rows = document.querySelectorAll('.table-container tbody tr');
 
     rows.forEach(row => {
-        const match = Array.from(row.cells).some(cell => 
+        const match = Array.from(row.cells).some(cell =>
             cell.textContent.toLowerCase().includes(filter)
         );
         row.style.display = match ? '' : 'none';
