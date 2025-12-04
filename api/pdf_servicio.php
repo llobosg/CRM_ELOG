@@ -377,6 +377,18 @@ if (!empty($gastos_datos)) {
     $html .= '</div>';
 }
 
+// --- Notas Comerciales ---
+$html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
+$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS COMERCIALES</h3>'; // Tamaño de título ligeramente menor
+$html .= nl2br(sanitizeText($notasComerciales));
+$html .= '</div>';
+
+// --- Notas a Operaciones ---
+$html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
+$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>'; // Tamaño de título ligeramente menor
+$html .= nl2br(sanitizeText($notasOperaciones));
+$html .= '</div>';
+
 // --- Carga interna de condiciones de tráfico ---
 $condicionTraficoLimpia = '';
 $tipoTraficoDelServicio = $servicio_datos['trafico'];
@@ -417,18 +429,6 @@ if ($tipoTraficoDelServicio) {
     error_log("[PDF_SERVICIO] Advertencia: Tipo de tráfico vacío, no se puede cargar la condición al generar PDF para servicio {$servicio_datos['id_srvc']}.");
 }
 // --- FIN CARGA INTERNA ---
-
-// --- Notas Comerciales ---
-$html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
-$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS COMERCIALES</h3>'; // Tamaño de título ligeramente menor
-$html .= nl2br(sanitizeText($notasComerciales));
-$html .= '</div>';
-
-// --- Notas a Operaciones ---
-$html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
-$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>'; // Tamaño de título ligeramente menor
-$html .= nl2br(sanitizeText($notasOperaciones));
-$html .= '</div>';
 
 // === Agregar la condición de tráfico al PDF usando MultiCell ===
 if ($condicionTraficoLimpia) {
