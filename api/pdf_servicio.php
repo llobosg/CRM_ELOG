@@ -163,7 +163,7 @@
             $this->SetFont('helvetica', '', 8);
 
             // Número de página centrado
-            $this->Cell(0, 10, 'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages() . ' - Cotización: ' . $GLOBALS['servicio_datos']['concatenado'], 0, false, 'C');
+            $this->Cell(0, 10, '          Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages() . ' - Cotización: ' . $GLOBALS['servicio_datos']['concatenado'], 0, false, 'C');
         }
     }
 
@@ -264,10 +264,10 @@
     $html .= '</tr>';
 
     // Fila interna 2: Commodity
+    $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>'; // Fila de espacio
     $html .= '<tr>';
     $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>COMMODITY:</strong></td>';
     $html .= '<td style="width: 50%; text-align: left;">' . $servicio_datos['commodity'] . '</td>'; // Alineado a la izquierda
-    
     $html .= '</tr>';
 
     // Fila interna 3: Unidades FCL y Cantidad/Bultos
@@ -381,9 +381,17 @@
         $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
         $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS VENTAS LOCALES</h3>'; // Tamaño de título ligeramente menor
         $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
-        $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: center;">TIPO</th><th style="border: 1px solid #ddd; text-align: center;">GASTOS</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: right;">MONTO</th><th style="border: 1px solid #ddd; text-align: center;">AFECTO</th><th style="border: 1px solid #ddd; text-align: right;">IVA%</th></tr></thead>';
+        // Anchos ajustados: MONEDA (-20%), AFECTO (-20%), IVA (-40%), nueva columna TOTAL
+        $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: center;">TIPO</th><th style="border: 1px solid #ddd; text-align: center;">GASTOS</th><th style="border: 1px solid #ddd; text-align: center; width: 12%;">MONEDA</th><th style="border: 1px solid #ddd; text-align: right;">MONTO</th><th style="border: 1px solid #ddd; text-align: center; width: 8%;">AFECTO</th><th style="border: 1px solid #ddd; text-align: right; width: 6%;">IVA%</th><th style="border: 1px solid #ddd; text-align: right; width: 10%;">TOTAL</th></tr></thead>'; // Anchos ajustados y nueva columna TOTAL
         $html .= '<tbody>';
         foreach ($gastos_datos as $g) {
+            // --- Cálculo del subtotal ---
+            $monto = $g['monto'];
+            $iva = $g['iva'];
+            $afecto = $g['afecto'];
+            $esAfecto = ($afecto === 'SI' || $afecto === true);
+            $subtotal = $esAfecto ? $monto * (1 + $iva / 100) : $monto;
+            // --- Fin cálculo ---
             $html .= '<tr>';
             $html .= '<td style="border: 1px solid #ddd;">' . $g['tipo'] . '</td>';
             $html .= '<td style="border: 1px solid #ddd;">' . $g['gasto'] . '</td>';
@@ -391,6 +399,8 @@
             $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($g['monto'], 2) . '</td>';
             $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $g['afecto'] . '</td>';
             $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($g['iva'], 2) . '%</td>';
+            // Nueva celda para el TOTAL calculado
+            $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($subtotal, 2) . '</td>';
             $html .= '</tr>';
         }
         $html .= '</tbody>';
@@ -461,7 +471,7 @@
     // --- Agregar la condición de tráfico al HTML del PDF (al final) ---
     if ($condicionTraficoLimpia) {
         $html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: auto;">'; // Tamaño de fuente base un 10% menor, forzar nueva página si es muy larga
-        $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio) . '</h3>'; // Título con tráfico
+        $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS</h3>'; // Título con tráfico
 
         // Dividir el texto en líneas, ahora debería haber \n entre viñetas gracias al procesamiento anterior
         $lineas = preg_split('/\r\n|\r|\n/', $condicionTraficoLimpia);
