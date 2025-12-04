@@ -163,7 +163,7 @@
             $this->SetFont('helvetica', '', 8);
 
             // Número de página centrado
-            $this->Cell(0, 10, 'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages(),$this->Cell(0, 10, 'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages() . ' - Cotización: ' . $GLOBALS['servicio_datos']['concatenado'], 0, false, 'R');
+            $this->Cell(0, 10, 'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages() . ' - Cotización: ' . $GLOBALS['servicio_datos']['concatenado'], 0, false, 'R');
         }
     }
 
