@@ -430,20 +430,37 @@
     }
     // --- FIN CARGA INTERNA ---
 
-    // --- Agregar la condición de tráfico al HTML del PDF (usando tabla para formato) ---
+    // --- Agregar la condición de tráfico al HTML del PDF (usando tabla con fila por línea) ---
     if ($condicionTraficoLimpia) {
         $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
         $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio) . '</h3>'; // Título con tráfico
 
-        // Dividir el texto en líneas
-        $lineas = explode("\n", $condicionTraficoLimpia);
+        // Dividir el texto en líneas, manejando tanto \n como \r\n
+        $lineas = preg_split('/\r\n|\r|\n/', $condicionTraficoLimpia);
 
-        // Crear una tabla para cada línea
+        // Crear una tabla para cada línea, manejando viñetas
         $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
         foreach ($lineas as $linea) {
             $linea = trim($linea); // Limpiar espacios al inicio y final de cada línea
             if ($linea !== '') { // Solo procesar líneas no vacías
-                $html .= '<tr><td style="padding: 1px 0; vertical-align: top;">' . htmlspecialchars($linea, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td></tr>';
+                // Opcional: Identificar si la línea comienza con una viñeta común y darle formato
+                // Busca patrones como "• texto", "- texto", "* texto", etc.
+                $patronViñeta = '/^([•\-–—*+\u2022]\s*)(.*)$/u'; // Patrón que captura la viñeta y el resto del texto
+                if (preg_match($patronViñeta, $linea, $matches)) {
+                    // Si hay coincidencia, formatea la línea como viñeta + texto
+                    $viñeta = $matches[1];
+                    $texto = $matches[2];
+                    // Creamos una fila con dos celdas: una para la viñeta y otra para el texto
+                    $html .= '<tr>';
+                    $html .= '<td style="padding: 1px 0; vertical-align: top; width: 5%;">' . htmlspecialchars($viñeta, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td>';
+                    $html .= '<td style="padding: 1px 0; vertical-align: top; width: 95%;">' . htmlspecialchars($texto, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td>';
+                    $html .= '</tr>';
+                } else {
+                    // Si no es una viñeta, imprime la línea completa en una celda
+                    $html .= '<tr>';
+                    $html .= '<td style="padding: 1px 0; vertical-align: top; width: 100%;" colspan="2">' . htmlspecialchars($linea, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td>';
+                    $html .= '</tr>';
+                }
             }
         }
         $html .= '</table>';
