@@ -5,51 +5,63 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 
+// --- Obtener rol y ID del usuario ---
 $rol_usuario = $_SESSION['rol'] ?? 'comercial';
 $nombre_usuario = $_SESSION['user'] ?? 'Usuario';
 $id_usuario = (int)($_SESSION['user_id'] ?? 0);
 
-// --- Lógica de Filtro por Rol ---
-$where_clause = '';
-$params_where = [];
+// --- Lógica de Filtro por Rol (aislada en variables locales) ---
+$filtro_sql = ''; // Inicializar variable para la cláusula WHERE
+$filtro_params = []; // Inicializar array para los parámetros de la consulta
 
 if ($rol_usuario === 'comercial') {
-    $where_clause = " WHERE id_comercial = ?";
-    $params_where = [$id_usuario];
+    $filtro_sql = " AND p.id_comercial = ?"; // Usar AND si va después de un WHERE en la misma consulta
+    $filtro_params = [$id_usuario];
+} else {
+    // Para admin, admin_finanzas, pricing, no se aplica filtro adicional basado en id_comercial
+    // $filtro_sql y $filtro_params permanecen como cadenas vacías y array vacío.
 }
-// Para admin, admin_finanzas, pricing, $where_clause y $params_where quedan vacíos.
 
-// --- Estadísticas ---
-$sql_total = "SELECT COUNT(*) as total FROM prospectos " . $where_clause; // ✅ Ajuste: No se usa alias 'p' aquí si no se hace JOIN
+// --- Estadísticas (consultas COUNT) ---
+// La consulta base es SELECT COUNT, la parte WHERE se agrega después de la condición específica del estado
+// La parte de filtro por rol se concatena al final.
+// Ejemplo para Total:
+$sql_total_base = "SELECT COUNT(*) as total FROM prospectos p WHERE 1=1 "; // WHERE 1=1 facilita concatenar ANDs adicionales
+$sql_total = $sql_total_base . $filtro_sql; // Concatenar filtro de rol
 $stmt_total = $pdo->prepare($sql_total);
-$stmt_total->execute($params_where); // ✅ Usar los parámetros correctos
+$stmt_total->execute($filtro_params); // Ejecutar con los parámetros del filtro
 $total = (int)$stmt_total->fetch()['total'];
 
 // Asumiendo que 'Enviado', 'Pendiente', etc. son estados válidos en tu sistema
 // Ajusta estos estados si es necesario
-$sql_enviados = "SELECT COUNT(*) as total FROM prospectos WHERE estado = 'Enviado' " . $where_clause; // ✅ Ajuste: No se usa alias 'p'
+$sql_enviados_base = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Enviado' ";
+$sql_enviados = $sql_enviados_base . $filtro_sql;
 $stmt_enviados = $pdo->prepare($sql_enviados);
-$stmt_enviados->execute($params_where); // ✅ Usar los parámetros correctos
+$stmt_enviados->execute($filtro_params);
 $enviados = (int)$stmt_enviados->fetch()['total'];
 
-$sql_pendientes = "SELECT COUNT(*) as total FROM prospectos WHERE estado = 'Pendiente' " . $where_clause; // ✅ Ajuste: No se usa alias 'p'
+$sql_pendientes_base = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Pendiente' ";
+$sql_pendientes = $sql_pendientes_base . $filtro_sql;
 $stmt_pendientes = $pdo->prepare($sql_pendientes);
-$stmt_pendientes->execute($params_where); // ✅ Usar los parámetros correctos
+$stmt_pendientes->execute($filtro_params);
 $pendientes = (int)$stmt_pendientes->fetch()['total'];
 
-$sql_devueltos = "SELECT COUNT(*) as total FROM prospectos WHERE estado = 'Devuelto_pendiente' " . $where_clause; // ✅ Ajuste: No se usa alias 'p'
+$sql_devueltos_base = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Devuelto_pendiente' ";
+$sql_devueltos = $sql_devueltos_base . $filtro_sql;
 $stmt_devueltos = $pdo->prepare($sql_devueltos);
-$stmt_devueltos->execute($params_where); // ✅ Usar los parámetros correctos
+$stmt_devueltos->execute($filtro_params);
 $devueltos = (int)$stmt_devueltos->fetch()['total'];
 
-$sql_cerrados = "SELECT COUNT(*) as total FROM prospectos WHERE estado = 'CerradoOK' " . $where_clause; // ✅ Ajuste: No se usa alias 'p'
+$sql_cerrados_base = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'CerradoOK' ";
+$sql_cerrados = $sql_cerrados_base . $filtro_sql;
 $stmt_cerrados = $pdo->prepare($sql_cerrados);
-$stmt_cerrados->execute($params_where); // ✅ Usar los parámetros correctos
+$stmt_cerrados->execute($filtro_params);
 $cerrados = (int)$stmt_cerrados->fetch()['total'];
 
-$sql_rechazados = "SELECT COUNT(*) as total FROM prospectos WHERE estado = 'Rechazado' " . $where_clause; // ✅ Ajuste: No se usa alias 'p'
+$sql_rechazados_base = "SELECT COUNT(*) as total FROM prospectos p WHERE p.estado = 'Rechazado' ";
+$sql_rechazados = $sql_rechazados_base . $filtro_sql;
 $stmt_rechazados = $pdo->prepare($sql_rechazados);
-$stmt_rechazados->execute($params_where); // ✅ Usar los parámetros correctos
+$stmt_rechazados->execute($filtro_params);
 $rechazados = (int)$stmt_rechazados->fetch()['total'];
 
 $porcentaje_cierre = $total > 0 ? round(($cerrados / $total) * 100, 1) : 0;
@@ -60,11 +72,16 @@ $dir = $_GET['dir'] ?? 'desc';
 $allowed_order = ['concatenado', 'razon_social', 'rut_empresa', 'pais', 'estado', 'fecha_alta', 'id_ppl'];
 $order = in_array($order, $allowed_order) ? $order : 'id_ppl';
 $dir = $dir === 'asc' ? 'ASC' : 'DESC';
-$order_clause = "ORDER BY $order $dir"; // ✅ Ajuste: No se usa alias 'p' aquí si no se hace JOIN en la consulta principal de la tabla
+$order_clause = "ORDER BY p.$order $dir";
 
-$sql_tabla = "SELECT concatenado, razon_social, rut_empresa, pais, estado, fecha_alta FROM prospectos " . $where_clause . " " . $order_clause . " LIMIT 10"; // ✅ Ajuste: No se usa alias 'p'
+// Consulta para la tabla (SELECT con JOIN)
+$sql_tabla_base = "SELECT p.concatenado, p.razon_social, p.rut_empresa, p.pais, p.estado, p.fecha_alta FROM prospectos p ";
+// Opcional: Si necesitas un JOIN con clientes para obtener datos como el nombre del comercial, lo harías aquí
+// $sql_tabla_base = "SELECT p.concatenado, p.razon_social, p.rut_empresa, p.pais, p.estado, p.fecha_alta, u.nombre as nombre_comercial FROM prospectos p LEFT JOIN usuarios u ON p.id_comercial = u.id ";
+$sql_tabla = $sql_tabla_base . $filtro_sql . " " . $order_clause . " LIMIT 10";
 $stmt_tabla = $pdo->prepare($sql_tabla);
-$stmt_tabla->execute($params_where); // ✅ Usar los parámetros correctos
+$stmt_tabla->execute($filtro_params);
+
 $prospectos_para_tabla = $stmt_tabla->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
