@@ -430,43 +430,38 @@
     }
     // --- FIN CARGA INTERNA ---
 
-    // --- Agregar la condición de tráfico al HTML del PDF (usando tabla con fila por línea) ---
-    if ($condicionTraficoLimpia) {
-        $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
-        $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio) . '</h3>'; // Título con tráfico
+    // --- RENDERIZAR LA CONDICIÓN DE TRÁFICO CON MULTICELL (NO HTML) ---
+if (!empty($condicionTraficoLimpia)) {
 
-        // Dividir el texto en líneas, manejando tanto \n como \r\n
-        $lineas = preg_split('/\r\n|\r|\n/', $condicionTraficoLimpia);
+    // Título
+    $pdf->Ln(4);
+    $pdf->SetFont('helvetica', 'B', 10);
+    $pdf->Write(0, 'CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio), '', 0, 'L', true);
+    $pdf->Ln(1);
 
-        // Crear una tabla para cada línea, manejando viñetas
-        $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
-        foreach ($lineas as $linea) {
-            $linea = trim($linea); // Limpiar espacios al inicio y final de cada línea
-            if ($linea !== '') { // Solo procesar líneas no vacías
-                // Opcional: Identificar si la línea comienza con una viñeta común y darle formato
-                // Busca patrones como "• texto", "- texto", "* texto", etc.
-                $patronViñeta = '/^([•\-–—*\xE2\x80\xA2]\s*)(.*)$/u'; // Patrón que captura la viñeta y el resto del texto - \xE2\x80\xA2 es el hex UTF-8 para •
-                if (preg_match($patronViñeta, $linea, $matches)) {
-                    // Si hay coincidencia, formatea la línea como viñeta + texto
-                    $viñeta = $matches[1];
-                    $texto = $matches[2];
-                    // Creamos una fila con dos celdas: una para la viñeta y otra para el texto
-                    $html .= '<tr>';
-                    $html .= '<td style="padding: 1px 0; vertical-align: top; width: 5%;">' . htmlspecialchars($viñeta, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td>';
-                    $html .= '<td style="padding: 1px 0; vertical-align: top; width: 95%;">' . htmlspecialchars($texto, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td>';
-                    $html .= '</tr>';
-                } else {
-                    // Si no es una viñeta, imprime la línea completa en una celda
-                    $html .= '<tr>';
-                    $html .= '<td style="padding: 1px 0; vertical-align: top; width: 100%;" colspan="2">' . htmlspecialchars($linea, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td>';
-                    $html .= '</tr>';
-                }
-            }
-        }
-        $html .= '</table>';
+    // Contenido normal
+    $pdf->SetFont('helvetica', '', 9);
 
-        $html .= '</div>';
-    }
+    // Asegurar que cada "•" tenga salto antes
+    $texto = $condicionTraficoLimpia;
+    $texto = str_replace("•", "\n•", $texto);
+    $texto = preg_replace('/\n+/', "\n", $texto);
+
+    // Limpiar doble espacios
+    $texto = trim($texto);
+
+    // MultiCell respeta saltos y viñetas
+    $pdf->MultiCell(
+        0,          // ancho
+        5,          // alto de línea
+        $texto,     // contenido
+        0,          // sin borde
+        'L',        // alineación
+        false,      // sin fondo
+        1           // mover cursor a siguiente línea
+    );
+}
+
 
     // Salida del PDF
     $pdf->writeHTML($html, true, false, true, false, '');
