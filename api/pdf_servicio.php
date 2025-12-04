@@ -430,14 +430,24 @@
     }
     // --- FIN CARGA INTERNA ---
 
-    // --- Agregar la condición de tráfico al HTML del PDF ---
+    // --- Agregar la condición de tráfico al HTML del PDF (usando tabla para formato) ---
     if ($condicionTraficoLimpia) {
-        $html .= '<div style="margin-top: 4mm; font-size: 9pt; page-break-before: auto;">'; // Tamaño de fuente base un 10% menor, forzar nueva página si es muy larga
+        $html .= '<div style="margin-top: 4mm; font-size: 9pt;">'; // Tamaño de fuente base un 10% menor
         $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm; text-decoration: underline;">CONDICIONES ESPECÍFICAS - ' . strtoupper($tipoTraficoDelServicio) . '</h3>'; // Título con tráfico
-        $html .= '<div style="line-height: 1.4; white-space: pre-wrap;">'; // Contenedor para mejor formato de párrafos y preservar saltos de línea
-        // ✅ CORREGIDO: Usar nl2br para convertir \n en <br> y luego escapar HTML
-        $html .= htmlspecialchars(nl2br($condicionTraficoLimpia), ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401);
-        $html .= '</div>';
+
+        // Dividir el texto en líneas
+        $lineas = explode("\n", $condicionTraficoLimpia);
+
+        // Crear una tabla para cada línea
+        $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
+        foreach ($lineas as $linea) {
+            $linea = trim($linea); // Limpiar espacios al inicio y final de cada línea
+            if ($linea !== '') { // Solo procesar líneas no vacías
+                $html .= '<tr><td style="padding: 1px 0; vertical-align: top;">' . htmlspecialchars($linea, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML401) . '</td></tr>';
+            }
+        }
+        $html .= '</table>';
+
         $html .= '</div>';
     }
 
