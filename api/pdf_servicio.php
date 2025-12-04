@@ -445,7 +445,7 @@
             if ($linea !== '') { // Solo procesar líneas no vacías
                 // Opcional: Identificar si la línea comienza con una viñeta común y darle formato
                 // Busca patrones como "• texto", "- texto", "* texto", etc.
-                $patronViñeta = '/^([•\-–—*+\u2022]\s*)(.*)$/u'; // Patrón que captura la viñeta y el resto del texto
+                $patronViñeta = '/^([•\-–—*\xE2\x80\xA2]\s*)(.*)$/u'; // Patrón que captura la viñeta y el resto del texto - \xE2\x80\xA2 es el hex UTF-8 para •
                 if (preg_match($patronViñeta, $linea, $matches)) {
                     // Si hay coincidencia, formatea la línea como viñeta + texto
                     $viñeta = $matches[1];
