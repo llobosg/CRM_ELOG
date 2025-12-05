@@ -124,7 +124,7 @@
 
         <!-- Saludo personalizado -->
         <div style="margin-bottom: 1.5rem; padding: 0.8rem; background-color: #e9ecef; border-radius: 6px;">
-            <h2 style="margin: 0; font-size: 1.2rem; color: #3a4f63;">Dashboard - <?= htmlspecialchars($nombre_usuario) ?></h2>
+            <h2 style="margin: 0; font-size: 1.2rem; color: #3a4f63;">Bienvenido/a, <?= htmlspecialchars($nombre_usuario) ?> (Rol: <?= htmlspecialchars($rol_usuario) ?>)</h2>
         </div>
 
         <!-- Tarjetas de estadísticas -->
