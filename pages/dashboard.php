@@ -9,14 +9,11 @@
     $rol_usuario = $_SESSION['rol'] ?? 'comercial';
     $nombre_usuario = $_SESSION['user'] ?? 'Usuario'; // Valor temporal o por defecto si no se puede cargar desde DB
     $id_usuario = (int)($_SESSION['id_usr'] ?? 0); // ✅ Definir $id_usuario aquí, antes de usarlo
-    error_log("[DASHBOARD] rol $rol_usuario: " . $e->getMessage());
-    error_log("[DASHBOARD] user $nombre_usuario: " . $e->getMessage());
-    error_log("[DASHBOARD] id_usr $id_usuario: " . $e->getMessage());
 
     // --- Cargar nombre real del usuario desde la base de datos ---
     if ($id_usuario > 0) { // Solo intentar cargar si hay un ID de usuario válido en la sesión
         try {
-            $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE id_usr = ?");
+            $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE email = ?");
             $stmt_nombre->execute([$id_usuario]); // ✅ Usar $id_usuario aquí
             $fila_nombre = $stmt_nombre->fetch(PDO::FETCH_ASSOC);
             if ($fila_nombre && !empty($fila_nombre['nombre'])) {
