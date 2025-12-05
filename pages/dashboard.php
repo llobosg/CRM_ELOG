@@ -13,7 +13,7 @@
     // --- Cargar nombre real del usuario desde la base de datos ---
     if ($id_usuario > 0) { // Solo intentar cargar si hay un ID de usuario válido en la sesión
         try {
-            $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE email = ?");
+            $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE email = $nombre_usuario");
             $stmt_nombre->execute([$id_usuario]); // ✅ Usar $id_usuario aquí
             $fila_nombre = $stmt_nombre->fetch(PDO::FETCH_ASSOC);
             if ($fila_nombre && !empty($fila_nombre['nombre'])) {
