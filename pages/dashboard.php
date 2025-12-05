@@ -7,8 +7,29 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
 // --- Obtener rol y ID del usuario ---
 $rol_usuario = $_SESSION['rol'] ?? 'comercial';
-$nombre_usuario = $_SESSION['user'] ?? 'Usuario';
-$id_usuario = (int)($_SESSION['user_id'] ?? 0);
+// --- Obtener nombre del usuario logueado desde la base de datos ---
+$user_id = (int)($_SESSION['user_id'] ?? 0);
+$nombre_usuario = 'Usuario'; // Valor por defecto si no se encuentra o no hay sesión
+
+if ($user_id > 0) {
+    try {
+        $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE id = ?");
+        $stmt_nombre->execute([$user_id]);
+        $fila_nombre = $stmt_nombre->fetch(PDO::FETCH_ASSOC);
+        if ($fila_nombre && !empty($fila_nombre['nombre'])) {
+            $nombre_usuario = sanitizeText($fila_nombre['nombre']);
+        } else {
+            // Opcional: Si no se encuentra un nombre en la base de datos, puedes usar el correo como fallback
+            $nombre_usuario = sanitizeText($_SESSION['user'] ?? 'Usuario Sin Nombre');
+            error_log("[DASHBOARD] Advertencia: No se encontró nombre para el usuario ID: $user_id. Usando fallback.");
+        }
+    } catch (PDOException $e) {
+        // Manejar error de base de datos al obtener nombre
+        error_log("[DASHBOARD] Error al obtener nombre del usuario ID $user_id: " . $e->getMessage());
+        $nombre_usuario = 'Usuario (Error)'; // Mensaje de error en el nombre
+    }
+}
+// --- Fin Obtener nombre ---
 
 // --- Lógica de Filtro por Rol (aislada en variables locales) ---
 $filtro_sql = ''; // Inicializar variable para la cláusula WHERE
