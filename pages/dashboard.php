@@ -13,8 +13,8 @@
     // --- Cargar nombre real del usuario desde la base de datos ---
     if ($id_usuario > 0) { // Solo intentar cargar si hay un ID de usuario válido en la sesión
         try {
-            $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE email = $nombre_usuario");
-            $stmt_nombre->execute([$id_usuario]); // ✅ Usar $id_usuario aquí
+            $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE nombre = ?");
+            $stmt_nombre->execute([$nombre_usuario]); // ✅ Usar $nombre_usuario aquí
             $fila_nombre = $stmt_nombre->fetch(PDO::FETCH_ASSOC);
             if ($fila_nombre && !empty($fila_nombre['nombre'])) {
                 $nombre_usuario = sanitizeText($fila_nombre['nombre']); // ✅ Actualizar $nombre_usuario con el nombre real
@@ -124,7 +124,7 @@
 
         <!-- Saludo personalizado -->
         <div style="margin-bottom: 1.5rem; padding: 0.8rem; background-color: #e9ecef; border-radius: 6px;">
-            <h2 style="margin: 0; font-size: 1.2rem; color: #3a4f63;">Bienvenido/a, <?= htmlspecialchars($id_usuario) ?> (Rol: <?= htmlspecialchars($rol_usuario) ?>)</h2>
+            <h2 style="margin: 0; font-size: 1.2rem; color: #3a4f63;">Bienvenido/a, <?= htmlspecialchars($nombre_usuario) ?> (Rol: <?= htmlspecialchars($rol_usuario) ?>)</h2>
         </div>
 
         <!-- Tarjetas de estadísticas -->

@@ -39,7 +39,7 @@ try {
     $usuario = $stmt->fetch();
 
     if ($usuario && $password_input === $usuario['password']) {
-        $_SESSION['user'] = $usuario['email'] ?: $usuario['nombre'] ?: 'Usuario';
+        $_SESSION['user'] = $usuario['nombre'] ?: 'Usuario';
         $_SESSION['user_id'] = (int)$usuario['id_usr'];
         $_SESSION['rol'] = $usuario['rol'];
 
