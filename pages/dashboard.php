@@ -11,10 +11,10 @@
     $id_usuario = (int)($_SESSION['user_id'] ?? 0); // ✅ Definir $id_usuario aquí, antes de usarlo
 
     // --- Cargar nombre real del usuario desde la base de datos ---
-    if ($id_usuario > 0) { // Solo intentar cargar si hay un ID de usuario v‡lido en la sesi¢n
+    if ($id_usuario > 0) { // Solo intentar cargar si hay un ID de usuario válido en la sesión
         try {
-            $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE id = ?");
-            $stmt_nombre->execute([$id_usuario]); // ✅ Usar $id_usuario aqu¡
+            $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE id_usr = ?");
+            $stmt_nombre->execute([$id_usuario]); // ✅ Usar $id_usuario aquí
             $fila_nombre = $stmt_nombre->fetch(PDO::FETCH_ASSOC);
             if ($fila_nombre && !empty($fila_nombre['nombre'])) {
                 $nombre_usuario = sanitizeText($fila_nombre['nombre']); // ✅ Actualizar $nombre_usuario con el nombre real
