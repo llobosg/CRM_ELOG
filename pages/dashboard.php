@@ -7,8 +7,11 @@
 
     // --- Obtener rol y ID del usuario desde la sesión ---
     $rol_usuario = $_SESSION['rol'] ?? 'comercial';
-    $nombre_usuario = $_SESSION['nombre'] ?? 'Usuario'; // Valor temporal o por defecto si no se puede cargar desde DB
+    $nombre_usuario = $_SESSION['user'] ?? 'Usuario'; // Valor temporal o por defecto si no se puede cargar desde DB
     $id_usuario = (int)($_SESSION['id_usr'] ?? 0); // ✅ Definir $id_usuario aquí, antes de usarlo
+    error_log("[DASHBOARD] rol $rol_usuario: " . $e->getMessage());
+    error_log("[DASHBOARD] user $nombre_usuario: " . $e->getMessage());
+    error_log("[DASHBOARD] id_usr $id_usuario: " . $e->getMessage());
 
     // --- Cargar nombre real del usuario desde la base de datos ---
     if ($id_usuario > 0) { // Solo intentar cargar si hay un ID de usuario válido en la sesión
