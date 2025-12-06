@@ -72,7 +72,7 @@ try {
         INSERT INTO adjuntos_prospectos (id_prospect, nombre_archivo, ruta_archivo, tipo_mime, tamano_bytes)
         VALUES (?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$id_prospect, $nombreOriginal, '/uploads/adjuntos_prospectos/' . $nombreUnico, $tipoMime, $tamano]);
+    $stmt->execute([$id_prospect, $nombreOriginal, '/adjuntos_prospectos/' . $nombreUnico, $tipoMime, $tamano]);
 
     echo json_encode(['success' => true, 'message' => 'Archivo subido correctamente.']);
 
