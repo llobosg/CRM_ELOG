@@ -2606,9 +2606,6 @@
 
         // --- Funciones para manejo de Adjuntos ---
 
-        // Variable para almacenar el ID del prospecto actual
-        let idProspectoActual = null;
-
         // Abrir submodal de adjuntos
         function abrirSubmodalAdjuntos() {
             const idPpl = document.getElementById('id_ppl')?.value;
