@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../config.php';
 
 // Directorio donde se guardarán los archivos
-$uploadDir = __DIR__ . '/../uploads/adjuntos_prospectos/';
+$uploadDir = __DIR__ . '/../adjuntos_prospectos/';
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0755, true); // Crear directorio si no existe
 }
