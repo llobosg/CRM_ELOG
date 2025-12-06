@@ -463,18 +463,27 @@
         </div>
     </div>
 
-    <!-- Agregar al final del <main> o donde consideres apropiado en prospectos.php -->
-    <div id="adjuntos-section" style="position: fixed; top: 100px; right: 20px; width: 300px; background: white; border: 1px solid #ccc; border-radius: 8px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 10000; max-height: 80vh; overflow-y: auto; display: none;">
-        <h4>Adjuntos</h4>
-        <ul id="lista-adjuntos">
-            <!-- Los enlaces a los PDFs generados se pueden añadir aquí dinámicamente si se almacenan temporalmente -->
-            <!-- Por ahora, esta sección solo sirve como marcador visual -->
-        </ul>
-        <button onclick="document.getElementById('adjuntos-section').style.display='none';" style="margin-top: 10px;">Cerrar</button>
+    <!-- Submodal de Adjuntos -->
+    <div id="submodal-adjuntos" class="modal" style="display: none; position: fixed; z-index: 10001; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-content" style="background-color: white; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 60%; max-width: 600px; border-radius: 8px;">
+            <h3><i class="fas fa-paperclip"></i> Adjuntos del Prospecto</h3>
+            <!-- Botón de cierre con evento onclick -->
+            <span class="close" onclick="cerrarSubmodalAdjuntos()" style="cursor: pointer; float: right; font-size: 1.8rem; margin-top: -5px;">&times;</span>
+            <div id="lista-adjuntos" style="margin: 1rem 0; max-height: 200px; overflow-y: auto;">
+                <!-- Los adjuntos se cargarán aquí dinámicamente -->
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem;">
+                <!-- Input de archivo -->
+                <input type="file" id="archivo-input" name="archivo_adjunto" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" style="flex-grow: 1;" />
+                <!-- Botón Subir con type="button" -->
+                <button type="button" class="btn-primary" onclick="subirAdjunto()">Subir</button>
+            </div>
+            <!-- Botón Cerrar con type="button" -->
+            <div style="text-align: right; margin-top: 1rem;">
+                <button type="button" class="btn-secondary" onclick="cerrarSubmodalAdjuntos()">Cerrar</button>
+            </div>
+        </div>
     </div>
-
-    <!-- Botón para mostrar la sección de adjuntos (opcional) -->
-    <button onclick="document.getElementById('adjuntos-section').style.display='block';" style="position: fixed; top: 50px; right: 20px; z-index: 10001;">Adjuntos</button>
 
     <!-- Toast de notificaciones -->
     <div id="toast" class="toast" style="display:none;">
@@ -2591,10 +2600,166 @@
             }
         });
 
-        // Opcional: También podrías querer disparar la carga si el campo se llena por otros medios (como al cargar un prospecto)
-        // En ese caso, después de llenar 'rut_empresa' en 'seleccionarProspecto', puedes llamar directamente a:
-        // cargarContactoPrimario(document.getElementById('rut_empresa').value);
+        // --- Variables globales para adjuntos ---
+        let adjuntosProspecto = []; // Array para almacenar los adjuntos del prospecto actual
+        let idProspectoActual = null; // Para saber a qué prospecto pertenecen los adjuntos
 
+        // --- Funciones para manejo de Adjuntos ---
+
+        // Variable para almacenar el ID del prospecto actual
+        let idProspectoActual = null;
+
+        // Abrir submodal de adjuntos
+        function abrirSubmodalAdjuntos() {
+            const idPpl = document.getElementById('id_ppl')?.value;
+            if (!idPpl || idPpl === '0') {
+                error('No hay un prospecto seleccionado para adjuntar archivos.');
+                return;
+            }
+            idProspectoActual = idPpl; // Guardar ID del prospecto actual
+            cargarAdjuntosProspecto(idPpl); // Cargar adjuntos del prospecto
+            document.getElementById('submodal-adjuntos').style.display = 'block';
+            // Prevenir el submit del form principal si el submodal está dentro de él
+            event?.preventDefault?.(); // Agregar esta línea si el evento click lo provee
+        }
+
+        // Cerrar submodal de adjuntos
+        function cerrarSubmodalAdjuntos() {
+            document.getElementById('submodal-adjuntos').style.display = 'none';
+            // Opcional: Limpiar el input de archivo al cerrar
+            document.getElementById('archivo-input').value = '';
+            // Prevenir el submit del form principal si el submodal está dentro de él
+            event?.preventDefault?.(); // Agregar esta línea si el evento click lo provee
+        }
+
+        // Cargar adjuntos desde la API
+        function cargarAdjuntosProspecto(idPpl) {
+            // Limpiar lista antes de cargar
+            document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #666; text-align: center;">Cargando...</p>';
+
+            fetch(`/api/get_adjuntos_prospecto.php?id_prospect=${encodeURIComponent(idPpl)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const adjuntos = data.adjuntos || [];
+                        if (adjuntos.length === 0) {
+                            document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #666; text-align: center;">No hay adjuntos para este prospecto.</p>';
+                            return;
+                        }
+                        document.getElementById('lista-adjuntos').innerHTML = adjuntos.map(adj => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #eee;">
+                                <a href="${adj.ruta_archivo}" target="_blank" style="text-decoration: none; color: #007bff; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <i class="fas fa-file"></i> ${adj.nombre_archivo}
+                                </a>
+                                <button type="button" class="btn-delete" onclick="eliminarAdjunto(${adj.id_adjunto})" style="margin-left: 0.5rem; background: #dc3545; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                                    🗑️
+                                </button>
+                            </div>
+                        `).join('');
+                    } else {
+                        document.getElementById('lista-adjuntos').innerHTML = `<p style="color: #dc3545; text-align: center;">Error: ${data.message || 'No se pudieron cargar los adjuntos.'}</p>`;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error al cargar adjuntos:', err);
+                    document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #dc3545; text-align: center;">Error de conexión al cargar adjuntos.</p>';
+                });
+        }
+
+        // Subir un adjunto
+        function subirAdjunto() {
+            const input = document.getElementById('archivo-input');
+            const archivo = input.files[0];
+            if (!archivo) {
+                error('Seleccione un archivo para subir.');
+                return;
+            }
+
+            if (!idProspectoActual) {
+                error('No se puede subir: No hay prospecto seleccionado.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('archivo', archivo);
+            formData.append('id_prospect', idProspectoActual);
+
+            // Opcional: Mostrar indicador de carga
+            document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #666; text-align: center;">Subiendo archivo...</p>';
+
+            fetch('/api/subir_adjunto_prospecto.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errData => { throw new Error(errData.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    exito(data.message || 'Archivo subido correctamente.');
+                    input.value = ''; // Limpiar input
+                    cargarAdjuntosProspecto(idProspectoActual); // Recargar lista
+                } else {
+                    error('Error al subir archivo: ' + (data.message || 'Intente nuevamente'));
+                }
+            })
+            .catch(err => {
+                console.error('Error en la solicitud de subida:', err);
+                error('Error de conexión al subir el archivo: ' + err.message);
+                // Recargar lista por si acaso la subida falló pero el estado del frontend quedó desactualizado
+                cargarAdjuntosProspecto(idProspectoActual);
+            });
+        }
+
+        // Eliminar un adjunto
+        function eliminarAdjunto(idAdjunto) {
+            if (!confirm('¿Eliminar este archivo adjunto?')) return;
+
+            fetch('/api/eliminar_adjunto_prospecto.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_adjunto: idAdjunto })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errData => { throw new Error(errData.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    exito(data.message || 'Archivo eliminado correctamente.');
+                    cargarAdjuntosProspecto(idProspectoActual); // Recargar lista
+                } else {
+                    error('Error al eliminar archivo: ' + (data.message || 'Intente nuevamente'));
+                }
+            })
+            .catch(err => {
+                console.error('Error en la solicitud de eliminación:', err);
+                error('Error de conexión al eliminar el archivo: ' + err.message);
+                // Recargar lista por si acaso la eliminación falló pero el estado del frontend quedó desactualizado
+                cargarAdjuntosProspecto(idProspectoActual);
+            });
+        }
+
+        // Asignar listener al botón de adjuntos (ajusta el selector si es necesario)
+        // Busca el botón real en tu HTML principal (por ejemplo, en la barra de herramientas del formulario prospecto)
+        // y asegúrate de que su ID o clase coincida con el selector aquí.
+        // Ejemplo (ajusta 'btn-adjuntos' por el ID o clase real):
+        document.getElementById('btn-adjuntos')?.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevenir cualquier comportamiento por defecto del botón
+            abrirSubmodalAdjuntos();
+        });
+        // Si usas una clase:
+        // document.querySelector('.btn-adjuntos')?.addEventListener('click', function(event) { ... });
 
         // Exponer funciones globales
         window.guardarServicio = guardarServicio;
