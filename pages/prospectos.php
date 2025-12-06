@@ -485,6 +485,19 @@
         </div>
     </div>
 
+    <!-- Agregar al final del <main> o donde consideres apropiado en prospectos.php -->
+    <div id="adjuntos-section" style="position: fixed; top: 100px; right: 20px; width: 300px; background: white; border: 1px solid #ccc; border-radius: 8px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 10000; max-height: 80vh; overflow-y: auto; display: none;">
+        <h4>Adjuntos</h4>
+        <ul id="lista-adjuntos">
+            <!-- Los enlaces a los PDFs generados se pueden añadir aquí dinámicamente si se almacenan temporalmente -->
+            <!-- Por ahora, esta sección solo sirve como marcador visual -->
+        </ul>
+        <button onclick="document.getElementById('adjuntos-section').style.display='none';" style="margin-top: 10px;">Cerrar</button>
+    </div>
+
+    <!-- Botón para mostrar la sección de adjuntos (opcional) -->
+    <button onclick="document.getElementById('adjuntos-section').style.display='block';" style="position: fixed; top: 50px; right: 20px; z-index: 10001;">Adjuntos</button>
+
     <!-- Toast de notificaciones -->
     <div id="toast" class="toast" style="display:none;">
         <i class="fas fa-info-circle"></i> 
@@ -2755,6 +2768,7 @@
             event.preventDefault(); // Prevenir cualquier comportamiento por defecto del botón
             abrirSubmodalAdjuntos();
         });
+    
         // Si usas una clase:
         // document.querySelector('.btn-adjuntos')?.addEventListener('click', function(event) { ... });
 
