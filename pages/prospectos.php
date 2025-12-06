@@ -110,6 +110,8 @@
                     <i class="fas fa-plus"></i> Agregar Servicio
                 </button>
                 <button type="button" class="btn-primary" id="btn-save-all">Grabar Todo</button>
+                 <!-- NUEVO: Botón para adjuntos -->
+                <button type="button" id="btn-adjuntos" class="btn-comment" title="Ver Adjuntos del Prospecto"><i class="fas fa-paperclip"></i> Adjuntos</button>
             </div>
         </div>
         <div class="table-container">
@@ -484,19 +486,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Agregar al final del <main> o donde consideres apropiado en prospectos.php -->
-    <div id="adjuntos-section" style="position: fixed; top: 100px; right: 20px; width: 300px; background: white; border: 1px solid #ccc; border-radius: 8px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 10000; max-height: 80vh; overflow-y: auto; display: none;">
-        <h4>Adjuntos</h4>
-        <ul id="lista-adjuntos">
-            <!-- Los enlaces a los PDFs generados se pueden añadir aquí dinámicamente si se almacenan temporalmente -->
-            <!-- Por ahora, esta sección solo sirve como marcador visual -->
-        </ul>
-        <button onclick="document.getElementById('adjuntos-section').style.display='none';" style="margin-top: 10px;">Cerrar</button>
-    </div>
-
-    <!-- Botón para mostrar la sección de adjuntos (opcional) -->
-    <button onclick="document.getElementById('adjuntos-section').style.display='block';" style="position: fixed; top: 50px; right: 20px; z-index: 10001;">Adjuntos</button>
 
     <!-- Toast de notificaciones -->
     <div id="toast" class="toast" style="display:none;">
@@ -2552,58 +2541,7 @@
             document.getElementById('email').value = '';
         }
 
-        // --- Modificar funciones existentes para integrar la carga de contactos ---
-
-        // Modificar la función que se llama al seleccionar un cliente en el autocomplete
-        // Suponiendo que tienes una función como 'seleccionarCliente(nombre, rut, ...)'
-        // Agrega la llamada a cargarContactoPrimario al final de esa función
-        // Ejemplo (ajusta según tu código real de autocompletado):
-        /*
-        function seleccionarCliente(nombre, rut, fono, pais, direccion, operacion, tipo_oper, estado, concatenado, booking, incoterm, id_comercial, nombre_comercial, notas_comerciales, notas_operaciones, fecha_alta, fecha_estado) {
-            // ... (código existente para llenar campos) ...
-            document.getElementById('razon_social_select').value = nombre;
-            document.getElementById('rut_empresa').value = rut;
-            // ... (otros campos) ...
-
-            // NUEVO: Cargar contacto primario después de seleccionar el cliente
-            cargarContactoPrimario(rut);
-        }
-        */
-
-        // Modificar la función 'seleccionarProspecto' para que también cargue el contacto
-        // Busca la función 'seleccionarProspecto(id)' y agrega la llamada después de llenar los campos del prospecto
-        // Ejemplo (dentro de la parte exitosa del .then() de la llamada fetch del prospecto):
-        /*
-        // Dentro de seleccionarProspecto, después de llenar campos como razon_social, rut_empresa, etc.
-        document.getElementById('rut_empresa').value = p.rut_empresa; // Asegura que este campo esté lleno
-        // ... (otros campos) ...
-        // NUEVO: Cargar contacto primario basado en el rut del prospecto cargado
-        cargarContactoPrimario(p.rut_empresa);
-        */
-
-        // Modificar la función 'reiniciarFormProspecto' para que limpie también los campos de contacto
-        // Busca la función 'reiniciarFormProspecto' y agrega la limpieza
-        // Ejemplo (al final de la función, antes del return):
-        /*
-        function reiniciarFormProspecto() {
-            // ... (código existente para limpiar campos) ...
-            document.getElementById('rut_empresa').value = '';
-            // ... (otros campos) ...
-
-            // NUEVO: Limpiar campos de contacto
-            limpiarCamposContacto();
-
-            // ... (otros resets) ...
-        }
-        */
-        // La lógica para llamar a cargarContactoPrimario en los lugares correctos depende de cómo se estructura el llenado del formulario.
-        // Lo más probable es que se llame después de que se haya establecido el 'rut_empresa' en el formulario.
-        // Por ejemplo, si el 'rut_empresa' se llena al seleccionar un cliente del autocomplete, o al cargar un prospecto existente.
-        // La llamada debe ser asíncrona y esperar a que 'rut_empresa' tenga un valor válido.
-
-        // --- Integración ---
-        // Suponiendo que tienes una función que se llama inmediatamente después de que 'rut_empresa' se establece (por ejemplo, al seleccionar un cliente o al cargar un prospecto)
-        // Aquí hay un ejemplo de cómo podría integrarse si 'rut_empresa' cambia y quieres disparar la carga:
+        // Evento para detectar cambios en el campo rut_empresa
         document.getElementById('rut_empresa').addEventListener('change', function() {
             const rut = this.value.trim();
             if (rut) {
