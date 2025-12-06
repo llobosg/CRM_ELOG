@@ -478,9 +478,6 @@
                 <input type="file" id="archivo-input" name="archivo_adjunto" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" style="flex-grow: 1;" />
                 <!-- Botón Subir con type="button" -->
                 <button type="button" class="btn-primary" onclick="subirAdjunto()">Subir</button>
-            </div>
-            <!-- Botón Cerrar con type="button" -->
-            <div style="text-align: right; margin-top: 1rem;">
                 <button type="button" class="btn-secondary" onclick="cerrarSubmodalAdjuntos()">Cerrar</button>
             </div>
         </div>
