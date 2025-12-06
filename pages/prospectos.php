@@ -104,14 +104,13 @@
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
                 <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
+                <button type="button" class="btn-comment" id="btn-adjuntos"  title="Ver Adjuntos del Prospecto"><i class="fas fa-paperclip"></i> Adjuntos</button>
             </div>
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-add" id="btn-agregar-servicio" style="display: none;">
                     <i class="fas fa-plus"></i> Agregar Servicio
                 </button>
                 <button type="button" class="btn-primary" id="btn-save-all">Grabar Todo</button>
-                 <!-- NUEVO: Botón para adjuntos -->
-                <button type="button" id="btn-adjuntos" class="btn-comment" title="Ver Adjuntos del Prospecto"><i class="fas fa-paperclip"></i> Adjuntos</button>
             </div>
         </div>
         <div class="table-container">
