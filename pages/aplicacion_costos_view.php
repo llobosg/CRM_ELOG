@@ -1,17 +1,20 @@
 <?php
-// pages/aplicacion_costos.php
+// pages/aplicacion_costos_view.php
+// Lógica de negocio + Vista
 
-require_once __DIR__ . '/../config.php';
-
-// === Solo admins ===
+// === Verificar Rol (debe estar al inicio) ===
 if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ?page=prospectos');
-    exit;
+    header('Location: index.php?page=dashboard');
+    exit; // Terminar inmediatamente si no es admin
 }
 
-// === Actualizar registro existente ===
+// === Lógica de Guardado/Eliminación (debe estar ANTES de cualquier HTML) ===
+
+// --- Actualizar registro existente ---
 if ($_POST && isset($_POST['update'])) {
     try {
+        require_once __DIR__ . '/../config.php'; // Incluir config si no está ya incluido globalmente en index.php antes de incluir esta vista
+
         $id = (int)($_POST['aplicacion_costos_id'] ?? 0);
         $aplica = trim($_POST['aplica'] ?? '');
         $medio_transporte = trim($_POST['medio_transporte'] ?? '');
@@ -24,18 +27,20 @@ if ($_POST && isset($_POST['update'])) {
         $stmt->execute([$aplica, $medio_transporte, $id]);
 
         $mensajeExito = '✅ Aplicación de costos actualizada';
-        header("Location: ?page=aplicacion_costos&exito=" . urlencode($mensajeExito));
-        exit;
+        header("Location: index.php?page=aplicacion_costos&exito=" . urlencode($mensajeExito));
+        exit; // Terminar inmediatamente después de redirigir
     } catch (Exception $e) {
         $mensajeError = '❌ Error: ' . $e->getMessage();
-        header("Location: ?page=aplicacion_costos&error=" . urlencode($mensajeError));
-        exit;
+        header("Location: index.php?page=aplicacion_costos&error=" . urlencode($mensajeError));
+        exit; // Terminar inmediatamente después de redirigir
     }
 }
 
-// === Guardar nuevo registro ===
+// --- Guardar nuevo registro ---
 if ($_POST && isset($_POST['save'])) {
     try {
+        require_once __DIR__ . '/../config.php'; // Incluir config si no está ya incluido globalmente en index.php antes de incluir esta vista
+
         $aplica = trim($_POST['aplica'] ?? '');
         $medio_transporte = trim($_POST['medio_transporte'] ?? '');
 
@@ -47,34 +52,42 @@ if ($_POST && isset($_POST['save'])) {
         $stmt->execute([$aplica, $medio_transporte]);
 
         $mensajeExito = '✅ Aplicación de costos guardada';
-        header("Location: ?page=aplicacion_costos&exito=" . urlencode($mensajeExito));
-        exit;
+        header("Location: index.php?page=aplicacion_costos&exito=" . urlencode($mensajeExito));
+        exit; // Terminar inmediatamente después de redirigir
     } catch (Exception $e) {
         $mensajeError = '❌ Error: ' . $e->getMessage();
-        header("Location: ?page=aplicacion_costos&error=" . urlencode($mensajeError));
-        exit;
+        header("Location: index.php?page=aplicacion_costos&error=" . urlencode($mensajeError));
+        exit; // Terminar inmediatamente después de redirigir
     }
 }
 
-// === Eliminar registro ===
+// --- Eliminar registro ---
 if (isset($_GET['delete'])) {
     try {
+        require_once __DIR__ . '/../config.php'; // Incluir config si no está ya incluido globalmente en index.php antes de incluir esta vista
+
         $stmt = $pdo->prepare("DELETE FROM aplicacion_costos WHERE id = ?");
         $stmt->execute([$_GET['delete']]);
         $mensajeExito = '✅ Aplicación de costos eliminada';
-        header("Location: ?page=aplicacion_costos&exito=" . urlencode($mensajeExito));
-        exit;
+        header("Location: index.php?page=aplicacion_costos&exito=" . urlencode($mensajeExito));
+        exit; // Terminar inmediatamente después de redirigir
     } catch (Exception $e) {
         $mensajeError = '❌ No se puede eliminar: registro en uso o error interno';
-        header("Location: ?page=aplicacion_costos&error=" . urlencode($mensajeError));
-        exit;
+        header("Location: index.php?page=aplicacion_costos&error=" . urlencode($mensajeError));
+        exit; // Terminar inmediatamente después de redirigir
     }
 }
 
-// === Cargar registros ===
-$registros = $pdo->query("SELECT id, aplica, medio_transporte FROM aplicacion_costos ORDER BY aplica")->fetchAll();
+// === Cargar datos para la Vista (después de manejar POST/GET) ===
+require_once __DIR__ . '/../config.php'; // Incluir config si no está ya incluido globalmente en index.php antes de incluir esta vista
+
+$registros = $pdo->query("SELECT id, aplica, medio_transporte FROM aplicacion_costos ORDER BY aplica")->fetchAll(PDO::FETCH_ASSOC);
+
+// === Generar HTML de la Vista ===
+// A partir de aquí, ya no debe haber `header()` ni `exit()` si no es para manejar un error inesperado durante la generación del HTML.
 ?>
 
+<!-- HTML de la Vista -->
 <h2 class="section-title"><i class="fas fa-calculator"></i> Aplicación de Costos</h2>
 
 <div class="card">
@@ -82,7 +95,7 @@ $registros = $pdo->query("SELECT id, aplica, medio_transporte FROM aplicacion_co
         <input type="hidden" name="modo" value="crear"> <!-- Indicador de modo -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.2rem;">
             <div class="form-group">
-                <label>Aplica *</label> <!-- ✅ Etiqueta corregida -->
+                <label>Aplica *</label>
                 <input type="text" name="aplica" id="aplica" required style="width: 100%;" />
             </div>
             <div class="form-group">
@@ -123,7 +136,7 @@ $registros = $pdo->query("SELECT id, aplica, medio_transporte FROM aplicacion_co
                            style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none; margin-right: 0.5rem;">
                             ✏️
                         </a>
-                        <a href="?page=aplicacion_costos&delete=<?= $r['id'] ?>" 
+                        <a href="index.php?page=aplicacion_costos&delete=<?= $r['id'] ?>" 
                            class="btn-delete" 
                            style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none;"
                            onclick="return confirm('¿Eliminar esta aplicación de costos?')">
