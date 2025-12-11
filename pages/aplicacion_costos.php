@@ -89,7 +89,7 @@ $registros = $pdo->query("SELECT id, aplica, medio_transporte FROM aplicacion_co
         <input type="hidden" name="modo" value="crear"> <!-- Indicador de modo -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.2rem;">
             <div class="form-group">
-                <label>Aplica *</label>
+                <label>Aplica **</label>
                 <input type="text" name="aplica" id="aplica" required style="width: 100%;" />
             </div>
             <div class="form-group">
