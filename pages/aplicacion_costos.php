@@ -82,7 +82,7 @@ if (isset($_GET['delete'])) {
 $registros = $pdo->query("SELECT id, aplica, medio_transporte FROM aplicacion_costos ORDER BY aplica")->fetchAll();
 ?>
 
-<h2 class="section-title"><i class="fas fa-calculator"></i> Aplicación de Costos</h2>
+<h2 class="section-title"><i class="fas fa-calculator"></i> Aplicación de Costos..</h2>
 
 <div class="card">
     <form method="POST" id="form-aplicacion_costos">
