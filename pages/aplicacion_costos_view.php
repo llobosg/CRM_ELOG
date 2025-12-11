@@ -1,93 +1,26 @@
 <?php
 // pages/aplicacion_costos_view.php
-// Lógica de negocio + Vista
 
-// === Verificar Rol (debe estar al inicio) ===
+require_once __DIR__ . '/../config.php';
+
+// Verificar rol de administrador
 if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
     header('Location: index.php?page=dashboard');
-    exit; // Terminar inmediatamente si no es admin
+    exit;
 }
 
-// === Lógica de Guardado/Eliminación (debe estar ANTES de cualquier HTML) ===
-
-// --- Actualizar registro existente ---
-if ($_POST && isset($_POST['update'])) {
-    try {
-        require_once __DIR__ . '/../config.php'; // Incluir config si no está ya incluido globalmente en index.php antes de incluir esta vista
-
-        $id = (int)($_POST['aplicacion_costos_id'] ?? 0);
-        $aplica = trim($_POST['aplica'] ?? '');
-        $medio_transporte = trim($_POST['medio_transporte'] ?? '');
-
-        if (!$id || empty($aplica)) {
-            throw new Exception('ID o campo "Aplica" inválido para la actualización');
-        }
-
-        $stmt = $pdo->prepare("UPDATE aplicacion_costos SET aplica = ?, medio_transporte = ? WHERE id = ?");
-        $stmt->execute([$aplica, $medio_transporte, $id]);
-
-        $mensajeExito = '✅ Aplicación de costos actualizada';
-        header("Location: index.php?page=aplicacion_costos&exito=" . urlencode($mensajeExito));
-        exit; // Terminar inmediatamente después de redirigir
-    } catch (Exception $e) {
-        $mensajeError = '❌ Error: ' . $e->getMessage();
-        header("Location: index.php?page=aplicacion_costos&error=" . urlencode($mensajeError));
-        exit; // Terminar inmediatamente después de redirigir
-    }
+// Cargar registros para mostrarlos en la tabla
+try {
+    $stmt = $pdo->prepare("SELECT id, aplica, medio_transporte FROM aplicacion_costos ORDER BY aplica");
+    $stmt->execute();
+    $registros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    error_log("Error al cargar registros de aplicación de costos: " . $e->getMessage());
+    $registros = [];
+    $mensaje_error_global = "Error al cargar los registros.";
 }
-
-// --- Guardar nuevo registro ---
-if ($_POST && isset($_POST['save'])) {
-    try {
-        require_once __DIR__ . '/../config.php'; // Incluir config si no está ya incluido globalmente en index.php antes de incluir esta vista
-
-        $aplica = trim($_POST['aplica'] ?? '');
-        $medio_transporte = trim($_POST['medio_transporte'] ?? '');
-
-        if (empty($aplica)) {
-            throw new Exception('El campo "Aplica" es obligatorio');
-        }
-
-        $stmt = $pdo->prepare("INSERT INTO aplicacion_costos (aplica, medio_transporte) VALUES (?, ?)");
-        $stmt->execute([$aplica, $medio_transporte]);
-
-        $mensajeExito = '✅ Aplicación de costos guardada';
-        header("Location: index.php?page=aplicacion_costos&exito=" . urlencode($mensajeExito));
-        exit; // Terminar inmediatamente después de redirigir
-    } catch (Exception $e) {
-        $mensajeError = '❌ Error: ' . $e->getMessage();
-        header("Location: index.php?page=aplicacion_costos&error=" . urlencode($mensajeError));
-        exit; // Terminar inmediatamente después de redirigir
-    }
-}
-
-// --- Eliminar registro ---
-if (isset($_GET['delete'])) {
-    try {
-        require_once __DIR__ . '/../config.php'; // Incluir config si no está ya incluido globalmente en index.php antes de incluir esta vista
-
-        $stmt = $pdo->prepare("DELETE FROM aplicacion_costos WHERE id = ?");
-        $stmt->execute([$_GET['delete']]);
-        $mensajeExito = '✅ Aplicación de costos eliminada';
-        header("Location: index.php?page=aplicacion_costos&exito=" . urlencode($mensajeExito));
-        exit; // Terminar inmediatamente después de redirigir
-    } catch (Exception $e) {
-        $mensajeError = '❌ No se puede eliminar: registro en uso o error interno';
-        header("Location: index.php?page=aplicacion_costos&error=" . urlencode($mensajeError));
-        exit; // Terminar inmediatamente después de redirigir
-    }
-}
-
-// === Cargar datos para la Vista (después de manejar POST/GET) ===
-require_once __DIR__ . '/../config.php'; // Incluir config si no está ya incluido globalmente en index.php antes de incluir esta vista
-
-$registros = $pdo->query("SELECT id, aplica, medio_transporte FROM aplicacion_costos ORDER BY aplica")->fetchAll(PDO::FETCH_ASSOC);
-
-// === Generar HTML de la Vista ===
-// A partir de aquí, ya no debe haber `header()` ni `exit()` si no es para manejar un error inesperado durante la generación del HTML.
 ?>
 
-<!-- HTML de la Vista -->
 <h2 class="section-title"><i class="fas fa-calculator"></i> Aplicación de Costos</h2>
 
 <div class="card">
@@ -159,28 +92,30 @@ function editarAplicacionCostos(id, aplica, medioTransporte) {
 
     aplicacionCostosEdicionId = id;
     document.getElementById('btn-guardar-aplicacion_costos').textContent = 'Actualizar';
-    document.getElementById('btn-guardar-aplicacion_costos').name = 'update';
+    document.getElementById('btn-guardar-aplicacion_costos').name = 'update'; // Cambiar nombre del botón a 'update'
     document.getElementById('btn-cancelar-edicion').style.display = 'inline-block';
 
-    let hidden = document.getElementById('aplicacion_costos_id_hidden');
-    if (!hidden) {
-        hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.id = 'aplicacion_costos_id_hidden';
-        hidden.name = 'aplicacion_costos_id';
-        document.getElementById('form-aplicacion_costos').appendChild(hidden);
+    // Agregar campo oculto con el ID para la actualización
+    let hiddenId = document.getElementById('aplicacion_costos_id_hidden');
+    if (!hiddenId) {
+        hiddenId = document.createElement('input');
+        hiddenId.type = 'hidden';
+        hiddenId.id = 'aplicacion_costos_id_hidden';
+        hiddenId.name = 'aplicacion_costos_id'; // Nombre del campo para el ID
+        document.getElementById('form-aplicacion_costos').appendChild(hiddenId);
     }
-    hidden.value = id;
+    hiddenId.value = id;
 }
 
 function cancelarEdicion() {
     document.getElementById('aplica').value = '';
     document.getElementById('medio_transporte').value = '';
+
     document.getElementById('btn-guardar-aplicacion_costos').textContent = 'Guardar';
-    document.getElementById('btn-guardar-aplicacion_costos').name = 'save';
+    document.getElementById('btn-guardar-aplicacion_costos').name = 'save'; // Volver nombre del botón a 'save'
     document.getElementById('btn-cancelar-edicion').style.display = 'none';
-    const hidden = document.getElementById('aplicacion_costos_id_hidden');
-    if (hidden) hidden.remove();
+    const hiddenId = document.getElementById('aplicacion_costos_id_hidden');
+    if (hiddenId) hiddenId.remove(); // Eliminar campo oculto si existe
     aplicacionCostosEdicionId = null;
     warning('Edición cancelada');
 }
