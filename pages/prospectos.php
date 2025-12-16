@@ -2155,8 +2155,18 @@
 
         // === FUNCIONES DE SERVICIOS ===
         function editarServicio(index) {
-            document.getElementById('id_srvc_edit').value = s.id_srvc; // ✅ Asignar ID del servicio al campo oculto
-            if (index < 0 || index >= servicios.length) return error('Índice inválido');
+            if (index < 0 || index >= servicios.length) {
+                error('Índice inválido');
+                return;
+            }
+
+            // ✅ Obtener el objeto del servicio del array global 'servicios' usando el índice
+            const servicioSeleccionado = servicios[index];
+
+            // ✅ Asignar el ID del servicio al campo oculto del modal
+            document.getElementById('id_srvc_edit').value = servicioSeleccionado.id_srvc || '';
+
+            // Continuar con la lógica de abrir el modal y cargar los datos
             abrirModalServicio(index);
         }
 
