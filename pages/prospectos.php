@@ -208,6 +208,7 @@
             <span class="close" onclick="cerrarModalServicio()">&times;</span>
             <input type="hidden" id="id_prospect_serv" name="id_prospect_serv" />
             <input type="hidden" id="concatenado_serv" name="concatenado_serv" />
+            <input type="hidden" id="id_srvc_edit" name="id_srvc_edit" value="">
             <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.8rem; margin-top: 1.2rem; align-items: center;">
                 <!-- Fila 1 -->
                 <label>Servicio</label>
@@ -1414,6 +1415,7 @@
         function abrirModalServicio(index = null) {
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
+            document.getElementById('id_srvc_edit').value = ''; // ✅ Limpiar ID al crear nuevo servicio
             if (!idPpl || idPpl === '0' || !concatenado) {
                 error('Guarde el prospecto primero antes de agregar servicios.');
                 return;
@@ -2153,6 +2155,7 @@
 
         // === FUNCIONES DE SERVICIOS ===
         function editarServicio(index) {
+            document.getElementById('id_srvc_edit').value = s.id_srvc; // ✅ Asignar ID del servicio al campo oculto
             if (index < 0 || index >= servicios.length) return error('Índice inválido');
             abrirModalServicio(index);
         }
@@ -2742,42 +2745,54 @@
                 return;
             }
 
-            // --- CORRECCIÓN: Determinar si hay un servicio seleccionado/abierto en el modal ---
+            // --- CORRECCIÓN: Obtener ID del servicio desde el campo oculto del modal-servicio ---
+            // Asumiendo que el campo oculto se llama 'id_srvc_edit' y está dentro del form del modal-servicio
+            const idSrvcHidden = document.getElementById('id_srvc_edit'); // Campo oculto en el modal de servicio
             let idSrvc = null;
             let servicioSeleccionadoParaRO = null;
 
-            console.log('🔍 [ROUTE_ORDER] Valor de servicioEnEdicion:', servicioEnEdicion);
-            console.log('🔍 [ROUTE_ORDER] Valor de servicios[servicioEnEdicion]:', servicioEnEdicion !== null ? servicios[servicioEnEdicion] : 'N/A');
-
-            if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-                // Si se está editando un servicio desde la tabla principal
-                servicioSeleccionadoParaRO = servicios[servicioEnEdicion];
-                idSrvc = servicioSeleccionadoParaRO.id_srvc;
-                console.log('📖 [ROUTE_ORDER] Servicio obtenido del array local. ID:', idSrvc, 'Objeto:', servicioSeleccionadoParaRO);
+            if (idSrvcHidden && idSrvcHidden.value) {
+                // Si el campo oculto existe y tiene valor, es un servicio existente en edición
+                idSrvc = idSrvcHidden.value;
+                // Buscar el objeto del servicio en el array global 'servicios' usando el ID del campo oculto
+                servicioSeleccionadoParaRO = servicios.find(s => s.id_srvc === idSrvc);
+                console.log('📖 [ROUTE_ORDER] Servicio obtenido del campo oculto del modal. ID:', idSrvc, 'Encontrado en array global:', !!servicioSeleccionadoParaRO);
             } else {
-                console.log('⚠️ [ROUTE_ORDER] No se está editando un servicio existente (servicioEnEdicion es null o no hay objeto en el array).');
-                // Si el modal de servicio está abierto pero no se está editando (está en modo "Agregar Servicio"),
-                // no se puede generar un Route Order porque no hay un ID de servicio permanente.
+                // Si el campo oculto no existe o no tiene valor, es un servicio nuevo (no guardado aún)
+                console.log('⚠️ [ROUTE_ORDER] No hay ID de servicio en el modal (posiblemente en modo "Agregar Servicio").');
                 error('No hay un servicio seleccionado para generar el Route Order.');
                 return;
             }
 
+            // Validar que el ID exista y no sea temporal
             if (!idSrvc) {
-                console.log('❌ [ROUTE_ORDER] El ID del servicio (idSrvc) es nulo o vacío.');
+                console.log('❌ [ROUTE_ORDER] El ID del servicio (idSrvc) obtenido del modal es nulo o vacío.');
                 error('No se puede generar Route Order: El servicio no tiene un ID definido.');
                 return;
             }
 
             if (idSrvc.startsWith('TEMP_')) {
-                console.log('❌ [ROUTE_ORDER] El ID del servicio es temporal (TEMP_). No se puede generar para servicios temporales.');
+                console.log('❌ [ROUTE_ORDER] El ID del servicio obtenido del modal es temporal (TEMP_). No se puede generar para servicios temporales.');
                 error('Solo se puede generar Route Order para servicios ya guardados.');
+                return;
+            }
+
+            // Validar que el servicio también esté en el array global (opcional, pero recomendable para consistencia)
+            if (!servicioSeleccionadoParaRO) {
+                console.warn('⚠️ [ROUTE_ORDER] El ID de servicio del modal (' + idSrvc + ') no se encontró en el array global de servicios.');
+                // Opcional: intentar cargarlo desde la API si no está en el array
+                // cargarDatosRouteOrder(idSrvc, concatenado, null); // Pasar null si no se tiene localmente
+                // return; // Y salir si no se va a intentar carga remota
+                // Por ahora, asumimos que si el campo oculto tiene un ID, el servicio debería estar en el array global.
+                error('Datos inconsistentes del servicio.');
                 return;
             }
 
             console.log('✅ [ROUTE_ORDER] ID del servicio válido para generar RO:', idSrvc);
 
             // Cargar datos del servicio y prospecto asociado
-            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO); // Pasar el objeto del servicio también
+            // Pasamos el objeto del servicio si lo encontramos, o null si no
+            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO);
             document.getElementById('submodal-route-order').style.display = 'block';
             console.log('🖼️ [ROUTE_ORDER] Submodal de Route Order mostrado.');
         }
