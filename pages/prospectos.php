@@ -2730,7 +2730,6 @@
 
         function abrirSubmodalRouteOrder() {
             const idPpl = document.getElementById('id_ppl')?.value;
-            const idSrvc = document.getElementById('id_srvc_edit')?.value; // Si se está editando un servicio existente
             const concatenado = document.getElementById('concatenado')?.value;
 
             if (!idPpl || idPpl === '0') {
@@ -2738,21 +2737,29 @@
                 return;
             }
 
-            // Si se está editando un servicio, usar su ID; si es nuevo, usar el ID temporal o el concatenado del prospecto para identificarlo
-            // Para este ejemplo, asumiremos que se pasa el ID del servicio si está editando, o null si es nuevo.
-            // Si el servicio es nuevo, se pueden usar los datos temporales del array 'servicios' si se está creando uno.
-            // La lógica aquí dependerá de cómo manejes el flujo de creación/edición.
-            // Por ahora, simplifiquemos: intentamos usar el ID si existe, o el ID del prospecto si es un nuevo servicio no guardado aún.
-            // Si se está editando un servicio guardado, se debe pasar su ID.
-            // Si se está creando un servicio nuevo, no se puede generar un Route Order para él aún, porque no tiene ID en BD.
-            // Asumiremos que solo se puede generar para servicios ya guardados (con id_srvc real).
-            if (!idSrvc) {
-                error('Solo se puede generar Route Order para servicios ya guardados.');
+            // --- CORRECCIÓN: Determinar si hay un servicio seleccionado/abierto en el modal ---
+            let idSrvc = null;
+            let servicioSeleccionadoParaRO = null;
+
+            if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+                // Si se está editando un servicio desde la tabla principal
+                servicioSeleccionadoParaRO = servicios[servicioEnEdicion];
+                idSrvc = servicioSeleccionadoParaRO.id_srvc;
+            } else {
+                // Si el modal de servicio está abierto pero no se está editando (está en modo "Agregar Servicio"),
+                // no se puede generar un Route Order porque no hay un ID de servicio permanente.
+                error('No hay un servicio seleccionado para generar el Route Order.');
                 return;
             }
 
+            if (!idSrvc || idSrvc.startsWith('TEMP_')) {
+                error('Solo se puede generar Route Order para servicios ya guardados.');
+                return;
+            }
+            // --- FIN CORRECCIÓN ---
+
             // Cargar datos del servicio y prospecto asociado
-            cargarDatosRouteOrder(idSrvc, concatenado);
+            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO); // Pasar el objeto del servicio también
             document.getElementById('submodal-route-order').style.display = 'block';
         }
 
@@ -2761,27 +2768,37 @@
             datosRouteOrder = null; // Limpiar datos al cerrar
         }
 
-        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto) {
+        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null) {
             // Mostrar indicador de carga
             document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Cargando datos del Route Order...</p>';
 
-            // Obtener datos del servicio desde el array local 'servicios' o desde la BD si es necesario
-            // Si se llama desde el modal de servicio, es probable que el servicio ya esté en el array 'servicios'
-            let servicioSeleccionado = null;
-            if (typeof servicios === 'object' && Array.isArray(servicios)) {
-                servicioSeleccionado = servicios.find(s => s.id_srvc === idSrvc);
-            }
-
-            if (!servicioSeleccionado) {
-                // Si no está en el array local, hacer una petición a la API para obtenerlo
+            if (servicioLocal) {
+                // Si se proporciona el servicio localmente (desde el array 'servicios'), usarlo directamente
+                // Asumiendo que 'costos' y 'gastos_locales' también están disponibles en el objeto local si se guardaron previamente
+                datosRouteOrder = {
+                    servicio: servicioLocal,
+                    prospecto: { concatenado: concatenadoProspecto },
+                    // Si costos y gastos no están en el objeto local, podrías necesitar cargarlos por separado si es necesario
+                    // o asumir que si se está editando, ya están disponibles localmente o se pueden obtener de otro array global si aplica.
+                    // Para esta lógica, asumiremos que están incluidos en el objeto servicioLocal si el servicio ya fue guardado y editado.
+                    costos: servicioLocal.costos || [],
+                    gastos_locales: servicioLocal.gastos_locales || []
+                };
+                renderizarRouteOrder(datosRouteOrder);
+            } else {
+                // Si no se tiene localmente, hacer la petición a la API
                 fetch(`/api/get_servicio.php?id_srvc=${encodeURIComponent(idSrvc)}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success && data.servicio) {
                             datosRouteOrder = {
                                 servicio: data.servicio,
-                                prospecto: { concatenado: concatenadoProspecto }, // Datos limitados del prospecto si no se cargan por separado
-                                // Aquí puedes hacer llamadas adicionales para costos y gastos si no vienen con get_servicio
+                                prospecto: { concatenado: concatenadoProspecto },
                                 costos: data.servicio.costos || [],
                                 gastos_locales: data.servicio.gastos_locales || []
                             };
@@ -2796,16 +2813,6 @@
                         error('Error de conexión al cargar los datos del servicio.');
                         document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error de conexión.</p>';
                     });
-            } else {
-                // Si el servicio está en el array local, usarlo directamente
-                // Asumiendo que costos y gastos_locales están incluidos en el objeto del array servicios[]
-                datosRouteOrder = {
-                    servicio: servicioSeleccionado,
-                    prospecto: { concatenado: concatenadoProspecto },
-                    costos: servicioSeleccionado.costos || [],
-                    gastos_locales: servicioSeleccionado.gastos_locales || []
-                };
-                renderizarRouteOrder(datosRouteOrder);
             }
         }
 
