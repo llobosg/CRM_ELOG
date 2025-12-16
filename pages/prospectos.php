@@ -2729,10 +2729,15 @@
         // --- Funciones para manejo del submodal Route Order ---
 
         function abrirSubmodalRouteOrder() {
+            console.log('🔍 [ROUTE_ORDER] Iniciando apertura de submodal.');
+
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
 
+            console.log('📄 [ROUTE_ORDER] Datos del prospecto (id_ppl, concatenado):', { id_ppl: idPpl, concatenado: concatenado });
+
             if (!idPpl || idPpl === '0') {
+                console.log('❌ [ROUTE_ORDER] No hay un prospecto seleccionado (id_ppl vacío o 0).');
                 error('No hay un prospecto seleccionado.');
                 return;
             }
@@ -2741,26 +2746,40 @@
             let idSrvc = null;
             let servicioSeleccionadoParaRO = null;
 
+            console.log('🔍 [ROUTE_ORDER] Valor de servicioEnEdicion:', servicioEnEdicion);
+            console.log('🔍 [ROUTE_ORDER] Valor de servicios[servicioEnEdicion]:', servicioEnEdicion !== null ? servicios[servicioEnEdicion] : 'N/A');
+
             if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
                 // Si se está editando un servicio desde la tabla principal
                 servicioSeleccionadoParaRO = servicios[servicioEnEdicion];
                 idSrvc = servicioSeleccionadoParaRO.id_srvc;
+                console.log('📖 [ROUTE_ORDER] Servicio obtenido del array local. ID:', idSrvc, 'Objeto:', servicioSeleccionadoParaRO);
             } else {
+                console.log('⚠️ [ROUTE_ORDER] No se está editando un servicio existente (servicioEnEdicion es null o no hay objeto en el array).');
                 // Si el modal de servicio está abierto pero no se está editando (está en modo "Agregar Servicio"),
                 // no se puede generar un Route Order porque no hay un ID de servicio permanente.
                 error('No hay un servicio seleccionado para generar el Route Order.');
                 return;
             }
 
-            if (!idSrvc || idSrvc.startsWith('TEMP_')) {
+            if (!idSrvc) {
+                console.log('❌ [ROUTE_ORDER] El ID del servicio (idSrvc) es nulo o vacío.');
+                error('No se puede generar Route Order: El servicio no tiene un ID definido.');
+                return;
+            }
+
+            if (idSrvc.startsWith('TEMP_')) {
+                console.log('❌ [ROUTE_ORDER] El ID del servicio es temporal (TEMP_). No se puede generar para servicios temporales.');
                 error('Solo se puede generar Route Order para servicios ya guardados.');
                 return;
             }
-            // --- FIN CORRECCIÓN ---
+
+            console.log('✅ [ROUTE_ORDER] ID del servicio válido para generar RO:', idSrvc);
 
             // Cargar datos del servicio y prospecto asociado
             cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO); // Pasar el objeto del servicio también
             document.getElementById('submodal-route-order').style.display = 'block';
+            console.log('🖼️ [ROUTE_ORDER] Submodal de Route Order mostrado.');
         }
 
         function cerrarSubmodalRouteOrder() {
