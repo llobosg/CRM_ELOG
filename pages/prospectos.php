@@ -105,6 +105,8 @@
                 <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
                 <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
                 <button type="button" class="btn-comment" id="btn-adjuntos"  title="Ver Adjuntos del Prospecto"><i class="fas fa-paperclip"></i> Adjuntos</button>
+                <!-- NUEVO: Botón para Route Order -->
+                <button type="button" class="btn-comment" id="btn-route-order" onclick="abrirSubmodalRouteOrder()"><i class="fas fa-route"></i> Router Order</button>
             </div>
             <div style="display: flex; gap: 0.8rem;">
                 <button type="button" class="btn-add" id="btn-agregar-servicio" style="display: none;">
@@ -479,6 +481,21 @@
                 <!-- Botón Subir con type="button" -->
                 <button type="button" class="btn-primary" onclick="subirAdjunto()">Subir</button>
                 <button type="button" class="btn-secondary" onclick="cerrarSubmodalAdjuntos()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nuevo Submodal Route Order -->
+    <div id="submodal-route-order" class="modal" style="display: none; position: fixed; z-index: 10001; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-content" style="background-color: white; margin: 2% auto; padding: 20px; border: 1px solid #888; width: 95%; max-width: 1600px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
+            <h3><i class="fas fa-route"></i> Route Order</h3>
+            <span class="close" onclick="cerrarSubmodalRouteOrder()" style="cursor: pointer; float: right; font-size: 1.8rem; margin-top: -5px;">&times;</span>
+            <div id="route-order-content" style="margin-top: 1rem;">
+                <!-- El contenido del Route Order se cargará aquí dinámicamente -->
+            </div>
+            <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: flex-end; align-items: center;">
+                <button type="button" class="btn-primary" onclick="exportarRouteOrderAExcel()"><i class="fas fa-file-excel"></i> Exportar a Excel</button>
+                <button type="button" class="btn-secondary" onclick="cerrarSubmodalRouteOrder()">Cerrar</button>
             </div>
         </div>
     </div>
@@ -2705,6 +2722,401 @@
     
         // Si usas una clase:
         // document.querySelector('.btn-adjuntos')?.addEventListener('click', function(event) { ... });
+
+        // --- Variables globales para Route Order ---
+        let datosRouteOrder = null; // Almacenará los datos cargados para el Route Order
+
+        // --- Funciones para manejo del submodal Route Order ---
+
+        function abrirSubmodalRouteOrder() {
+            const idPpl = document.getElementById('id_ppl')?.value;
+            const idSrvc = document.getElementById('id_srvc_edit')?.value; // Si se está editando un servicio existente
+            const concatenado = document.getElementById('concatenado')?.value;
+
+            if (!idPpl || idPpl === '0') {
+                error('No hay un prospecto seleccionado.');
+                return;
+            }
+
+            // Si se está editando un servicio, usar su ID; si es nuevo, usar el ID temporal o el concatenado del prospecto para identificarlo
+            // Para este ejemplo, asumiremos que se pasa el ID del servicio si está editando, o null si es nuevo.
+            // Si el servicio es nuevo, se pueden usar los datos temporales del array 'servicios' si se está creando uno.
+            // La lógica aquí dependerá de cómo manejes el flujo de creación/edición.
+            // Por ahora, simplifiquemos: intentamos usar el ID si existe, o el ID del prospecto si es un nuevo servicio no guardado aún.
+            // Si se está editando un servicio guardado, se debe pasar su ID.
+            // Si se está creando un servicio nuevo, no se puede generar un Route Order para él aún, porque no tiene ID en BD.
+            // Asumiremos que solo se puede generar para servicios ya guardados (con id_srvc real).
+            if (!idSrvc) {
+                error('Solo se puede generar Route Order para servicios ya guardados.');
+                return;
+            }
+
+            // Cargar datos del servicio y prospecto asociado
+            cargarDatosRouteOrder(idSrvc, concatenado);
+            document.getElementById('submodal-route-order').style.display = 'block';
+        }
+
+        function cerrarSubmodalRouteOrder() {
+            document.getElementById('submodal-route-order').style.display = 'none';
+            datosRouteOrder = null; // Limpiar datos al cerrar
+        }
+
+        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto) {
+            // Mostrar indicador de carga
+            document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Cargando datos del Route Order...</p>';
+
+            // Obtener datos del servicio desde el array local 'servicios' o desde la BD si es necesario
+            // Si se llama desde el modal de servicio, es probable que el servicio ya esté en el array 'servicios'
+            let servicioSeleccionado = null;
+            if (typeof servicios === 'object' && Array.isArray(servicios)) {
+                servicioSeleccionado = servicios.find(s => s.id_srvc === idSrvc);
+            }
+
+            if (!servicioSeleccionado) {
+                // Si no está en el array local, hacer una petición a la API para obtenerlo
+                fetch(`/api/get_servicio.php?id_srvc=${encodeURIComponent(idSrvc)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.servicio) {
+                            datosRouteOrder = {
+                                servicio: data.servicio,
+                                prospecto: { concatenado: concatenadoProspecto }, // Datos limitados del prospecto si no se cargan por separado
+                                // Aquí puedes hacer llamadas adicionales para costos y gastos si no vienen con get_servicio
+                                costos: data.servicio.costos || [],
+                                gastos_locales: data.servicio.gastos_locales || []
+                            };
+                            renderizarRouteOrder(datosRouteOrder);
+                        } else {
+                            error('Error al cargar los datos del servicio para Route Order.');
+                            document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error al cargar los datos.</p>';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error al cargar servicio para Route Order:', err);
+                        error('Error de conexión al cargar los datos del servicio.');
+                        document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error de conexión.</p>';
+                    });
+            } else {
+                // Si el servicio está en el array local, usarlo directamente
+                // Asumiendo que costos y gastos_locales están incluidos en el objeto del array servicios[]
+                datosRouteOrder = {
+                    servicio: servicioSeleccionado,
+                    prospecto: { concatenado: concatenadoProspecto },
+                    costos: servicioSeleccionado.costos || [],
+                    gastos_locales: servicioSeleccionado.gastos_locales || []
+                };
+                renderizarRouteOrder(datosRouteOrder);
+            }
+        }
+
+        function renderizarRouteOrder(datos) {
+            if (!datos || !datos.servicio) {
+                document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">No hay datos para mostrar.</p>';
+                return;
+            }
+
+            const s = datos.servicio;
+            const p = datos.prospecto;
+
+            // Aquí construimos el HTML del submodal basado en los datos
+            let html = `
+                <div style="font-size: 9pt; line-height: 1.4;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <strong>Nº Cotización:</strong> ${p.concatenado || 'N/A'}
+                        </div>
+                        <div style="text-align: right;">
+                            <strong>TIPO CAMBIO CLIENTE:</strong> ${s.tipo_cambio || '1.00'}<br>
+                            <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
+                            <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
+                            <strong>PROV. NACIONAL:</strong> ${s.proveedor_nac || ''}<br>
+                            <strong>TERRESTRE:</strong><br>
+                            <strong>DESCONSOLIDACIÓN:</strong> ${s.desconsolidac || ''}<br>
+                            <strong>GRÚAS:</strong><br>
+                            <strong>EMBALAJE:</strong>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <strong>SHIPPER:</strong><br>
+                            <div style="margin-left: 1rem;">${s.razon_social || ''}</div> <!-- Asumiendo que razon_social del prospecto está en el servicio o se puede acceder -->
+                            <strong>DIRECCIÓN:</strong><br>
+                            <div style="margin-left: 1rem;">${s.direccion || ''}</div> <!-- Asumiendo que direccion del prospecto está en el servicio o se puede acceder -->
+                            <strong>CONTACTO:</strong><br>
+                            <div style="margin-left: 1rem;">${s.contacto_nombre || ''}</div> <!-- Asumiendo contacto_nombre se puede acceder -->
+                            <strong>R.U.T:</strong><br>
+                            <div style="margin-left: 1rem;">${s.rut_empresa || ''}</div> <!-- Asumiendo rut_empresa del prospecto está en el servicio o se puede acceder -->
+                        </div>
+                        <div>
+                            <strong>CONSIGNATARIO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>DIRECCIÓN:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTACTO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>R.U.T:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <strong>INCOTERM:</strong> ${s.incoterm || ''}<br>
+                        <strong>COMMODITY:</strong> ${s.commodity || ''}<br>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                            <div><strong>VOLÚMEN:</strong> ${s.volumen ? parseFloat(s.volumen).toFixed(2) : '0.00'}</div>
+                            <div><strong>PESO BRUTO:</strong> ${s.peso ? parseFloat(s.peso).toFixed(2) : '0.00'} kg</div>
+                            <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
+                            <div><strong>UNIDADES:</strong> ${s.bultos || '0'}</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                            <div><strong>POL:</strong> ${s.origen || ''}</div>
+                            <div><strong>POD:</strong> ${s.destino || ''}</div>
+                            <div><strong>COLOADER:</strong></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <strong>NOTAS ADICIONALES:</strong><br>
+                        <div style="white-space: pre-line; margin-left: 1rem;">${s.nota_srvc || ''}</div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">Costos</h5>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+
+            datos.costos.forEach(c => {
+                html += `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${c.concepto || ''}</td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.moneda || ''}</td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.qty ? parseFloat(c.qty).toFixed(2) : '0.00'}</td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.costo ? parseFloat(c.costo).toFixed(2) : '0.00'}</td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.tarifa ? parseFloat(c.tarifa).toFixed(2) : '0.00'}</td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.total_costo ? parseFloat(c.total_costo).toFixed(2) : '0.00'}</td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.aplica || ''}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">Gastos Locales</h5>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Tipo</th>
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Gasto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">IVA%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+
+            datos.gastos_locales.forEach(g => {
+                html += `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.tipo || ''}</td>
+                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.gasto || ''}</td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.moneda || ''}</td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${g.monto ? parseFloat(g.monto).toFixed(2) : '0.00'}</td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.afecto || ''}</td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${g.iva ? parseFloat(g.iva).toFixed(2) : '0.00'}%</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h5>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                <div><strong>TOTAL VENTA:</strong></div>
+                                <div style="text-align: right;">${s.venta ? parseFloat(s.venta).toFixed(2) : '0.00'}</div>
+                                <div><strong>TOTAL COSTO:</strong></div>
+                                <div style="text-align: right;">${s.costo ? parseFloat(s.costo).toFixed(2) : '0.00'}</div>
+                                <div><strong>PROFIT LOCAL:</strong></div>
+                                <div style="text-align: right;">${(s.venta && s.costo) ? parseFloat(s.venta - s.costo).toFixed(2) : '0.00'}</div>
+                                <div><strong>PROFIT %:</strong></div>
+                                <div style="text-align: right;">${(s.venta && s.costo && s.venta > 0) ? parseFloat(((s.venta - s.costo) / s.venta) * 100).toFixed(2) : '0.00'}%</div>
+                            </div>
+                        </div>
+                        <div>
+                            <!-- Espacio reservado para más datos si se agregan -->
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <strong>CREDITO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTADO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                        <div>
+                            <!-- Espacio reservado para más datos si se agregan -->
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">TRANSPORTE NACIONAL</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Acepta</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filas dinámicas para transporte nacional -->
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <strong>TRANSPORTISTA:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>DIREC. RETIRO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTACTO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>FONO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                        <div>
+                            <strong>DIREC. ENTREGA:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>FONO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>EMPRESA:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTACTO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">SEGURO</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Min.</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">V.Venta</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filas dinámicas para seguro -->
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS A OPERACIONES</h4>
+                    <div style="white-space: pre-line;">${s.notas_operaciones || ''}</div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS COMERCIALES</h4>
+                    <div style="white-space: pre-line;">${s.notas_comerciales || ''}</div>
+                </div>
+            `;
+
+            document.getElementById('route-order-content').innerHTML = html;
+        }
+
+        // --- Función para exportar a Excel ---
+        function exportarRouteOrderAExcel() {
+            if (!datosRouteOrder) {
+                error('No hay datos para exportar.');
+                return;
+            }
+
+            // Opcional: Mostrar indicador de carga
+            // document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Generando Excel...</p>';
+
+            // Hacer una petición al backend para generar el archivo Excel
+            fetch('/api/exportar_route_order_excel.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(datosRouteOrder)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                // Si la respuesta es correcta, debería ser un archivo para descargar
+                return response.blob(); // Obtener el archivo como Blob
+            })
+            .then(blob => {
+                // Crear un objeto URL para el blob
+                const downloadUrl = window.URL.createObjectURL(blob);
+                // Crear un enlace temporal para descargar el archivo
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `Route_Order_${datosRouteOrder.servicio.concatenado || 'N/A'}.xlsx`; // Nombre del archivo
+                document.body.appendChild(link); // Añadir al DOM
+                link.click(); // Simular clic para descargar
+                document.body.removeChild(link); // Limpiar
+                window.URL.revokeObjectURL(downloadUrl); // Liberar el objeto URL
+                exito('Archivo Excel descargado correctamente.');
+            })
+            .catch(err => {
+                console.error('Error al exportar a Excel:', err);
+                error('No se pudo generar el archivo Excel.');
+                // Opcional: Volver a renderizar el contenido original si falla la exportación
+                // if (datosRouteOrder) renderizarRouteOrder(datosRouteOrder);
+            });
+        }
 
         // Exponer funciones globales
         window.guardarServicio = guardarServicio;
