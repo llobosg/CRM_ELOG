@@ -1441,6 +1441,16 @@
                     // Editar servicio existente
                     servicioEnEdicion = index;
                     const s = servicios[index];
+                    // --- LLENAR CAMPOS CON DATOS DEL SERVICIO ---
+                    document.getElementById('serv_servicio').value = s.servicio || '';
+                    document.getElementById('serv_tipo').value = s.tipo || '';
+                    document.getElementById('serv_medio_transporte').value = s.trafico || '';
+                    document.getElementById('serv_commodity').value = s.commodity || '';
+                    document.getElementById('serv_origen').value = s.origen || '';
+                    document.getElementById('serv_pais_origen').value = s.pais_origen || '';
+                    document.getElementById('serv_destino').value = s.destino || '';
+                    document.getElementById('serv_pais_destino').value = s.pais_destino || '';
+                    document.getElementById('serv_nota_srvc').value = s.nota_srvc || '';
                     costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
                     gastosLocales = Array.isArray(s.gastos_locales) 
                         ? s.gastos_locales.map(g => ({
@@ -1471,6 +1481,9 @@
                     document.getElementById('serv_aod').value = s.aod || '';
                     document.getElementById('serv_agente').value = s.agente || '';
                     document.getElementById('serv_validez').value = s.validez || '';
+
+                    // --- NUEVO: Asignar ID del servicio al campo oculto ---
+                    document.getElementById('id_srvc_edit').value = s.id_srvc || ''; // ✅ Añadir esta línea
 
                     // Cargar lugares si hay medio guardado
                     const medioGuardado = (s.trafico || '').trim();
@@ -1514,6 +1527,8 @@
                 } else {
                     // Nuevo servicio
                     servicioEnEdicion = null;
+                    // Limpiar el campo oculto del ID al crear un nuevo servicio
+                    document.getElementById('id_srvc_edit').value = '';
                 }
             });
 
