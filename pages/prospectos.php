@@ -1412,7 +1412,11 @@
             });
         }
 
+        // --- FUNCIÓN CORREGIDA: abrirModalServicio ---
         function abrirModalServicio(index = null) {
+            console.log('🔍 [ABRIR_MODAL_SERVICIO] Iniciando, index:', index);
+
+            // 1. Validar que el prospecto esté guardado (antes de abrir el modal)
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
             if (!idPpl || idPpl === '0' || !concatenado) {
@@ -1420,136 +1424,128 @@
                 return;
             }
 
-            // Limpiar modal
+            // 2. Limpiar campos del modal (y el campo oculto id_srvc_edit)
             const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
             modalInputs.forEach(el => {
-                if (el.type === 'number') el.value = '';
-                else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
-                else if (el.tagName === 'SELECT') el.selectedIndex = 0;
-            });
-
-            document.getElementById('id_prospect_serv').value = idPpl;
-            document.getElementById('concatenado_serv').value = concatenado;
-            document.getElementById('serv_titulo_concatenado').textContent = concatenado;
-            costosServicio = [];
-            gastosLocales = [];
-
-            // Cargar datos del modal (commodity, medios, etc.)
-            cargarDatosModalServicio(() => {
-                if (index !== null) {
-                    // Editar servicio existente
-                    servicioEnEdicion = index;
-                    const s = servicios[index];
-                    costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
-                    gastosLocales = Array.isArray(s.gastos_locales) 
-                        ? s.gastos_locales.map(g => ({
-                            ...g,
-                            monto: parseFloat(g.monto) || 0,
-                            iva: parseFloat(g.iva) || 0
-                        }))
-                        : [];
-
-                    // Rellenar campos básicos
-                    document.getElementById('serv_servicio').value = s.servicio || '';
-                    document.getElementById('serv_transportador').value = s.transportador || '';
-                    document.getElementById('serv_incoterm').value = s.incoterm || '';
-                    document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
-                    document.getElementById('serv_transito').value = s.transito || '';
-                    document.getElementById('serv_frecuencia').value = s.frecuencia || '';
-                    document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
-                    document.getElementById('serv_sector').value = s.sector || '';
-                    document.getElementById('serv_mercancia').value = s.mercancia || '';
-                    document.getElementById('serv_bultos').value = s.bultos || '';
-                    document.getElementById('serv_peso').value = s.peso || '';
-                    document.getElementById('serv_volumen').value = s.volumen || '';
-                    document.getElementById('serv_dimensiones').value = s.dimensiones || '';
-                    document.getElementById('serv_moneda').value = s.moneda || 'USD';
-                    document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
-                    document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
-                    document.getElementById('serv_aol').value = s.aol || '';
-                    document.getElementById('serv_aod').value = s.aod || '';
-                    document.getElementById('serv_agente').value = s.agente || '';
-                    document.getElementById('serv_validez').value = s.validez || '';
-
-                    // Cargar lugares si hay medio guardado
-                    const medioGuardado = (s.trafico || '').trim();
-                    if (medioGuardado) {
-                        // ✅ PASAR ORIGEN + PAÍS_ORIGEN para filtrado preciso
-                        cargarLugaresPorMedio(medioGuardado, s.origen, s.pais_origen).then(() => {
-                            const origenSel = document.getElementById('serv_origen');
-                            const destinoSel = document.getElementById('serv_destino');
-
-                            // Preseleccionar Origen (por valor + país)
-                            if (origenSel && s.origen && s.pais_origen) {
-                                for (let i = 0; i < origenSel.options.length; i++) {
-                                    const opt = origenSel.options[i];
-                                    if (opt.value === s.origen && opt.getAttribute('data-pais') === s.pais_origen) {
-                                        origenSel.selectedIndex = i;
-                                        document.getElementById('serv_pais_origen').value = s.pais_origen;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // Preseleccionar Destino (por valor + país)
-                            if (destinoSel && s.destino && s.pais_destino) {
-                                for (let i = 0; i < destinoSel.options.length; i++) {
-                                    const opt = destinoSel.options[i];
-                                    if (opt.value === s.destino && opt.getAttribute('data-pais') === s.pais_destino) {
-                                        destinoSel.selectedIndex = i;
-                                        document.getElementById('serv_pais_destino').value = s.pais_destino;
-                                        break;
-                                    }
-                                }
-                            }
-                        });
-                    }
-
-                    // Cargar commodity y medio
-                    const medioSel = document.getElementById('serv_medio_transporte');
-                    const commoditySel = document.getElementById('serv_commodity');
-                    if (medioSel && s.trafico) medioSel.value = s.trafico;
-                    if (commoditySel && s.commodity) commoditySel.value = s.commodity;
-                } else {
-                    // Nuevo servicio
-                    servicioEnEdicion = null;
+                if (el.type === 'hidden' && el.id === 'id_srvc_edit') {
+                    // Limpiar el campo oculto id_srvc_edit
+                    el.value = '';
+                } else if (el.type === 'number' || el.type === 'text' || el.tagName === 'TEXTAREA') {
+                    el.value = '';
+                } else if (el.tagName === 'SELECT') {
+                    el.selectedIndex = 0;
                 }
             });
 
-            // Listener para cargar lugares al cambiar el medio de transporte
-            const medioSel = document.getElementById('serv_medio_transporte');
-            if (medioSel) {
-                const newMedioSel = medioSel.cloneNode(true);
-                medioSel.parentNode.replaceChild(newMedioSel, medioSel);
-                newMedioSel.addEventListener('change', function() {
-                    const medioSeleccionado = this.value;
-                    if (medioSeleccionado) {
-                        // --- CORRECCIÓN: Mapear medios específicos al genérico ---
-                        let medioParaCarga = medioSeleccionado;
-                        if (medioSeleccionado === 'Marítimo FCL' || medioSeleccionado === 'Marítimo LCL') {
-                            medioParaCarga = 'Marítimo';
-                        }
-                        // Puedes añadir más mapeos aquí si aplica para Aéreo o Terrestre en el futuro
-                        // else if (medioSeleccionado === 'Aéreo Internacional' || medioSeleccionado === 'Aéreo Nacional') {
-                        //     medioParaCarga = 'Aéreo';
-                        // }
-                        // else if (medioSeleccionado === 'Terrestre Regional') {
-                        //     medioParaCarga = 'Terrestre';
-                        // }
-                        // --- FIN CORRECCIÓN ---
+            // Limpiar submodales
+            costosServicio = [];
+            gastosLocales = [];
+            actualizarTablaCostos();
+            actualizarTablaGastosLocales();
 
-                        // Llamar a la función con el valor mapeado
-                        cargarLugaresPorMedio(medioParaCarga); // Sin origen → cargar todos
-                    } else {
-                        document.getElementById('serv_origen').innerHTML = '<option value="">Seleccionar</option>';
-                        document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>';
-                        document.getElementById('serv_pais_origen').value = '';
-                        document.getElementById('serv_pais_destino').value = '';
-                    }
-                });
+            // 3. Cargar datos si es edición
+            if (index !== null) {
+                console.log('📖 [ABRIR_MODAL_SERVICIO] Modo edición para servicio en index:', index);
+                servicioEnEdicion = index;
+                const s = servicios[index]; // Obtener objeto del servicio del array global
+
+                if (!s) {
+                    console.error('❌ [ABRIR_MODAL_SERVICIO] Servicio no encontrado en array global para index:', index);
+                    error('Error interno: Servicio no encontrado.');
+                    return;
+                }
+
+                // --- LLENAR CAMPOS CON DATOS DEL SERVICIO ---
+                document.getElementById('serv_servicio').value = s.servicio || '';
+                document.getElementById('serv_tipo').value = s.tipo || '';
+                document.getElementById('serv_medio_transporte').value = s.trafico || '';
+                document.getElementById('serv_commodity').value = s.commodity || '';
+                document.getElementById('serv_origen').value = s.origen || '';
+                document.getElementById('serv_pais_origen').value = s.pais_origen || '';
+                document.getElementById('serv_destino').value = s.destino || '';
+                document.getElementById('serv_pais_destino').value = s.pais_destino || '';
+                document.getElementById('serv_transito').value = s.transito || '';
+                document.getElementById('serv_frecuencia').value = s.frecuencia || '';
+                document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
+                document.getElementById('serv_sector').value = s.sector || '';
+                document.getElementById('serv_mercancia').value = s.mercancia || '';
+                document.getElementById('serv_bultos').value = s.bultos || '';
+                document.getElementById('serv_peso').value = s.peso || '';
+                document.getElementById('serv_volumen').value = s.volumen || '';
+                document.getElementById('serv_dimensiones').value = s.dimensiones || '';
+                document.getElementById('serv_moneda').value = s.moneda || 'USD';
+                document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || '1';
+                document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
+                document.getElementById('serv_desconsolidac').value = s.desconsolidac || '0';
+                document.getElementById('serv_aol').value = s.aol || '';
+                document.getElementById('serv_aod').value = s.aod || '';
+                document.getElementById('serv_agente').value = s.agente || '';
+                document.getElementById('serv_transportador').value = s.transportador || '';
+                document.getElementById('serv_incoterm').value = s.incoterm || '';
+                document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
+                document.getElementById('serv_nota_srvc').value = s.nota_srvc || ''; // ✅ Asegurar carga de nota_srvc
+                document.getElementById('serv_validez').value = s.validez || ''; // ✅ Asegurar carga de validez si aplica
+
+                // --- CARGAR COSTOS Y GASTOS LOCALES ---
+                costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
+                gastosLocales = Array.isArray(s.gastos_locales) ? s.gastos_locales.map(g => ({
+                    ...g,
+                    monto: parseFloat(g.monto) || 0,
+                    iva: parseFloat(g.iva) || 0
+                })) : [];
+
+                actualizarTablaCostos();
+                actualizarTablaGastosLocales();
+
+                // --- CARGAR EL ID DEL SERVICIO EN EL CAMPO OCULTO ---
+                // ESTA ES LA PARTE CRUCIAL
+                const idSrvcHiddenField = document.getElementById('id_srvc_edit');
+                if (idSrvcHiddenField) {
+                    idSrvcHiddenField.value = s.id_srvc || ''; // Asignar el ID real del servicio al campo oculto
+                    console.log('✅ [ABRIR_MODAL_SERVICIO] Campo id_srvc_edit asignado a:', idSrvcHiddenField.value);
+                } else {
+                    console.warn('⚠️ [ABRIR_MODAL_SERVICIO] Campo id_srvc_edit no encontrado en el DOM.');
+                    // Opcional: crearlo si no existe
+                    // const nuevoCampo = document.createElement('input');
+                    // nuevoCampo.type = 'hidden';
+                    // nuevoCampo.id = 'id_srvc_edit';
+                    // nuevoCampo.name = 'id_srvc_edit'; // Asegúrate que el backend lo espere si es necesario para guardar individual
+                    // nuevoCampo.value = s.id_srvc || '';
+                    // document.getElementById('form-servicio-modal').appendChild(nuevoCampo);
+                }
+
+                // --- CAMBIAR TÍTULO Y TEXTO DEL BOTÓN ---
+                document.querySelector('#modal-servicio h3').textContent = `Editar Servicio: ${s.servicio || 'N/A'}`;
+                document.getElementById('btn-guardar-servicio-modal').textContent = 'Actualizar';
+
+            } else {
+                // === CREAR NUEVO SERVICIO ===
+                console.log('➕ [ABRIR_MODAL_SERVICIO] Modo creación.');
+                servicioEnEdicion = null;
+
+                // --- ASEGURAR QUE EL CAMPO OCULTO ESTÉ VACÍO EN MODO CREACIÓN ---
+                const idSrvcHiddenField = document.getElementById('id_srvc_edit');
+                if (idSrvcHiddenField) {
+                    idSrvcHiddenField.value = '';
+                    console.log('🧹 [ABRIR_MODAL_SERVICIO] Campo id_srvc_edit limpiado para nuevo servicio.');
+                }
+
+                // Opcional: Poner valores por defecto si aplica
+                document.getElementById('serv_moneda').value = 'USD';
+                document.getElementById('serv_tipo_cambio').value = '1';
+                document.getElementById('serv_estado').value = 'Activo';
+
+                // --- CAMBIAR TÍTULO Y TEXTO DEL BOTÓN ---
+                document.querySelector('#modal-servicio h3').textContent = 'Agregar Nuevo Servicio';
+                document.getElementById('btn-guardar-servicio-modal').textContent = 'Guardar';
             }
 
-            document.getElementById('modal-servicio').style.display = 'flex';
+            // --- CARGAR DATOS DINÁMICOS PARA SELECTS (commodity, etc.) ---
+            cargarDatosModalServicio(() => {
+                console.log('📋 [ABRIR_MODAL_SERVICIO] Datos dinámicos del modal cargados.');
+                // Mostrar el modal DESPUÉS de que los datos estén listos (opcional, puede hacerse antes si no depende de ellos)
+                document.getElementById('modal-servicio').style.display = 'block';
+            });
         }
 
         function cerrarModalServicio() {
