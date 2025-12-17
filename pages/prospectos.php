@@ -2976,7 +2976,7 @@
                         <div>
                             <strong>Nº Cotización:</strong> ${p?.concatenado || s.concatenado || 'N/A'}
                         </div>
-                        <div style="text-align: right;">
+                        <div style="text-align: left;">
                             <strong>TIPO CAMBIO CLIENTE:</strong> ${s.tipo_cambio.toFixed(4)}<br> <!-- Convertido a número -->
                             <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
                             <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
@@ -3014,11 +3014,9 @@
                             <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
                             <div><strong>UNIDADES:</strong> ${s.bultos}</div> <!-- Convertido a número -->
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
-                            <div><strong>POL:</strong> ${s.origen || ''}</div>
-                            <div><strong>POD:</strong> ${s.destino || ''}</div>
-                            <div><strong>COLOADER:</strong></div>
-                        </div>
+                        <div><strong>POL:</strong> ${s.origen || ''}</div>
+                        <div><strong>POD:</strong> ${s.destino || ''}</div>
+                        <div><strong>COLOADER:</strong></div>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
