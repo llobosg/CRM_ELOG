@@ -2867,41 +2867,10 @@
                 return;
             }
 
-            const s_raw = datos.servicio; // Datos sin procesar
+            const s = datos.servicio;
             const p = datos.prospecto; // Asumiendo que datos.prospecto tiene la info del prospecto padre
-            const costos_raw = datos.costos || [];
-            const gastos_locales_raw = datos.gastos_locales || [];
-
-            // --- CONVERSIÓN DE CAMPOS NUMÉRICOS ---
-            const s = {
-                ...s_raw,
-                // Campos numéricos del servicio
-                tipo_cambio: parseFloat(s_raw.tipo_cambio) || 1,
-                costo: parseFloat(s_raw.costo) || 0,
-                venta: parseFloat(s_raw.venta) || 0,
-                costogastoslocalesdestino: parseFloat(s_raw.costogastoslocalesdestino) || 0,
-                ventasgastoslocalesdestino: parseFloat(s_raw.ventasgastoslocalesdestino) || 0,
-                peso: parseFloat(s_raw.peso) || 0,
-                volumen: parseFloat(s_raw.volumen) || 0,
-                bultos: parseInt(s_raw.bultos) || 0,
-                // Agregar otros campos numéricos si es necesario
-            };
-
-            const costos = costos_raw.map(c => ({
-                ...c,
-                qty: parseFloat(c.qty) || 0,
-                costo: parseFloat(c.costo) || 0,
-                tarifa: parseFloat(c.tarifa) || 0,
-                total_costo: parseFloat(c.total_costo) || 0,
-                total_tarifa: parseFloat(c.total_tarifa) || 0
-            }));
-
-            const gastos_locales = gastos_locales_raw.map(g => ({
-                ...g,
-                monto: parseFloat(g.monto) || 0,
-                iva: parseFloat(g.iva) || 0
-            }));
-            // --- FIN CONVERSIÓN ---
+            const costos = datos.costos || [];
+            const gastos_locales = datos.gastos_locales || [];
 
             // Calcular texto de transporte basado en el tráfico del servicio
             const tipoTrafico = (s.trafico || '').toLowerCase();
@@ -2937,47 +2906,115 @@
                 shipperRut = p?.rut_empresa || s.rut_empresa || '';
             }
 
-            // Calcular totales para la tabla de costos (después de convertir)
+            // Calcular totales para la tabla de costos (antes de renderizarla)
             let totalCostos = 0;
             let totalVenta = 0;
             let totalTotalCosto = 0;
             let totalTotalTarifa = 0;
 
-            costos.forEach(c => {
-                totalCostos += c.costo;
-                totalVenta += c.tarifa;
-                totalTotalCosto += c.total_costo;
-                totalTotalTarifa += c.total_tarifa;
+            const costosRenderizados = costos.map(c => {
+                const qty = parseFloat(c.qty) || 0;
+                const costo = parseFloat(c.costo) || 0;
+                const tarifa = parseFloat(c.tarifa) || 0;
+                const total_costo = qty * costo;
+                const total_tarifa = qty * tarifa;
+
+                totalCostos += costo;
+                totalVenta += tarifa;
+                totalTotalCosto += total_costo;
+                totalTotalTarifa += total_tarifa;
+
+                return {
+                    ...c,
+                    qty: qty,
+                    costo: costo,
+                    tarifa: tarifa,
+                    total_costo: total_costo,
+                    total_tarifa: total_tarifa
+                };
             });
 
-            // Calcular totales para la tabla de gastos locales (después de convertir)
+            // Calcular totales para la tabla de gastos locales
             let totalGastosCostos = 0;
             let totalGastosVentas = 0;
             gastos_locales.forEach(g => {
+                const monto = parseFloat(g.monto) || 0;
+                const iva = parseFloat(g.iva) || 0; // El IVA puede ser 0
                 const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
-                const subtotal = esAfecto ? g.monto * (1 + g.iva / 100) : g.monto;
-                if (g.tipo.toUpperCase() === 'COSTO') {
+                const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
+
+                if ((g.tipo || '').toUpperCase() === 'COSTO') {
                     totalGastosCostos += subtotal;
-                } else if (g.tipo.toUpperCase() === 'VENTAS') {
+                } else if ((g.tipo || '').toUpperCase() === 'VENTAS') {
                     totalGastosVentas += subtotal;
                 }
             });
 
-            // Calcular Profit Share (después de convertir y calcular totales)
-            const totalCostoFinal = s.costo + totalGastosCostos;
-            const totalVentaFinal = s.venta + totalGastosVentas;
+            // Calcular Profit Share
+            const totalCostoFinal = (s.costo || 0) + totalGastosCostos;
+            const totalVentaFinal = (s.venta || 0) + totalGastosVentas;
             const profitLocal = totalVentaFinal - totalCostoFinal;
             const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0;
 
-            // Construir HTML del submodal basado en los datos procesados
+            // --- Cargar estado de crédito del cliente ---
+            const rutCliente = s.rut_empresa; // Usar el RUT del servicio (asumiendo que es el RUT del cliente del prospecto)
+            let simboloCredito = '';
+            let simboloContado = '';
+
+            if (rutCliente) {
+                // Hacer la petición AJAX para obtener el estado de crédito
+                fetch(`/api/get_estado_credito_cliente.php?rut=${encodeURIComponent(rutCliente)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(creditoData => {
+                        if (creditoData.success && creditoData.estado_credito) {
+                            const estadoCredito = creditoData.estado_credito.toLowerCase();
+                            if (estadoCredito === 'vigente' || estadoCredito === 'activo') { // Ajusta según los valores reales de tu DB
+                                simboloCredito = ' ✓';
+                                simboloContado = ' &nbsp;';
+                            } else {
+                                simboloCredito = ' &nbsp;';
+                                simboloContado = ' ✓'; // Si no es vigente, asumir contado
+                            }
+                        } else {
+                            // Si la API devuelve éxito pero no hay estado, asumir contado o dejar vacío
+                            simboloCredito = ' &nbsp;';
+                            simboloContado = ' ✓';
+                        }
+                        // Una vez que se tiene el símbolo, continuar con la construcción del HTML
+                        _renderizarRouteOrderConCredito(datos, s, p, costosRenderizados, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
+                    })
+                    .catch(err => {
+                        console.error('Error al cargar estado de crédito:', err);
+                        // En caso de error, asumir contado o dejar ambos vacíos
+                        simboloCredito = ' &nbsp;';
+                        simboloContado = ' ✓';
+                        // Continuar con la construcción del HTML de todas formas
+                        _renderizarRouteOrderConCredito(datos, s, p, costosRenderizados, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
+                    });
+            } else {
+                // Si no hay RUT de cliente, no se puede verificar crédito
+                simboloCredito = ' &nbsp;';
+                simboloContado = ' &nbsp;';
+                _renderizarRouteOrderConCredito(datos, s, p, costosRenderizados, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
+            }
+        }
+
+        // --- Función auxiliar para construir el HTML con el estado de crédito ---
+        function _renderizarRouteOrderConCredito(datos, s, p, costosRenderizados, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado) {
+            // Construir HTML del submodal basado en los datos y el estado de crédito
             let html = `
                 <div style="font-size: 9pt; line-height: 1.4;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div>
                             <strong>Nº Cotización:</strong> ${p?.concatenado || s.concatenado || 'N/A'}
                         </div>
-                        <div style="text-align: left;">
-                            <strong>TIPO CAMBIO CLIENTE:</strong> ${s.tipo_cambio.toFixed(4)}<br> <!-- Convertido a número -->
+                        <div style="text-align: right;">
+                            <strong>TIPO CAMBIO CLIENTE:</strong> ${(s.tipo_cambio || 1).toFixed(4)}<br>
                             <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
                             <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
                             <strong>PROV. NACIONAL:</strong> ${s.proveedor_nac || ''}<br>
@@ -3009,19 +3046,21 @@
                         <strong>INCOTERM:</strong> ${s.incoterm || ''}<br>
                         <strong>COMMODITY:</strong> ${s.commodity || ''}<br>
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
-                            <div><strong>VOLÚMEN:</strong> ${s.volumen.toFixed(2)}</div> <!-- Convertido a número -->
-                            <div><strong>PESO BRUTO:</strong> ${s.peso.toFixed(2)} kg</div> <!-- Convertido a número -->
+                            <div><strong>VOLÚMEN:</strong> ${(s.volumen || 0).toFixed(2)}</div>
+                            <div><strong>PESO BRUTO:</strong> ${(s.peso || 0).toFixed(2)} kg</div>
                             <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
-                            <div><strong>UNIDADES:</strong> ${s.bultos}</div> <!-- Convertido a número -->
+                            <div><strong>UNIDADES:</strong> ${s.bultos || 0}</div>
                         </div>
-                        <div><strong>POL:</strong> ${s.origen || ''}</div>
-                        <div><strong>POD:</strong> ${s.destino || ''}</div>
-                        <div><strong>COLOADER:</strong></div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                            <div><strong>POD:</strong> ${s.destino || ''}</div>
+                            <div><strong>POL:</strong> ${s.origen || ''}</div>
+                            <div><strong>COLOADER:</strong></div>
+                        </div>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
                         <strong>NOTAS ADICIONALES:</strong><br>
-                        <div style="white-space: pre-line; margin-left: 1rem;">${s.nota_srvc || ''}</div> <!-- Campo nota_srvc -->
+                        <div style="white-space: pre-line; margin-left: 1rem;">${s.nota_srvc || ''}</div>
                     </div>
 
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
@@ -3044,15 +3083,15 @@
             `;
 
             // Renderizar filas de costos
-            costos.forEach(c => {
+            costosRenderizados.forEach(c => {
                 html += `
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 0.3rem;">${c.concepto || ''}</td>
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.moneda || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.qty.toFixed(2)}</td> <!-- Convertido a número -->
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.costo.toFixed(2)}</td> <!-- Convertido a número -->
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.tarifa.toFixed(2)}</td> <!-- Convertido a número -->
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.total_costo.toFixed(2)}</td> <!-- Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.qty.toFixed(2)}</td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.costo.toFixed(2)}</td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.tarifa.toFixed(2)}</td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.total_costo.toFixed(2)}</td>
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.aplica || ''}</td>
                             </tr>
                 `;
@@ -3099,16 +3138,16 @@
 
             // Renderizar filas de gastos locales
             gastos_locales.forEach(g => {
-                const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
-                const subtotal = esAfecto ? g.monto * (1 + g.iva / 100) : g.monto;
+                const monto = parseFloat(g.monto) || 0;
+                const iva = parseFloat(g.iva) || 0;
                 html += `
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.tipo || ''}</td>
                                 <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.gasto || ''}</td>
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.moneda || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${g.monto.toFixed(2)}</td> <!-- Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.afecto || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${g.iva.toFixed(2)}%</td> <!-- Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td>
                             </tr>
                 `;
             });
@@ -3124,13 +3163,13 @@
                             <h5 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h5>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                                 <div><strong>TOTAL VENTA:</strong></div>
-                                <div style="text-align: right;">${totalVentaFinal.toFixed(2)}</div> <!-- Calculado como número -->
+                                <div style="text-align: right;">${totalVentaFinal.toFixed(2)}</div>
                                 <div><strong>TOTAL COSTO:</strong></div>
-                                <div style="text-align: right;">${totalCostoFinal.toFixed(2)}</div> <!-- Calculado como número -->
+                                <div style="text-align: right;">${totalCostoFinal.toFixed(2)}</div>
                                 <div><strong>PROFIT LOCAL:</strong></div>
-                                <div style="text-align: right;">${profitLocal.toFixed(2)}</div> <!-- Calculado como número -->
+                                <div style="text-align: right;">${profitLocal.toFixed(2)}</div>
                                 <div><strong>PROFIT %:</strong></div>
-                                <div style="text-align: right;">${profitPorcentaje.toFixed(2)}%</div> <!-- Calculado como número -->
+                                <div style="text-align: right;">${profitPorcentaje.toFixed(2)}%</div>
                             </div>
                         </div>
                         <div>
@@ -3141,9 +3180,9 @@
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
-                            <strong>CREDITO:</strong><br>
+                            <strong>CREDITO:${simboloCredito}</strong><br> <!-- Símbolo dinámico -->
                             <div style="margin-left: 1rem;">&nbsp;</div>
-                            <strong>CONTADO:</strong><br>
+                            <strong>CONTADO:${simboloContado}</strong><br> <!-- Símbolo dinámico -->
                             <div style="margin-left: 1rem;">&nbsp;</div>
                         </div>
                         <div>
@@ -3226,13 +3265,14 @@
                     </table>
 
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS A OPERACIONES</h4>
-                    <div style="white-space: pre-line;">${s.notas_operaciones || ''}</div>
+                    <div>${s.notas_operaciones || ''}</div>
 
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS COMERCIALES</h4>
-                    <div style="white-space: pre-line;">${s.notas_comerciales || ''}</div>
+                    <div>${s.notas_comerciales || ''}</div>
                 </div>
             `;
 
+            // Insertar el HTML generado en el contenedor del submodal
             document.getElementById('route-order-content').innerHTML = html;
         }
 
