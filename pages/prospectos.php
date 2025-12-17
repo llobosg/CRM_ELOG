@@ -2982,7 +2982,7 @@
                         <!-- Fila para Peso Bruto, Dimensiones -->
                         <tr>
                             <td style="border: none;"><strong>Peso Bruto:</strong></td>
-                            <td style="border: none;">${(s.peso || 0).toFixed(2)} kg</td>
+                            <td style="border: none;">${(parseFloat(s.peso) || 0).toFixed(2)} kg</td>
                             <td style="border: none;"><strong>Dimensiones:</strong></td>
                             <td style="border: none;">${s.dimensiones || ''}</td>
                         </tr>
