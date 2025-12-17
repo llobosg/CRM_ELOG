@@ -2860,6 +2860,7 @@
             }
         }
 
+        // --- Función para renderizar el contenido del submodal Route Order ---
         function renderizarRouteOrder(datos) {
             if (!datos || !datos.servicio) {
                 document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">No hay datos para mostrar.</p>';
@@ -2868,6 +2869,8 @@
 
             const s = datos.servicio;
             const p = datos.prospecto; // Asumiendo que datos.prospecto tiene la info del prospecto padre
+            const costos = datos.costos || [];
+            const gastos_locales = datos.gastos_locales || [];
 
             // Calcular texto de transporte basado en el tráfico del servicio
             const tipoTrafico = (s.trafico || '').toLowerCase();
@@ -2892,335 +2895,333 @@
             let consignatarioRut = '';
 
             if (operacion === 'im') { // Importación
-                consignatarioRS = p.razon_social || s.razon_social || ''; // Priorizar datos del prospecto padre
+                consignatarioRS = p.razon_social || s.razon_social || '';
                 consignatarioDireccion = p.direccion || s.direccion || '';
-                consignatarioContacto = datos.contacto_nombre || s.contacto_nombre || ''; // Asumiendo datos.contacto_nombre es el contacto primario del prospecto
+                consignatarioContacto = datos.contacto_nombre || s.contacto_nombre || '';
                 consignatarioRut = p.rut_empresa || s.rut_empresa || '';
-                // Shipper queda vacío o se puede poblar con datos predeterminados o de otra fuente si aplica
             } else { // Exportación u otros (por defecto se asume Exportación)
                 shipperRS = p.razon_social || s.razon_social || '';
                 shipperDireccion = p.direccion || s.direccion || '';
                 shipperContacto = datos.contacto_nombre || s.contacto_nombre || '';
                 shipperRut = p.rut_empresa || s.rut_empresa || '';
-                // Consignatario queda vacío o se puede poblar con datos predeterminados o de otra fuente si aplica
             }
 
+            // Calcular totales para la tabla de costos (antes de renderizarla)
+            let totalCostos = 0;
+            let totalVenta = 0;
+            let totalTotalCosto = 0;
+            let totalTotalTarifa = 0;
 
-            // Construir HTML del submodal basado en el nuevo layout
+            // Convertir valores numéricos en costos y calcular totales
+            const costosRenderizados = costos.map(c => {
+                const qty = parseFloat(c.qty) || 0;
+                const costo = parseFloat(c.costo) || 0;
+                const tarifa = parseFloat(c.tarifa) || 0;
+                const total_costo = qty * costo;
+                const total_tarifa = qty * tarifa;
+
+                totalCostos += costo;
+                totalVenta += tarifa;
+                totalTotalCosto += total_costo;
+                totalTotalTarifa += total_tarifa;
+
+                return {
+                    ...c,
+                    qty: qty,
+                    costo: costo,
+                    tarifa: tarifa,
+                    total_costo: total_costo,
+                    total_tarifa: total_tarifa
+                };
+            });
+
+            // Calcular totales para la tabla de gastos locales
+            let totalGastosCostos = 0;
+            let totalGastosVentas = 0;
+            gastos_locales.forEach(g => {
+                const monto = parseFloat(g.monto) || 0;
+                const iva = parseFloat(g.iva) ?? 0; // El IVA puede ser 0
+                const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
+                const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
+
+                if ((g.tipo || '').toUpperCase() === 'COSTO') {
+                    totalGastosCostos += subtotal;
+                } else if ((g.tipo || '').toUpperCase() === 'VENTAS') {
+                    totalGastosVentas += subtotal;
+                }
+            });
+
+            // Calcular Profit Share
+            const totalCostoFinal = (s.costo || 0) + totalGastosCostos;
+            const totalVentaFinal = (s.venta || 0) + totalGastosVentas;
+            const profitLocal = totalVentaFinal - totalCostoFinal;
+            const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0;
+
+            // Construir HTML del submodal basado en los datos y totales calculados
             let html = `
                 <div style="font-size: 9pt; line-height: 1.4;">
-                    <!-- Tabla principal de 4 columnas -->
-                    <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-                        <tr>
-                            <td style="width: 25%; vertical-align: top; border: none;">
-                                <!-- Logo (ajusta la ruta o usa placeholder si no es aplicable aquí) -->
-                                <div style="height: 16mm; margin-bottom: 1mm; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">[Logo]</div>
-                            </td>
-                            <td style="width: 25%; border: none;"></td> <!-- Columna vacía -->
-                            <td style="width: 25%; border: none;"><strong>Nº Cotización:</strong></td>
-                            <td style="width: 25%; border: none;">${p.concatenado || s.concatenado || 'N/A'}</td>
-                        </tr>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <strong>Nº Cotización:</strong> ${p.concatenado || s.concatenado || 'N/A'}
+                        </div>
+                        <div style="text-align: right;">
+                            <strong>TIPO CAMBIO CLIENTE:</strong> ${(s.tipo_cambio || 1).toFixed(4)}<br> <!-- Convertido a número -->
+                            <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
+                            <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
+                            <strong>PROV. NACIONAL:</strong> ${s.proveedor_nac || ''}<br>
+                            <strong>TERRESTRE:</strong><br>
+                            <strong>DESCONSOLIDACIÓN:</strong> ${s.desconsolidac || ''}<br>
+                            <strong>GRÚAS:</strong><br>
+                            <strong>EMBALAJE:</strong>
+                        </div>
+                    </div>
 
-                        <!-- Fila para Tipo de Cambio Cliente, Agente/Oficina -->
-                        <tr>
-                            <td style="border: none;"><strong>Tipo Cambio Cliente:</strong></td>
-                            <td style="border: none;">${s.tipo_cambio || '1.00'}</td>
-                            <td style="border: none;"><strong>Agente / Oficina:</strong></td>
-                            <td style="border: none;">${s.agente || ''}</td>
-                        </tr>
-                        <!-- Fila para Ref. Cliente, Prov. Nacional -->
-                        <tr>
-                            <td style="border: none;"><strong>Ref. Cliente:</strong></td>
-                            <td style="border: none;">${s.ref_cliente || ''}</td>
-                            <td style="border: none;"><strong>Prov. Nacional:</strong></td>
-                            <td style="border: none;">${s.proveedor_nac || ''}</td>
-                        </tr>
-                        <!-- Fila para Terrestre, Desconsolidación -->
-                        <tr>
-                            <td style="border: none;"><strong>Terrestre:</strong></td>
-                            <td style="border: none;">&nbsp;</td>
-                            <td style="border: none;"><strong>Desconsolidación:</strong></td>
-                            <td style="border: none;">${s.desconsolidac || ''}</td>
-                        </tr>
-                        <!-- Fila para Grúas, Embalaje -->
-                        <tr>
-                            <td style="border: none;"><strong>Grúas:</strong></td>
-                            <td style="border: none;">&nbsp;</td>
-                            <td style="border: none;"><strong>Embalaje:</strong></td>
-                            <td style="border: none;">&nbsp;</td>
-                        </tr>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
+                            <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #007bff;">SHIPPER</h4>
+                            <div><strong>Razón Social:</strong> ${shipperRS}</div>
+                            <div><strong>Dirección:</strong> ${shipperDireccion}</div>
+                            <div><strong>Contacto:</strong> ${shipperContacto}</div>
+                            <div><strong>R.U.T.:</strong> ${shipperRut}</div>
+                        </div>
+                        <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
+                            <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #28a745;">CONSIGNATARIO</h4>
+                            <div><strong>Razón Social:</strong> ${consignatarioRS}</div>
+                            <div><strong>Dirección:</strong> ${consignatarioDireccion}</div>
+                            <div><strong>Contacto:</strong> ${consignatarioContacto}</div>
+                            <div><strong>R.U.T.:</strong> ${consignatarioRut}</div>
+                        </div>
+                    </div>
 
-                        <!-- Fila con bloques Shipper y Consignatario -->
-                        <tr>
-                            <td style="border: none;" colspan="4">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
-                                    <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
-                                        <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #007bff;">SHIPPER</h4>
-                                        <div><strong>Razón Social:</strong> ${shipperRS}</div>
-                                        <div><strong>Dirección:</strong> ${shipperDireccion}</div>
-                                        <div><strong>Contacto:</strong> ${shipperContacto}</div>
-                                        <div><strong>R.U.T.:</strong> ${shipperRut}</div>
-                                    </div>
-                                    <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
-                                        <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #28a745;">CONSIGNATARIO</h4>
-                                        <div><strong>Razón Social:</strong> ${consignatarioRS}</div>
-                                        <div><strong>Dirección:</strong> ${consignatarioDireccion}</div>
-                                        <div><strong>Contacto:</strong> ${consignatarioContacto}</div>
-                                        <div><strong>R.U.T.:</strong> ${consignatarioRut}</div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
+                    <div style="margin-bottom: 1rem;">
+                        <strong>INCOTERM:</strong> ${s.incoterm || ''}<br>
+                        <strong>COMMODITY:</strong> ${s.commodity || ''}<br>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                            <div><strong>VOLÚMEN:</strong> ${(s.volumen || 0).toFixed(2)}</div> <!-- Convertido a número -->
+                            <div><strong>PESO BRUTO:</strong> ${(s.peso || 0).toFixed(2)} kg</div> <!-- Convertido a número -->
+                            <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
+                            <div><strong>UNIDADES:</strong> ${s.bultos || 0}</div> <!-- Convertido a número entero -->
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                            <div><strong>POL:</strong> ${s.origen || ''}</div>
+                            <div><strong>POD:</strong> ${s.destino || ''}</div>
+                            <div><strong>COLOADER:</strong></div>
+                        </div>
+                    </div>
 
-                        <!-- Fila para Incoterm y Commodity -->
-                        <tr>
-                            <td style="border: none;"><strong>Incoterm:</strong></td>
-                            <td style="border: none;">${s.incoterm || ''}</td>
-                            <td style="border: none;"><strong>Commodity:</strong></td>
-                            <td style="border: none;">${s.commodity || ''}</td>
-                        </tr>
-                        <!-- Fila para Peso Bruto, Dimensiones -->
-                        <tr>
-                            <td style="border: none;"><strong>Peso Bruto:</strong></td>
-                            <td style="border: none;">${(parseFloat(s.peso) || 0).toFixed(2)} kg</td>
-                            <td style="border: none;"><strong>Dimensiones:</strong></td>
-                            <td style="border: none;">${s.dimensiones || ''}</td>
-                        </tr>
-                        <!-- Fila para Unidades FCL, Cantidad/Bultos -->
-                        <tr>
-                            <td style="border: none;"><strong>Unidades FCL:</strong></td>
-                            <td style="border: none;">${(parseInt(s.bultos) || 0).toString()}</td>
-                            <td style="border: none;"><strong>Cantidad/Bultos:</strong></td>
-                            <td style="border: none;">${(parseInt(s.bultos) || 0).toString()}</td>
-                        </tr>
-                        <!-- Fila para Volumen, Agente -->
-                        <tr>
-                            <td style="border: none;"><strong>Volumen:</strong></td>
-                            <td style="border: none;">${(parseFloat(s.volumen) || 0).toFixed(2)} kg</td>
-                            <td style="border: none;"><strong>Agente:</strong></td>
-                            <td style="border: none;">${s.agente || ''}</td>
-                        </tr>
-                        <!-- Fila para POL y POD -->
-                        <tr>
-                            <td style="border: none;"><strong>POL:</strong></td>
-                            <td style="border: none;">${s.origen || ''}</td>
-                            <td style="border: none;"><strong>POD:</strong></td>
-                            <td style="border: none;">${s.destino || ''}</td>
-                        </tr>
-                        <!-- Fila para texto calculado (Naviera/Aerolínea/Transporte) y Coloader -->
-                        <tr>
-                            <td style="border: none;"><strong>${textoTransporte}:</strong></td>
-                            <td style="border: none;">${s.transportador || ''}</td>
-                            <td style="border: none;"><strong>Coloader:</strong></td>
-                            <td style="border: none;">&nbsp;</td>
-                        </tr>
+                    <div style="margin-bottom: 1rem;">
+                        <strong>NOTAS ADICIONALES:</strong><br>
+                        <div style="white-space: pre-line; margin-left: 1rem;">${s.nota_srvc || ''}</div>
+                    </div>
 
-                        <!-- Fila para Notas del Servicio (ocupando toda la fila) -->
-                        <tr>
-                            <td style="border: none;" colspan="4">
-                                <div style="margin: 1rem 0;">
-                                    <div style="margin-bottom: 2px;"><strong>Notas Servicio</strong></div>
-                                    <div style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; min-height: 30px; background-color: #fafafa; font-size: 8.5pt; line-height: 1.3;">
-                                        ${(s.nota_srvc || '').replace(/\n/g, '<br>')} <!-- Asumiendo que s.nota_srvc puede contener saltos de línea -->
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">Costos</h5>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
 
+            // Renderizar filas de costos
+            costosRenderizados.forEach(c => {
+                html += `
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${c.concepto || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.moneda || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.qty.toFixed(2)}</td> <!-- Ahora es número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.costo.toFixed(2)}</td> <!-- Ahora es número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.tarifa.toFixed(2)}</td> <!-- Ahora es número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.total_costo.toFixed(2)}</td> <!-- Calculado como número -->
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.aplica || ''}</td>
+                            </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                                <tfoot>
+                                    <tr style="font-weight: bold;">
+                                        <td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTALES:</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${totalCostos.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${totalVenta.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${totalTotalCosto.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd;"></td>
+                                    </tr>
+                                    <tr style="font-weight: bold;">
+                                        <td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT:</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${profitLocal.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd;"></td>
+                                    </tr>
+                                    <tr style="font-weight: bold;">
+                                        <td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT %:</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${profitPorcentaje.toFixed(2)}%</td>
+                                        <td style="border: 1px solid #ddd;"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">Gastos Locales</h5>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Tipo</th>
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Gasto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">IVA%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+
+            // Renderizar filas de gastos locales
+            gastos_locales.forEach(g => {
+                const monto = parseFloat(g.monto) || 0; // Convertir a número
+                const iva = parseFloat(g.iva) ?? 0;    // Convertir a número
+                html += `
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.tipo || ''}</td>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.gasto || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.moneda || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td> <!-- Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.afecto || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td> <!-- Convertido a número -->
+                            </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h5>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                <div><strong>TOTAL VENTA:</strong></div>
+                                <div style="text-align: right;">${totalVentaFinal.toFixed(2)}</div> <!-- Calculado como número -->
+                                <div><strong>TOTAL COSTO:</strong></div>
+                                <div style="text-align: right;">${totalCostoFinal.toFixed(2)}</div> <!-- Calculado como número -->
+                                <div><strong>PROFIT LOCAL:</strong></div>
+                                <div style="text-align: right;">${profitLocal.toFixed(2)}</div> <!-- Calculado como número -->
+                                <div><strong>PROFIT %:</strong></div>
+                                <div style="text-align: right;">${profitPorcentaje.toFixed(2)}%</div> <!-- Calculado como número -->
+                            </div>
+                        </div>
+                        <div>
+                            <!-- Espacio reservado para más datos si se agregan -->
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <strong>CREDITO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTADO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                        <div>
+                            <!-- Espacio reservado para más datos si se agregan -->
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">TRANSPORTE NACIONAL</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Acepta</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filas dinámicas para transporte nacional -->
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <strong>TRANSPORTISTA:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>DIREC. RETIRO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTACTO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>FONO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                        <div>
+                            <strong>DIREC. ENTREGA:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>FONO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>EMPRESA:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTACTO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">SEGURO</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Min.</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">V.Venta</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filas dinámicas para seguro -->
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                            </tr>
+                        </tbody>
                     </table>
 
-                    <!-- Separador visual -->
-                    <div style="height:6mm;"></div>
-                    <div style="background-color: #e9ecef; height: 1px;"></div>
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS A OPERACIONES</h4>
+                    <div style="white-space: pre-line;">${s.notas_operaciones || ''}</div>
 
-                    <!-- CONTENIDO POSTERIOR (Profit Share, Gastos, etc.) -->
-                    <div style="margin-top: 4mm; font-size: 9pt;">
-                        <h3 style="font-size: 10pt; margin-bottom: 2mm;">PROFIT SHARE</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div>
-                                <h4 style="margin-bottom: 0.5rem;">Costos</h4>
-                                <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                    <thead>
-                                        <tr style="background-color: #f2f2f2;">
-                                            <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                            <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                            <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
-                                            <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
-                                            <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
-                                            <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
-                                            <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-            `;
-
-            // Añadir filas de costos
-            (datos.costos || []).forEach(c => {
-                html += `
-                        <tr>
-                            <td style="border: 1px solid #ddd; padding: 0.3rem;">${c.concepto || ''}</td>
-                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.moneda || ''}</td>
-                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td>
-                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.costo || 0).toFixed(2)}</td>
-                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.tarifa || 0).toFixed(2)}</td>
-                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.total_costo || 0).toFixed(2)}</td>
-                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.aplica || ''}</td>
-                        </tr>
-                `;
-            });
-
-            html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div>
-                                <h4 style="margin-bottom: 0.5rem;">Gastos Locales</h4>
-                                <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                    <thead>
-                                        <tr style="background-color: #f2f2f2;">
-                                            <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Tipo</th>
-                                            <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Gasto</th>
-                                            <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                            <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
-                                            <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
-                                            <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">IVA%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-            `;
-
-            // Añadir filas de gastos locales
-            (datos.gastos_locales || []).forEach(g => {
-                html += `
-                        <tr>
-                            <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.tipo || ''}</td>
-                            <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.gasto || ''}</td>
-                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.moneda || ''}</td>
-                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(g.monto || 0).toFixed(2)}</td>
-                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.afecto || ''}</td>
-                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(g.iva || 0).toFixed(2)}%</td>
-                        </tr>
-                `;
-            });
-
-            html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                            <div>
-                                <h4 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h4>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                                    <div><strong>TOTAL VENTA:</strong></div>
-                                    <div style="text-align: right;">${(s.venta || 0).toFixed(2)}</div>
-                                    <div><strong>TOTAL COSTO:</strong></div>
-                                    <div style="text-align: right;">${(s.costo || 0).toFixed(2)}</div>
-                                    <div><strong>PROFIT LOCAL:</strong></div>
-                                    <div style="text-align: right;">${((s.venta || 0) - (s.costo || 0)).toFixed(2)}</div>
-                                    <div><strong>PROFIT %:</strong></div>
-                                    <div style="text-align: right;">${(s.venta > 0 ? (((s.venta - s.costo) / s.venta) * 100) : 0).toFixed(2)}%</div>
-                                </div>
-                            </div>
-                            <div>
-                                <!-- Espacio reservado para más datos si se agregan -->
-                            </div>
-                        </div>
-
-                        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 10pt; text-decoration: underline;">CONDICIONES COMERCIALES</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div>
-                                <div><strong>CREDITO:</strong></div>
-                                <div>&nbsp;</div>
-                                <div><strong>CONTADO:</strong></div>
-                                <div>&nbsp;</div>
-                            </div>
-                            <div>
-                                <!-- Espacio reservado para más datos si se agregan -->
-                            </div>
-                        </div>
-
-                        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 10pt;">TRANSPORTE NACIONAL</h3>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                            <thead>
-                                <tr style="background-color: #f2f2f2;">
-                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
-                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
-                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit</th>
-                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Acepta</th>
-                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                            <div>
-                                <div><strong>TRANSPORTISTA:</strong></div>
-                                <div>&nbsp;</div>
-                                <div><strong>DIREC. RETIRO:</strong></div>
-                                <div>&nbsp;</div>
-                                <div><strong>CONTACTO:</strong></div>
-                                <div>&nbsp;</div>
-                                <div><strong>FONO:</strong></div>
-                                <div>&nbsp;</div>
-                            </div>
-                            <div>
-                                <div><strong>DIREC. ENTREGA:</strong></div>
-                                <div>&nbsp;</div>
-                                <div><strong>FONO:</strong></div>
-                                <div>&nbsp;</div>
-                                <div><strong>EMPRESA:</strong></div>
-                                <div>&nbsp;</div>
-                                <div><strong>CONTACTO:</strong></div>
-                                <div>&nbsp;</div>
-                            </div>
-                        </div>
-
-                        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 10pt;">SEGURO</h3>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                            <thead>
-                                <tr style="background-color: #f2f2f2;">
-                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
-                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
-                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Min.</th>
-                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">V.Venta</th>
-                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 10pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>
-                        <div>${(s.notas_operaciones || '').replace(/\n/g, '<br>')}</div>
-
-                        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 10pt; text-decoration: underline;">NOTAS COMERCIALES</h3>
-                        <div>${(s.notas_comerciales || '').replace(/\n/g, '<br>')}</div>
-                    </div>
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS COMERCIALES</h4>
+                    <div style="white-space: pre-line;">${s.notas_comerciales || ''}</div>
                 </div>
             `;
 
