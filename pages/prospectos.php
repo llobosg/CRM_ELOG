@@ -1482,9 +1482,6 @@
                     document.getElementById('serv_agente').value = s.agente || '';
                     document.getElementById('serv_validez').value = s.validez || '';
 
-                    // --- NUEVO: Asignar ID del servicio al campo oculto ---
-                    document.getElementById('id_srvc_edit').value = s.id_srvc || ''; // ✅ Añadir esta línea
-
                     // Cargar lugares si hay medio guardado
                     const medioGuardado = (s.trafico || '').trim();
                     if (medioGuardado) {
@@ -1527,8 +1524,6 @@
                 } else {
                     // Nuevo servicio
                     servicioEnEdicion = null;
-                    // Limpiar el campo oculto del ID al crear un nuevo servicio
-                    document.getElementById('id_srvc_edit').value = '';
                 }
             });
 
