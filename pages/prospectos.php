@@ -2867,10 +2867,41 @@
                 return;
             }
 
-            const s = datos.servicio;
+            const s_raw = datos.servicio; // Datos sin procesar
             const p = datos.prospecto; // Asumiendo que datos.prospecto tiene la info del prospecto padre
-            const costos = datos.costos || [];
-            const gastos_locales = datos.gastos_locales || [];
+            const costos_raw = datos.costos || [];
+            const gastos_locales_raw = datos.gastos_locales || [];
+
+            // --- CONVERSIÓN DE CAMPOS NUMÉRICOS ---
+            const s = {
+                ...s_raw,
+                // Campos numéricos del servicio
+                tipo_cambio: parseFloat(s_raw.tipo_cambio) || 1,
+                costo: parseFloat(s_raw.costo) || 0,
+                venta: parseFloat(s_raw.venta) || 0,
+                costogastoslocalesdestino: parseFloat(s_raw.costogastoslocalesdestino) || 0,
+                ventasgastoslocalesdestino: parseFloat(s_raw.ventasgastoslocalesdestino) || 0,
+                peso: parseFloat(s_raw.peso) || 0,
+                volumen: parseFloat(s_raw.volumen) || 0,
+                bultos: parseInt(s_raw.bultos) || 0,
+                // Agregar otros campos numéricos si es necesario
+            };
+
+            const costos = costos_raw.map(c => ({
+                ...c,
+                qty: parseFloat(c.qty) || 0,
+                costo: parseFloat(c.costo) || 0,
+                tarifa: parseFloat(c.tarifa) || 0,
+                total_costo: parseFloat(c.total_costo) || 0,
+                total_tarifa: parseFloat(c.total_tarifa) || 0
+            }));
+
+            const gastos_locales = gastos_locales_raw.map(g => ({
+                ...g,
+                monto: parseFloat(g.monto) || 0,
+                iva: parseFloat(g.iva) || 0
+            }));
+            // --- FIN CONVERSIÓN ---
 
             // Calcular texto de transporte basado en el tráfico del servicio
             const tipoTrafico = (s.trafico || '').toLowerCase();
@@ -2884,7 +2915,7 @@
             }
 
             // Determinar datos para Shipper y Consignatario basado en la operación del prospecto padre
-            const operacion = (p.operacion || '').toLowerCase(); // Asumiendo que 'p' tiene la operación
+            const operacion = (p?.operacion || '').toLowerCase();
             let shipperRS = '';
             let shipperDireccion = '';
             let shipperContacto = '';
@@ -2895,77 +2926,58 @@
             let consignatarioRut = '';
 
             if (operacion === 'im') { // Importación
-                consignatarioRS = p.razon_social || s.razon_social || '';
-                consignatarioDireccion = p.direccion || s.direccion || '';
+                consignatarioRS = p?.razon_social || s.razon_social || '';
+                consignatarioDireccion = p?.direccion || s.direccion || '';
                 consignatarioContacto = datos.contacto_nombre || s.contacto_nombre || '';
-                consignatarioRut = p.rut_empresa || s.rut_empresa || '';
+                consignatarioRut = p?.rut_empresa || s.rut_empresa || '';
             } else { // Exportación u otros (por defecto se asume Exportación)
-                shipperRS = p.razon_social || s.razon_social || '';
-                shipperDireccion = p.direccion || s.direccion || '';
+                shipperRS = p?.razon_social || s.razon_social || '';
+                shipperDireccion = p?.direccion || s.direccion || '';
                 shipperContacto = datos.contacto_nombre || s.contacto_nombre || '';
-                shipperRut = p.rut_empresa || s.rut_empresa || '';
+                shipperRut = p?.rut_empresa || s.rut_empresa || '';
             }
 
-            // Calcular totales para la tabla de costos (antes de renderizarla)
+            // Calcular totales para la tabla de costos (después de convertir)
             let totalCostos = 0;
             let totalVenta = 0;
             let totalTotalCosto = 0;
             let totalTotalTarifa = 0;
 
-            // Convertir valores numéricos en costos y calcular totales
-            const costosRenderizados = costos.map(c => {
-                const qty = parseFloat(c.qty) || 0;
-                const costo = parseFloat(c.costo) || 0;
-                const tarifa = parseFloat(c.tarifa) || 0;
-                const total_costo = qty * costo;
-                const total_tarifa = qty * tarifa;
-
-                totalCostos += costo;
-                totalVenta += tarifa;
-                totalTotalCosto += total_costo;
-                totalTotalTarifa += total_tarifa;
-
-                return {
-                    ...c,
-                    qty: qty,
-                    costo: costo,
-                    tarifa: tarifa,
-                    total_costo: total_costo,
-                    total_tarifa: total_tarifa
-                };
+            costos.forEach(c => {
+                totalCostos += c.costo;
+                totalVenta += c.tarifa;
+                totalTotalCosto += c.total_costo;
+                totalTotalTarifa += c.total_tarifa;
             });
 
-            // Calcular totales para la tabla de gastos locales
+            // Calcular totales para la tabla de gastos locales (después de convertir)
             let totalGastosCostos = 0;
             let totalGastosVentas = 0;
             gastos_locales.forEach(g => {
-                const monto = parseFloat(g.monto) || 0;
-                const iva = parseFloat(g.iva) ?? 0; // El IVA puede ser 0
                 const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
-                const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
-
-                if ((g.tipo || '').toUpperCase() === 'COSTO') {
+                const subtotal = esAfecto ? g.monto * (1 + g.iva / 100) : g.monto;
+                if (g.tipo.toUpperCase() === 'COSTO') {
                     totalGastosCostos += subtotal;
-                } else if ((g.tipo || '').toUpperCase() === 'VENTAS') {
+                } else if (g.tipo.toUpperCase() === 'VENTAS') {
                     totalGastosVentas += subtotal;
                 }
             });
 
-            // Calcular Profit Share
-            const totalCostoFinal = (s.costo || 0) + totalGastosCostos;
-            const totalVentaFinal = (s.venta || 0) + totalGastosVentas;
+            // Calcular Profit Share (después de convertir y calcular totales)
+            const totalCostoFinal = s.costo + totalGastosCostos;
+            const totalVentaFinal = s.venta + totalGastosVentas;
             const profitLocal = totalVentaFinal - totalCostoFinal;
             const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0;
 
-            // Construir HTML del submodal basado en los datos y totales calculados
+            // Construir HTML del submodal basado en los datos procesados
             let html = `
                 <div style="font-size: 9pt; line-height: 1.4;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div>
-                            <strong>Nº Cotización:</strong> ${p.concatenado || s.concatenado || 'N/A'}
+                            <strong>Nº Cotización:</strong> ${p?.concatenado || s.concatenado || 'N/A'}
                         </div>
                         <div style="text-align: right;">
-                            <strong>TIPO CAMBIO CLIENTE:</strong> ${(s.tipo_cambio || 1).toFixed(4)}<br> <!-- Convertido a número -->
+                            <strong>TIPO CAMBIO CLIENTE:</strong> ${s.tipo_cambio.toFixed(4)}<br> <!-- Convertido a número -->
                             <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
                             <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
                             <strong>PROV. NACIONAL:</strong> ${s.proveedor_nac || ''}<br>
@@ -2997,10 +3009,10 @@
                         <strong>INCOTERM:</strong> ${s.incoterm || ''}<br>
                         <strong>COMMODITY:</strong> ${s.commodity || ''}<br>
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
-                            <div><strong>VOLÚMEN:</strong> ${(s.volumen || 0).toFixed(2)}</div> <!-- Convertido a número -->
-                            <div><strong>PESO BRUTO:</strong> ${(s.peso || 0).toFixed(2)} kg</div> <!-- Convertido a número -->
+                            <div><strong>VOLÚMEN:</strong> ${s.volumen.toFixed(2)}</div> <!-- Convertido a número -->
+                            <div><strong>PESO BRUTO:</strong> ${s.peso.toFixed(2)} kg</div> <!-- Convertido a número -->
                             <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
-                            <div><strong>UNIDADES:</strong> ${s.bultos || 0}</div> <!-- Convertido a número entero -->
+                            <div><strong>UNIDADES:</strong> ${s.bultos}</div> <!-- Convertido a número -->
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
                             <div><strong>POL:</strong> ${s.origen || ''}</div>
@@ -3011,7 +3023,7 @@
 
                     <div style="margin-bottom: 1rem;">
                         <strong>NOTAS ADICIONALES:</strong><br>
-                        <div style="white-space: pre-line; margin-left: 1rem;">${s.nota_srvc || ''}</div>
+                        <div style="white-space: pre-line; margin-left: 1rem;">${s.nota_srvc || ''}</div> <!-- Campo nota_srvc -->
                     </div>
 
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
@@ -3034,15 +3046,15 @@
             `;
 
             // Renderizar filas de costos
-            costosRenderizados.forEach(c => {
+            costos.forEach(c => {
                 html += `
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 0.3rem;">${c.concepto || ''}</td>
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.moneda || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.qty.toFixed(2)}</td> <!-- Ahora es número -->
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.costo.toFixed(2)}</td> <!-- Ahora es número -->
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.tarifa.toFixed(2)}</td> <!-- Ahora es número -->
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.total_costo.toFixed(2)}</td> <!-- Calculado como número -->
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.qty.toFixed(2)}</td> <!-- Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.costo.toFixed(2)}</td> <!-- Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.tarifa.toFixed(2)}</td> <!-- Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.total_costo.toFixed(2)}</td> <!-- Convertido a número -->
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.aplica || ''}</td>
                             </tr>
                 `;
@@ -3089,16 +3101,16 @@
 
             // Renderizar filas de gastos locales
             gastos_locales.forEach(g => {
-                const monto = parseFloat(g.monto) || 0; // Convertir a número
-                const iva = parseFloat(g.iva) ?? 0;    // Convertir a número
+                const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
+                const subtotal = esAfecto ? g.monto * (1 + g.iva / 100) : g.monto;
                 html += `
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.tipo || ''}</td>
                                 <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.gasto || ''}</td>
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.moneda || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td> <!-- Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${g.monto.toFixed(2)}</td> <!-- Convertido a número -->
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.afecto || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td> <!-- Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${g.iva.toFixed(2)}%</td> <!-- Convertido a número -->
                             </tr>
                 `;
             });
@@ -3155,7 +3167,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Filas dinámicas para transporte nacional -->
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
@@ -3204,7 +3215,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Filas dinámicas para seguro -->
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
