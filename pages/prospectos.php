@@ -2989,14 +2989,14 @@
                         <!-- Fila para Unidades FCL, Cantidad/Bultos -->
                         <tr>
                             <td style="border: none;"><strong>Unidades FCL:</strong></td>
-                            <td style="border: none;">${s.bultos || '0'}</td>
+                            <td style="border: none;">${(parseInt(s.bultos) || 0).toString()}</td>
                             <td style="border: none;"><strong>Cantidad/Bultos:</strong></td>
-                            <td style="border: none;">${s.bultos || '0'}</td>
+                            <td style="border: none;">${(parseInt(s.bultos) || 0).toString()}</td>
                         </tr>
                         <!-- Fila para Volumen, Agente -->
                         <tr>
                             <td style="border: none;"><strong>Volumen:</strong></td>
-                            <td style="border: none;">${(s.volumen || 0).toFixed(2)}</td>
+                            <td style="border: none;">${(parseFloat(s.volumen) || 0).toFixed(2)} kg</td>
                             <td style="border: none;"><strong>Agente:</strong></td>
                             <td style="border: none;">${s.agente || ''}</td>
                         </tr>
