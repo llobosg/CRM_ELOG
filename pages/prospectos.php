@@ -1415,7 +1415,6 @@
         function abrirModalServicio(index = null) {
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
-            document.getElementById('id_srvc_edit').value = ''; // ✅ Limpiar ID al crear nuevo servicio
             if (!idPpl || idPpl === '0' || !concatenado) {
                 error('Guarde el prospecto primero antes de agregar servicios.');
                 return;
@@ -1441,16 +1440,6 @@
                     // Editar servicio existente
                     servicioEnEdicion = index;
                     const s = servicios[index];
-                    // --- LLENAR CAMPOS CON DATOS DEL SERVICIO ---
-                    document.getElementById('serv_servicio').value = s.servicio || '';
-                    document.getElementById('serv_tipo').value = s.tipo || '';
-                    document.getElementById('serv_medio_transporte').value = s.trafico || '';
-                    document.getElementById('serv_commodity').value = s.commodity || '';
-                    document.getElementById('serv_origen').value = s.origen || '';
-                    document.getElementById('serv_pais_origen').value = s.pais_origen || '';
-                    document.getElementById('serv_destino').value = s.destino || '';
-                    document.getElementById('serv_pais_destino').value = s.pais_destino || '';
-                    document.getElementById('serv_nota_srvc').value = s.nota_srvc || '';
                     costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
                     gastosLocales = Array.isArray(s.gastos_locales) 
                         ? s.gastos_locales.map(g => ({
