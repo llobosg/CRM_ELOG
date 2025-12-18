@@ -3032,11 +3032,9 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div style="text-align: left;">
                             <strong>Nº Cotización:</strong> ${p?.concatenado || s.concatenado || 'N/A'}<br>
-                            <strong>FECHA COTIZACIÓN:</strong> ${new Date().toLocaleDateString('es-ES')}<br>
-                            <strong>VALIDEZ COTIZACIÓN:</strong> <strong>${s.validez || ''}</strong><br>
                             <strong>TRÁFICO:</strong> <strong>${s.trafico || ''}</strong><br>
                         </div>
-                        <div style="text-align: right;">
+                        <div style="text-align: left;">
                             <strong>TIPO CAMBIO CLIENTE:</strong> ${(s.tipo_cambio || 1).toFixed(4)}<br>
                             <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
                             <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
@@ -3074,11 +3072,9 @@
                             <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
                             <div><strong>UNIDADES:</strong> ${s.bultos || 0}</div>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
-                            <div><strong>POD:</strong> ${s.destino || ''}</div>
-                            <div><strong>POL:</strong> ${s.origen || ''}</div>
-                            <div><strong>COLOADER:</strong></div>
-                        </div>
+                        <div><strong>POD:</strong> ${s.destino || ''}</div>
+                        <div><strong>POL:</strong> ${s.origen || ''}</div>
+                        <div><strong>COLOADER:</strong></div>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
@@ -3186,13 +3182,13 @@
                             <h5 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h5>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                                 <div><strong>TOTAL VENTA:</strong></div>
-                                <div style="text-align: right;">${totalVentaFinal.toFixed(2)}</div>
+                                <div style="text-align: left;">${totalVentaFinal.toFixed(2)}</div>
                                 <div><strong>TOTAL COSTO:</strong></div>
-                                <div style="text-align: right;">${totalCostoFinal.toFixed(2)}</div>
+                                <div style="text-align: left;">${totalCostoFinal.toFixed(2)}</div>
                                 <div><strong>PROFIT LOCAL:</strong></div>
-                                <div style="text-align: right;">${profitLocal.toFixed(2)}</div>
+                                <div style="text-align: left;">${profitLocal.toFixed(2)}</div>
                                 <div><strong>PROFIT %:</strong></div>
-                                <div style="text-align: right;">${profitPorcentaje.toFixed(2)}%</div>
+                                <div style="text-align: left;">${profitPorcentaje.toFixed(2)}%</div>
                             </div>
                         </div>
                         <div>
