@@ -2956,8 +2956,11 @@
             let totalGastosCostos = 0;
             let totalGastosVentas = 0;
             gastos_locales.forEach(g => {
+                // Asegurar que monto e iva sean números antes de operar
+                const monto = parseFloat(g.monto) || 0;
+                const iva = parseFloat(g.iva) || 0; // El IVA puede ser 0
                 const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
-                const subtotal = esAfecto ? g.monto * (1 + g.iva / 100) : g.monto;
+                const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
                 if ((g.tipo || '').toUpperCase() === 'COSTO') {
                     totalGastosCostos += subtotal;
                 } else if ((g.tipo || '').toUpperCase() === 'VENTAS') {
@@ -2965,11 +2968,13 @@
                 }
             });
 
-            // Calcular Profit Share (después de convertir y calcular totales)
-            const totalCostoFinal = s.costo + totalGastosCostos;
-            const totalVentaFinal = s.venta + totalGastosVentas;
-            const profitLocal = totalVentaFinal - totalCostoFinal;
-            const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0;
+            // Calcular Profit Share (asegurando que operandos sean números)
+            const costoServicio = parseFloat(s.costo) || 0; // Asegurar que sea número
+            const ventaServicio = parseFloat(s.venta) || 0; // Asegurar que sea número
+            const totalCostoFinal = costoServicio + totalGastosCostos; // Ahora seguro que es número
+            const totalVentaFinal = ventaServicio + totalGastosVentas; // Ahora seguro que es número
+            const profitLocal = totalVentaFinal - totalCostoFinal; // Ahora seguro que es número
+            const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0; // Ahora seguro que es número
 
             // --- Cargar estado de crédito del cliente (dentro de renderizarRouteOrder) ---
             const rutCliente = s.rut_empresa; // Usar el RUT del servicio (asumiendo que es el RUT del cliente del prospecto)
