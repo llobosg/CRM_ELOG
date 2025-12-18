@@ -3177,7 +3177,7 @@
                 `;
             });
 
-            html .= `
+            html = `
                                 </tbody>
                             </table>
                         </div>
