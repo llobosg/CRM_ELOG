@@ -3024,6 +3024,10 @@
 
         // --- Función auxiliar para construir el HTML con el estado de crédito ---
         function _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado) {
+            // --- LOG DE DEPURACIÓN ---
+            console.log('_renderizarRouteOrderConCredito: profitLocal recibido:', profitLocal, 'Tipo:', typeof profitLocal);
+            // --- FIN LOG ---
+
             // --- Construcción del HTML ---
             let html = `
                 <div style="font-size: 9pt; line-height: 1.4;">
@@ -3031,11 +3035,11 @@
                         <div style="text-align: left;">
                             <strong>Nº Cotización:</strong> ${p?.concatenado || s.concatenado || 'N/A'}<br>
                             <strong>FECHA COTIZACIÓN:</strong> ${new Date().toLocaleDateString('es-ES')}<br>
-                            <strong>VALIDEZ COTIZACIÓN:</strong> <strong>${s.validez || ''}</strong><br> <!-- Campo 'validez' del servicio -->
-                            <strong>TRÁFICO:</strong> <strong>${s.trafico || ''}</strong><br> <!-- Campo 'trafico' del servicio -->
+                            <strong>VALIDEZ COTIZACIÓN:</strong> <strong>${s.validez || ''}</strong><br>
+                            <strong>TRÁFICO:</strong> <strong>${s.trafico || ''}</strong><br>
                         </div>
                         <div style="text-align: right;">
-                            <strong>TIPO CAMBIO CLIENTE:</strong> ${s.tipo_cambio.toFixed(4)}<br> <!-- ✅ Ahora es número -->
+                            <strong>TIPO CAMBIO CLIENTE:</strong> ${(s.tipo_cambio || 1).toFixed(4)}<br> <!-- Asegurar número -->
                             <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
                             <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
                             <strong>PROV. NACIONAL:</strong> ${s.proveedor_nac || ''}<br>
@@ -3067,15 +3071,15 @@
                         <strong>INCOTERM:</strong> ${s.incoterm || ''}<br>
                         <strong>COMMODITY:</strong> ${s.commodity || ''}<br>
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
-                            <div><strong>VOLÚMEN:</strong> ${s.volumen.toFixed(2)}</div> <!-- ✅ Ahora es número -->
-                            <div><strong>PESO BRUTO:</strong> ${s.peso.toFixed(2)} kg</div> <!-- ✅ Ahora es número -->
+                            <div><strong>VOLÚMEN:</strong> ${(s.volumen || 0).toFixed(2)}</div> <!-- Asegurar número -->
+                            <div><strong>PESO BRUTO:</strong> ${(s.peso || 0).toFixed(2)} kg</div> <!-- Asegurar número -->
                             <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
-                            <div><strong>UNIDADES:</strong> ${s.bultos}</div> <!-- ✅ Ahora es número entero -->
+                            <div><strong>UNIDADES:</strong> ${s.bultos || 0}</div> <!-- Asegurar número -->
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
-                            <div><strong>POD:</strong> ${s.destino || ''}</div> <!-- POSICIÓN 1 -->
-                            <div><strong>POL:</strong> ${s.origen || ''}</div>  <!-- POSICIÓN 2 -->
-                            <div><strong>COLOADER:</strong></div> <!-- POSICIÓN 3 -->
+                            <div><strong>POD:</strong> ${s.destino || ''}</div>
+                            <div><strong>POL:</strong> ${s.origen || ''}</div>
+                            <div><strong>COLOADER:</strong></div>
                         </div>
                     </div>
 
@@ -3109,10 +3113,10 @@
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 0.3rem;">${c.concepto || ''}</td>
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.moneda || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.qty.toFixed(2)}</td> <!-- ✅ Ahora es número -->
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.costo.toFixed(2)}</td> <!-- ✅ Ahora es número -->
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.tarifa.toFixed(2)}</td> <!-- ✅ Ahora es número -->
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.total_costo.toFixed(2)}</td> <!-- ✅ Calculado como número -->
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td> <!-- Asegurar número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.costo || 0).toFixed(2)}</td> <!-- Asegurar número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.tarifa || 0).toFixed(2)}</td> <!-- Asegurar número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.total_costo || 0).toFixed(2)}</td> <!-- Asegurar número -->
                                 <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.aplica || ''}</td>
                             </tr>
                 `;
@@ -3123,19 +3127,19 @@
                                 <tfoot>
                                     <tr style="font-weight: bold;">
                                         <td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTALES:</td>
-                                        <td style="border: 1px solid #ddd; text-align: right;">${totalCostos.toFixed(2)}</td>
-                                        <td style="border: 1px solid #ddd; text-align: right;">${totalVenta.toFixed(2)}</td>
-                                        <td style="border: 1px solid #ddd; text-align: right;">${totalTotalCosto.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${(totalCostos || 0).toFixed(2)}</td> <!-- Asegurar número -->
+                                        <td style="border: 1px solid #ddd; text-align: right;">${(totalVenta || 0).toFixed(2)}</td> <!-- Asegurar número -->
+                                        <td style="border: 1px solid #ddd; text-align: right;">${(totalTotalCosto || 0).toFixed(2)}</td> <!-- Asegurar número -->
                                         <td style="border: 1px solid #ddd;"></td>
                                     </tr>
                                     <tr style="font-weight: bold;">
                                         <td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT:</td>
-                                        <td style="border: 1px solid #ddd; text-align: right;">${profitLocal.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${(profitLocal || 0).toFixed(2)}</td> <!-- ✅ CORREGIDO: Asegurar número -->
                                         <td style="border: 1px solid #ddd;"></td>
                                     </tr>
                                     <tr style="font-weight: bold;">
                                         <td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT %:</td>
-                                        <td style="border: 1px solid #ddd; text-align: right;">${profitPorcentaje.toFixed(2)}%</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${(profitPorcentaje || 0).toFixed(2)}%</td> <!-- ✅ CORREGIDO: Asegurar número -->
                                         <td style="border: 1px solid #ddd;"></td>
                                     </tr>
                                 </tfoot>
@@ -3173,7 +3177,7 @@
                 `;
             });
 
-            html += `
+            html .= `
                                 </tbody>
                             </table>
                         </div>
@@ -3184,13 +3188,13 @@
                             <h5 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h5>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                                 <div><strong>TOTAL VENTA:</strong></div>
-                                <div style="text-align: right;">${totalVentaFinal.toFixed(2)}</div> <!-- ✅ Calculado como número -->
+                                <div style="text-align: right;">${(totalVentaFinal || 0).toFixed(2)}</div> <!-- ✅ Calculado como número -->
                                 <div><strong>TOTAL COSTO:</strong></div>
-                                <div style="text-align: right;">${totalCostoFinal.toFixed(2)}</div> <!-- ✅ Calculado como número -->
+                                <div style="text-align: right;">${(totalCostoFinal || 0).toFixed(2)}</div> <!-- ✅ Calculado como número -->
                                 <div><strong>PROFIT LOCAL:</strong></div>
-                                <div style="text-align: right;">${profitLocal.toFixed(2)}</div> <!-- ✅ Calculado como número -->
+                                <div style="text-align: right;">${(profitLocal || 0).toFixed(2)}</div> <!-- ✅ Calculado como número -->
                                 <div><strong>PROFIT %:</strong></div>
-                                <div style="text-align: right;">${profitPorcentaje.toFixed(2)}%</div> <!-- ✅ Calculado como número -->
+                                <div style="text-align: right;">${(profitPorcentaje || 0).toFixed(2)}%</div> <!-- ✅ Calculado como número -->
                             </div>
                         </div>
                         <div>
