@@ -2916,7 +2916,7 @@
                 textoTransporte = 'TRANSPORTE';
             }
 
-            // Determinar datos para Shipper y Consignatario basado en la operación del prospecto padre
+            // Determinar datos para Shipper y Consignatario basado en la operaci—n del prospecto padre
             const operacion = (p?.operacion || '').toLowerCase();
             let shipperRS = '';
             let shipperDireccion = '';
@@ -2927,12 +2927,12 @@
             let consignatarioContacto = '';
             let consignatarioRut = '';
 
-            if (operacion === 'im') { // Importación
+            if (operacion === 'im') { // Importaci—n
                 consignatarioRS = p?.razon_social || s.razon_social || '';
                 consignatarioDireccion = p?.direccion || s.direccion || '';
                 consignatarioContacto = datos.contacto_nombre || s.contacto_nombre || '';
                 consignatarioRut = p?.rut_empresa || s.rut_empresa || '';
-            } else { // Exportación u otros (por defecto se asume Exportación)
+            } else { // Exportaci—n u otros (por defecto se asume Exportaci—n)
                 shipperRS = p?.razon_social || s.razon_social || '';
                 shipperDireccion = p?.direccion || s.direccion || '';
                 shipperContacto = datos.contacto_nombre || s.contacto_nombre || '';
