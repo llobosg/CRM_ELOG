@@ -3019,6 +3019,30 @@
             // --- Fin carga estado de crédito ---
         }
 
+        // --- Función para sanitizar texto (asegura que no haya caracteres HTML peligrosos o conflictivos para la visualización en el submodal) ---
+        function sanitizeText(text) {
+            if (text === null || text === undefined) return '';
+            // Usar DOMPurify o una librería similar en producción para mayor seguridad
+            // Por simplicidad aquí, solo escapar caracteres básicos de HTML y asegurar string
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // --- Función para manejar saltos de línea en texto plano ---
+        function nl2br(str) {
+            if (typeof str !== 'string') return str;
+            return str.replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1<br>$2');
+        }
+
+        // --- Resto del código JavaScript de prospectos.php ---
+        // (aquí va el resto de tus variables globales, funciones como renderizarRouteOrder, etc.)
+
         // --- Función auxiliar para construir el HTML con el estado de crédito y datos del servicio ---
         function _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado) {
             // --- LOG DE DEPURACIÓN ---
@@ -3033,7 +3057,6 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div style="text-align: left;">
                             <strong>Nº Cotización:</strong> ${p?.concatenado || s.concatenado || 'N/A'}<br>
-                            <!-- Eliminar FECHA COTIZACIÓN y VALIDEZ COTIZACIÓN -->
                         </div>
                         <div style="text-align: right;">
                             <!-- Bloque de campos a la derecha -->
@@ -3053,10 +3076,10 @@
 
                     <!-- Fila 3: Sección Atención, Empresa y Mensaje -->
                     <div style="margin-bottom: 1rem;">
-                        <div style="font-size: 10pt; line-height: 1.4;">
-                            <strong>Atención:</strong> <span style="font-style: italic;">${sanitizeText(datos.contacto_nombre || s.contacto_nombre || '')}</span> <!-- Campo contacto -->
+                        <div style="font-size: 10pt; line-height: 1.4; margin-bottom: 1mm;">
+                            <strong>Atención:</strong> ${sanitizeText(datos.contacto_nombre || s.contacto_nombre || '')} <!-- Campo contacto -->
                             <br><strong>Empresa:</strong> ${sanitizeText(shipperRS || consignatarioRS || '')} <!-- Mostrar RS del Shipper o Consignatario -->
-                            <br><br>Informamos a ustedes la cotización solicitada según los datos a continuación:
+                            <br><br>Informamos a ustedes la cotización solicitada según los datos a continuación:<br>
                         </div>
                     </div>
 
