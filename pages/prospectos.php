@@ -2861,16 +2861,49 @@
         }
 
         // --- Función para renderizar el contenido del submodal Route Order ---
+        // --- Función para renderizar el contenido del submodal Route Order ---
         function renderizarRouteOrder(datos) {
             if (!datos || !datos.servicio) {
                 document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">No hay datos para mostrar.</p>';
                 return;
             }
 
-            const s = datos.servicio;
+            const s_raw = datos.servicio; // Datos sin procesar
             const p = datos.prospecto; // Asumiendo que datos.prospecto tiene la info del prospecto padre
-            const costos = datos.costos || [];
-            const gastos_locales = datos.gastos_locales || [];
+            const costos_raw = datos.costos || [];
+            const gastos_locales_raw = datos.gastos_locales || [];
+
+            // --- CONVERSIÓN DE CAMPOS NUMÉRICOS (al nivel superior de renderizarRouteOrder) ---
+            const s = {
+                ...s_raw,
+                // Campos numéricos del servicio
+                tipo_cambio: parseFloat(s_raw.tipo_cambio) || 1, // ✅ Convertido aquí
+                costo: parseFloat(s_raw.costo) || 0,
+                venta: parseFloat(s_raw.venta) || 0,
+                costogastoslocalesdestino: parseFloat(s_raw.costogastoslocalesdestino) || 0,
+                ventasgastoslocalesdestino: parseFloat(s_raw.ventasgastoslocalesdestino) || 0,
+                peso: parseFloat(s_raw.peso) || 0,
+                volumen: parseFloat(s_raw.volumen) || 0,
+                bultos: parseInt(s_raw.bultos) || 0,
+                iva: parseInt(s_raw.iva) || 19, // Asumiendo valor por defecto
+                // Agregar otros campos numéricos si es necesario
+            };
+
+            const costos = costos_raw.map(c => ({
+                ...c,
+                qty: parseFloat(c.qty) || 0,
+                costo: parseFloat(c.costo) || 0,
+                tarifa: parseFloat(c.tarifa) || 0,
+                total_costo: parseFloat(c.total_costo) || 0,
+                total_tarifa: parseFloat(c.total_tarifa) || 0
+            }));
+
+            const gastos_locales = gastos_locales_raw.map(g => ({
+                ...g,
+                monto: parseFloat(g.monto) || 0,
+                iva: parseFloat(g.iva) || 0
+            }));
+            // --- FIN CONVERSIÓN ---
 
             // Calcular texto de transporte basado en el tráfico del servicio
             const tipoTrafico = (s.trafico || '').toLowerCase();
@@ -2906,43 +2939,25 @@
                 shipperRut = p?.rut_empresa || s.rut_empresa || '';
             }
 
-            // Calcular totales para la tabla de costos (antes de renderizarla)
+            // Calcular totales para la tabla de costos (después de convertir)
             let totalCostos = 0;
             let totalVenta = 0;
             let totalTotalCosto = 0;
             let totalTotalTarifa = 0;
 
-            const costosRenderizados = costos.map(c => {
-                const qty = parseFloat(c.qty) || 0;
-                const costo = parseFloat(c.costo) || 0;
-                const tarifa = parseFloat(c.tarifa) || 0;
-                const total_costo = qty * costo;
-                const total_tarifa = qty * tarifa;
-
-                totalCostos += costo;
-                totalVenta += tarifa;
-                totalTotalCosto += total_costo;
-                totalTotalTarifa += total_tarifa;
-
-                return {
-                    ...c,
-                    qty: qty,
-                    costo: costo,
-                    tarifa: tarifa,
-                    total_costo: total_costo,
-                    total_tarifa: total_tarifa
-                };
+            costos.forEach(c => {
+                totalCostos += c.costo;
+                totalVenta += c.tarifa;
+                totalTotalCosto += c.total_costo;
+                totalTotalTarifa += c.total_tarifa;
             });
 
-            // Calcular totales para la tabla de gastos locales
+            // Calcular totales para la tabla de gastos locales (después de convertir)
             let totalGastosCostos = 0;
             let totalGastosVentas = 0;
             gastos_locales.forEach(g => {
-                const monto = parseFloat(g.monto) || 0;
-                const iva = parseFloat(g.iva) || 0; // El IVA puede ser 0
                 const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
-                const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
-
+                const subtotal = esAfecto ? g.monto * (1 + g.iva / 100) : g.monto;
                 if ((g.tipo || '').toUpperCase() === 'COSTO') {
                     totalGastosCostos += subtotal;
                 } else if ((g.tipo || '').toUpperCase() === 'VENTAS') {
@@ -2950,16 +2965,16 @@
                 }
             });
 
-            // Calcular Profit Share
-            const totalCostoFinal = (s.costo || 0) + totalGastosCostos;
-            const totalVentaFinal = (s.venta || 0) + totalGastosVentas;
+            // Calcular Profit Share (después de convertir y calcular totales)
+            const totalCostoFinal = s.costo + totalGastosCostos;
+            const totalVentaFinal = s.venta + totalGastosVentas;
             const profitLocal = totalVentaFinal - totalCostoFinal;
             const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0;
 
-            // --- Cargar estado de crédito del cliente ---
+            // --- Cargar estado de crédito del cliente (dentro de renderizarRouteOrder) ---
             const rutCliente = s.rut_empresa; // Usar el RUT del servicio (asumiendo que es el RUT del cliente del prospecto)
-            let simboloCredito = '';
-            let simboloContado = '';
+            let simboloCredito = ' &nbsp;'; // Inicializar símbolo
+            let simboloContado = ' &nbsp;'; // Inicializar símbolo
 
             if (rutCliente) {
                 // Hacer la petición AJAX para obtener el estado de crédito
@@ -2974,34 +2989,307 @@
                         if (creditoData.success && creditoData.estado_credito) {
                             const estadoCredito = creditoData.estado_credito.toLowerCase();
                             if (estadoCredito === 'vigente' || estadoCredito === 'activo') { // Ajusta según los valores reales de tu DB
-                                simboloCredito = ' ✓';
+                                simboloCredito = ' ✓'; // Puedes usar 'X', '☑️', '☒️', etc.
                                 simboloContado = ' &nbsp;';
                             } else {
                                 simboloCredito = ' &nbsp;';
-                                simboloContado = ' ✓'; // Si no es vigente, asumir contado
+                                simboloContado = ' ✓'; // Puedes usar 'X', '☑️', '☒️', etc.
                             }
                         } else {
                             // Si la API devuelve éxito pero no hay estado, asumir contado o dejar vacío
                             simboloCredito = ' &nbsp;';
-                            simboloContado = ' ✓';
+                            simboloContado = ' ✓'; // O dejar ambos como ' &nbsp;'
                         }
                         // Una vez que se tiene el símbolo, continuar con la construcción del HTML
-                        _renderizarRouteOrderConCredito(datos, s, p, costosRenderizados, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
+                        _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
                     })
                     .catch(err => {
                         console.error('Error al cargar estado de crédito:', err);
                         // En caso de error, asumir contado o dejar ambos vacíos
                         simboloCredito = ' &nbsp;';
-                        simboloContado = ' ✓';
+                        simboloContado = ' ✓'; // O dejar ambos como ' &nbsp;'
                         // Continuar con la construcción del HTML de todas formas
-                        _renderizarRouteOrderConCredito(datos, s, p, costosRenderizados, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
+                        _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
                     });
             } else {
                 // Si no hay RUT de cliente, no se puede verificar crédito
-                simboloCredito = ' &nbsp;';
-                simboloContado = ' &nbsp;';
-                _renderizarRouteOrderConCredito(datos, s, p, costosRenderizados, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
+                _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
             }
+        }
+
+        // --- Función auxiliar para construir el HTML con el estado de crédito ---
+        function _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado) {
+            // --- Construcción del HTML ---
+            let html = `
+                <div style="font-size: 9pt; line-height: 1.4;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="text-align: left;">
+                            <strong>Nº Cotización:</strong> ${p?.concatenado || s.concatenado || 'N/A'}<br>
+                            <strong>FECHA COTIZACIÓN:</strong> ${new Date().toLocaleDateString('es-ES')}<br>
+                            <strong>VALIDEZ COTIZACIÓN:</strong> <strong>${s.validez || ''}</strong><br> <!-- Campo 'validez' del servicio -->
+                            <strong>TRÁFICO:</strong> <strong>${s.trafico || ''}</strong><br> <!-- Campo 'trafico' del servicio -->
+                        </div>
+                        <div style="text-align: right;">
+                            <strong>TIPO CAMBIO CLIENTE:</strong> ${s.tipo_cambio.toFixed(4)}<br> <!-- ✅ Ahora es número -->
+                            <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
+                            <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
+                            <strong>PROV. NACIONAL:</strong> ${s.proveedor_nac || ''}<br>
+                            <strong>TERRESTRE:</strong><br>
+                            <strong>DESCONSOLIDACIÓN:</strong> ${s.desconsolidac || ''}<br>
+                            <strong>GRÚAS:</strong><br>
+                            <strong>EMBALAJE:</strong>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
+                            <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #007bff;">SHIPPER</h4>
+                            <div><strong>Razón Social:</strong> ${shipperRS}</div>
+                            <div><strong>Dirección:</strong> ${shipperDireccion}</div>
+                            <div><strong>Contacto:</strong> ${shipperContacto}</div>
+                            <div><strong>R.U.T.:</strong> ${shipperRut}</div>
+                        </div>
+                        <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
+                            <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #28a745;">CONSIGNATARIO</h4>
+                            <div><strong>Razón Social:</strong> ${consignatarioRS}</div>
+                            <div><strong>Dirección:</strong> ${consignatarioDireccion}</div>
+                            <div><strong>Contacto:</strong> ${consignatarioContacto}</div>
+                            <div><strong>R.U.T.:</strong> ${consignatarioRut}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <strong>INCOTERM:</strong> ${s.incoterm || ''}<br>
+                        <strong>COMMODITY:</strong> ${s.commodity || ''}<br>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                            <div><strong>VOLÚMEN:</strong> ${s.volumen.toFixed(2)}</div> <!-- ✅ Ahora es número -->
+                            <div><strong>PESO BRUTO:</strong> ${s.peso.toFixed(2)} kg</div> <!-- ✅ Ahora es número -->
+                            <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
+                            <div><strong>UNIDADES:</strong> ${s.bultos}</div> <!-- ✅ Ahora es número entero -->
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                            <div><strong>POD:</strong> ${s.destino || ''}</div> <!-- POSICIÓN 1 -->
+                            <div><strong>POL:</strong> ${s.origen || ''}</div>  <!-- POSICIÓN 2 -->
+                            <div><strong>COLOADER:</strong></div> <!-- POSICIÓN 3 -->
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <strong>NOTAS ADICIONALES:</strong><br>
+                        <div style="white-space: pre-line; margin-left: 1rem;">${s.nota_srvc || ''}</div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">Costos</h5>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+
+            // Renderizar filas de costos
+            costos.forEach(c => {
+                html += `
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${c.concepto || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.moneda || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.qty.toFixed(2)}</td> <!-- ✅ Ahora es número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.costo.toFixed(2)}</td> <!-- ✅ Ahora es número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.tarifa.toFixed(2)}</td> <!-- ✅ Ahora es número -->
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${c.total_costo.toFixed(2)}</td> <!-- ✅ Calculado como número -->
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.aplica || ''}</td>
+                            </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                                <tfoot>
+                                    <tr style="font-weight: bold;">
+                                        <td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTALES:</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${totalCostos.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${totalVenta.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${totalTotalCosto.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd;"></td>
+                                    </tr>
+                                    <tr style="font-weight: bold;">
+                                        <td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT:</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${profitLocal.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd;"></td>
+                                    </tr>
+                                    <tr style="font-weight: bold;">
+                                        <td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT %:</td>
+                                        <td style="border: 1px solid #ddd; text-align: right;">${profitPorcentaje.toFixed(2)}%</td>
+                                        <td style="border: 1px solid #ddd;"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">Gastos Locales</h5>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Tipo</th>
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Gasto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">IVA%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+
+            // Renderizar filas de gastos locales
+            gastos_locales.forEach(g => {
+                const monto = parseFloat(g.monto) || 0; // Convertir a número aquí también si no se hizo en el mapeo principal
+                const iva = parseFloat(g.iva) || 0;    // Convertir a número aquí también si no se hizo en el mapeo principal
+                html += `
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.tipo || ''}</td>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.gasto || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.moneda || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td> <!-- ✅ Convertido a número -->
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.afecto || ''}</td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td> <!-- ✅ Convertido a número -->
+                            </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h5>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                <div><strong>TOTAL VENTA:</strong></div>
+                                <div style="text-align: right;">${totalVentaFinal.toFixed(2)}</div> <!-- ✅ Calculado como número -->
+                                <div><strong>TOTAL COSTO:</strong></div>
+                                <div style="text-align: right;">${totalCostoFinal.toFixed(2)}</div> <!-- ✅ Calculado como número -->
+                                <div><strong>PROFIT LOCAL:</strong></div>
+                                <div style="text-align: right;">${profitLocal.toFixed(2)}</div> <!-- ✅ Calculado como número -->
+                                <div><strong>PROFIT %:</strong></div>
+                                <div style="text-align: right;">${profitPorcentaje.toFixed(2)}%</div> <!-- ✅ Calculado como número -->
+                            </div>
+                        </div>
+                        <div>
+                            <!-- Espacio reservado para más datos si se agregan -->
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <strong>CREDITO:${simboloCredito}</strong><br> <!-- Símbolo dinámico -->
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTADO:${simboloContado}</strong><br> <!-- Símbolo dinámico -->
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                        <div>
+                            <!-- Espacio reservado para más datos si se agregan -->
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">TRANSPORTE NACIONAL</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Acepta</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <strong>TRANSPORTISTA:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>DIREC. RETIRO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTACTO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>FONO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                        <div>
+                            <strong>DIREC. ENTREGA:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>FONO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>EMPRESA:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                            <strong>CONTACTO:</strong><br>
+                            <div style="margin-left: 1rem;">&nbsp;</div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">SEGURO</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Min.</th>
+                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">V.Venta</th>
+                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS A OPERACIONES</h4>
+                    <div>${s.notas_operaciones || ''}</div>
+
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS COMERCIALES</h4>
+                    <div>${s.notas_comerciales || ''}</div>
+                </div>
+            `;
+
+            // Insertar el HTML generado en el contenedor del submodal
+            document.getElementById('route-order-content').innerHTML = html;
         }
 
         // --- Función auxiliar para construir el HTML con el estado de crédito ---
