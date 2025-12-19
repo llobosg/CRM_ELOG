@@ -2942,18 +2942,20 @@
             let consignatarioContacto = '';
             let consignatarioRut = '';
 
-            // Usar datos del prospecto SI están disponibles, sino intentar del servicio (s)
-            const razonSocial = p.razon_social || s.razon_social || '';
-            const direccion = p.direccion || s.direccion || '';
-            const contactoNombre = p.contacto_nombre || s.contacto_nombre || '';
-            const rutEmpresa = p.rut_empresa || s.rut_empresa || '';
+            // Priorizar datos del servicio (s), ya que el prospecto (p) puede no tenerlos
+            const razonSocial = s.razon_social || p?.razon_social || '';
+            const direccion = s.direccion || p?.direccion || '';
+            const contactoNombre = s.contacto_nombre || p?.contacto_nombre || '';
+            const rutEmpresa = s.rut_empresa || p?.rut_empresa || '';
 
             if (operacion === 'im') {
+                // Importación: llenar CONSIGNATARIO
                 consignatarioRS = razonSocial;
                 consignatarioDireccion = direccion;
                 consignatarioContacto = contactoNombre;
                 consignatarioRut = rutEmpresa;
             } else {
+                // Exportación u otro: llenar SHIPPER
                 shipperRS = razonSocial;
                 shipperDireccion = direccion;
                 shipperContacto = contactoNombre;
