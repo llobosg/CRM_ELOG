@@ -3128,86 +3128,114 @@
                     </div>
 
                     <!-- PROFIT SHARE ACTUALIZADO -->
-                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <!-- BLOQUE COSTOS -->
-                        <div>
-                            <h5 style="margin-bottom: 0.5rem;">Costos</h5>
-                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                <thead>
-                                    <tr style="background-color: #f2f2f2;">
-                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
-                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
-                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
-                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-            `;
+                                <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <!-- BLOQUE COSTOS -->
+                                    <div>
+                                        <h5 style="margin-bottom: 0.5rem;">Costos</h5>
+                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                            <thead>
+                                                <tr style="background-color: #f2f2f2;">
+                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                        `;
 
-            costos.forEach(c => {
-                html += `
-                                    <tr>
-                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
-                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td>
-                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.costo || 0).toFixed(2)}</td>
-                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.total_costo || 0).toFixed(2)}</td>
-                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
-                                    </tr>
-                `;
-            });
+                        // Calcular total costo real (qty * costo)
+                        let totalCostoCalculado = 0;
+                        costos.forEach(c => {
+                            const qty = c.qty || 0;
+                            const costo = c.costo || 0;
+                            const total = qty * costo;
+                            totalCostoCalculado += total;
+                            html += `
+                                                <tr>
+                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${costo.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
+                                                </tr>
+                            `;
+                        });
 
-            html += `
-                                </tbody>
-                            </table>
-                        </div>
+                        html += `
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style="font-weight: bold;">
+                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL COSTO:</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalCostoCalculado.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd;"></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
 
-                        <!-- BLOQUE VENTAS -->
-                        <div>
-                            <h5 style="margin-bottom: 0.5rem;">Ventas</h5>
-                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                <thead>
-                                    <tr style="background-color: #f2f2f2;">
-                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
-                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
-                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
-                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-            `;
+                                    <!-- BLOQUE VENTAS -->
+                                    <div>
+                                        <h5 style="margin-bottom: 0.5rem;">Ventas</h5>
+                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                            <thead>
+                                                <tr style="background-color: #f2f2f2;">
+                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                        `;
 
-            costos.forEach(c => {
-                const totalTarifa = (c.qty || 0) * (c.tarifa || 0);
-                html += `
-                                    <tr>
-                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
-                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td>
-                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.tarifa || 0).toFixed(2)}</td>
-                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalTarifa.toFixed(2)}</td>
-                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
-                                    </tr>
-                `;
-            });
+                        // Calcular total venta real (qty * tarifa)
+                        let totalVentaCalculado = 0;
+                        costos.forEach(c => {
+                            const qty = c.qty || 0;
+                            const tarifa = c.tarifa || 0;
+                            const total = qty * tarifa;
+                            totalVentaCalculado += total;
+                            html += `
+                                                <tr>
+                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${tarifa.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
+                                                </tr>
+                            `;
+                        });
 
-            html += `
-                                </tbody>
-                            </table>
-                            <!-- TOTALES PROFIT debajo del bloque Ventas -->
-                            <div style="margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid #ccc; font-weight: bold;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                                    <div><strong>TOTAL PROFIT:</strong></div>
-                                    <div style="text-align: right;">${profitLocal.toFixed(2)}</div>
+                        // Calcular profit y profit %
+                        const totalProfit = totalVentaCalculado - totalCostoCalculado;
+                        const totalProfitPorcentaje = totalVentaCalculado > 0 ? ((totalProfit / totalVentaCalculado) * 100) : 0;
+
+                        html += `
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style="font-weight: bold;">
+                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL VENTAS:</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalVentaCalculado.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd;"></td>
+                                                </tr>
+                                                <tr style="font-weight: bold;">
+                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT:</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfit.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd;"></td>
+                                                </tr>
+                                                <tr style="font-weight: bold;">
+                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT %:</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfitPorcentaje.toFixed(2)}%</td>
+                                                    <td style="border: 1px solid #ddd;"></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.3rem;">
-                                    <div><strong>TOTAL PROFIT %:</strong></div>
-                                    <div style="text-align: right;">${profitPorcentaje.toFixed(2)}%</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- GASTOS LOCALES -->
                     <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem;">
