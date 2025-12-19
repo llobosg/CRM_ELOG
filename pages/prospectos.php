@@ -34,6 +34,7 @@
     <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
     <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
+    <input type="hidden" id="operacion" value="<?= htmlspecialchars($prospecto['operacion'] ?? '') ?>">
 
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem; position: relative;">
@@ -2746,9 +2747,10 @@
 
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
-            const operacionProspecto = document.querySelector('#operacion')?.value || ''; // Asegœrate de que el campo exista
-
-            console.log('📄 [ROUTE_ORDER] Datos del prospecto (id_ppl, concatenado):', { id_ppl: idPpl, concatenado: concatenado });
+            const operacion = document.getElementById('operacion')?.value || '';
+            const operacionProspecto = document.querySelector('operacion')?.value || ''; // Asegœrate de que el campo exista
+            console.log('?? [ROUTE_ORDER] Datos del prospecto (id_ppl, concatenado, operacion):', { id_ppl: idPpl, concatenado: concatenado, operacion: operacion });
+            // Validar que haya un prospecto seleccionado
 
             if (!idPpl || idPpl === '0') {
                 console.log('❌ [ROUTE_ORDER] No hay un prospecto seleccionado (id_ppl vacío o 0).');
@@ -2803,7 +2805,7 @@
 
             // Cargar datos del servicio y prospecto asociado
             // Pasamos el objeto del servicio si lo encontramos, o null si no
-            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO);
+            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO, operacionProspecto, operacion);
             document.getElementById('submodal-route-order').style.display = 'block';
             console.log('🖼️ [ROUTE_ORDER] Submodal de Route Order mostrado.');
         }
@@ -2813,7 +2815,7 @@
             datosRouteOrder = null; // Limpiar datos al cerrar
         }
 
-        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null, operacionProspecto = '') {
+        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null, operacionProspecto = '', operacion = '') {
             // Mostrar indicador de carga
             document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Cargando datos del Route Order...</p>';
 
@@ -2843,7 +2845,7 @@
                         if (data.success && data.servicio) {
                             datosRouteOrder = {
                                 servicio: data.servicio,
-                                prospecto: { concatenado: concatenadoProspecto },
+                                prospecto: { concatenado: concatenadoProspecto, operacion: operacionProspecto },
                                 costos: data.servicio.costos || [],
                                 gastos_locales: data.servicio.gastos_locales || []
                             };
