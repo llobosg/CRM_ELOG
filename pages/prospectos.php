@@ -3128,265 +3128,317 @@
                     </div>
 
                     <!-- PROFIT SHARE ACTUALIZADO -->
-                                <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <!-- BLOQUE COSTOS -->
-                                    <div>
-                                        <h5 style="margin-bottom: 0.5rem;">Costos</h5>
-                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                            <thead>
-                                                <tr style="background-color: #f2f2f2;">
-                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                        `;
+                                            <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                                <!-- BLOQUE COSTOS -->
+                                                <div>
+                                                    <h5 style="margin-bottom: 0.5rem;">Costos</h5>
+                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                        <thead>
+                                                            <tr style="background-color: #f2f2f2;">
+                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                    `;
 
-                        // Calcular total costo real (qty * costo)
-                        let totalCostoCalculado = 0;
-                        costos.forEach(c => {
-                            const qty = c.qty || 0;
-                            const costo = c.costo || 0;
-                            const total = qty * costo;
-                            totalCostoCalculado += total;
-                            html += `
-                                                <tr>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${costo.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
-                                                </tr>
-                            `;
-                        });
+                                    // Calcular total costo real (qty * costo)
+                                    let totalCostoCalculado = 0;
+                                    costos.forEach(c => {
+                                        const qty = c.qty || 0;
+                                        const costo = c.costo || 0;
+                                        const total = qty * costo;
+                                        totalCostoCalculado += total;
+                                        html += `
+                                                            <tr>
+                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${costo.toFixed(2)}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
+                                                            </tr>
+                                        `;
+                                    });
 
-                        html += `
-                                            </tbody>
-                                            <tfoot>
-                                                <tr style="font-weight: bold;">
-                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL COSTO:</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalCostoCalculado.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd;"></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
+                                    html += `
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr style="font-weight: bold;">
+                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL COSTO:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalCostoCalculado.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                <td style="border: 1px solid #ddd;"></td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
 
-                                    <!-- BLOQUE VENTAS -->
-                                    <div>
-                                        <h5 style="margin-bottom: 0.5rem;">Ventas</h5>
-                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                            <thead>
-                                                <tr style="background-color: #f2f2f2;">
-                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                        `;
+                                                    <!-- CONDICIONES COMERCIALES (izquierda) -->
+                                                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
+                                                    <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem;">
+                                                        <strong>CREDITO:${simboloCredito}</strong>
+                                                        <strong>CONTADO:${simboloContado}</strong>
+                                                    </div>
 
-                        // Calcular total venta real (qty * tarifa)
-                        let totalVentaCalculado = 0;
-                        costos.forEach(c => {
-                            const qty = c.qty || 0;
-                            const tarifa = c.tarifa || 0;
-                            const total = qty * tarifa;
-                            totalVentaCalculado += total;
-                            html += `
-                                                <tr>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${tarifa.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
-                                                </tr>
-                            `;
-                        });
+                                                    <!-- TRANSPORTE NACIONAL (izquierda) -->
+                                                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">TRANSPORTE NACIONAL</h4>
+                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                        <thead>
+                                                            <tr style="background-color: #f2f2f2;">
+                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Acepta</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
 
-                        // Calcular profit y profit %
-                        const totalProfit = totalVentaCalculado - totalCostoCalculado;
-                        const totalProfitPorcentaje = totalVentaCalculado > 0 ? ((totalProfit / totalVentaCalculado) * 100) : 0;
+                                                    <!-- CAMPOS TRANSPORTE -->
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                                        <div>
+                                                            <strong>TRANSPORTISTA:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>DIREC. RETIRO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>CONTACTO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>FONO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                        </div>
+                                                        <div>
+                                                            <strong>DIREC. ENTREGA:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>FONO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>EMPRESA:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>CONTACTO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                        </div>
+                                                    </div>
 
-                        html += `
-                                            </tbody>
-                                            <tfoot>
-                                                <tr style="font-weight: bold;">
-                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL VENTAS:</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalVentaCalculado.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd;"></td>
-                                                </tr>
-                                                <tr style="font-weight: bold;">
-                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT:</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfit.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd;"></td>
-                                                </tr>
-                                                <tr style="font-weight: bold;">
-                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT %:</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfitPorcentaje.toFixed(2)}%</td>
-                                                    <td style="border: 1px solid #ddd;"></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
+                                                    <!-- SEGURO (izquierda) -->
+                                                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">SEGURO</h4>
+                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                        <thead>
+                                                            <tr style="background-color: #f2f2f2;">
+                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Min.</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">V.Venta</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
 
-                                <!-- GASTOS LOCALES REORGANIZADOS -->
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
-                                    <!-- Espacio izquierdo (vacío o para futuras expansiones) -->
-                                    <div></div>
+                                                <!-- BLOQUE VENTAS -->
+                                                <div>
+                                                    <h5 style="margin-bottom: 0.5rem;">Ventas</h5>
+                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                        <thead>
+                                                            <tr style="background-color: #f2f2f2;">
+                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                    `;
 
-                                    <!-- GASTOS LOCALES EN DESTINO (VENTAS) -->
-                                    <div>
-                                        <h5 style="margin-bottom: 0.5rem;">Gastos Locales en Destino</h5>
-                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                            <thead>
-                                                <tr style="background-color: #f2f2f2;">
-                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                        `;
+                                    // Calcular total venta real (qty * tarifa)
+                                    let totalVentaCalculado = 0;
+                                    costos.forEach(c => {
+                                        const qty = c.qty || 0;
+                                        const tarifa = c.tarifa || 0;
+                                        const total = qty * tarifa;
+                                        totalVentaCalculado += total;
+                                        html += `
+                                                            <tr>
+                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${tarifa.toFixed(2)}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
+                                                            </tr>
+                                        `;
+                                    });
 
-                        // Filtrar y renderizar solo Gastos Locales de tipo "Ventas"
-                        let totalGastosVentasMonto = 0;
-                        const gastosVentas = gastos_locales.filter(g => (g.tipo || '').toUpperCase() === 'VENTAS');
-                        gastosVentas.forEach(g => {
-                            const monto = parseFloat(g.monto) || 0;
-                            totalGastosVentasMonto += monto;
-                            html += `
-                                                <tr>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
-                                                </tr>
-                            `;
-                        });
+                                    // Calcular profit y profit %
+                                    const totalProfit = totalVentaCalculado - totalCostoCalculado;
+                                    const totalProfitPorcentaje = totalVentaCalculado > 0 ? ((totalProfit / totalVentaCalculado) * 100) : 0;
 
-                        html += `
-                                            </tbody>
-                                            <tfoot>
-                                                <tr style="font-weight: bold;">
-                                                    <td colspan="2" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL MONTO:</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosVentasMonto.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd;"></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
+                                    html += `
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr style="font-weight: bold;">
+                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL VENTAS:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalVentaCalculado.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                <td style="border: 1px solid #ddd;"></td>
+                                                            </tr>
+                                                            <tr style="font-weight: bold;">
+                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfit.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                <td style="border: 1px solid #ddd;"></td>
+                                                            </tr>
+                                                            <tr style="font-weight: bold;">
+                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT %:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfitPorcentaje.toFixed(2)}%</td>
+                                                                <td style="border: 1px solid #ddd;"></td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
 
-                                <!-- GASTOS LOCALES EN DESTINO COSTO -->
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
-                                    <div></div>
-                                    <div>
-                                        <h5 style="margin-bottom: 0.5rem;">Gastos Locales en Destino Costo</h5>
-                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                            <thead>
-                                                <tr style="background-color: #f2f2f2;">
-                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                        `;
+                                                    <!-- GASTOS LOCALES EN DESTINO (VENTAS) -->
+                                                    <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Gastos Locales en Destino</h5>
+                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                        <thead>
+                                                            <tr style="background-color: #f2f2f2;">
+                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                    `;
 
-                        // Filtrar y renderizar solo Gastos Locales de tipo "Costo"
-                        let totalGastosCostosMonto = 0;
-                        const gastosCostos = gastos_locales.filter(g => (g.tipo || '').toUpperCase() === 'COSTO');
-                        gastosCostos.forEach(g => {
-                            const monto = parseFloat(g.monto) || 0;
-                            totalGastosCostosMonto += monto;
-                            html += `
-                                                <tr>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
-                                                </tr>
-                            `;
-                        });
+                                    // Filtrar y renderizar solo Gastos Locales de tipo "Ventas"
+                                    let totalGastosVentasMonto = 0;
+                                    const gastosVentas = gastos_locales.filter(g => (g.tipo || '').toUpperCase() === 'VENTAS');
+                                    gastosVentas.forEach(g => {
+                                        const monto = parseFloat(g.monto) || 0;
+                                        totalGastosVentasMonto += monto;
+                                        html += `
+                                                            <tr>
+                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                            </tr>
+                                        `;
+                                    });
 
-                        html += `
-                                            </tbody>
-                                            <tfoot>
-                                                <tr style="font-weight: bold;">
-                                                    <td colspan="2" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL MONTO:</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosCostosMonto.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd;"></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
+                                    html += `
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr style="font-weight: bold;">
+                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL MONTO:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosVentasMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
 
-                                <!-- TERCER BLOQUE: TOTAL GASTOS LOCALES MÁS PROFIT LOCAL -->
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
-                                    <div></div>
-                                    <div>
-                                        <h5 style="margin-bottom: 0.5rem;">Total Gastos Locales más Profit Local</h5>
-                                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; font-size: 8.5pt;">
-                                            <!-- Títulos -->
-                                            <div></div>
-                                            <div style="font-weight: bold; text-align: center;">Moneda</div>
-                                            <div style="font-weight: bold; text-align: right;">Monto</div>
+                                                    <!-- GASTOS LOCALES EN DESTINO COSTO -->
+                                                    <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Gastos Locales en Destino Costo</h5>
+                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                        <thead>
+                                                            <tr style="background-color: #f2f2f2;">
+                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                    `;
 
-                                            <!-- Total Venta -->
-                                            <div style="text-align: right;">Total Venta:</div>
-                                            <div style="text-align: center;">CLP</div> <!-- Asumiendo CLP por ahora; podrías agrupar por moneda si es necesario -->
-                                            <div style="text-align: right;">${totalGastosVentasMonto.toFixed(2)}</div>
+                                    // Filtrar y renderizar solo Gastos Locales de tipo "Costo"
+                                    let totalGastosCostosMonto = 0;
+                                    const gastosCostos = gastos_locales.filter(g => (g.tipo || '').toUpperCase() === 'COSTO');
+                                    gastosCostos.forEach(g => {
+                                        const monto = parseFloat(g.monto) || 0;
+                                        totalGastosCostosMonto += monto;
+                                        html += `
+                                                            <tr>
+                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                            </tr>
+                                        `;
+                                    });
 
-                                            <!-- Total Costo -->
-                                            <div style="text-align: right;">Total Costo:</div>
-                                            <div style="text-align: center;">CLP</div>
-                                            <div style="text-align: right;">${totalGastosCostosMonto.toFixed(2)}</div>
+                                    html += `
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr style="font-weight: bold;">
+                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL MONTO:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosCostosMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
 
-                                            <!-- Profit Local -->
-                                            <div style="text-align: right;">Profit Local:</div>
-                                            <div style="text-align: center;">CLP</div>
-                                            <div style="text-align: right;">${(totalGastosVentasMonto - totalGastosCostosMonto).toFixed(2)}</div>
-
-                                            <!-- Profit % -->
-                                            <div style="text-align: right;">Profit %:</div>
-                                            <div style="text-align: center;"></div>
-                                            <div style="text-align: right;">
-                                                ${totalGastosVentasMonto > 0 
-                                                    ? ((totalGastosVentasMonto - totalGastosCostosMonto) / totalGastosVentasMonto * 100).toFixed(2) + '%' 
-                                                    : '0.00%'}
+                                                    <!-- TERCER BLOQUE: TOTAL GASTOS LOCALES MÁS PROFIT LOCAL -->
+                                                    <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Total Gastos Locales más Profit Local</h5>
+                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                        <thead>
+                                                            <tr style="background-color: #f2f2f2;">
+                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;"></th>
+                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total Venta:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">CLP</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosVentasMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total Costo:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">CLP</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosCostosMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                            </tr>
+                                                            <tr style="font-weight: bold;">
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit Local:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">CLP</td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(totalGastosVentasMonto - totalGastosCostosMonto).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                            </tr>
+                                                            <tr style="font-weight: bold;">
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit %:</td>
+                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">
+                                                                    ${(totalGastosVentasMonto > 0 
+                                                                        ? ((totalGastosVentasMonto - totalGastosCostosMonto) / totalGastosVentasMonto * 100).toFixed(2) + '%' 
+                                                                        : '0.00%')}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                    <!-- TOTAL FINAL -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                        <div>
-                            <h5 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h5>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                                <div><strong>TOTAL VENTA:</strong></div>
-                                <div style="text-align: left;">${totalVentaFinal.toFixed(2)}</div>
-                                <div><strong>TOTAL COSTO:</strong></div>
-                                <div style="text-align: left;">${totalCostoFinal.toFixed(2)}</div>
-                                <div><strong>PROFIT LOCAL:</strong></div>
-                                <div style="text-align: left;">${profitLocal.toFixed(2)}</div>
-                                <div><strong>PROFIT %:</strong></div>
-                                <div style="text-align: left;">${profitPorcentaje.toFixed(2)}%</div>
-                            </div>
-                        </div>
-                        <div></div>
-                    </div>
 
                     <!-- CONDICIONES COMERCIALES -->
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
