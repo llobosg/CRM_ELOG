@@ -2748,78 +2748,73 @@
 
         function abrirSubmodalRouteOrder() {
             console.log('🔍 [ROUTE_ORDER] Iniciando apertura de submodal.');
-
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
+            
+            // --- NUEVO: Obtener datos completos del prospecto desde campos ocultos ---
             const operacion = document.getElementById('operacion')?.value || '';
             const razonSocial = document.getElementById('prospecto_razon_social')?.value || '';
             const direccion = document.getElementById('prospecto_direccion')?.value || '';
             const rutEmpresa = document.getElementById('prospecto_rut_empresa')?.value || '';
             const contactoNombre = document.getElementById('prospecto_contacto_nombre')?.value || '';
-            const operacionProspecto = document.getElementById('operacion')?.value || ''; // Asegœrate de que el campo exista
-            console.log('?? [ROUTE_ORDER] Datos del prospecto (id_ppl, concatenado, operacion):', { id_ppl: idPpl, concatenado: concatenado, operacion: operacion });
-            // Validar que haya un prospecto seleccionado
+
+            const prospectoCompleto = {
+                operacion: operacion,
+                razon_social: razonSocial,
+                direccion: direccion,
+                rut_empresa: rutEmpresa,
+                contacto_nombre: contactoNombre
+            };
+
+            console.log('🔍 [ROUTE_ORDER] Datos del prospecto:', { 
+                id_ppl: idPpl, 
+                concatenado: concatenado,
+                prospecto: prospectoCompleto
+            });
 
             if (!idPpl || idPpl === '0') {
-                console.log('❌ [ROUTE_ORDER] No hay un prospecto seleccionado (id_ppl vacío o 0).');
+                console.log('⚠️ [ROUTE_ORDER] No hay un prospecto seleccionado (id_ppl vacío o 0).');
                 error('No hay un prospecto seleccionado.');
                 return;
             }
 
-            // --- CORRECCIÓN: Obtener ID del servicio desde el campo oculto del modal-servicio ---
-            // Asumiendo que el campo oculto se llama 'id_srvc_edit' y está dentro del form del modal-servicio
-            const idSrvcHidden = document.getElementById('id_srvc_edit'); // Campo oculto en el modal de servicio
+            // Obtener ID del servicio desde el campo oculto del modal-servicio
+            const idSrvcHidden = document.getElementById('id_srvc_edit');
             let idSrvc = null;
             let servicioSeleccionadoParaRO = null;
 
             if (idSrvcHidden && idSrvcHidden.value) {
-                // Si el campo oculto existe y tiene valor, es un servicio existente en edición
                 idSrvc = idSrvcHidden.value;
-                // Buscar el objeto del servicio en el array global 'servicios' usando el ID del campo oculto
                 servicioSeleccionadoParaRO = servicios.find(s => s.id_srvc === idSrvc);
                 console.log('📖 [ROUTE_ORDER] Servicio obtenido del campo oculto del modal. ID:', idSrvc, 'Encontrado en array global:', !!servicioSeleccionadoParaRO);
             } else {
-                // Si el campo oculto no existe o no tiene valor, es un servicio nuevo (no guardado aún)
                 console.log('⚠️ [ROUTE_ORDER] No hay ID de servicio en el modal (posiblemente en modo "Agregar Servicio").');
                 error('No hay un servicio seleccionado para generar el Route Order.');
                 return;
             }
 
-            // Validar que el ID exista y no sea temporal
             if (!idSrvc) {
-                console.log('❌ [ROUTE_ORDER] El ID del servicio (idSrvc) obtenido del modal es nulo o vacío.');
+                console.log('⚠️ [ROUTE_ORDER] El ID del servicio (idSrvc) obtenido del modal es nulo o vacío.');
                 error('No se puede generar Route Order: El servicio no tiene un ID definido.');
                 return;
             }
 
             if (idSrvc.startsWith('TEMP_')) {
-                console.log('❌ [ROUTE_ORDER] El ID del servicio obtenido del modal es temporal (TEMP_). No se puede generar para servicios temporales.');
+                console.log('⚠️ [ROUTE_ORDER] El ID del servicio obtenido del modal es temporal (TEMP_). No se puede generar para servicios temporales.');
                 error('Solo se puede generar Route Order para servicios ya guardados.');
                 return;
             }
 
-            // Validar que el servicio también esté en el array global (opcional, pero recomendable para consistencia)
             if (!servicioSeleccionadoParaRO) {
                 console.warn('⚠️ [ROUTE_ORDER] El ID de servicio del modal (' + idSrvc + ') no se encontró en el array global de servicios.');
-                // Opcional: intentar cargarlo desde la API si no está en el array
-                // cargarDatosRouteOrder(idSrvc, concatenado, null); // Pasar null si no se tiene localmente
-                // return; // Y salir si no se va a intentar carga remota
-                // Por ahora, asumimos que si el campo oculto tiene un ID, el servicio debería estar en el array global.
                 error('Datos inconsistentes del servicio.');
                 return;
             }
 
             console.log('✅ [ROUTE_ORDER] ID del servicio válido para generar RO:', idSrvc);
 
-            // Cargar datos del servicio y prospecto asociado
-            // Pasamos el objeto del servicio si lo encontramos, o null si no
-            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO, {
-                operacion: operacion,
-                razon_social: razonSocial,
-                direccion: direccion,
-                rut_empresa: rutEmpresa,
-                contacto_nombre: contactoNombre
-            });
+            // --- PASAR prospectoCompleto en lugar de solo operacion ---
+            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO, prospectoCompleto);
             document.getElementById('submodal-route-order').style.display = 'block';
             console.log('🖼️ [ROUTE_ORDER] Submodal de Route Order mostrado.');
         }
@@ -2885,11 +2880,7 @@
                         document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error de conexión.</p>';
                     });
             }
-                        operacion: ...,
-                        razon_social: ...,
-                        direccion: ...,
-                        rut_empresa: ...,
-                        contacto_nombre: ...
+          
                     },
                     // Si costos y gastos no están en el objeto local, podrías necesitar cargarlos por separado si es necesario
                     // o asumir que si se está editando, ya están disponibles localmente o se pueden obtener de otro array global si aplica.
@@ -2936,15 +2927,14 @@
                 return;
             }
 
-            const s_raw = datos.servicio; // Datos sin procesar
-            const p = datos.prospecto; // Asumiendo que datos.prospecto tiene la info del prospecto padre
+            const s_raw = datos.servicio;
+            const p = datos.prospecto; // Ahora incluye todos los campos necesarios
             const costos_raw = datos.costos || [];
             const gastos_locales_raw = datos.gastos_locales || [];
 
-            // --- CONVERSIÓN DE CAMPOS NUMÉRICOS (al nivel superior de renderizarRouteOrder) ---
+            // Conversión de campos numéricos
             const s = {
                 ...s_raw,
-                // Campos numéricos del servicio
                 tipo_cambio: parseFloat(s_raw.tipo_cambio) || 1,
                 costo: parseFloat(s_raw.costo) || 0,
                 venta: parseFloat(s_raw.venta) || 0,
@@ -2954,7 +2944,6 @@
                 volumen: parseFloat(s_raw.volumen) || 0,
                 bultos: parseInt(s_raw.bultos) || 0,
                 iva: parseInt(s_raw.iva) || 19,
-                // Asegurar que 'validez' sea una cadena
                 validez: s_raw.validez || '',
             };
 
@@ -2972,9 +2961,8 @@
                 monto: parseFloat(g.monto) || 0,
                 iva: parseFloat(g.iva) || 0
             }));
-            // --- FIN CONVERSIÓN ---
 
-            // Calcular texto de transporte basado en el tráfico del servicio
+            // Determinar texto de transporte
             const tipoTrafico = (s.trafico || '').toLowerCase();
             let textoTransporte = 'TRANSPORTE';
             if (tipoTrafico.includes('mar')) {
@@ -2985,12 +2973,8 @@
                 textoTransporte = 'TRANSPORTE';
             }
 
-            // Determinar datos para Shipper y Consignatario basado en la operaci—n del prospecto padre
-            // --- LOG de depuraci—n para operacion ---
-            console.log('🔍 [ROUTE_ORDER] Prospecto recibido en renderizarRouteOrder:', p);
+            // --- LÓGICA CORREGIDA: usar datos del prospecto padre completo ---
             const operacion = (p?.operacion || '').toLowerCase();
-            console.log('🔍 [ROUTE_ORDER] Valor de "operacion" detectado:', operacion);
-            // --- FIN LOG ---
             let shipperRS = '';
             let shipperDireccion = '';
             let shipperContacto = '';
@@ -3000,24 +2984,23 @@
             let consignatarioContacto = '';
             let consignatarioRut = '';
 
-            if (operacion === 'im') { // Importaci—n
-                consignatarioRS = p?.razon_social || s.razon_social || '';
-                consignatarioDireccion = p?.direccion || s.direccion || '';
-                consignatarioContacto = datos.contacto_nombre || s.contacto_nombre || '';
-                consignatarioRut = p?.rut_empresa || s.rut_empresa || '';
-            } else { // Exportaci—n u otros (por defecto se asume Exportaci—n)
-                shipperRS = p?.razon_social || s.razon_social || '';
-                shipperDireccion = p?.direccion || s.direccion || '';
-                shipperContacto = datos.contacto_nombre || s.contacto_nombre || '';
-                shipperRut = p?.rut_empresa || s.rut_empresa || '';
+            if (operacion === 'im') { // Importación
+                consignatarioRS = p.razon_social || '';
+                consignatarioDireccion = p.direccion || '';
+                consignatarioContacto = p.contacto_nombre || '';
+                consignatarioRut = p.rut_empresa || '';
+            } else { // Exportación u otros
+                shipperRS = p.razon_social || '';
+                shipperDireccion = p.direccion || '';
+                shipperContacto = p.contacto_nombre || '';
+                shipperRut = p.rut_empresa || '';
             }
 
-            // Calcular totales para la tabla de costos (después de convertir)
+            // Cálculo de totales (sin cambios)
             let totalCostos = 0;
             let totalVenta = 0;
             let totalTotalCosto = 0;
             let totalTotalTarifa = 0;
-
             costos.forEach(c => {
                 totalCostos += c.costo;
                 totalVenta += c.tarifa;
@@ -3025,7 +3008,6 @@
                 totalTotalTarifa += c.total_tarifa;
             });
 
-            // Calcular totales para la tabla de gastos locales (después de convertir)
             let totalGastosCostos = 0;
             let totalGastosVentas = 0;
             gastos_locales.forEach(g => {
@@ -3038,68 +3020,56 @@
                 }
             });
 
-            // Calcular Profit Share (después de convertir y calcular totales)
             const totalCostoFinal = s.costo + totalGastosCostos;
             const totalVentaFinal = s.venta + totalGastosVentas;
             const profitLocal = totalVentaFinal - totalCostoFinal;
             const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0;
 
-            // --- Cargar estado de crédito del cliente (dentro de renderizarRouteOrder) ---
-            const rutCliente = s.rut_empresa; // Usar el RUT del servicio (asumiendo que es el RUT del cliente del prospecto)
-            let simboloCredito = ' &nbsp;'; // Inicializar símbolo
-            let simboloContado = ' &nbsp;'; // Inicializar símbolo
+            // Cargar estado de crédito (sin cambios en estructura)
+            const rutCliente = s.rut_empresa;
+            let simboloCredito = ' &nbsp;';
+            let simboloContado = ' &nbsp;';
 
             if (rutCliente) {
-                // Hacer la petición AJAX para obtener el estado de crédito
                 fetch(`/api/get_estado_credito_cliente.php?rut=${encodeURIComponent(rutCliente)}`)
                     .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         return response.json();
                     })
                     .then(creditoData => {
                         if (creditoData.success && creditoData.estado_credito) {
                             const estadoCredito = creditoData.estado_credito.toLowerCase();
-                            if (estadoCredito === 'vigente' || estadoCredito === 'activo') { // Ajusta según los valores reales de tu DB
-                                simboloCredito = ' ✓';
+                            if (estadoCredito === 'vigente' || estadoCredito === 'activo') {
+                                simboloCredito = ' ✅';
                                 simboloContado = ' &nbsp;';
                             } else {
                                 simboloCredito = ' &nbsp;';
-                                simboloContado = ' ✓';
+                                simboloContado = ' ✅';
                             }
                         } else {
-                            // Si la API devuelve éxito pero no hay estado, asumir contado o dejar ambos vacíos
                             simboloCredito = ' &nbsp;';
-                            simboloContado = ' ✓'; // O dejar ambos como ' &nbsp;'
+                            simboloContado = ' ✅';
                         }
-                        // Llamar a la función auxiliar para construir el HTML con los símbolos cargados
                         _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
                     })
                     .catch(err => {
                         console.error('Error al cargar estado de crédito:', err);
-                        // En caso de error, asumir contado o dejar ambos vacíos
                         simboloCredito = ' &nbsp;';
-                        simboloContado = ' ✓'; // O dejar ambos como ' &nbsp;'
-                        // Continuar con la construcción del HTML de todas formas
+                        simboloContado = ' ✅';
                         _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
                     });
             } else {
-                // Si no hay RUT de cliente, no se puede verificar crédito
-                // Continuar con la construcción del HTML de todas formas
                 _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
             }
-            // --- Fin carga estado de crédito ---
         }
 
         // --- Función auxiliar para construir el HTML con el estado de crédito y datos del servicio ---
         function _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado) {
-            // --- LOG DE DEPURACIÓN ---
+            // --- LOG DE DEPURACIÓN (opcional: puedes borrarlo en producción) ---
             console.log('_renderizarRouteOrderConCredito: profitLocal recibido:', profitLocal, 'Tipo:', typeof profitLocal);
             console.log('_renderizarRouteOrderConCredito: profitPorcentaje recibido:', profitPorcentaje, 'Tipo:', typeof profitPorcentaje);
             // --- FIN LOG ---
 
-            // --- Construcción del HTML usando template literal ---
             let html = `
                 <div style="font-size: 9pt; line-height: 1.4;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -3118,29 +3088,27 @@
                             <strong>EMBALAJE:</strong>
                         </div>
                     </div>
-
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
                             <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #007bff;">SHIPPER</h4>
-                            <div><strong>Razón Social:</strong> ${shipperRS}</div>
-                            <div><strong>Dirección:</strong> ${shipperDireccion}</div>
-                            <div><strong>Contacto:</strong> ${shipperContacto}</div>
-                            <div><strong>R.U.T.:</strong> ${shipperRut}</div>
+                            <div><strong>Razón Social:</strong> ${sanitizeText(shipperRS)}</div>
+                            <div><strong>Dirección:</strong> ${sanitizeText(shipperDireccion)}</div>
+                            <div><strong>Contacto:</strong> ${sanitizeText(shipperContacto)}</div>
+                            <div><strong>R.U.T.:</strong> ${sanitizeText(shipperRut)}</div>
                         </div>
                         <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
                             <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #28a745;">CONSIGNATARIO</h4>
-                            <div><strong>Razón Social:</strong> ${consignatarioRS}</div>
-                            <div><strong>Dirección:</strong> ${consignatarioDireccion}</div>
-                            <div><strong>Contacto:</strong> ${consignatarioContacto}</div>
-                            <div><strong>R.U.T.:</strong> ${consignatarioRut}</div>
+                            <div><strong>Razón Social:</strong> ${sanitizeText(consignatarioRS)}</div>
+                            <div><strong>Dirección:</strong> ${sanitizeText(consignatarioDireccion)}</div>
+                            <div><strong>Contacto:</strong> ${sanitizeText(consignatarioContacto)}</div>
+                            <div><strong>R.U.T.:</strong> ${sanitizeText(consignatarioRut)}</div>
                         </div>
                     </div>
-
                     <div style="margin-bottom: 1rem;">
                         <strong>INCOTERM:</strong> ${s.incoterm || ''}<br>
                         <strong>COMMODITY:</strong> ${s.commodity || ''}<br>
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
-                            <div><strong>VOLÚMEN:</strong> ${(s.volumen || 0).toFixed(2)}</div>
+                            <div><strong>VOLUMEN:</strong> ${(s.volumen || 0).toFixed(2)}</div>
                             <div><strong>PESO BRUTO:</strong> ${(s.peso || 0).toFixed(2)} kg</div>
                             <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
                             <div><strong>UNIDADES:</strong> ${s.bultos || 0}</div>
@@ -3149,12 +3117,10 @@
                         <div><strong>POL:</strong> ${s.origen || ''}</div>
                         <div><strong>COLOADER:</strong></div>
                     </div>
-
                     <div style="margin-bottom: 1rem;">
                         <strong>NOTAS ADICIONALES:</strong><br>
-                        <div style="white-space: pre-line; margin-left: 1rem;">${s.nota_srvc || ''}</div>
+                        <div style="white-space: pre-line; margin-left: 1rem;">${sanitizeText(s.nota_srvc || '')}</div>
                     </div>
-
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
@@ -3174,18 +3140,17 @@
                                 <tbody>
             `;
 
-            // Renderizar filas de costos
             costos.forEach(c => {
                 html += `
-                            <tr>
-                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${c.concepto || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.moneda || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td>
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.costo || 0).toFixed(2)}</td>
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.tarifa || 0).toFixed(2)}</td>
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.total_costo || 0).toFixed(2)}</td>
-                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${c.aplica || ''}</td>
-                            </tr>
+                                    <tr>
+                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.moneda || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.costo || 0).toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.tarifa || 0).toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.total_costo || 0).toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
+                                    </tr>
                 `;
             });
 
@@ -3201,12 +3166,12 @@
                                     </tr>
                                     <tr style="font-weight: bold;">
                                         <td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT:</td>
-                                        <td style="border: 1px solid #ddd; text-align: right;">${profitLocal.toFixed(2)}</td> <!-- ✅ Usar profitLocal calculado -->
+                                        <td style="border: 1px solid #ddd; text-align: right;">${profitLocal.toFixed(2)}</td>
                                         <td style="border: 1px solid #ddd;"></td>
                                     </tr>
                                     <tr style="font-weight: bold;">
                                         <td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT %:</td>
-                                        <td style="border: 1px solid #ddd; text-align: right;">${profitPorcentaje.toFixed(2)}%</td> <!-- ✅ Usar profitPorcentaje calculado -->
+                                        <td style="border: 1px solid #ddd; text-align: right;">${profitPorcentaje.toFixed(2)}%</td>
                                         <td style="border: 1px solid #ddd;"></td>
                                     </tr>
                                 </tfoot>
@@ -3228,19 +3193,18 @@
                                 <tbody>
             `;
 
-            // Renderizar filas de gastos locales
             gastos_locales.forEach(g => {
                 const monto = parseFloat(g.monto) || 0;
                 const iva = parseFloat(g.iva) || 0;
                 html += `
-                            <tr>
-                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.tipo || ''}</td>
-                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${g.gasto || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.moneda || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
-                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${g.afecto || ''}</td>
-                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td>
-                            </tr>
+                                    <tr>
+                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.tipo || '')}</td>
+                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td>
+                                    </tr>
                 `;
             });
 
@@ -3249,7 +3213,6 @@
                             </table>
                         </div>
                     </div>
-
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
                         <div>
                             <h5 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h5>
@@ -3264,11 +3227,8 @@
                                 <div style="text-align: left;">${profitPorcentaje.toFixed(2)}%</div>
                             </div>
                         </div>
-                        <div>
-                            <!-- Espacio reservado para más datos si se agregan -->
-                        </div>
+                        <div></div>
                     </div>
-
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
@@ -3277,11 +3237,8 @@
                             <strong>CONTADO:${simboloContado}</strong><br>
                             <div style="margin-left: 1rem;">&nbsp;</div>
                         </div>
-                        <div>
-                            <!-- Espacio reservado para más datos si se agregan -->
-                        </div>
+                        <div></div>
                     </div>
-
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">TRANSPORTE NACIONAL</h4>
                     <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
                         <thead>
@@ -3329,7 +3286,6 @@
                             <div style="margin-left: 1rem;">&nbsp;</div>
                         </div>
                     </div>
-
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">SEGURO</h4>
                     <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
                         <thead>
@@ -3355,16 +3311,13 @@
                             </tr>
                         </tbody>
                     </table>
-
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS A OPERACIONES</h4>
-                    <div>${s.notas_operaciones || ''}</div>
-
+                    <div>${sanitizeText(s.notas_operaciones || '')}</div>
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS COMERCIALES</h4>
-                    <div>${s.notas_comerciales || ''}</div>
+                    <div>${sanitizeText(s.notas_comerciales || '')}</div>
                 </div>
             `;
 
-            // Insertar el HTML generado en el contenedor del submodal
             document.getElementById('route-order-content').innerHTML = html;
         }
 
