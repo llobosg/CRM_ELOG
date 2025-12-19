@@ -2942,16 +2942,22 @@
             let consignatarioContacto = '';
             let consignatarioRut = '';
 
+            // Usar datos del prospecto SI están disponibles, sino intentar del servicio (s)
+            const razonSocial = p.razon_social || s.razon_social || '';
+            const direccion = p.direccion || s.direccion || '';
+            const contactoNombre = p.contacto_nombre || s.contacto_nombre || '';
+            const rutEmpresa = p.rut_empresa || s.rut_empresa || '';
+
             if (operacion === 'im') {
-                consignatarioRS = p.razon_social || '';
-                consignatarioDireccion = p.direccion || '';
-                consignatarioContacto = p.contacto_nombre || '';
-                consignatarioRut = p.rut_empresa || '';
+                consignatarioRS = razonSocial;
+                consignatarioDireccion = direccion;
+                consignatarioContacto = contactoNombre;
+                consignatarioRut = rutEmpresa;
             } else {
-                shipperRS = p.razon_social || '';
-                shipperDireccion = p.direccion || '';
-                shipperContacto = p.contacto_nombre || '';
-                shipperRut = p.rut_empresa || '';
+                shipperRS = razonSocial;
+                shipperDireccion = direccion;
+                shipperContacto = contactoNombre;
+                shipperRut = rutEmpresa;
             }
 
             // Cálculo de totales
