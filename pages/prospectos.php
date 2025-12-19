@@ -2746,6 +2746,7 @@
 
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
+            const operacionProspecto = document.querySelector('#operacion')?.value || ''; // Asegœrate de que el campo exista
 
             console.log('📄 [ROUTE_ORDER] Datos del prospecto (id_ppl, concatenado):', { id_ppl: idPpl, concatenado: concatenado });
 
@@ -2812,7 +2813,7 @@
             datosRouteOrder = null; // Limpiar datos al cerrar
         }
 
-        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null) {
+        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null, operacionProspecto = '') {
             // Mostrar indicador de carga
             document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Cargando datos del Route Order...</p>';
 
@@ -2821,7 +2822,7 @@
                 // Asumiendo que 'costos' y 'gastos_locales' también están disponibles en el objeto local si se guardaron previamente
                 datosRouteOrder = {
                     servicio: servicioLocal,
-                    prospecto: { concatenado: concatenadoProspecto },
+                    prospecto: { concatenado: concatenadoProspecto, operacion: operacionProspecto },
                     // Si costos y gastos no están en el objeto local, podrías necesitar cargarlos por separado si es necesario
                     // o asumir que si se está editando, ya están disponibles localmente o se pueden obtener de otro array global si aplica.
                     // Para esta lógica, asumiremos que están incluidos en el objeto servicioLocal si el servicio ya fue guardado y editado.
@@ -2917,7 +2918,11 @@
             }
 
             // Determinar datos para Shipper y Consignatario basado en la operaci—n del prospecto padre
+            // --- LOG de depuraci—n para operacion ---
+            console.log('🔍 [ROUTE_ORDER] Prospecto recibido en renderizarRouteOrder:', p);
             const operacion = (p?.operacion || '').toLowerCase();
+            console.log('🔍 [ROUTE_ORDER] Valor de "operacion" detectado:', operacion);
+            // --- FIN LOG ---
             let shipperRS = '';
             let shipperDireccion = '';
             let shipperContacto = '';
