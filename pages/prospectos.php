@@ -2746,6 +2746,23 @@
 
         // --- Funciones para manejo del submodal Route Order ---
 
+        function sanitizeText(text) {
+            if (typeof text !== 'string') {
+                return text == null ? '' : String(text);
+            }
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+                '/': '&#x2F;'
+            };
+            return text.replace(/[&<>"'\/]/g, function (s) {
+                return map[s];
+            });
+        }
+
         function abrirSubmodalRouteOrder() {
             console.log('🔍 [ROUTE_ORDER] Iniciando apertura de submodal.');
             const idPpl = document.getElementById('id_ppl')?.value;
