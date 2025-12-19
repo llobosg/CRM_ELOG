@@ -3075,11 +3075,6 @@
 
         // --- Función auxiliar para construir el HTML con el estado de crédito y datos del servicio ---
         function _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado) {
-            // --- LOG DE DEPURACIÓN (opcional: puedes borrarlo en producción) ---
-            console.log('_renderizarRouteOrderConCredito: profitLocal recibido:', profitLocal, 'Tipo:', typeof profitLocal);
-            console.log('_renderizarRouteOrderConCredito: profitPorcentaje recibido:', profitPorcentaje, 'Tipo:', typeof profitPorcentaje);
-            // --- FIN LOG ---
-
             let html = `
                 <div style="font-size: 9pt; line-height: 1.4;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -3131,146 +3126,129 @@
                         <strong>NOTAS ADICIONALES:</strong><br>
                         <div style="white-space: pre-line; margin-left: 1rem;">${sanitizeText(s.nota_srvc || '')}</div>
                     </div>
-                                <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <!-- BLOQUE COSTOS -->
-                                    <div>
-                                        <h5 style="margin-bottom: 0.5rem;">Costos</h5>
-                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                            <thead>
-                                                <tr style="background-color: #f2f2f2;">
-                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                        `;
 
-                        costos.forEach(c => {
-                            html += `
-                                                <tr>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.costo || 0).toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.total_costo || 0).toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
-                                                </tr>
-                            `;
-                        });
+                    <!-- PROFIT SHARE ACTUALIZADO -->
+                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <!-- BLOQUE COSTOS -->
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">Costos</h5>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
 
-                        html += `
-                                            </tbody>
-                                        </table>
-                                    </div>
+            costos.forEach(c => {
+                html += `
+                                    <tr>
+                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.costo || 0).toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.total_costo || 0).toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
+                                    </tr>
+                `;
+            });
 
-                                    <!-- BLOQUE VENTAS -->
-                                    <div>
-                                        <h5 style="margin-bottom: 0.5rem;">Ventas</h5>
-                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                            <thead>
-                                                <tr style="background-color: #f2f2f2;">
-                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                        `;
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
 
-                        costos.forEach(c => {
-                            const totalTarifa = (c.qty || 0) * (c.tarifa || 0);
-                            html += `
-                                                <tr>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.tarifa || 0).toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalTarifa.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
-                                                </tr>
-                            `;
-                        });
+                        <!-- BLOQUE VENTAS -->
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">Ventas</h5>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
 
-                        html += `
-                                            </tbody>
-                                        </table>
-                                        <!-- TOTALES PROFIT debajo del bloque Ventas -->
-                                        <div style="margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid #ccc; font-weight: bold;">
-                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                                                <div><strong>TOTAL PROFIT:</strong></div>
-                                                <div style="text-align: right;">${profitLocal.toFixed(2)}</div>
-                                            </div>
-                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.3rem;">
-                                                <div><strong>TOTAL PROFIT %:</strong></div>
-                                                <div style="text-align: right;">${profitPorcentaje.toFixed(2)}%</div>
-                                            </div>
-                                        </div>
-                                    </div>
+            costos.forEach(c => {
+                const totalTarifa = (c.qty || 0) * (c.tarifa || 0);
+                html += `
+                                    <tr>
+                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${(c.qty || 0).toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(c.tarifa || 0).toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalTarifa.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
+                                    </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                            </table>
+                            <!-- TOTALES PROFIT debajo del bloque Ventas -->
+                            <div style="margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid #ccc; font-weight: bold;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                    <div><strong>TOTAL PROFIT:</strong></div>
+                                    <div style="text-align: right;">${profitLocal.toFixed(2)}</div>
                                 </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.3rem;">
+                                    <div><strong>TOTAL PROFIT %:</strong></div>
+                                    <div style="text-align: right;">${profitPorcentaje.toFixed(2)}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                <!-- BLOQUE GASTOS LOCALES (sin cambios, sigue aquí) -->
-                                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem;">
-                                    <div>
-                                        <h5 style="margin-bottom: 0.5rem;">Gastos Locales</h5>
-                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                            <thead>
-                                                <tr style="background-color: #f2f2f2;">
-                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Tipo</th>
-                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Gasto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
-                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">IVA%</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                        `;
+                    <!-- GASTOS LOCALES -->
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem;">
+                        <div>
+                            <h5 style="margin-bottom: 0.5rem;">Gastos Locales</h5>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Tipo</th>
+                                        <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Gasto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                        <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                        <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">IVA%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
 
-                        gastos_locales.forEach(g => {
-                            const monto = parseFloat(g.monto) || 0;
-                            const iva = parseFloat(g.iva) || 0;
-                            html += `
-                                                <tr>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.tipo || '')}</td>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td>
-                                                </tr>
-                            `;
-                        });
+            gastos_locales.forEach(g => {
+                const monto = parseFloat(g.monto) || 0;
+                const iva = parseFloat(g.iva) || 0;
+                html += `
+                                    <tr>
+                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.tipo || '')}</td>
+                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
+                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td>
+                                    </tr>
+                `;
+            });
 
-                        html += `
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>           
-
-                            gastos_locales.forEach(g => {
-                                const monto = parseFloat(g.monto) || 0;
-                                const iva = parseFloat(g.iva) || 0;
-                                html += `
-                                                <tr>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.tipo || '')}</td>
-                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
-                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td>
-                                                </tr>
-                            `;
-                        });
-
-                        html += `
+            html += `
                                 </tbody>
                             </table>
                         </div>
                     </div>
+
+                    <!-- TOTAL FINAL -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
                         <div>
                             <h5 style="margin-bottom: 0.5rem;">TOTAL GASTOS LOCALES MÁS PROFIT LOCAL</h5>
@@ -3287,6 +3265,8 @@
                         </div>
                         <div></div>
                     </div>
+
+                    <!-- CONDICIONES COMERCIALES -->
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
@@ -3297,6 +3277,8 @@
                         </div>
                         <div></div>
                     </div>
+
+                    <!-- TRANSPORTE NACIONAL -->
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">TRANSPORTE NACIONAL</h4>
                     <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
                         <thead>
@@ -3344,6 +3326,8 @@
                             <div style="margin-left: 1rem;">&nbsp;</div>
                         </div>
                     </div>
+
+                    <!-- SEGURO -->
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">SEGURO</h4>
                     <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
                         <thead>
@@ -3369,6 +3353,8 @@
                             </tr>
                         </tbody>
                     </table>
+
+                    <!-- NOTAS -->
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS A OPERACIONES</h4>
                     <div>${sanitizeText(s.notas_operaciones || '')}</div>
                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS COMERCIALES</h4>
