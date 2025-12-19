@@ -3212,22 +3212,61 @@
                                     </div>
                                 </div>
 
-            gastos_locales.forEach(g => {
-                const monto = parseFloat(g.monto) || 0;
-                const iva = parseFloat(g.iva) || 0;
-                html += `
-                                    <tr>
-                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.tipo || '')}</td>
-                                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
-                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
-                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
-                                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
-                                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td>
-                                    </tr>
-                `;
-            });
+                                <!-- BLOQUE GASTOS LOCALES (sin cambios, sigue aquí) -->
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem;">
+                                    <div>
+                                        <h5 style="margin-bottom: 0.5rem;">Gastos Locales</h5>
+                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                            <thead>
+                                                <tr style="background-color: #f2f2f2;">
+                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Tipo</th>
+                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Gasto</th>
+                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">IVA%</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                        `;
 
-            html += `
+                        gastos_locales.forEach(g => {
+                            const monto = parseFloat(g.monto) || 0;
+                            const iva = parseFloat(g.iva) || 0;
+                            html += `
+                                                <tr>
+                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.tipo || '')}</td>
+                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td>
+                                                </tr>
+                            `;
+                        });
+
+                        html += `
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>           
+
+                            gastos_locales.forEach(g => {
+                                const monto = parseFloat(g.monto) || 0;
+                                const iva = parseFloat(g.iva) || 0;
+                                html += `
+                                                <tr>
+                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.tipo || '')}</td>
+                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toFixed(2)}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
+                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${iva.toFixed(2)}%</td>
+                                                </tr>
+                            `;
+                        });
+
+                        html += `
                                 </tbody>
                             </table>
                         </div>
