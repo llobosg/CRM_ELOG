@@ -1343,20 +1343,18 @@
                     setNota('notas_operaciones', p.notas_operaciones);
 
                     // === Cargar servicios (si existen) ===
-                    const prospectoData = {
-                        razon_social: p.razon_social || '',
-                        direccion: p.direccion || '',
-                        rut_empresa: p.rut_empresa || '',
-                        contacto_nombre: p.nombre || '' // nota: el contacto primario se carga más abajo, pero el nombre comercial está en p.nombre
-                    };
+                    const razonSocialProspecto = p.razon_social || '';
+                    const direccionProspecto = p.direccion || '';
+                    const rutEmpresaProspecto = p.rut_empresa || '';
+                    const contactoNombreProspecto = p.nombre || ''; // Nota: contacto primario se carga aparte, pero nombre comercial está en p.nombre
 
                     servicios = (data.servicios || []).map(s => ({
                         ...s,
-                        // Campos del prospecto inyectados en cada servicio
-                        razon_social: prospectoData.razon_social,
-                        direccion: prospectoData.direccion,
-                        rut_empresa: prospectoData.rut_empresa,
-                        contacto_nombre: prospectoData.contacto_nombre,
+                        // Campos heredados del prospecto
+                        razon_social: razonSocialProspecto,
+                        direccion: s.direccion || direccionProspecto, // Prioriza el del servicio si existe (caso raro), sino del prospecto
+                        rut_empresa: rutEmpresaProspecto,
+                        contacto_nombre: s.contacto_nombre || contactoNombreProspecto,
                         // Campos numéricos
                         costo: parseFloat(s.costo) || 0,
                         venta: parseFloat(s.venta) || 0,
