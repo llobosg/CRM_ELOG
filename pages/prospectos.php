@@ -1343,8 +1343,21 @@
                     setNota('notas_operaciones', p.notas_operaciones);
 
                     // === Cargar servicios (si existen) ===
+                    const prospectoData = {
+                        razon_social: p.razon_social || '',
+                        direccion: p.direccion || '',
+                        rut_empresa: p.rut_empresa || '',
+                        contacto_nombre: p.nombre || '' // nota: el contacto primario se carga más abajo, pero el nombre comercial está en p.nombre
+                    };
+
                     servicios = (data.servicios || []).map(s => ({
                         ...s,
+                        // Campos del prospecto inyectados en cada servicio
+                        razon_social: prospectoData.razon_social,
+                        direccion: prospectoData.direccion,
+                        rut_empresa: prospectoData.rut_empresa,
+                        contacto_nombre: prospectoData.contacto_nombre,
+                        // Campos numéricos
                         costo: parseFloat(s.costo) || 0,
                         venta: parseFloat(s.venta) || 0,
                         costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
@@ -1694,9 +1707,20 @@
             .then(r => r.json())
             .then(res => {
                 if (res.success) {
+                    // Inyectar datos del prospecto en el nuevo servicio
+                    const prospectoRazonSocial = document.getElementById('razon_social_select').selectedOptions[0]?.textContent || '';
+                    const prospectoRut = document.getElementById('rut_empresa')?.value || '';
+                    const prospectoDireccion = document.getElementById('direccion')?.value || '';
+                    const prospectoContacto = document.getElementById('contacto')?.value || '';
+
                     const servicioGuardado = {
                         ...data,
-                        id_srvc: res.id_srvc
+                        id_srvc: res.id_srvc,
+                        // Campos heredados del prospecto
+                        razon_social: prospectoRazonSocial,
+                        rut_empresa: prospectoRut,
+                        direccion: prospectoDireccion,
+                        contacto_nombre: prospectoContacto
                     };
                     if (servicioEnEdicion !== null) {
                         servicios[servicioEnEdicion] = servicioGuardado;
@@ -2931,6 +2955,18 @@
             else if (tipoTrafico.includes('aer')) textoTransporte = 'AEROLINEA';
             else if (tipoTrafico.includes('ter') || tipoTrafico.includes('land')) textoTransporte = 'TRANSPORTE';
 
+            // --- LOG de diagnóstico: contenido del servicio (s) y prospecto (p) ---
+            console.log('🔍 [ROUTE_ORDER] Diagnóstico SHIPPER/CONSIGNATARIO:');
+            console.log('  operacion:', p?.operacion);
+            console.log('  p.razon_social:', p?.razon_social);
+            console.log('  s.razon_social:', s?.razon_social);
+            console.log('  p.direccion:', p?.direccion);
+            console.log('  s.direccion:', s?.direccion);
+            console.log('  p.contacto_nombre:', p?.contacto_nombre);
+            console.log('  s.contacto_nombre:', s?.contacto_nombre);
+            console.log('  p.rut_empresa:', p?.rut_empresa);
+            console.log('  s.rut_empresa:', s?.rut_empresa);
+
             // --- Lógica corregida para SHIPPER / CONSIGNATARIO ---
             const operacion = (p?.operacion || '').toLowerCase();
             let shipperRS = '';
@@ -2948,14 +2984,17 @@
             const contactoNombre = s.contacto_nombre || p?.contacto_nombre || '';
             const rutEmpresa = s.rut_empresa || p?.rut_empresa || '';
 
+            console.log('  → razonSocial seleccionada:', razonSocial);
+            console.log('  → direccion seleccionada:', direccion);
+            console.log('  → contactoNombre seleccionado:', contactoNombre);
+            console.log('  → rutEmpresa seleccionado:', rutEmpresa);
+
             if (operacion === 'im') {
-                // Importación: llenar CONSIGNATARIO
                 consignatarioRS = razonSocial;
                 consignatarioDireccion = direccion;
                 consignatarioContacto = contactoNombre;
                 consignatarioRut = rutEmpresa;
             } else {
-                // Exportación u otro: llenar SHIPPER
                 shipperRS = razonSocial;
                 shipperDireccion = direccion;
                 shipperContacto = contactoNombre;
