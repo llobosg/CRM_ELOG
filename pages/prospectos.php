@@ -2840,7 +2840,7 @@
                         direccion: prospectoCompleto.direccion,
                         rut_empresa: prospectoCompleto.rut_empresa,
                         contacto_nombre: prospectoCompleto.contacto_nombre
-                    },
+                    }
                     // Si costos y gastos no están en el objeto local, podrías necesitar cargarlos por separado si es necesario
                     // o asumir que si se está editando, ya están disponibles localmente o se pueden obtener de otro array global si aplica.
                     // Para esta lógica, asumiremos que están incluidos en el objeto servicioLocal si el servicio ya fue guardado y editado.
