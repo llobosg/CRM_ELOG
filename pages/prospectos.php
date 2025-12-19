@@ -2750,8 +2750,8 @@
             console.log('🔍 [ROUTE_ORDER] Iniciando apertura de submodal.');
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
-            
-            // --- NUEVO: Obtener datos completos del prospecto desde campos ocultos ---
+
+            // Extraer datos del prospecto desde campos ocultos
             const operacion = document.getElementById('operacion')?.value || '';
             const razonSocial = document.getElementById('prospecto_razon_social')?.value || '';
             const direccion = document.getElementById('prospecto_direccion')?.value || '';
@@ -2766,8 +2766,8 @@
                 contacto_nombre: contactoNombre
             };
 
-            console.log('🔍 [ROUTE_ORDER] Datos del prospecto:', { 
-                id_ppl: idPpl, 
+            console.log('📄 [ROUTE_ORDER] Datos del prospecto:', {
+                id_ppl: idPpl,
                 concatenado: concatenado,
                 prospecto: prospectoCompleto
             });
@@ -2778,7 +2778,6 @@
                 return;
             }
 
-            // Obtener ID del servicio desde el campo oculto del modal-servicio
             const idSrvcHidden = document.getElementById('id_srvc_edit');
             let idSrvc = null;
             let servicioSeleccionadoParaRO = null;
@@ -2813,7 +2812,6 @@
 
             console.log('✅ [ROUTE_ORDER] ID del servicio válido para generar RO:', idSrvc);
 
-            // --- PASAR prospectoCompleto en lugar de solo operacion ---
             cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO, prospectoCompleto);
             document.getElementById('submodal-route-order').style.display = 'block';
             console.log('🖼️ [ROUTE_ORDER] Submodal de Route Order mostrado.');
@@ -2825,84 +2823,33 @@
         }
 
         function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null, prospectoCompleto = {}) {
-            // Mostrar indicador de carga
             document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Cargando datos del Route Order...</p>';
 
             if (servicioLocal) {
-                // Si se proporciona el servicio localmente (desde el array 'servicios'), usarlo directamente
-                // Asumiendo que 'costos' y 'gastos_locales' también están disponibles en el objeto local si se guardaron previamente
-                datosRouteOrder = {
+                const datosRouteOrder = {
                     servicio: servicioLocal,
                     prospecto: {
                         concatenado: concatenadoProspecto,
-                        operacion: prospectoCompleto.operacion,
-                        razon_social: prospectoCompleto.razon_social,
-                        direccion: prospectoCompleto.direccion,
-                        rut_empresa: prospectoCompleto.rut_empresa,
-                        contacto_nombre: prospectoCompleto.contacto_nombre
+                        ...prospectoCompleto
                     },
-                    // Si costos y gastos no están en el objeto local, podrías necesitar cargarlos por separado si es necesario
-                    // o asumir que si se está editando, ya están disponibles localmente o se pueden obtener de otro array global si aplica.
-                    // Para esta lógica, asumiremos que están incluidos en el objeto servicioLocal si el servicio ya fue guardado y editado.
                     costos: servicioLocal.costos || [],
                     gastos_locales: servicioLocal.gastos_locales || []
                 };
                 renderizarRouteOrder(datosRouteOrder);
             } else {
-                // Si no se tiene localmente, hacer la petición a la API
                 fetch(`/api/get_servicio.php?id_srvc=${encodeURIComponent(idSrvc)}`)
                     .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         return response.json();
                     })
                     .then(data => {
                         if (data.success && data.servicio) {
-                            datosRouteOrder = {
+                            const datosRouteOrder = {
                                 servicio: data.servicio,
-                                prospecto: { 
+                                prospecto: {
                                     concatenado: concatenadoProspecto,
                                     ...prospectoCompleto
                                 },
-                                costos: data.servicio.costos || [],
-                                gastos_locales: data.servicio.gastos_locales || []
-                            };
-                            renderizarRouteOrder(datosRouteOrder);
-                        } else {
-                            error('Error al cargar los datos del servicio para Route Order.');
-                            document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error al cargar los datos.</p>';
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Error al cargar servicio para Route Order:', err);
-                        error('Error de conexión al cargar los datos del servicio.');
-                        document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error de conexión.</p>';
-                    });
-            }
-          
-                    },
-                    // Si costos y gastos no están en el objeto local, podrías necesitar cargarlos por separado si es necesario
-                    // o asumir que si se está editando, ya están disponibles localmente o se pueden obtener de otro array global si aplica.
-                    // Para esta lógica, asumiremos que están incluidos en el objeto servicioLocal si el servicio ya fue guardado y editado.
-                    costos: servicioLocal.costos || [],
-                    gastos_locales: servicioLocal.gastos_locales || []
-                };
-                renderizarRouteOrder(datosRouteOrder);
-            } else {
-                // Si no se tiene localmente, hacer la petición a la API
-                fetch(`/api/get_servicio.php?id_srvc=${encodeURIComponent(idSrvc)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success && data.servicio) {
-                            datosRouteOrder = {
-                                servicio: data.servicio,
-                                prospecto: { concatenado: concatenadoProspecto, operacion: operacionProspecto },
                                 costos: data.servicio.costos || [],
                                 gastos_locales: data.servicio.gastos_locales || []
                             };
@@ -2928,11 +2875,10 @@
             }
 
             const s_raw = datos.servicio;
-            const p = datos.prospecto; // Ahora incluye todos los campos necesarios
+            const p = datos.prospecto;
             const costos_raw = datos.costos || [];
             const gastos_locales_raw = datos.gastos_locales || [];
 
-            // Conversión de campos numéricos
             const s = {
                 ...s_raw,
                 tipo_cambio: parseFloat(s_raw.tipo_cambio) || 1,
@@ -2944,7 +2890,7 @@
                 volumen: parseFloat(s_raw.volumen) || 0,
                 bultos: parseInt(s_raw.bultos) || 0,
                 iva: parseInt(s_raw.iva) || 19,
-                validez: s_raw.validez || '',
+                validez: s_raw.validez || ''
             };
 
             const costos = costos_raw.map(c => ({
@@ -2962,18 +2908,13 @@
                 iva: parseFloat(g.iva) || 0
             }));
 
-            // Determinar texto de transporte
             const tipoTrafico = (s.trafico || '').toLowerCase();
             let textoTransporte = 'TRANSPORTE';
-            if (tipoTrafico.includes('mar')) {
-                textoTransporte = 'NAVIERA';
-            } else if (tipoTrafico.includes('aer')) {
-                textoTransporte = 'AEROLÍNEA';
-            } else if (tipoTrafico.includes('ter') || tipoTrafico.includes('land')) {
-                textoTransporte = 'TRANSPORTE';
-            }
+            if (tipoTrafico.includes('mar')) textoTransporte = 'NAVIERA';
+            else if (tipoTrafico.includes('aer')) textoTransporte = 'AEROLINEA';
+            else if (tipoTrafico.includes('ter') || tipoTrafico.includes('land')) textoTransporte = 'TRANSPORTE';
 
-            // --- LÓGICA CORREGIDA: usar datos del prospecto padre completo ---
+            // --- Lógica corregida para SHIPPER / CONSIGNATARIO ---
             const operacion = (p?.operacion || '').toLowerCase();
             let shipperRS = '';
             let shipperDireccion = '';
@@ -2984,23 +2925,20 @@
             let consignatarioContacto = '';
             let consignatarioRut = '';
 
-            if (operacion === 'im') { // Importación
+            if (operacion === 'im') {
                 consignatarioRS = p.razon_social || '';
                 consignatarioDireccion = p.direccion || '';
                 consignatarioContacto = p.contacto_nombre || '';
                 consignatarioRut = p.rut_empresa || '';
-            } else { // Exportación u otros
+            } else {
                 shipperRS = p.razon_social || '';
                 shipperDireccion = p.direccion || '';
                 shipperContacto = p.contacto_nombre || '';
                 shipperRut = p.rut_empresa || '';
             }
 
-            // Cálculo de totales (sin cambios)
-            let totalCostos = 0;
-            let totalVenta = 0;
-            let totalTotalCosto = 0;
-            let totalTotalTarifa = 0;
+            // Cálculo de totales
+            let totalCostos = 0, totalVenta = 0, totalTotalCosto = 0, totalTotalTarifa = 0;
             costos.forEach(c => {
                 totalCostos += c.costo;
                 totalVenta += c.tarifa;
@@ -3008,16 +2946,12 @@
                 totalTotalTarifa += c.total_tarifa;
             });
 
-            let totalGastosCostos = 0;
-            let totalGastosVentas = 0;
+            let totalGastosCostos = 0, totalGastosVentas = 0;
             gastos_locales.forEach(g => {
                 const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
                 const subtotal = esAfecto ? g.monto * (1 + g.iva / 100) : g.monto;
-                if ((g.tipo || '').toUpperCase() === 'COSTO') {
-                    totalGastosCostos += subtotal;
-                } else if ((g.tipo || '').toUpperCase() === 'VENTAS') {
-                    totalGastosVentas += subtotal;
-                }
+                if ((g.tipo || '').toUpperCase() === 'COSTO') totalGastosCostos += subtotal;
+                else if ((g.tipo || '').toUpperCase() === 'VENTAS') totalGastosVentas += subtotal;
             });
 
             const totalCostoFinal = s.costo + totalGastosCostos;
@@ -3025,41 +2959,43 @@
             const profitLocal = totalVentaFinal - totalCostoFinal;
             const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0;
 
-            // Cargar estado de crédito (sin cambios en estructura)
+            // Cargar estado de crédito
             const rutCliente = s.rut_empresa;
             let simboloCredito = ' &nbsp;';
             let simboloContado = ' &nbsp;';
 
+            const renderFinal = (credito, contado) => {
+                _renderizarRouteOrderConCredito(
+                    datos, s, p, costos, gastos_locales,
+                    totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa,
+                    totalGastosCostos, totalGastosVentas,
+                    shipperRS, shipperDireccion, shipperContacto, shipperRut,
+                    consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut,
+                    totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje,
+                    textoTransporte, credito, contado
+                );
+            };
+
             if (rutCliente) {
                 fetch(`/api/get_estado_credito_cliente.php?rut=${encodeURIComponent(rutCliente)}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        return response.json();
-                    })
+                    .then(response => response.ok ? response.json() : Promise.reject())
                     .then(creditoData => {
                         if (creditoData.success && creditoData.estado_credito) {
-                            const estadoCredito = creditoData.estado_credito.toLowerCase();
-                            if (estadoCredito === 'vigente' || estadoCredito === 'activo') {
-                                simboloCredito = ' ✅';
-                                simboloContado = ' &nbsp;';
+                            const estado = creditoData.estado_credito.toLowerCase();
+                            if (estado === 'vigente' || estado === 'activo') {
+                                renderFinal(' ✅', ' &nbsp;');
                             } else {
-                                simboloCredito = ' &nbsp;';
-                                simboloContado = ' ✅';
+                                renderFinal(' &nbsp;', ' ✅');
                             }
                         } else {
-                            simboloCredito = ' &nbsp;';
-                            simboloContado = ' ✅';
+                            renderFinal(' &nbsp;', ' ✅');
                         }
-                        _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
                     })
-                    .catch(err => {
-                        console.error('Error al cargar estado de crédito:', err);
-                        simboloCredito = ' &nbsp;';
-                        simboloContado = ' ✅';
-                        _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
+                    .catch(() => {
+                        renderFinal(' &nbsp;', ' ✅');
                     });
             } else {
-                _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado);
+                renderFinal(simboloCredito, simboloContado);
             }
         }
 
