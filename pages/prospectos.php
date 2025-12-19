@@ -35,6 +35,10 @@
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
     <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
     <input type="hidden" id="operacion" value="<?= htmlspecialchars($prospecto['operacion'] ?? '') ?>">
+    <input type="hidden" id="prospecto_razon_social" value="<?= htmlspecialchars($prospecto['razon_social'] ?? '') ?>">
+    <input type="hidden" id="prospecto_direccion" value="<?= htmlspecialchars($prospecto['direccion'] ?? '') ?>">
+    <input type="hidden" id="prospecto_rut_empresa" value="<?= htmlspecialchars($prospecto['rut_empresa'] ?? '') ?>">
+    <input type="hidden" id="prospecto_contacto_nombre" value="<?= htmlspecialchars($contacto['nombre'] ?? '') ?>">
 
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem; position: relative;">
@@ -2748,7 +2752,11 @@
             const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
             const operacion = document.getElementById('operacion')?.value || '';
-            const operacionProspecto = document.querySelector('operacion')?.value || ''; // Asegœrate de que el campo exista
+            const razonSocial = document.getElementById('prospecto_razon_social')?.value || '';
+            const direccion = document.getElementById('prospecto_direccion')?.value || '';
+            const rutEmpresa = document.getElementById('prospecto_rut_empresa')?.value || '';
+            const contactoNombre = document.getElementById('prospecto_contacto_nombre')?.value || '';
+            const operacionProspecto = document.getElementById('operacion')?.value || ''; // Asegœrate de que el campo exista
             console.log('?? [ROUTE_ORDER] Datos del prospecto (id_ppl, concatenado, operacion):', { id_ppl: idPpl, concatenado: concatenado, operacion: operacion });
             // Validar que haya un prospecto seleccionado
 
@@ -2805,7 +2813,13 @@
 
             // Cargar datos del servicio y prospecto asociado
             // Pasamos el objeto del servicio si lo encontramos, o null si no
-            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO, operacionProspecto, operacion);
+            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO, {
+                operacion: operacion,
+                razon_social: razonSocial,
+                direccion: direccion,
+                rut_empresa: rutEmpresa,
+                contacto_nombre: contactoNombre
+            });
             document.getElementById('submodal-route-order').style.display = 'block';
             console.log('🖼️ [ROUTE_ORDER] Submodal de Route Order mostrado.');
         }
@@ -2815,7 +2829,7 @@
             datosRouteOrder = null; // Limpiar datos al cerrar
         }
 
-        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null, operacionProspecto = '', operacion = '') {
+        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null, prospectoCompleto = {}) {
             // Mostrar indicador de carga
             document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Cargando datos del Route Order...</p>';
 
@@ -2824,7 +2838,59 @@
                 // Asumiendo que 'costos' y 'gastos_locales' también están disponibles en el objeto local si se guardaron previamente
                 datosRouteOrder = {
                     servicio: servicioLocal,
-                    prospecto: { concatenado: concatenadoProspecto, operacion: operacionProspecto },
+                    prospecto: {
+                        concatenado: concatenadoProspecto,
+                        operacion: prospectoCompleto.operacion,
+                        razon_social: prospectoCompleto.razon_social,
+                        direccion: prospectoCompleto.direccion,
+                        rut_empresa: prospectoCompleto.rut_empresa,
+                        contacto_nombre: prospectoCompleto.contacto_nombre
+                    },
+                    // Si costos y gastos no están en el objeto local, podrías necesitar cargarlos por separado si es necesario
+                    // o asumir que si se está editando, ya están disponibles localmente o se pueden obtener de otro array global si aplica.
+                    // Para esta lógica, asumiremos que están incluidos en el objeto servicioLocal si el servicio ya fue guardado y editado.
+                    costos: servicioLocal.costos || [],
+                    gastos_locales: servicioLocal.gastos_locales || []
+                };
+                renderizarRouteOrder(datosRouteOrder);
+            } else {
+                // Si no se tiene localmente, hacer la petición a la API
+                fetch(`/api/get_servicio.php?id_srvc=${encodeURIComponent(idSrvc)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success && data.servicio) {
+                            datosRouteOrder = {
+                                servicio: data.servicio,
+                                prospecto: { 
+                                    concatenado: concatenadoProspecto,
+                                    ...prospectoCompleto
+                                },
+                                costos: data.servicio.costos || [],
+                                gastos_locales: data.servicio.gastos_locales || []
+                            };
+                            renderizarRouteOrder(datosRouteOrder);
+                        } else {
+                            error('Error al cargar los datos del servicio para Route Order.');
+                            document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error al cargar los datos.</p>';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error al cargar servicio para Route Order:', err);
+                        error('Error de conexión al cargar los datos del servicio.');
+                        document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error de conexión.</p>';
+                    });
+            }
+                        operacion: ...,
+                        razon_social: ...,
+                        direccion: ...,
+                        rut_empresa: ...,
+                        contacto_nombre: ...
+                    },
                     // Si costos y gastos no están en el objeto local, podrías necesitar cargarlos por separado si es necesario
                     // o asumir que si se está editando, ya están disponibles localmente o se pueden obtener de otro array global si aplica.
                     // Para esta lógica, asumiremos que están incluidos en el objeto servicioLocal si el servicio ya fue guardado y editado.
