@@ -3316,6 +3316,10 @@
                 );
             };
 
+            // Definir variables en el scope de renderizarRouteOrder
+            let creditoSimbolo = ' &nbsp;';
+            let contadoSimbolo = ' &nbsp;';
+
             if (rutCliente) {
                 fetch(`/api/get_estado_credito_cliente.php?rut=${encodeURIComponent(rutCliente)}`)
                     .then(response => response.ok ? response.json() : Promise.reject())
@@ -3323,26 +3327,47 @@
                         if (creditoData.success && creditoData.estado_credito) {
                             const estado = creditoData.estado_credito.toLowerCase();
                             if (estado === 'vigente' || estado === 'activo') {
-                                renderFinal(' ✅', ' &nbsp;');
+                                creditoSimbolo = ' ✅';
+                                contadoSimbolo = ' &nbsp;';
                             } else {
-                                renderFinal(' &nbsp;', ' ✅');
+                                creditoSimbolo = ' &nbsp;';
+                                contadoSimbolo = ' ✅';
                             }
                         } else {
-                            renderFinal(' &nbsp;', ' ✅');
+                            creditoSimbolo = ' &nbsp;';
+                            contadoSimbolo = ' ✅';
                         }
+                        // === Agregar a datosRouteOrder ===
+                        if (datosRouteOrder) {
+                            datosRouteOrder.estado_credito = {
+                                credito: creditoSimbolo,
+                                contado: contadoSimbolo
+                            };
+                        }
+                        renderFinal(creditoSimbolo, contadoSimbolo);
                     })
                     .catch(() => {
-                        renderFinal(' &nbsp;', ' ✅');
+                        creditoSimbolo = ' &nbsp;';
+                        contadoSimbolo = ' ✅';
+                        if (datosRouteOrder) {
+                            datosRouteOrder.estado_credito = {
+                                credito: creditoSimbolo,
+                                contado: contadoSimbolo
+                            };
+                        }
+                        renderFinal(creditoSimbolo, contadoSimbolo);
                     });
             } else {
-                renderFinal(simboloCredito, simboloContado);
-            }
-            // En renderizarRouteOrder, dentro del fetch de crédito
-            if (datosRouteOrder) {
-                datosRouteOrder.estado_credito = {
-                    credito: creditoSimbolo,   // ' ✅' o ' &nbsp;'
-                    contado: contadoSimbolo    // ' ✅' o ' &nbsp;'
-                };
+                // Sin RUT, asumir contado
+                creditoSimbolo = ' &nbsp;';
+                contadoSimbolo = ' ✅';
+                if (datosRouteOrder) {
+                    datosRouteOrder.estado_credito = {
+                        credito: creditoSimbolo,
+                        contado: contadoSimbolo
+                    };
+                }
+                renderFinal(creditoSimbolo, contadoSimbolo);
             }
             const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
             // === Cargar y mostrar datos de Transporte Nacional al abrir el submodal ===
