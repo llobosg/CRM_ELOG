@@ -3025,7 +3025,7 @@
             contenedor.innerHTML = `
                 <div style="display: grid; grid-template-columns: max-content auto 1fr max-content auto; gap: 0.5rem; font-size: 9pt; margin-top: 0.8rem;">
                     <!-- Columna 1: Labels izquierda -->
-                    <div><strong>TRANSPORTISTA:</strong></div>
+                    <div><strong>TRANSPORTISTA**:</strong></div>
                     <div>${getVal(data?.transportista)}</div>
                     <div></div>
                     <div><strong>DIREC. ENTREGA:</strong></div>
