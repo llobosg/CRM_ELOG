@@ -3337,6 +3337,13 @@
             } else {
                 renderFinal(simboloCredito, simboloContado);
             }
+            // En renderizarRouteOrder, dentro del fetch de crédito
+            if (datosRouteOrder) {
+                datosRouteOrder.estado_credito = {
+                    credito: creditoSimbolo,   // ' ✅' o ' &nbsp;'
+                    contado: contadoSimbolo    // ' ✅' o ' &nbsp;'
+                };
+            }
             const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
             // === Cargar y mostrar datos de Transporte Nacional al abrir el submodal ===
             if (idSrvc) {

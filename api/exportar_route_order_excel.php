@@ -180,6 +180,24 @@ $row++;
 // === CONDICIONES COMERCIALES (A debajo de Costos) ===
 $hoja->setCellValue("A{$row}", "CONDICIONES COMERCIALES");
 $hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
+$row++;
+
+// Obtener estado de crédito
+$estadoCredito = $datosRO['estado_credito'] ?? null;
+$simboloCredito = ' &nbsp;';
+$simboloContado = ' &nbsp;';
+
+if ($estadoCredito) {
+    $simboloCredito = $estadoCredito['credito'] ?? ' &nbsp;';
+    $simboloContado = $estadoCredito['contado'] ?? ' &nbsp;';
+} else {
+    // Si no se envió, asumir contado (puedes cambiar la lógica)
+    $simboloContado = ' ✅';
+}
+
+$hoja->setCellValue("A{$row}", "CRÉDITO:" . $simboloCredito);
+$row++;
+$hoja->setCellValue("A{$row}", "CONTADO:" . $simboloContado);
 $row += 2;
 
 // === TRANSPORTE NACIONAL (A debajo) ===
