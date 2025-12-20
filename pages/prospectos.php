@@ -2980,38 +2980,7 @@
             renderizarCamposTransporteNac(null);
         }
 
-        // Renderiza los campos de transporte nacional en el Route Order
-        function renderizarCamposTransporteNac(data = null) {
-            const campos = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                    <div>
-                        <strong>TRANSPORTISTA:</strong><br>
-                        <div style="margin-left: 1rem;">${sanitizeText(data?.transportista || '&nbsp;')}</div>
-                        <strong>DIREC. RETIRO:</strong><br>
-                        <div style="margin-left: 1rem;">${sanitizeText(data?.direc_retiro || '&nbsp;')}</div>
-                        <strong>CONTACTO:</strong><br>
-                        <div style="margin-left: 1rem;">${sanitizeText(data?.contacto_retiro || '&nbsp;')}</div>
-                        <strong>FONO:</strong><br>
-                        <div style="margin-left: 1rem;">${sanitizeText(data?.fono_retiro || '&nbsp;')}</div>
-                    </div>
-                    <div>
-                        <strong>DIREC. ENTREGA:</strong><br>
-                        <div style="margin-left: 1rem;">${sanitizeText(data?.direc_entrega || '&nbsp;')}</div>
-                        <strong>FONO:</strong><br>
-                        <div style="margin-left: 1rem;">${sanitizeText(data?.fono_entrega || '&nbsp;')}</div>
-                        <strong>EMPRESA:</strong><br>
-                        <div style="margin-left: 1rem;">${sanitizeText(data?.empresa_entrega || '&nbsp;')}</div>
-                        <strong>CONTACTO:</strong><br>
-                        <div style="margin-left: 1rem;">${sanitizeText(data?.contacto_entrega || '&nbsp;')}</div>
-                    </div>
-                </div>
-            `;
-            // Reemplazar el contenedor de campos de transporte
-            const contenedor = document.getElementById('campos-transporte-nac');
-            if (contenedor) {
-                contenedor.innerHTML = campos;
-            }
-        }
+        
 
         // Renderiza la TABLA de Transporte Nacional (7 columnas)
         function renderizarTablaTransporteNac(data = null) {
@@ -3546,6 +3515,30 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
+
+                                                    <!-- CAMPOS TRANSPORTE (dinámicos) -->
+                                                    <div id="campos-transporte-nac" style="margin-top: 0.8rem;"></div>
+                                                        <div>
+                                                            <strong>TRANSPORTISTA:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>DIREC. RETIRO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>CONTACTO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>FONO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                        </div>
+                                                        <div>
+                                                            <strong>DIREC. ENTREGA:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>FONO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>EMPRESA:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                            <strong>CONTACTO:</strong><br>
+                                                            <div style="margin-left: 1rem;">&nbsp;</div>
+                                                        </div>
+                                                    </div>
 
                                                     <!-- BOTONES TRANSPORTE NACIONAL -->
                                                     <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
