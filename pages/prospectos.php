@@ -2779,6 +2779,185 @@
         let datosRouteOrder = null; // Almacenará los datos cargados para el Route Order
 
         // --- Funciones para manejo del submodal Route Order ---
+        function abrirModalTransporteNac(accion) {
+            // Obtener datos del contexto actual
+            const idPpl = document.getElementById('id_ppl')?.value || '';
+            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+            if (!idPpl || !idSrvc) {
+                alert('No hay un servicio seleccionado.');
+                return;
+            }
+
+            if (accion === 'editar') {
+                // Cargar registro existente
+                fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            mostrarFormularioTransporteNac(res.data, 'editar');
+                        } else {
+                            alert('No existe registro. Usa "Grabar Transporte" para crear uno.');
+                            mostrarFormularioTransporteNac(null, 'crear');
+                        }
+                    })
+                    .catch(e => {
+                        console.error(e);
+                        alert('Error al cargar el registro.');
+                    });
+            } else {
+                mostrarFormularioTransporteNac(null, 'crear');
+            }
+        }
+
+        function mostrarFormularioTransporteNac(data, modo) {
+            let html = `
+                <div style="padding: 1rem; background: #f9f9f9; border: 1px solid #ccc; border-radius: 6px;">
+                    <h4 style="margin-top: 0;">${modo === 'crear' ? 'Nuevo' : 'Editar'} Transporte Nacional</h4>
+                    <input type="hidden" id="transp_nac_id" value="${data?.id_transp_nac || ''}">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; font-size: 9pt;">
+                        <div>
+                            <label>Moneda:</label>
+                            <select id="transp_nac_moneda" style="width: 100%;">
+                                <option value="CLP" ${(!data?.moneda || data.moneda === 'CLP') ? 'selected' : ''}>CLP</option>
+                                <option value="USD" ${data?.moneda === 'USD' ? 'selected' : ''}>USD</option>
+                                <option value="EUR" ${data?.moneda === 'EUR' ? 'selected' : ''}>EUR</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Costo:</label>
+                            <input type="number" id="transp_nac_costo" step="0.01" value="${data?.costo || '0.00'}" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label>Venta:</label>
+                            <input type="number" id="transp_nac_venta" step="0.01" value="${data?.venta || '0.00'}" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label>Acepta:</label>
+                            <select id="transp_nac_acepta" style="width: 100%;">
+                                <option value="Si" ${data?.acepta === 'Si' ? 'selected' : ''}>Si</option>
+                                <option value="No" ${!data?.acepta || data.acepta === 'No' ? 'selected' : ''}>No</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Afecto:</label>
+                            <select id="transp_nac_afecto" style="width: 100%;">
+                                <option value="Si" ${data?.afecto === 'Si' ? 'selected' : ''}>Si</option>
+                                <option value="No" ${!data?.afecto || data.afecto === 'No' ? 'selected' : ''}>No</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Transportista:</label>
+                            <input type="text" id="transp_nac_transportista" value="${data?.transportista || ''}" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label>Direc. Retiro:</label>
+                            <input type="text" id="transp_nac_direc_retiro" value="${data?.direc_retiro || ''}" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label>Contacto Retiro:</label>
+                            <input type="text" id="transp_nac_contacto_retiro" value="${data?.contacto_retiro || ''}" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label>Fono Retiro:</label>
+                            <input type="text" id="transp_nac_fono_retiro" value="${data?.fono_retiro || ''}" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label>Direc. Entrega:</label>
+                            <input type="text" id="transp_nac_direc_entrega" value="${data?.direc_entrega || ''}" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label>Fono Entrega:</label>
+                            <input type="text" id="transp_nac_fono_entrega" value="${data?.fono_entrega || ''}" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label>Empresa Entrega:</label>
+                            <input type="text" id="transp_nac_empresa_entrega" value="${data?.empresa_entrega || ''}" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label>Contacto Entrega:</label>
+                            <input type="text" id="transp_nac_contacto_entrega" value="${data?.contacto_entrega || ''}" style="width: 100%;">
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; text-align: right;">
+                        <button onclick="guardarTransporteNac()" style="background: #007bff; color: white; padding: 0.3rem 0.6rem; border: none; border-radius: 4px; margin-right: 0.5rem;">Guardar</button>
+                        <button onclick="cerrarFormularioTransporteNac()" style="background: #6c757d; color: white; padding: 0.3rem 0.6rem; border: none; border-radius: 4px;">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('route-order-content').insertAdjacentHTML('beforeend', `<div id="modal-transporte-nac">${html}</div>`);
+        }
+
+        function cerrarFormularioTransporteNac() {
+            const modal = document.getElementById('modal-transporte-nac');
+            if (modal) modal.remove();
+        }
+
+        function guardarTransporteNac() {
+            const idPpl = document.getElementById('id_ppl')?.value || '';
+            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+            const id = document.getElementById('transp_nac_id')?.value || null;
+
+            const data = {
+                id_transp_nac: id || null,
+                id_prospect: idPpl,
+                id_srvc: idSrvc,
+                moneda: document.getElementById('transp_nac_moneda').value,
+                costo: document.getElementById('transp_nac_costo').value,
+                venta: document.getElementById('transp_nac_venta').value,
+                acepta: document.getElementById('transp_nac_acepta').value,
+                afecto: document.getElementById('transp_nac_afecto').value,
+                transportista: document.getElementById('transp_nac_transportista').value,
+                direc_retiro: document.getElementById('transp_nac_direc_retiro').value,
+                contacto_retiro: document.getElementById('transp_nac_contacto_retiro').value,
+                fono_retiro: document.getElementById('transp_nac_fono_retiro').value,
+                direc_entrega: document.getElementById('transp_nac_direc_entrega').value,
+                fono_entrega: document.getElementById('transp_nac_fono_entrega').value,
+                empresa_entrega: document.getElementById('transp_nac_empresa_entrega').value,
+                contacto_entrega: document.getElementById('transp_nac_contacto_entrega').value
+            };
+
+            fetch('/pages/ro_transp_nac_logic.php?action=save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    alert(res.message);
+                    cerrarFormularioTransporteNac();
+                    // Opcional: recargar submodal o datos
+                } else {
+                    alert('Error: ' + res.message);
+                }
+            })
+            .catch(e => {
+                console.error(e);
+                alert('Error de conexión.');
+            });
+        }
+
+        function eliminarTransporteNac() {
+            if (!confirm('¿Eliminar registro de Transporte Nacional?')) return;
+
+            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+            fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success && res.data?.id_transp_nac) {
+                        const id = res.data.id_transp_nac;
+                        fetch(`/pages/ro_transp_nac_logic.php?action=delete&id=${id}`)
+                            .then(r => r.json())
+                            .then(res2 => {
+                                alert(res2.message || 'Eliminado.');
+                            })
+                            .catch(e => alert('Error al eliminar.'));
+                    } else {
+                        alert('No hay registro para eliminar.');
+                    }
+                })
+                .catch(e => alert('Error al verificar registro.'));
+        }
 
         function sanitizeText(text) {
             if (typeof text !== 'string') {
@@ -3231,6 +3410,22 @@
                                                             <strong>CONTACTO:</strong><br>
                                                             <div style="margin-left: 1rem;">&nbsp;</div>
                                                         </div>
+                                                    </div>
+
+                                                    <!-- BOTONES TRANSPORTE NACIONAL -->
+                                                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                                                        <button type="button" onclick="abrirModalTransporteNac('crear')" 
+                                                            style="padding: 0.3rem 0.6rem; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">
+                                                            🚚 Grabar Transporte
+                                                        </button>
+                                                        <button type="button" onclick="abrirModalTransporteNac('editar')" 
+                                                            style="padding: 0.3rem 0.6rem; background-color: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">
+                                                            ✏️ Editar
+                                                        </button>
+                                                        <button type="button" onclick="eliminarTransporteNac()" 
+                                                            style="padding: 0.3rem 0.6rem; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">
+                                                            🗑️ Eliminar
+                                                        </button>
                                                     </div>
 
                                                     <!-- SEGURO (izquierda) -->
