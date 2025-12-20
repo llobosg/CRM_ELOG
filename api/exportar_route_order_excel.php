@@ -1,6 +1,9 @@
 <?php
 // api/exportar_route_order_excel.php
 // Genera un archivo Excel para el Route Order
+error_reporting(E_ALL);
+ini_set('display_errors', 1); // ← Solo para diagnóstico
+ini_set('memory_limit', '256M');
 
 // --- Prevenir cualquier salida no deseada ---
 if (ob_get_level()) {
