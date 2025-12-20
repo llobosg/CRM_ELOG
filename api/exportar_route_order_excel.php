@@ -110,6 +110,32 @@ $hoja->setCellValue("E6", $consignatarioCont);
 $hoja->setCellValue("D7", "R.U.T:");
 $hoja->setCellValue("E7", $consignatarioRut);
 
+// === DATOS ADICIONALES DEL SERVICIO (F3) ===
+$row = 3;
+$hoja->setCellValue("F{$row}", "TIPO CAMBIO CLIENTE:");
+$hoja->setCellValue("G{$row}", number_format($servicio['tipo_cambio'] ?? 1, 4, ',', '.'));
+$row++;
+$hoja->setCellValue("F{$row}", "AGENTE / OFICINA:");
+$hoja->setCellValue("G{$row}", $servicio['agente'] ?? '');
+$row++;
+$hoja->setCellValue("F{$row}", "REF. CLIENTE:");
+$hoja->setCellValue("G{$row}", $servicio['ref_cliente'] ?? '');
+$row++;
+$hoja->setCellValue("F{$row}", "PROV. NACIONAL:");
+$hoja->setCellValue("G{$row}", $servicio['proveedor_nac'] ?? '');
+$row++;
+$hoja->setCellValue("F{$row}", "TERRESTRE:");
+$hoja->setCellValue("G{$row}", '');
+$row++;
+$hoja->setCellValue("F{$row}", "DESCONSOLIDACIÓN:");
+$hoja->setCellValue("G{$row}", $servicio['desconsolidac'] ?? '');
+$row++;
+$hoja->setCellValue("F{$row}", "GRÚAS:");
+$hoja->setCellValue("G{$row}", '');
+$row++;
+$hoja->setCellValue("F{$row}", "EMBALAJE:");
+$hoja->setCellValue("G{$row}", '');
+
 // === Datos del Servicio (A9) ===
 $row = 9;
 $hoja->setCellValue("A{$row}", "INCOTERM:");
