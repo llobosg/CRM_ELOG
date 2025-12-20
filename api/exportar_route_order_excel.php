@@ -86,51 +86,68 @@ $hoja->setCellValue("B{$row}", $prospecto['concatenado'] ?? 'N_A');
 $hoja->getStyle("A{$row}:B{$row}")->applyFromArray($estiloTitulo);
 $row += 2;
 
-// === SHIPPER (A-B) ===
-$hoja->setCellValue("A{$row}", "SHIPPER:");
-$hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
-$row++;
-$hoja->setCellValue("A{$row}", "Razón Social:");
-$hoja->setCellValue("B{$row}", $shipperRS);
-$row++;
-$hoja->setCellValue("A{$row}", "DIRECCIÓN:");
-$hoja->setCellValue("B{$row}", $shipperDir);
-$row++;
-$hoja->setCellValue("A{$row}", "CONTACTO:");
-$hoja->setCellValue("B{$row}", $shipperCont);
-$row++;
-$hoja->setCellValue("A{$row}", "R.U.T:");
-$hoja->setCellValue("B{$row}", $shipperRut);
-$row += 2;
+// === SHIPPER (A3) ===
+$hoja->setCellValue("A3", "SHIPPER:");
+$hoja->getStyle("A3")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("A4", "Razón Social:");
+$hoja->setCellValue("B4", $shipperRS);
+$hoja->setCellValue("A5", "DIRECCIÓN:");
+$hoja->setCellValue("B5", $shipperDir);
+$hoja->setCellValue("A6", "CONTACTO:");
+$hoja->setCellValue("B6", $shipperCont);
+$hoja->setCellValue("A7", "R.U.T:");
+$hoja->setCellValue("B7", $shipperRut);
 
-// === CONSIGNATARIO (D-E) ===
-$hoja->setCellValue("D{$row}", "CONSIGNATARIO:");
-$hoja->getStyle("D{$row}")->applyFromArray($estiloTitulo);
-$row++; // misma fila que SHIPPER
-$hoja->setCellValue("D{$row}", "Razón Social:");
-$hoja->setCellValue("E{$row}", $consignatarioRS);
-$row++;
-$hoja->setCellValue("D{$row}", "DIRECCIÓN:");
-$hoja->setCellValue("E{$row}", $consignatarioDir);
-$row++;
-$hoja->setCellValue("D{$row}", "CONTACTO:");
-$hoja->setCellValue("E{$row}", $consignatarioCont);
-$row++;
-$hoja->setCellValue("D{$row}", "R.U.T:");
-$hoja->setCellValue("E{$row}", $consignatarioRut);
-$row = 16; // Saltamos a la fila 16
+// === CONSIGNATARIO (D3) ===
+$hoja->setCellValue("D3", "CONSIGNATARIO:");
+$hoja->getStyle("D3")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("D4", "Razón Social:");
+$hoja->setCellValue("E4", $consignatarioRS);
+$hoja->setCellValue("D5", "DIRECCIÓN:");
+$hoja->setCellValue("E5", $consignatarioDir);
+$hoja->setCellValue("D6", "CONTACTO:");
+$hoja->setCellValue("E6", $consignatarioCont);
+$hoja->setCellValue("D7", "R.U.T:");
+$hoja->setCellValue("E7", $consignatarioRut);
 
-// === Coloadoer (A16) ===
+// === Datos del Servicio (A9) ===
+$row = 9;
+$hoja->setCellValue("A{$row}", "INCOTERM:");
+$hoja->setCellValue("B{$row}", $servicio['incoterm'] ?? '');
+$row++;
+$hoja->setCellValue("A{$row}", "COMMODITY:");
+$hoja->setCellValue("B{$row}", $servicio['commodity'] ?? '');
+$row++;
+$hoja->setCellValue("A{$row}", "VOLUMEN:");
+$hoja->setCellValue("B{$row}", $servicio['volumen'] ?? '');
+$hoja->getStyle("B{$row}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00);
+$row++;
+$hoja->setCellValue("A{$row}", "PESO BRUTO:");
+$hoja->setCellValue("B{$row}", $servicio['peso'] ?? '');
+$hoja->getStyle("B{$row}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00);
+$row++;
+$hoja->setCellValue("A{$row}", "DIMENSIONES:");
+$hoja->setCellValue("B{$row}", $servicio['dimensiones'] ?? '');
+$row++;
+$hoja->setCellValue("A{$row}", "UNIDADES:");
+$hoja->setCellValue("B{$row}", $servicio['bultos'] ?? '');
+$row++;
+$hoja->setCellValue("A{$row}", "POL:");
+$hoja->setCellValue("B{$row}", $servicio['origen'] ?? '');
+$row++;
+$hoja->setCellValue("A{$row}", "POD:");
+$hoja->setCellValue("B{$row}", $servicio['destino'] ?? '');
+$row++;
 $hoja->setCellValue("A{$row}", "COLOADER:");
 $hoja->setCellValue("B{$row}", $servicio['coloader'] ?? '');
-$row = 18;
+$row += 2; // A18
 
 // === NOTAS ADICIONALES (A18:A22) ===
 $hoja->setCellValue("A{$row}", "NOTAS ADICIONALES:");
 $hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
-$hoja->mergeCells("A19:A22");
-$hoja->setCellValue("A19", $servicio['nota_srvc'] ?? '');
-$hoja->getStyle("A19")->applyFromArray($estiloTexto);
+$hoja->mergeCells("A" . ($row + 1) . ":A" . ($row + 4));
+$hoja->setCellValue("A" . ($row + 1), $servicio['nota_srvc'] ?? '');
+$hoja->getStyle("A" . ($row + 1))->applyFromArray($estiloTexto);
 $row = 23;
 
 // === COSTOS (A23) ===
