@@ -1,9 +1,6 @@
 <?php
 // api/exportar_route_order_excel.php
 // Genera un archivo Excel para el Route Order
-error_reporting(E_ALL);
-ini_set('display_errors', 1); // ← Solo para diagnóstico
-ini_set('memory_limit', '256M');
 
 // --- Prevenir cualquier salida no deseada ---
 if (ob_get_level()) {
@@ -17,6 +14,7 @@ while (ob_get_level()) {
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Nunca mostrar errores en la salida
 ini_set('log_errors', 1);
+ini_set('memory_limit', '256M');
 
 // --- Cargar dependencias ---
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -30,7 +28,7 @@ $data = json_decode($inputJSON, true);
 
 if (!$data || !isset($data['servicio'])) {
     http_response_code(400);
-    exit; // No imprimir nada
+    exit;
 }
 
 $datosRO = $data;
@@ -58,7 +56,7 @@ $estiloNumero = ['numberFormat' => ['formatCode' => \PhpOffice\PhpSpreadsheet\St
 // --- Función auxiliar para nombre seguro ---
 function nombreArchivoSeguro($str) {
     $str = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $str ?? '');
-    return substr($str, 0, 100); // Límite razonable
+    return substr($str, 0, 100);
 }
 
 // --- Inicio del contenido ---
@@ -142,7 +140,7 @@ foreach ($costos as $c) {
         $c['aplica'] ?? ''
     ], null, "A{$row}");
     $hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("C{$row}, D{$row}, E{$row}, F{$row}")->applyFromArray($estiloNumero);
+    $hoja->getStyle("C{$row}:F{$row}")->applyFromArray($estiloNumero); // ✅ Corregido: rango continuo
     $row++;
 }
 $row++;
@@ -165,7 +163,9 @@ foreach ($gastos_locales as $g) {
         $g['iva'] ?? 0
     ], null, "A{$row}");
     $hoja->getStyle("A{$row}:F{$row}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("D{$row}, F{$row}")->applyFromArray($estiloNumero);
+    // ✅ Corregido: celdas no contiguas → aplicar por separado
+    $hoja->getStyle("D{$row}")->applyFromArray($estiloNumero);
+    $hoja->getStyle("F{$row}")->applyFromArray($estiloNumero);
     $row++;
 }
 $row++;
@@ -218,7 +218,7 @@ if ($transporte) {
         $transporte['afecto'] ?? 'No'
     ], null, "A{$row}");
     $hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("C{$row}, D{$row}, E{$row}")->applyFromArray($estiloNumero);
+    $hoja->getStyle("C{$row}:E{$row}")->applyFromArray($estiloNumero); // ✅ Corregido: rango continuo
 } else {
     $hoja->fromArray(['', '', '', '', '', '', ''], null, "A{$row}");
 }
