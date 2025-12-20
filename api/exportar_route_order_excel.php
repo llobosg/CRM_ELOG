@@ -63,6 +63,20 @@ $spreadsheet = new Spreadsheet();
 $hoja = $spreadsheet->getActiveSheet();
 $hoja->setTitle('Route Order');
 
+// === Insertar logo en B2 ===
+$logoPath = getLogoPath();
+if ($logoPath) {
+    $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+    $drawing->setName('Logo Empresa');
+    $drawing->setDescription('Logo');
+    $drawing->setPath($logoPath);
+    $drawing->setHeight(40); // Ajusta según necesidad
+    $drawing->setCoordinates('B2');
+    $drawing->setOffsetX(0);
+    $drawing->setOffsetY(0);
+    $drawing->setWorksheet($hoja);
+}
+
 // --- Estilos ---
 $estiloTitulo = ['font' => ['bold' => true, 'size' => 12]];
 $estiloCabecera = [
@@ -76,6 +90,20 @@ $estiloTexto = ['alignment' => ['wrapText' => true, 'vertical' => Alignment::VER
 
 function nombreArchivoSeguro($str) {
     return substr(preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $str ?? ''), 0, 100);
+}
+
+function getLogoPath() {
+    // Ajusta esta ruta según tu estructura de proyecto
+    $possiblePaths = [
+        __DIR__ . '/../assets/logoelog2.png',
+    ];
+
+    foreach ($possiblePaths as $path) {
+        if (file_exists($path)) {
+            return $path;
+        }
+    }
+    return null;
 }
 
 $row = 1;
@@ -322,7 +350,7 @@ $hoja->setCellValue("J{$ventasStartRow}", "Gastos Locales en Destino");
 $hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
 $hoja->fromArray(['Concepto', 'Moneda', 'Monto', 'Afecto'], null, "J{$ventasStartRow}");
-$hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->getStyle("J{$ventasStartRow}:M{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 $totalGastosVentas = 0;
@@ -351,7 +379,7 @@ $hoja->setCellValue("J{$ventasStartRow}", "Gastos Locales en Destino Costo");
 $hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
 $hoja->fromArray(['Concepto', 'Moneda', 'Monto', 'Afecto'], null, "J{$ventasStartRow}");
-$hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->getStyle("J{$ventasStartRow}:M{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 $totalGastosCostos = 0;
@@ -374,26 +402,45 @@ $hoja->setCellValue("L{$ventasStartRow}", $totalGastosCostos);
 $hoja->getStyle("L{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow += 2;
 
-// === Total Gastos Locales + Profit ===
+// === Total Gastos Locales + Profit Local ===
 $profitLocal = $totalGastosVentas - $totalGastosCostos;
 $profitPct = $totalGastosVentas > 0 ? ($profitLocal / $totalGastosVentas * 100) : 0;
 
 $hoja->setCellValue("J{$ventasStartRow}", "Total Gastos Locales más Profit Local");
 $hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
-$hoja->setCellValue("J{$ventasStartRow}", "Moneda"); $hoja->setCellValue("K{$ventasStartRow}", "Monto");
-$hoja->getStyle("J{$ventasStartRow}:K{$ventasStartRow}")->applyFromArray($estiloCabecera);
+
+// Encabezados: dejamos J vacío, K = Moneda, L = Monto
+$hoja->setCellValue("K{$ventasStartRow}", "Moneda");
+$hoja->setCellValue("L{$ventasStartRow}", "Monto");
+$hoja->getStyle("K{$ventasStartRow}:L{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
-$hoja->setCellValue("J{$ventasStartRow}", "CLP"); $hoja->setCellValue("K{$ventasStartRow}", $totalGastosVentas);
-$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
+
+// TOTAL VENTA
+$hoja->setCellValue("J{$ventasStartRow}", "TOTAL VENTA:");
+$hoja->setCellValue("K{$ventasStartRow}", "CLP");
+$hoja->setCellValue("L{$ventasStartRow}", $totalGastosVentas);
+$hoja->getStyle("L{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
-$hoja->setCellValue("J{$ventasStartRow}", "CLP"); $hoja->setCellValue("K{$ventasStartRow}", $totalGastosCostos);
-$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
+
+// TOTAL COSTO
+$hoja->setCellValue("J{$ventasStartRow}", "TOTAL COSTO:");
+$hoja->setCellValue("K{$ventasStartRow}", "CLP");
+$hoja->setCellValue("L{$ventasStartRow}", $totalGastosCostos);
+$hoja->getStyle("L{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
-$hoja->setCellValue("J{$ventasStartRow}", "CLP"); $hoja->setCellValue("K{$ventasStartRow}", $profitLocal);
-$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
+
+// PROFIT LOCAL
+$hoja->setCellValue("J{$ventasStartRow}", "PROFIT LOCAL:");
+$hoja->setCellValue("K{$ventasStartRow}", "CLP");
+$hoja->setCellValue("L{$ventasStartRow}", $profitLocal);
+$hoja->getStyle("L{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
-$hoja->setCellValue("J{$ventasStartRow}", ""); $hoja->setCellValue("J{$ventasStartRow}", $profitPct . '%');
+
+// PROFIT %
+$hoja->setCellValue("J{$ventasStartRow}", "PROFIT %:");
+$hoja->setCellValue("K{$ventasStartRow}", "");
+$hoja->setCellValue("L{$ventasStartRow}", $profitPct . '%');
 $ventasStartRow++;
 
 // === NOTAS finales (abajo de todo) ===
