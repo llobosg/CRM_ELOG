@@ -3514,6 +3514,9 @@
                                                         </tbody>
                                                     </table>
 
+                                                    <!-- CAMPOS TRANSPORTE (dinámicos) -->
+                                                    <div id="campos-transporte-nac" style="margin-top: 0.8rem;"></div>
+
                                                     <!-- BOTONES TRANSPORTE NACIONAL -->
                                                     <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
                                                         <button type="button" onclick="abrirModalTransporteNac('crear')" 
