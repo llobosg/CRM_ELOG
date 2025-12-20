@@ -227,7 +227,7 @@ $row++;
 $hoja->setCellValue("B{$row}", "CONTADO:" . $simboloContado);
 $row += 2;
 
-// === TRANSPORTE NACIONAL (A debajo) ===
+// === TRANSPORTE NACIONAL (B debajo) ===
 $hoja->setCellValue("B{$row}", "TRANSPORTE NACIONAL");
 $hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
 $row++;
@@ -245,9 +245,9 @@ if ($transporte) {
         $profit_transp,
         $transporte['acepta'] ?? 'No',
         $transporte['afecto'] ?? 'No'
-    ], null, "A{$row}");
+    ], null, "B{$row}");
     $hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("D{$row}:F{$row}")->applyFromArray($estiloNumero);
+    $hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloNumero);
 } else {
     $hoja->fromArray(['', '', '', '', '', '', ''], null, "B{$row}");
 }
@@ -279,23 +279,23 @@ $hoja->setCellValue("B{$row}", "CONTACTO:");
 $hoja->setCellValue("C{$row}", $transporte['contacto_entrega'] ?? '');
 $row += 2;
 
-// === SEGURO (A debajo) ===
+// === SEGURO (B debajo) ===
 $hoja->setCellValue("B{$row}", "SEGURO");
 $hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
 $row++;
-$hoja->fromArray(['Concepto', 'Moneda', 'Costo', 'Venta', 'Min.', 'V.Venta', 'Aplica'], null, "C{$row}");
-$hoja->getStyle("C{$row}:I{$row}")->applyFromArray($estiloCabecera);
+$hoja->fromArray(['Concepto', 'Moneda', 'Costo', 'Venta', 'Min.', 'V.Venta', 'Aplica'], null, "B{$row}");
+$hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCabecera);
 $row++;
-$hoja->fromArray(['', '', '', '', '', '', ''], null, "C{$row}");
+$hoja->fromArray(['', '', '', '', '', '', ''], null, "B{$row}");
 $row += 2;
 
-// === VENTAS (I23) ===
+// === VENTAS (J23) ===
 $ventasStartRow = 25; // 23 + "PROFIT SHARE" + "Costos"
-$hoja->setCellValue("I{$ventasStartRow}", "Ventas");
-$hoja->getStyle("I{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("J{$ventasStartRow}", "Ventas");
+$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
-$hoja->fromArray(['Concepto', 'Moneda', 'Qty', 'Venta', 'Total', 'Aplica'], null, "I{$ventasStartRow}");
-$hoja->getStyle("I{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->fromArray(['Concepto', 'Moneda', 'Qty', 'Venta', 'Total', 'Aplica'], null, "J{$ventasStartRow}");
+$hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 foreach ($costos as $c) {
@@ -309,20 +309,20 @@ foreach ($costos as $c) {
         $tarifa,
         $total,
         $c['aplica'] ?? ''
-    ], null, "I{$ventasStartRow}");
-    $hoja->getStyle("I{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("K{$ventasStartRow}:L{$ventasStartRow}")->applyFromArray($estiloNumero);
+    ], null, "J{$ventasStartRow}");
+    $hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("L{$ventasStartRow}:M{$ventasStartRow}")->applyFromArray($estiloNumero);
     $ventasStartRow++;
 }
 $ventasStartRow++;
 
 // === Gastos Locales en Destino (Ventas) ===
 $gastosVentas = array_filter($gastos_locales, fn($g) => strtoupper($g['tipo'] ?? '') === 'VENTAS');
-$hoja->setCellValue("I{$ventasStartRow}", "Gastos Locales en Destino");
-$hoja->getStyle("I{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("J{$ventasStartRow}", "Gastos Locales en Destino");
+$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
-$hoja->fromArray(['Concepto', 'Moneda', 'Monto', 'Afecto'], null, "I{$ventasStartRow}");
-$hoja->getStyle("I{$ventasStartRow}:L{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->fromArray(['Concepto', 'Moneda', 'Monto', 'Afecto'], null, "J{$ventasStartRow}");
+$hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 $totalGastosVentas = 0;
@@ -334,24 +334,24 @@ foreach ($gastosVentas as $g) {
         $g['moneda'] ?? '',
         $monto,
         $g['afecto'] ?? ''
-    ], null, "I{$ventasStartRow}");
-    $hoja->getStyle("I{$ventasStartRow}:L{$ventasStartRow}")->applyFromArray($estiloCelda);
+    ], null, "J{$ventasStartRow}");
+    $hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCelda);
     $hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
     $ventasStartRow++;
 }
 
-$hoja->setCellValue("I{$ventasStartRow}", "TOTAL MONTO:");
-$hoja->setCellValue("K{$ventasStartRow}", $totalGastosVentas);
-$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue("J{$ventasStartRow}", "TOTAL MONTO:");
+$hoja->setCellValue("L{$ventasStartRow}", $totalGastosVentas);
+$hoja->getStyle("L{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow += 2;
 
 // === Gastos Locales en Destino Costo ===
 $gastosCostos = array_filter($gastos_locales, fn($g) => strtoupper($g['tipo'] ?? '') === 'COSTO');
-$hoja->setCellValue("I{$ventasStartRow}", "Gastos Locales en Destino Costo");
-$hoja->getStyle("I{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("J{$ventasStartRow}", "Gastos Locales en Destino Costo");
+$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
-$hoja->fromArray(['Concepto', 'Moneda', 'Monto', 'Afecto'], null, "I{$ventasStartRow}");
-$hoja->getStyle("I{$ventasStartRow}:L{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->fromArray(['Concepto', 'Moneda', 'Monto', 'Afecto'], null, "J{$ventasStartRow}");
+$hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 $totalGastosCostos = 0;
@@ -363,37 +363,37 @@ foreach ($gastosCostos as $g) {
         $g['moneda'] ?? '',
         $monto,
         $g['afecto'] ?? ''
-    ], null, "I{$ventasStartRow}");
-    $hoja->getStyle("I{$ventasStartRow}:L{$ventasStartRow}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
+    ], null, "J{$ventasStartRow}");
+    $hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("L{$ventasStartRow}")->applyFromArray($estiloNumero);
     $ventasStartRow++;
 }
 
-$hoja->setCellValue("I{$ventasStartRow}", "TOTAL MONTO:");
-$hoja->setCellValue("K{$ventasStartRow}", $totalGastosCostos);
-$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue("J{$ventasStartRow}", "TOTAL MONTO:");
+$hoja->setCellValue("L{$ventasStartRow}", $totalGastosCostos);
+$hoja->getStyle("L{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow += 2;
 
 // === Total Gastos Locales + Profit ===
 $profitLocal = $totalGastosVentas - $totalGastosCostos;
 $profitPct = $totalGastosVentas > 0 ? ($profitLocal / $totalGastosVentas * 100) : 0;
 
-$hoja->setCellValue("I{$ventasStartRow}", "Total Gastos Locales más Profit Local");
-$hoja->getStyle("I{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("J{$ventasStartRow}", "Total Gastos Locales más Profit Local");
+$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
-$hoja->setCellValue("I{$ventasStartRow}", "Moneda"); $hoja->setCellValue("J{$ventasStartRow}", "Monto");
-$hoja->getStyle("I{$ventasStartRow}:J{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->setCellValue("J{$ventasStartRow}", "Moneda"); $hoja->setCellValue("K{$ventasStartRow}", "Monto");
+$hoja->getStyle("J{$ventasStartRow}:K{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
-$hoja->setCellValue("I{$ventasStartRow}", "CLP"); $hoja->setCellValue("J{$ventasStartRow}", $totalGastosVentas);
-$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue("J{$ventasStartRow}", "CLP"); $hoja->setCellValue("K{$ventasStartRow}", $totalGastosVentas);
+$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
-$hoja->setCellValue("I{$ventasStartRow}", "CLP"); $hoja->setCellValue("J{$ventasStartRow}", $totalGastosCostos);
-$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue("J{$ventasStartRow}", "CLP"); $hoja->setCellValue("K{$ventasStartRow}", $totalGastosCostos);
+$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
-$hoja->setCellValue("I{$ventasStartRow}", "CLP"); $hoja->setCellValue("J{$ventasStartRow}", $profitLocal);
-$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue("J{$ventasStartRow}", "CLP"); $hoja->setCellValue("K{$ventasStartRow}", $profitLocal);
+$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
-$hoja->setCellValue("I{$ventasStartRow}", ""); $hoja->setCellValue("J{$ventasStartRow}", $profitPct . '%');
+$hoja->setCellValue("J{$ventasStartRow}", ""); $hoja->setCellValue("J{$ventasStartRow}", $profitPct . '%');
 $ventasStartRow++;
 
 // === NOTAS finales (abajo de todo) ===
