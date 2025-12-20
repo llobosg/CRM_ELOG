@@ -98,17 +98,18 @@ $hoja->setCellValue("B6", $shipperCont);
 $hoja->setCellValue("A7", "R.U.T:");
 $hoja->setCellValue("B7", $shipperRut);
 
-// === CONSIGNATARIO (D3) ===
-$hoja->setCellValue("D3", "CONSIGNATARIO:");
-$hoja->getStyle("D3")->applyFromArray($estiloTitulo);
-$hoja->setCellValue("D4", "Razón Social:");
-$hoja->setCellValue("E4", $consignatarioRS);
-$hoja->setCellValue("D5", "DIRECCIÓN:");
-$hoja->setCellValue("E5", $consignatarioDir);
-$hoja->setCellValue("D6", "CONTACTO:");
-$hoja->setCellValue("E6", $consignatarioCont);
-$hoja->setCellValue("D7", "R.U.T:");
-$hoja->setCellValue("E7", $consignatarioRut);
+// === CONSIGNATARIO (A9) ===
+$row = 9;
+$hoja->setCellValue("A9", "CONSIGNATARIO:");
+$hoja->getStyle("B9")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("A10", "Razón Social:");
+$hoja->setCellValue("B10", $consignatarioRS);
+$hoja->setCellValue("A11", "DIRECCIÓN:");
+$hoja->setCellValue("B11", $consignatarioDir);
+$hoja->setCellValue("A12", "CONTACTO:");
+$hoja->setCellValue("B12", $consignatarioCont);
+$hoja->setCellValue("A13", "R.U.T:");
+$hoja->setCellValue("B13", $consignatarioRut);
 
 // === DATOS ADICIONALES DEL SERVICIO (F3) ===
 $row = 3;
@@ -137,7 +138,7 @@ $hoja->setCellValue("F{$row}", "EMBALAJE:");
 $hoja->setCellValue("G{$row}", '');
 
 // === Datos del Servicio (A9) ===
-$row = 9;
+$row = 15;
 $hoja->setCellValue("A{$row}", "INCOTERM:");
 $hoja->setCellValue("B{$row}", $servicio['incoterm'] ?? '');
 $row++;
@@ -166,17 +167,17 @@ $hoja->setCellValue("B{$row}", $servicio['destino'] ?? '');
 $row++;
 $hoja->setCellValue("A{$row}", "COLOADER:");
 $hoja->setCellValue("B{$row}", $servicio['coloader'] ?? '');
-$row += 2; // A18
+$row += 2; // A25
 
-// === NOTAS ADICIONALES (A18:A22) ===
+// === NOTAS ADICIONALES (A25:A29) ===
 $hoja->setCellValue("A{$row}", "NOTAS ADICIONALES:");
 $hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
 $hoja->mergeCells("A" . ($row + 1) . ":A" . ($row + 4));
 $hoja->setCellValue("A" . ($row + 1), $servicio['nota_srvc'] ?? '');
 $hoja->getStyle("A" . ($row + 1))->applyFromArray($estiloTexto);
-$row = 23;
 
-// === COSTOS (A23) ===
+// === COSTOS (A30) ===
+$row = 30;
 $hoja->setCellValue("A{$row}", "PROFIT SHARE");
 $hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
 $row++;
