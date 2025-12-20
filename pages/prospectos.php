@@ -523,6 +523,7 @@
         let servicioEnEdicion = null;
         let tieneServiciosIniciales = false;
         let estadoProspecto = 'Pendiente';
+        let datosRouteOrder = null; // ← Variable global
         window.editarServicio = editarServicio;
 
         // ===================================================================
@@ -3144,10 +3145,11 @@
         }
 
         function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null, prospectoCompleto = {}) {
+            // Mostrar indicador de carga
             document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Cargando datos del Route Order...</p>';
 
             if (servicioLocal) {
-                const datosRouteOrder = {
+                datosRouteOrder = {  // ← Asignación a la variable global (sin let/const)
                     servicio: servicioLocal,
                     prospecto: {
                         concatenado: concatenadoProspecto,
@@ -3165,7 +3167,7 @@
                     })
                     .then(data => {
                         if (data.success && data.servicio) {
-                            const datosRouteOrder = {
+                            datosRouteOrder = {  // ← Asignación a la variable global
                                 servicio: data.servicio,
                                 prospecto: {
                                     concatenado: concatenadoProspecto,

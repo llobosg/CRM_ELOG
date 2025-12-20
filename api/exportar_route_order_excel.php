@@ -212,8 +212,25 @@ $hoja->fromArray(
 );
 $hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCabecera);
 $row++;
-// Añadir filas vacías o datos si existen
-$hoja->fromArray(['', '', '', '', '', '', ''], NULL, "A{$row}");
+
+// Verificar si se enviaron datos de transporte
+$transporte = $datosRO['transporte_nac'] ?? null;
+if ($transporte) {
+    $profit_transp = ($transporte['venta'] ?? 0) - ($transporte['costo'] ?? 0);
+    $hoja->fromArray([
+        $transporte['concepto'] ?? 'NACIONAL',
+        $transporte['moneda'] ?? 'CLP',
+        $transporte['costo'] ?? 0,
+        $transporte['venta'] ?? 0,
+        $profit_transp,
+        $transporte['acepta'] ?? 'No',
+        $transporte['afecto'] ?? 'No'
+    ], NULL, "A{$row}");
+    $hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("C{$row}, D{$row}, E{$row}")->applyFromArray($estiloNumero);
+} else {
+    $hoja->fromArray(['', '', '', '', '', '', ''], NULL, "A{$row}");
+}
 $row++;
 $row++; // Espacio
 
