@@ -3547,30 +3547,6 @@
                                                         </tbody>
                                                     </table>
 
-                                                    <!-- CAMPOS TRANSPORTE (dinámicos) -->
-                                                    <div id="campos-transporte-nac" style="margin-top: 0.8rem;"></div>
-                                                        <div>
-                                                            <strong>TRANSPORTISTA:</strong><br>
-                                                            <div style="margin-left: 1rem;">&nbsp;</div>
-                                                            <strong>DIREC. RETIRO:</strong><br>
-                                                            <div style="margin-left: 1rem;">&nbsp;</div>
-                                                            <strong>CONTACTO:</strong><br>
-                                                            <div style="margin-left: 1rem;">&nbsp;</div>
-                                                            <strong>FONO:</strong><br>
-                                                            <div style="margin-left: 1rem;">&nbsp;</div>
-                                                        </div>
-                                                        <div>
-                                                            <strong>DIREC. ENTREGA:</strong><br>
-                                                            <div style="margin-left: 1rem;">&nbsp;</div>
-                                                            <strong>FONO:</strong><br>
-                                                            <div style="margin-left: 1rem;">&nbsp;</div>
-                                                            <strong>EMPRESA:</strong><br>
-                                                            <div style="margin-left: 1rem;">&nbsp;</div>
-                                                            <strong>CONTACTO:</strong><br>
-                                                            <div style="margin-left: 1rem;">&nbsp;</div>
-                                                        </div>
-                                                    </div>
-
                                                     <!-- BOTONES TRANSPORTE NACIONAL -->
                                                     <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
                                                         <button type="button" onclick="abrirModalTransporteNac('crear')" 
