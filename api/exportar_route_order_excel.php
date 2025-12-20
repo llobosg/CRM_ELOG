@@ -70,7 +70,7 @@ if ($logoPath) {
     $drawing->setName('Logo Empresa');
     $drawing->setDescription('Logo');
     $drawing->setPath($logoPath);
-    $drawing->setHeight(40); // Ajusta según necesidad
+    $drawing->setHeight(80); // Ajusta según necesidad
     $drawing->setCoordinates('B2');
     $drawing->setOffsetX(0);
     $drawing->setOffsetY(0);
