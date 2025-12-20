@@ -2926,7 +2926,23 @@
                 if (res.success) {
                     alert(res.message);
                     cerrarFormularioTransporteNac();
-                    // Opcional: recargar submodal o datos
+                    
+                    // === NUEVO: Recargar y mostrar los datos guardados ===
+                    const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+                    fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
+                        .then(r2 => r2.json())
+                        .then(res2 => {
+                            if (res2.success) {
+                                renderizarCamposTransporteNac(res2.data);
+                            } else {
+                                renderizarCamposTransporteNac(null); // limpiar si no hay datos
+                            }
+                        })
+                        .catch(e => {
+                            console.error('Error al recargar transporte:', e);
+                            renderizarCamposTransporteNac(null);
+                        });
+                    // ================================================
                 } else {
                     alert('Error: ' + res.message);
                 }
@@ -2957,6 +2973,39 @@
                     }
                 })
                 .catch(e => alert('Error al verificar registro.'));
+        }
+
+        // Renderiza los campos de transporte nacional en el Route Order
+        function renderizarCamposTransporteNac(data = null) {
+            const campos = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <strong>TRANSPORTISTA:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.transportista || '&nbsp;')}</div>
+                        <strong>DIREC. RETIRO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.direc_retiro || '&nbsp;')}</div>
+                        <strong>CONTACTO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.contacto_retiro || '&nbsp;')}</div>
+                        <strong>FONO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.fono_retiro || '&nbsp;')}</div>
+                    </div>
+                    <div>
+                        <strong>DIREC. ENTREGA:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.direc_entrega || '&nbsp;')}</div>
+                        <strong>FONO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.fono_entrega || '&nbsp;')}</div>
+                        <strong>EMPRESA:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.empresa_entrega || '&nbsp;')}</div>
+                        <strong>CONTACTO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.contacto_entrega || '&nbsp;')}</div>
+                    </div>
+                </div>
+            `;
+            // Reemplazar el contenedor de campos de transporte
+            const contenedor = document.getElementById('campos-transporte-nac');
+            if (contenedor) {
+                contenedor.innerHTML = campos;
+            }
         }
 
         function sanitizeText(text) {
@@ -3250,6 +3299,18 @@
             } else {
                 renderFinal(simboloCredito, simboloContado);
             }
+            // Al final de renderizarRouteOrder, después de mostrar el HTML
+            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+            if (idSrvc) {
+                fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            renderizarCamposTransporteNac(res.data);
+                        }
+                    })
+                    .catch(console.error);
+            }
         }
 
         // --- Función auxiliar para construir el HTML con el estado de crédito y datos del servicio ---
@@ -3388,8 +3449,8 @@
                                                         </tbody>
                                                     </table>
 
-                                                    <!-- CAMPOS TRANSPORTE -->
-                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                                    <!-- CAMPOS TRANSPORTE (dinámicos) -->
+                                                    <div id="campos-transporte-nac" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
                                                         <div>
                                                             <strong>TRANSPORTISTA:</strong><br>
                                                             <div style="margin-left: 1rem;">&nbsp;</div>
