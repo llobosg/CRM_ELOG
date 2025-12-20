@@ -106,7 +106,7 @@ function getLogoPath() {
     return null;
 }
 
-$row = 1;
+$row = 11;
 
 // === Nº Cotización ===
 $hoja->setCellValue("B{$row}", "Nº Cotización:");
@@ -114,33 +114,41 @@ $hoja->setCellValue("C{$row}", $prospecto['concatenado'] ?? 'N_A');
 $hoja->getStyle("B{$row}:C{$row}")->applyFromArray($estiloTitulo);
 $row += 2;
 
-// === SHIPPER (A3) ===
-$hoja->setCellValue("B3", "SHIPPER:");
-$hoja->getStyle("B3")->applyFromArray($estiloTitulo);
-$hoja->setCellValue("B4", "Razón Social:");
-$hoja->setCellValue("C4", $shipperRS);
-$hoja->setCellValue("B5", "DIRECCIÓN:");
-$hoja->setCellValue("C5", $shipperDir);
-$hoja->setCellValue("B6", "CONTACTO:");
-$hoja->setCellValue("C6", $shipperCont);
-$hoja->setCellValue("B7", "R.U.T:");
-$hoja->setCellValue("C7", $shipperRut);
+// === SHIPPER (A13) ===
+$hoja->setCellValue("B{$row}", "SHIPPER:");
+$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
+$row++;
+$hoja->setCellValue("B{$row}", "Razón Social:");
+$hoja->setCellValue("C{$row}", $shipperRS);
+$row++;
+$hoja->setCellValue("B{$row}", "DIRECCIÓN:");
+$hoja->setCellValue("C{$row}", $shipperDir);
+$row++;
+$hoja->setCellValue("B{$row}", "CONTACTO:");
+$hoja->setCellValue("C{$row}", $shipperCont);
+$row++;
+$hoja->setCellValue("B{$row}", "R.U.T:");
+$hoja->setCellValue("C{$row}", $shipperRut);
 
-// === CONSIGNATARIO (A9) ===
-$row = 9;
-$hoja->setCellValue("B9", "CONSIGNATARIO:");
-$hoja->getStyle("C9")->applyFromArray($estiloTitulo);
-$hoja->setCellValue("B10", "Razón Social:");
-$hoja->setCellValue("C10", $consignatarioRS);
-$hoja->setCellValue("B11", "DIRECCIÓN:");
-$hoja->setCellValue("C11", $consignatarioDir);
-$hoja->setCellValue("B12", "CONTACTO:");
-$hoja->setCellValue("C12", $consignatarioCont);
-$hoja->setCellValue("B13", "R.U.T:");
-$hoja->setCellValue("C13", $consignatarioRut);
+// === CONSIGNATARIO (A19) ===
+$row += 2;
+$hoja->setCellValue("B{$row}", "CONSIGNATARIO:");
+$hoja->getStyle("C{$row}")->applyFromArray($estiloTitulo);
+$row++;
+$hoja->setCellValue("B{$row}", "Razón Social:");
+$hoja->setCellValue("C{$row}", $consignatarioRS);
+$row++;
+$hoja->setCellValue("B{$row}", "DIRECCIÓN:");
+$hoja->setCellValue("C{$row}", $consignatarioDir);
+$row++;
+$hoja->setCellValue("B{$row}", "CONTACTO:");
+$hoja->setCellValue("C{$row}", $consignatarioCont);
+$row++;
+$hoja->setCellValue("B{$row}", "R.U.T:");
+$hoja->setCellValue("C{$row}", $consignatarioRut);
 
 // === DATOS ADICIONALES DEL SERVICIO (F3) ===
-$row = 3;
+$row = 13;
 $hoja->setCellValue("F{$row}", "TIPO CAMBIO CLIENTE:");
 $hoja->setCellValue("G{$row}", number_format($servicio['tipo_cambio'] ?? 1, 4, ',', '.'));
 $row++;
@@ -165,8 +173,8 @@ $row++;
 $hoja->setCellValue("F{$row}", "EMBALAJE:");
 $hoja->setCellValue("G{$row}", '');
 
-// === Datos del Servicio (A9) ===
-$row = 15;
+// === Datos del Servicio (A22) ===
+$row = 22;
 $hoja->setCellValue("B{$row}", "INCOTERM:");
 $hoja->setCellValue("C{$row}", $servicio['incoterm'] ?? '');
 $row++;
@@ -195,12 +203,12 @@ $hoja->setCellValue("C{$row}", $servicio['destino'] ?? '');
 $row++;
 $hoja->setCellValue("B{$row}", "COLOADER:");
 $hoja->setCellValue("C{$row}", $servicio['coloader'] ?? '');
-$row += 2; // A25
+$row = 22;
 
-// === NOTAS ADICIONALES (A25:A29) ===
+// === NOTAS ADICIONALES (A22:A30) ===
 $hoja->setCellValue("B{$row}", "NOTAS ADICIONALES:");
 $hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
-$hoja->mergeCells("B" . ($row + 1) . ":B" . ($row + 4));
+$hoja->mergeCells("B" . ($row + 1) . ":N" . ($row + 4));
 $hoja->setCellValue("B" . ($row + 1), $servicio['nota_srvc'] ?? '');
 $hoja->getStyle("B" . ($row + 1))->applyFromArray($estiloTexto);
 
