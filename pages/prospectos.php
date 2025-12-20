@@ -3387,7 +3387,7 @@
                     .catch(console.error);
             }
             // === Cargar y mostrar datos de Transporte Nacional al abrir el submodal ===
-            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+            //const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
             if (idSrvc) {
                 fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
                     .then(r => r.json())
