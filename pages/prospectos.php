@@ -2772,12 +2772,6 @@
             event.preventDefault(); // Prevenir cualquier comportamiento por defecto del botón
             abrirSubmodalAdjuntos();
         });
-    
-        // Si usas una clase:
-        // document.querySelector('.btn-adjuntos')?.addEventListener('click', function(event) { ... });
-
-        // --- Variables globales para Route Order ---
-        let datosRouteOrder = null; // Almacenará los datos cargados para el Route Order
 
         // --- Funciones para manejo del submodal Route Order ---
         function abrirModalTransporteNac(accion) {
@@ -3377,6 +3371,37 @@
             } else {
                 renderizarTablaTransporteNac(null);
                 renderizarCamposTransporteNac(null);
+            }
+
+            // Al final de renderizarRouteOrder
+            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+            if (idSrvc) {
+                fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success && res.data) {
+                            // === AGREGAR transporte_nac a datosRouteOrder ===
+                            if (datosRouteOrder) {
+                                datosRouteOrder.transporte_nac = res.data;
+                            }
+                            renderizarTablaTransporteNac(res.data);
+                            renderizarCamposTransporteNac(res.data);
+                        } else {
+                            if (datosRouteOrder) {
+                                datosRouteOrder.transporte_nac = null;
+                            }
+                            renderizarTablaTransporteNac(null);
+                            renderizarCamposTransporteNac(null);
+                        }
+                    })
+                    .catch(e => {
+                        console.error('Error al cargar Transporte Nacional:', e);
+                        if (datosRouteOrder) {
+                            datosRouteOrder.transporte_nac = null;
+                        }
+                        renderizarTablaTransporteNac(null);
+                        renderizarCamposTransporteNac(null);
+                    });
             }
         }
 
