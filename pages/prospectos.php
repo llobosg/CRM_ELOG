@@ -2980,40 +2980,40 @@
             renderizarCamposTransporteNac(null);
         }
 
-        
-
-        // Renderiza la TABLA de Transporte Nacional (7 columnas)
-        function renderizarTablaTransporteNac(data = null) {
-            const tbody = document.querySelector('#tabla-transporte-nac tbody');
-            if (!tbody) return;
-
-            if (data) {
-                const profit = (parseFloat(data.venta) || 0) - (parseFloat(data.costo) || 0);
-                tbody.innerHTML = `
-                    <tr>
-                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(data.concepto || 'NACIONAL')}</td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.moneda || 'CLP')}</td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${parseFloat(data.costo).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${parseFloat(data.venta).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${profit.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.acepta || 'No')}</td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.afecto || 'No')}</td>
-                    </tr>
-                `;
-            } else {
-                tbody.innerHTML = `
-                    <tr>
-                        <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                    </tr>
-                `;
+        // Renderiza los campos de transporte nacional en el Route Order
+        function renderizarCamposTransporteNac(data = null) {
+            const campos = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <strong>TRANSPORTISTA:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.transportista || '&nbsp;')}</div>
+                        <strong>DIREC. RETIRO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.direc_retiro || '&nbsp;')}</div>
+                        <strong>CONTACTO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.contacto_retiro || '&nbsp;')}</div>
+                        <strong>FONO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.fono_retiro || '&nbsp;')}</div>
+                    </div>
+                    <div>
+                        <strong>DIREC. ENTREGA:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.direc_entrega || '&nbsp;')}</div>
+                        <strong>FONO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.fono_entrega || '&nbsp;')}</div>
+                        <strong>EMPRESA:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.empresa_entrega || '&nbsp;')}</div>
+                        <strong>CONTACTO:</strong><br>
+                        <div style="margin-left: 1rem;">${sanitizeText(data?.contacto_entrega || '&nbsp;')}</div>
+                    </div>
+                </div>
+            `;
+            // Reemplazar el contenedor de campos de transporte
+            const contenedor = document.getElementById('campos-transporte-nac');
+            if (contenedor) {
+                contenedor.innerHTML = campos;
             }
         }
+
+        
 
         // Renderiza los CAMPOS de transporte (a la derecha de los labels)
         function renderizarCamposTransporteNac(data = null) {
