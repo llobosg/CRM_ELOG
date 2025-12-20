@@ -81,35 +81,35 @@ function nombreArchivoSeguro($str) {
 $row = 1;
 
 // === Nº Cotización ===
-$hoja->setCellValue("A{$row}", "Nº Cotización:");
-$hoja->setCellValue("B{$row}", $prospecto['concatenado'] ?? 'N_A');
-$hoja->getStyle("A{$row}:B{$row}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("B{$row}", "Nº Cotización:");
+$hoja->setCellValue("C{$row}", $prospecto['concatenado'] ?? 'N_A');
+$hoja->getStyle("B{$row}:C{$row}")->applyFromArray($estiloTitulo);
 $row += 2;
 
 // === SHIPPER (A3) ===
-$hoja->setCellValue("A3", "SHIPPER:");
-$hoja->getStyle("A3")->applyFromArray($estiloTitulo);
-$hoja->setCellValue("A4", "Razón Social:");
-$hoja->setCellValue("B4", $shipperRS);
-$hoja->setCellValue("A5", "DIRECCIÓN:");
-$hoja->setCellValue("B5", $shipperDir);
-$hoja->setCellValue("A6", "CONTACTO:");
-$hoja->setCellValue("B6", $shipperCont);
-$hoja->setCellValue("A7", "R.U.T:");
-$hoja->setCellValue("B7", $shipperRut);
+$hoja->setCellValue("B3", "SHIPPER:");
+$hoja->getStyle("B3")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("B4", "Razón Social:");
+$hoja->setCellValue("C4", $shipperRS);
+$hoja->setCellValue("B5", "DIRECCIÓN:");
+$hoja->setCellValue("C5", $shipperDir);
+$hoja->setCellValue("B6", "CONTACTO:");
+$hoja->setCellValue("C6", $shipperCont);
+$hoja->setCellValue("B7", "R.U.T:");
+$hoja->setCellValue("C7", $shipperRut);
 
 // === CONSIGNATARIO (A9) ===
 $row = 9;
-$hoja->setCellValue("A9", "CONSIGNATARIO:");
-$hoja->getStyle("B9")->applyFromArray($estiloTitulo);
-$hoja->setCellValue("A10", "Razón Social:");
-$hoja->setCellValue("B10", $consignatarioRS);
-$hoja->setCellValue("A11", "DIRECCIÓN:");
-$hoja->setCellValue("B11", $consignatarioDir);
-$hoja->setCellValue("A12", "CONTACTO:");
-$hoja->setCellValue("B12", $consignatarioCont);
-$hoja->setCellValue("A13", "R.U.T:");
-$hoja->setCellValue("B13", $consignatarioRut);
+$hoja->setCellValue("B9", "CONSIGNATARIO:");
+$hoja->getStyle("C9")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("B10", "Razón Social:");
+$hoja->setCellValue("C10", $consignatarioRS);
+$hoja->setCellValue("B11", "DIRECCIÓN:");
+$hoja->setCellValue("C11", $consignatarioDir);
+$hoja->setCellValue("B12", "CONTACTO:");
+$hoja->setCellValue("C12", $consignatarioCont);
+$hoja->setCellValue("B13", "R.U.T:");
+$hoja->setCellValue("C13", $consignatarioRut);
 
 // === DATOS ADICIONALES DEL SERVICIO (F3) ===
 $row = 3;
@@ -139,53 +139,53 @@ $hoja->setCellValue("G{$row}", '');
 
 // === Datos del Servicio (A9) ===
 $row = 15;
-$hoja->setCellValue("A{$row}", "INCOTERM:");
-$hoja->setCellValue("B{$row}", $servicio['incoterm'] ?? '');
+$hoja->setCellValue("B{$row}", "INCOTERM:");
+$hoja->setCellValue("C{$row}", $servicio['incoterm'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "COMMODITY:");
-$hoja->setCellValue("B{$row}", $servicio['commodity'] ?? '');
+$hoja->setCellValue("B{$row}", "COMMODITY:");
+$hoja->setCellValue("C{$row}", $servicio['commodity'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "VOLUMEN:");
-$hoja->setCellValue("B{$row}", $servicio['volumen'] ?? '');
-$hoja->getStyle("B{$row}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00);
+$hoja->setCellValue("B{$row}", "VOLUMEN:");
+$hoja->setCellValue("C{$row}", $servicio['volumen'] ?? '');
+$hoja->getStyle("C{$row}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00);
 $row++;
-$hoja->setCellValue("A{$row}", "PESO BRUTO:");
-$hoja->setCellValue("B{$row}", $servicio['peso'] ?? '');
-$hoja->getStyle("B{$row}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00);
+$hoja->setCellValue("B{$row}", "PESO BRUTO:");
+$hoja->setCellValue("C{$row}", $servicio['peso'] ?? '');
+$hoja->getStyle("C{$row}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00);
 $row++;
-$hoja->setCellValue("A{$row}", "DIMENSIONES:");
-$hoja->setCellValue("B{$row}", $servicio['dimensiones'] ?? '');
+$hoja->setCellValue("B{$row}", "DIMENSIONES:");
+$hoja->setCellValue("C{$row}", $servicio['dimensiones'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "UNIDADES:");
-$hoja->setCellValue("B{$row}", $servicio['bultos'] ?? '');
+$hoja->setCellValue("B{$row}", "UNIDADES:");
+$hoja->setCellValue("C{$row}", $servicio['bultos'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "POL:");
-$hoja->setCellValue("B{$row}", $servicio['origen'] ?? '');
+$hoja->setCellValue("B{$row}", "POL:");
+$hoja->setCellValue("C{$row}", $servicio['origen'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "POD:");
-$hoja->setCellValue("B{$row}", $servicio['destino'] ?? '');
+$hoja->setCellValue("B{$row}", "POD:");
+$hoja->setCellValue("C{$row}", $servicio['destino'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "COLOADER:");
-$hoja->setCellValue("B{$row}", $servicio['coloader'] ?? '');
+$hoja->setCellValue("B{$row}", "COLOADER:");
+$hoja->setCellValue("C{$row}", $servicio['coloader'] ?? '');
 $row += 2; // A25
 
 // === NOTAS ADICIONALES (A25:A29) ===
-$hoja->setCellValue("A{$row}", "NOTAS ADICIONALES:");
-$hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
-$hoja->mergeCells("A" . ($row + 1) . ":A" . ($row + 4));
-$hoja->setCellValue("A" . ($row + 1), $servicio['nota_srvc'] ?? '');
-$hoja->getStyle("A" . ($row + 1))->applyFromArray($estiloTexto);
+$hoja->setCellValue("B{$row}", "NOTAS ADICIONALES:");
+$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
+$hoja->mergeCells("B" . ($row + 1) . ":B" . ($row + 4));
+$hoja->setCellValue("B" . ($row + 1), $servicio['nota_srvc'] ?? '');
+$hoja->getStyle("B" . ($row + 1))->applyFromArray($estiloTexto);
 
 // === COSTOS (A30) ===
 $row = 30;
-$hoja->setCellValue("A{$row}", "PROFIT SHARE");
-$hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("B{$row}", "PROFIT SHARE");
+$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
 $row++;
-$hoja->setCellValue("A{$row}", "Costos");
-$hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("B{$row}", "Costos");
+$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
 $row++;
-$hoja->fromArray(['Concepto', 'Moneda', 'Qty', 'Costo', 'Venta', 'Total', 'Aplica'], null, "A{$row}");
-$hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCabecera);
+$hoja->fromArray(['Concepto', 'Moneda', 'Qty', 'Costo', 'Venta', 'Total', 'Aplica'], null, "B{$row}");
+$hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCabecera);
 $row++;
 
 foreach ($costos as $c) {
@@ -197,16 +197,16 @@ foreach ($costos as $c) {
         $c['tarifa'] ?? 0,
         $c['total_costo'] ?? 0,
         $c['aplica'] ?? ''
-    ], null, "A{$row}");
-    $hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("D{$row}:G{$row}")->applyFromArray($estiloNumero);
+    ], null, "B{$row}");
+    $hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("E{$row}:H{$row}")->applyFromArray($estiloNumero);
     $row++;
 }
 $row++;
 
-// === CONDICIONES COMERCIALES (A debajo de Costos) ===
-$hoja->setCellValue("A{$row}", "CONDICIONES COMERCIALES");
-$hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
+// === CONDICIONES COMERCIALES (B debajo de Costos) ===
+$hoja->setCellValue("B{$row}", "CONDICIONES COMERCIALES");
+$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
 $row++;
 
 // Obtener estado de crédito
@@ -222,17 +222,17 @@ if ($estadoCredito) {
     $simboloContado = ' ✅';
 }
 
-$hoja->setCellValue("A{$row}", "CRÉDITO:" . $simboloCredito);
+$hoja->setCellValue("B{$row}", "CRÉDITO:" . $simboloCredito);
 $row++;
-$hoja->setCellValue("A{$row}", "CONTADO:" . $simboloContado);
+$hoja->setCellValue("B{$row}", "CONTADO:" . $simboloContado);
 $row += 2;
 
 // === TRANSPORTE NACIONAL (A debajo) ===
-$hoja->setCellValue("A{$row}", "TRANSPORTE NACIONAL");
-$hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("B{$row}", "TRANSPORTE NACIONAL");
+$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
 $row++;
-$hoja->fromArray(['Concepto', 'Moneda', 'Costo', 'Venta', 'Profit', 'Acepta', 'Afecto'], null, "A{$row}");
-$hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCabecera);
+$hoja->fromArray(['Concepto', 'Moneda', 'Costo', 'Venta', 'Profit', 'Acepta', 'Afecto'], null, "B{$row}");
+$hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCabecera);
 $row++;
 
 if ($transporte) {
@@ -246,47 +246,47 @@ if ($transporte) {
         $transporte['acepta'] ?? 'No',
         $transporte['afecto'] ?? 'No'
     ], null, "A{$row}");
-    $hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("C{$row}:E{$row}")->applyFromArray($estiloNumero);
+    $hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("D{$row}:F{$row}")->applyFromArray($estiloNumero);
 } else {
-    $hoja->fromArray(['', '', '', '', '', '', ''], null, "A{$row}");
+    $hoja->fromArray(['', '', '', '', '', '', ''], null, "B{$row}");
 }
 $row += 2;
 
-// === Campos de Transporte (A debajo) ===
-$hoja->setCellValue("A{$row}", "TRANSPORTISTA:");
-$hoja->setCellValue("B{$row}", $transporte['transportista'] ?? '');
+// === Campos de Transporte (B debajo) ===
+$hoja->setCellValue("B{$row}", "TRANSPORTISTA:");
+$hoja->setCellValue("C{$row}", $transporte['transportista'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "DIREC. RETIRO:");
-$hoja->setCellValue("B{$row}", $transporte['direc_retiro'] ?? '');
+$hoja->setCellValue("B{$row}", "DIREC. RETIRO:");
+$hoja->setCellValue("C{$row}", $transporte['direc_retiro'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "CONTACTO:");
-$hoja->setCellValue("B{$row}", $transporte['contacto_retiro'] ?? '');
+$hoja->setCellValue("B{$row}", "CONTACTO:");
+$hoja->setCellValue("C{$row}", $transporte['contacto_retiro'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "FONO:");
-$hoja->setCellValue("B{$row}", $transporte['fono_retiro'] ?? '');
+$hoja->setCellValue("B{$row}", "FONO:");
+$hoja->setCellValue("C{$row}", $transporte['fono_retiro'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "DIREC. ENTREGA:");
-$hoja->setCellValue("B{$row}", $transporte['direc_entrega'] ?? '');
+$hoja->setCellValue("B{$row}", "DIREC. ENTREGA:");
+$hoja->setCellValue("C{$row}", $transporte['direc_entrega'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "FONO:");
-$hoja->setCellValue("B{$row}", $transporte['fono_entrega'] ?? '');
+$hoja->setCellValue("B{$row}", "FONO:");
+$hoja->setCellValue("C{$row}", $transporte['fono_entrega'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "EMPRESA:");
-$hoja->setCellValue("B{$row}", $transporte['empresa_entrega'] ?? '');
+$hoja->setCellValue("B{$row}", "EMPRESA:");
+$hoja->setCellValue("C{$row}", $transporte['empresa_entrega'] ?? '');
 $row++;
-$hoja->setCellValue("A{$row}", "CONTACTO:");
-$hoja->setCellValue("B{$row}", $transporte['contacto_entrega'] ?? '');
+$hoja->setCellValue("B{$row}", "CONTACTO:");
+$hoja->setCellValue("C{$row}", $transporte['contacto_entrega'] ?? '');
 $row += 2;
 
 // === SEGURO (A debajo) ===
-$hoja->setCellValue("A{$row}", "SEGURO");
-$hoja->getStyle("A{$row}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("B{$row}", "SEGURO");
+$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
 $row++;
-$hoja->fromArray(['Concepto', 'Moneda', 'Costo', 'Venta', 'Min.', 'V.Venta', 'Aplica'], null, "A{$row}");
-$hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCabecera);
+$hoja->fromArray(['Concepto', 'Moneda', 'Costo', 'Venta', 'Min.', 'V.Venta', 'Aplica'], null, "C{$row}");
+$hoja->getStyle("C{$row}:I{$row}")->applyFromArray($estiloCabecera);
 $row++;
-$hoja->fromArray(['', '', '', '', '', '', ''], null, "A{$row}");
+$hoja->fromArray(['', '', '', '', '', '', ''], null, "C{$row}");
 $row += 2;
 
 // === VENTAS (I23) ===
@@ -398,16 +398,16 @@ $ventasStartRow++;
 
 // === NOTAS finales (abajo de todo) ===
 $lastRow = max($row, $ventasStartRow) + 2;
-$hoja->setCellValue("A{$lastRow}", "NOTAS A OPERACIONES");
-$hoja->getStyle("A{$lastRow}")->applyFromArray($estiloTitulo);
-$hoja->setCellValue("A" . ($lastRow + 1), $servicio['notas_operaciones'] ?? '');
+$hoja->setCellValue("B{$lastRow}", "NOTAS A OPERACIONES");
+$hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("B" . ($lastRow + 1), $servicio['notas_operaciones'] ?? '');
 $lastRow += 3;
-$hoja->setCellValue("A{$lastRow}", "NOTAS COMERCIALES");
-$hoja->getStyle("A{$lastRow}")->applyFromArray($estiloTitulo);
-$hoja->setCellValue("A" . ($lastRow + 1), $servicio['notas_comerciales'] ?? '');
+$hoja->setCellValue("B{$lastRow}", "NOTAS COMERCIALES");
+$hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("B" . ($lastRow + 1), $servicio['notas_comerciales'] ?? '');
 
 // --- Autoajustar ---
-foreach (range('A', 'N') as $col) {
+foreach (range('B', 'O') as $col) {
     $hoja->getColumnDimension($col)->setAutoSize(true);
 }
 
