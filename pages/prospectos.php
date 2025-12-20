@@ -2980,41 +2980,6 @@
             renderizarCamposTransporteNac(null);
         }
 
-        // Renderiza los campos de transporte nacional en el Route Order
-        //function renderizarCamposTransporteNac(data = null) {
-        //    const campos = `
-        //        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-        //            <div>
-        //                <strong>TRANSPORTISTA:</strong><br>
-        //                <div style="margin-left: 1rem;">${sanitizeText(data?.transportista || '&nbsp;')}</div>
-        //                <strong>DIREC. RETIRO:</strong><br>
-        //                <div style="margin-left: 1rem;">${sanitizeText(data?.direc_retiro || '&nbsp;')}</div>
-        //                <strong>CONTACTO:</strong><br>
-        //                <div style="margin-left: 1rem;">${sanitizeText(data?.contacto_retiro || '&nbsp;')}</div>
-        //                <strong>FONO:</strong><br>
-        //                <div style="margin-left: 1rem;">${sanitizeText(data?.fono_retiro || '&nbsp;')}</div>
-        //            </div>
-        //            <div>
-        //                <strong>DIREC. ENTREGA:</strong><br>
-        //                <div style="margin-left: 1rem;">${sanitizeText(data?.direc_entrega || '&nbsp;')}</div>
-        //                <strong>FONO:</strong><br>
-        //                <div style="margin-left: 1rem;">${sanitizeText(data?.fono_entrega || '&nbsp;')}</div>
-        //                <strong>EMPRESA:</strong><br>
-        //                <div style="margin-left: 1rem;">${sanitizeText(data?.empresa_entrega || '&nbsp;')}</div>
-        //                <strong>CONTACTO:</strong><br>
-        //                 <div style="margin-left: 1rem;">${sanitizeText(data?.contacto_entrega || '&nbsp;')}</div>
-        //             </div>
-        //        </div>
-        //    `;
-            // Reemplazar el contenedor de campos de transporte
-        //    const contenedor = document.getElementById('campos-transporte-nac');
-        //    if (contenedor) {
-        //        contenedor.innerHTML = campos;
-        //    }
-        //}
-
-        
-
         // Renderiza los CAMPOS de transporte (a la derecha de los labels)
         function renderizarCamposTransporteNac(data = null) {
             const contenedor = document.getElementById('campos-transporte-nac');
@@ -3025,7 +2990,7 @@
             contenedor.innerHTML = `
                 <div style="display: grid; grid-template-columns: max-content auto 1fr max-content auto; gap: 0.5rem; font-size: 9pt; margin-top: 0.8rem;">
                     <!-- Columna 1: Labels izquierda -->
-                    <div><strong>TRANSPORTISTA**:</strong></div>
+                    <div><strong>TRANSPORTISTA:</strong></div>
                     <div>${getVal(data?.transportista)}</div>
                     <div></div>
                     <div><strong>DIREC. ENTREGA:</strong></div>
