@@ -2927,19 +2927,22 @@
                     alert(res.message);
                     cerrarFormularioTransporteNac();
                     
-                    // === NUEVO: Recargar y mostrar los datos guardados ===
+                    // === Recargar y mostrar los datos guardados ===
                     const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
                     fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
                         .then(r2 => r2.json())
                         .then(res2 => {
-                            if (res2.success) {
+                            if (res2.success && res2.data) {
+                                renderizarTablaTransporteNac(res2.data);
                                 renderizarCamposTransporteNac(res2.data);
                             } else {
-                                renderizarCamposTransporteNac(null); // limpiar si no hay datos
+                                renderizarTablaTransporteNac(null);
+                                renderizarCamposTransporteNac(null);
                             }
                         })
                         .catch(e => {
                             console.error('Error al recargar transporte:', e);
+                            renderizarTablaTransporteNac(null);
                             renderizarCamposTransporteNac(null);
                         });
                     // ================================================
@@ -2973,6 +2976,8 @@
                     }
                 })
                 .catch(e => alert('Error al verificar registro.'));
+            renderizarTablaTransporteNac(null);
+            renderizarCamposTransporteNac(null);
         }
 
         // Renderiza los campos de transporte nacional en el Route Order
@@ -3006,6 +3011,76 @@
             if (contenedor) {
                 contenedor.innerHTML = campos;
             }
+        }
+
+        // Renderiza la TABLA de Transporte Nacional (7 columnas)
+        function renderizarTablaTransporteNac(data = null) {
+            const tbody = document.querySelector('#tabla-transporte-nac tbody');
+            if (!tbody) return;
+
+            if (data) {
+                const profit = (parseFloat(data.venta) || 0) - (parseFloat(data.costo) || 0);
+                tbody.innerHTML = `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(data.concepto || 'NACIONAL')}</td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.moneda || 'CLP')}</td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${parseFloat(data.costo).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${parseFloat(data.venta).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${profit.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.acepta || 'No')}</td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.afecto || 'No')}</td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Renderiza los CAMPOS de transporte (a la derecha de los labels)
+        function renderizarCamposTransporteNac(data = null) {
+            const contenedor = document.getElementById('campos-transporte-nac');
+            if (!contenedor) return;
+
+            const getVal = (val) => sanitizeText(val || '&nbsp;');
+
+            contenedor.innerHTML = `
+                <div style="display: grid; grid-template-columns: max-content auto 1fr max-content auto; gap: 0.5rem; font-size: 9pt; margin-top: 0.8rem;">
+                    <!-- Columna 1: Labels izquierda -->
+                    <div><strong>TRANSPORTISTA:</strong></div>
+                    <div>${getVal(data?.transportista)}</div>
+                    <div></div>
+                    <div><strong>DIREC. ENTREGA:</strong></div>
+                    <div>${getVal(data?.direc_entrega)}</div>
+
+                    <div><strong>DIREC. RETIRO:</strong></div>
+                    <div>${getVal(data?.direc_retiro)}</div>
+                    <div></div>
+                    <div><strong>FONO:</strong></div>
+                    <div>${getVal(data?.fono_entrega)}</div>
+
+                    <div><strong>CONTACTO:</strong></div>
+                    <div>${getVal(data?.contacto_retiro)}</div>
+                    <div></div>
+                    <div><strong>EMPRESA:</strong></div>
+                    <div>${getVal(data?.empresa_entrega)}</div>
+
+                    <div><strong>FONO:</strong></div>
+                    <div>${getVal(data?.fono_retiro)}</div>
+                    <div></div>
+                    <div><strong>CONTACTO:</strong></div>
+                    <div>${getVal(data?.contacto_entrega)}</div>
+                </div>
+            `;
         }
 
         function sanitizeText(text) {
@@ -3311,6 +3386,29 @@
                     })
                     .catch(console.error);
             }
+            // === Cargar y mostrar datos de Transporte Nacional al abrir el submodal ===
+            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+            if (idSrvc) {
+                fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success && res.data) {
+                            renderizarTablaTransporteNac(res.data);
+                            renderizarCamposTransporteNac(res.data);
+                        } else {
+                            renderizarTablaTransporteNac(null);
+                            renderizarCamposTransporteNac(null);
+                        }
+                    })
+                    .catch(e => {
+                        console.error('Error al cargar Transporte Nacional:', e);
+                        renderizarTablaTransporteNac(null);
+                        renderizarCamposTransporteNac(null);
+                    });
+            } else {
+                renderizarTablaTransporteNac(null);
+                renderizarCamposTransporteNac(null);
+            }
         }
 
         // --- Función auxiliar para construir el HTML con el estado de crédito y datos del servicio ---
@@ -3424,7 +3522,7 @@
 
                                                     <!-- TRANSPORTE NACIONAL (izquierda) -->
                                                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">TRANSPORTE NACIONAL</h4>
-                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                    <table id="tabla-transporte-nac" style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
                                                         <thead>
                                                             <tr style="background-color: #f2f2f2;">
                                                                 <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
@@ -3450,7 +3548,7 @@
                                                     </table>
 
                                                     <!-- CAMPOS TRANSPORTE (dinámicos) -->
-                                                    <div id="campos-transporte-nac" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                                    <div id="campos-transporte-nac" style="margin-top: 0.8rem;"></div>
                                                         <div>
                                                             <strong>TRANSPORTISTA:</strong><br>
                                                             <div style="margin-left: 1rem;">&nbsp;</div>
