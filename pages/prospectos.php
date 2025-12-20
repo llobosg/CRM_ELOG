@@ -3337,20 +3337,8 @@
             } else {
                 renderFinal(simboloCredito, simboloContado);
             }
-            // Al final de renderizarRouteOrder, después de mostrar el HTML
             const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
-            if (idSrvc) {
-                fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
-                    .then(r => r.json())
-                    .then(res => {
-                        if (res.success) {
-                            renderizarCamposTransporteNac(res.data);
-                        }
-                    })
-                    .catch(console.error);
-            }
             // === Cargar y mostrar datos de Transporte Nacional al abrir el submodal ===
-            //const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
             if (idSrvc) {
                 fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
                     .then(r => r.json())
@@ -3373,8 +3361,7 @@
                 renderizarCamposTransporteNac(null);
             }
 
-            // Al final de renderizarRouteOrder
-            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+            // Al final de renderizarRouteOrder, después de mostrar el HTML
             if (idSrvc) {
                 fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
                     .then(r => r.json())
