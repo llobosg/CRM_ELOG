@@ -206,11 +206,11 @@ $hoja->setCellValue("C{$row}", $servicio['coloader'] ?? '');
 $row = 22;
 
 // === NOTAS ADICIONALES (A22:A30) ===
-$hoja->setCellValue("B{$row}", "NOTAS ADICIONALES:");
-$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
-$hoja->mergeCells("B" . ($row + 1) . ":N" . ($row + 4));
-$hoja->setCellValue("B" . ($row + 1), $servicio['nota_srvc'] ?? '');
-$hoja->getStyle("B" . ($row + 1))->applyFromArray($estiloTexto);
+$hoja->setCellValue("G{$row}", "NOTAS ADICIONALES:");
+$hoja->getStyle("G{$row}")->applyFromArray($estiloTitulo);
+$hoja->mergeCells("G" . ($row + 1) . ":N" . ($row + 4));
+$hoja->setCellValue("G" . ($row + 1), $servicio['nota_srvc'] ?? '');
+$hoja->getStyle("G" . ($row + 1))->applyFromArray($estiloTexto);
 
 // === COSTOS (A30) ===
 $row = 30;
@@ -462,8 +462,35 @@ $hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTitulo);
 $hoja->setCellValue("B" . ($lastRow + 1), $servicio['notas_comerciales'] ?? '');
 
 // --- Autoajustar ---
-foreach (range('B', 'O') as $col) {
-    $hoja->getColumnDimension($col)->setAutoSize(true);
+//foreach (range('B', 'O') as $col) {
+//    $hoja->getColumnDimension($col)->setAutoSize(true);
+//}
+
+// === ANCHOS FIJOS DE COLUMNAS - Layout del Route Order ===
+// Columnas izquierda: datos generales (SHIPPER, Servicio, Notas)
+$hoja->getColumnDimension('A')->setWidth(18); // Labels (ej: "Razón Social:")
+$hoja->getColumnDimension('B')->setWidth(25); // Valores (ej: "Empresa XYZ")
+
+// Columnas centro-izquierda: CONSIGNATARIO y datos adicionales
+$hoja->getColumnDimension('D')->setWidth(18); // Labels CONSIGNATARIO
+$hoja->getColumnDimension('E')->setWidth(25); // Valores CONSIGNATARIO
+
+// Columnas centro-derecha: Datos adicionales del servicio (F-G)
+$hoja->getColumnDimension('F')->setWidth(20); // Labels (ej: "TIPO CAMBIO CLIENTE:")
+$hoja->getColumnDimension('G')->setWidth(22); // Valores (ej: "1,2345")
+
+// Columnas derecha: Tablas (Profit Share, Gastos, etc.)
+$hoja->getColumnDimension('I')->setWidth(15); // Concepto / Label
+$hoja->getColumnDimension('J')->setWidth(10); // Moneda / Qty
+$hoja->getColumnDimension('K')->setWidth(12); // Costo / Venta / Monto
+$hoja->getColumnDimension('L')->setWidth(12); // Total / Afecto
+$hoja->getColumnDimension('M')->setWidth(10); // Aplica (si se usa)
+$hoja->getColumnDimension('N')->setWidth(10); // Extra (por margen)
+
+// === Desactivar AutoSize en todas las columnas usadas ===
+$columnas = ['A','B','D','E','F','G','I','J','K','L','M','N'];
+foreach ($columnas as $col) {
+    $hoja->getColumnDimension($col)->setAutoSize(false);
 }
 
 // --- Salida ---
