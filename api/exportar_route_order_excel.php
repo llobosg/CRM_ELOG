@@ -572,15 +572,31 @@ $ventasStartRow++;
 
 // === NOTAS finales (abajo de todo) ===
 $lastRow = max($row, $ventasStartRow) + 2;
+error_log('notas_operaciones: ' . ($prospecto['notas_operaciones'] ?? 'VACÍO'));
+error_log('notas_comerciales: ' . ($prospecto['notas_comerciales'] ?? 'VACÍO'));
+
+// NOTAS A OPERACIONES
 $hoja->setCellValue("B{$lastRow}", "NOTAS A OPERACIONES");
 $hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTitulo);
-$hoja->mergeCells("B" . ($lastRow + 1) . ":O" . ($lastRow + 7));
-$hoja->setCellValue("B" . ($lastRow + 1), $prospecto['notas_operaciones'] ?? '');
-$lastRow += 10;
+$lastRow++; // Pasar a la fila de contenido
+
+// ✅ Primero: escribir el valor
+$hoja->setCellValue("B{$lastRow}", $prospecto['notas_operaciones'] ?? '');
+// ✅ Luego: fusionar
+$hoja->mergeCells("B{$lastRow}:O" . ($lastRow + 6)); // 7 filas: +6 desde $lastRow
+$hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTexto);
+$lastRow += 8; // Saltar 7 filas de contenido + 1
+
+// NOTAS COMERCIALES
 $hoja->setCellValue("B{$lastRow}", "NOTAS COMERCIALES");
 $hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTitulo);
-$hoja->mergeCells("B" . ($lastRow + 1) . ":O" . ($lastRow + 7));
-$hoja->setCellValue("B" . ($lastRow + 1), $prospecto['notas_comerciales'] ?? '');
+$lastRow++; // Pasar a la fila de contenido
+
+// ✅ Primero: escribir el valor
+$hoja->setCellValue("B{$lastRow}", $prospecto['notas_comerciales'] ?? '');
+// ✅ Luego: fusionar
+$hoja->mergeCells("B{$lastRow}:O" . ($lastRow + 6));
+$hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTexto);
 
 // === ANCHOS FIJOS DE COLUMNAS - Layout del Route Order ===
 // Columnas izquierda: datos generales (SHIPPER, Servicio, Notas)
