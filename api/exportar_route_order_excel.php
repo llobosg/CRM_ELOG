@@ -496,23 +496,6 @@ foreach ($columnas as $col) {
     $hoja->getColumnDimension($col)->setAutoSize(false);
 }
 
-// === ALINEACIÓN HORIZONTAL ===
-
-// Labels (columnas A, D, F) → izquierda
-$hoja->getStyle("A:A")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT]]);
-$hoja->getStyle("D:D")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT]]);
-$hoja->getStyle("F:F")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT]]);
-
-// Valores de texto (columnas B, E, G) → izquierda (o general)
-$hoja->getStyle("B:B,E:E,G:G")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT]]);
-
-// Números (columnas K, L) → derecha
-$hoja->getStyle("K:K,L:L")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT]]);
-
-// Encabezados de tablas (filas específicas) → centro
-$tablaRows = [$ventasStartRow - count($costos) - 1, /* otras filas de encabezado */];
-// Pero es más fácil aplicarlo al insertar (como ya haces con $estiloCabecera)
-
 // --- Salida ---
 $writer = new Xlsx($spreadsheet);
 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
