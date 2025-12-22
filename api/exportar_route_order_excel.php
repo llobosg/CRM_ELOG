@@ -256,7 +256,7 @@ foreach ($costos as $c) {
 // === TOTAL Costos === (inmediatamente después del último dato)
 $hoja->setCellValue("F{$row}", "TOTAL:");
 $hoja->setCellValue("G{$row}", $totalCostosFinal);
-$hoja->getStyle("F{$row}")->applyFromArray(['font' => ['bold' => true]]);
+$hoja->getStyle("F{$row}:G{$row}")->applyFromArray(['font' => ['bold' => true]]);
 $hoja->getStyle("G{$row}")->applyFromArray($estiloNumero);
 $row++;
 $row += 7;
@@ -404,20 +404,20 @@ foreach ($costos as $c) {
 }
 
 // === TOTAL Ventas === (inmediatamente después del último dato)
-$hoja->setCellValue("O{$ventasStartRow}", "TOTAL:"); // ← Columna O (debajo de "Venta")
+$hoja->setCellValue("N{$ventasStartRow}", "TOTAL:"); // ← Columna O (debajo de "Venta")
 $hoja->setCellValue("P{$ventasStartRow}", $totalVentasFinal); // ← Columna P (debajo de "Total")
-$hoja->getStyle("O{$ventasStartRow}")->applyFromArray(['font' => ['bold' => true]]);
+$hoja->getStyle("N{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray(['font' => ['bold' => true]]);
 $hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // === Profit Elog ===
 $profitElog = $totalGastosVentas - $totalGastosCostos;
 $profitElogPct = $totalGastosVentas > 0 ? ($profitElog / $totalGastosVentas * 100) : 0;
-$hoja->setCellValue("O{$ventasStartRow}", "TOTAL PROFIT ELOG:");
+$hoja->setCellValue("N{$ventasStartRow}", "TOTAL PROFIT ELOG:");
 $hoja->setCellValue("P{$ventasStartRow}", $profitElog);
 $hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
-$hoja->setCellValue("O{$ventasStartRow}", "TOTAL PROFIT %:");
+$hoja->setCellValue("N{$ventasStartRow}", "TOTAL PROFIT %:");
 $hoja->setCellValue("P{$ventasStartRow}", $profitElogPct);
 $hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
 
@@ -545,6 +545,7 @@ for ($i = 0; $i < count($labels); $i++) {
         // Porcentaje con 1 decimal
         $hoja->setCellValue("N{$ventasStartRow}", $values[$i]);
         $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
+        $hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray(['font' => ['bold' => true]]);
     }
     $ventasStartRow++;
 }
