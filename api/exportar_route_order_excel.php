@@ -507,52 +507,66 @@ $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow += 2;
 
-
-
-// === Total Gastos Locales + Profit Local ===
+// === Total Gastos Locales más Profit Local ===
 $hoja->setCellValue("K{$ventasStartRow}", "Total Gastos Locales más Profit Local");
 $hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
 
-// Encabezados
+// --- Encabezados ---
 $hoja->setCellValue("K{$ventasStartRow}", "Concepto");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("M{$ventasStartRow}", "Moneda");
 $hoja->setCellValue("N{$ventasStartRow}", "Monto");
-$hoja->getStyle("M{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
-// TOTAL VENTA (referencia a la celda real donde está el total de Gastos Ventas)
-// Supongamos que el total de Gastos Ventas está en la celda M65
+// --- Calcular rangos de datos ---
+// Ajusta estas filas según tu layout real
+$filaInicioVentas = 65; // ← Reemplaza con la fila real de inicio de "Gastos Locales en Destino"
+$cantidadVentas = count($gastosVentas);
+$filaFinVentas = $filaInicioVentas + $cantidadVentas - 1;
+
+$filaInicioCostos = 75; // ← Reemplaza con la fila real de inicio de "Gastos Locales en Destino Costo"
+$cantidadCostos = count($gastosCostos);
+$filaFinCostos = $filaInicioCostos + $cantidadCostos - 1;
+
+// --- TOTAL VENTA (suma de columna N en Gastos Ventas) ---
 $hoja->setCellValue("K{$ventasStartRow}", "TOTAL VENTA:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("M{$ventasStartRow}", "CLP");
-$hoja->setCellValue('N' . $ventasStartRow, $TotalGastoVentas); // ← Comillas simples + referencia absoluta
+if ($cantidadVentas > 0) {
+    $hoja->setCellValue("N{$ventasStartRow}", "=SUM(N{$filaInicioVentas}:N{$filaFinVentas})");
+} else {
+    $hoja->setCellValue("N{$ventasStartRow}", 0);
+}
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
-// TOTAL COSTO (supongamos M66)
+// --- TOTAL COSTO (suma de columna N en Gastos Costos) ---
 $hoja->setCellValue("K{$ventasStartRow}", "TOTAL COSTO:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("M{$ventasStartRow}", "CLP");
-$hoja->setCellValue('N' . $ventasStartRow, $totalGastosCostos);
+if ($cantidadCostos > 0) {
+    $hoja->setCellValue("N{$ventasStartRow}", "=SUM(N{$filaInicioCostos}:N{$filaFinCostos})");
+} else {
+    $hoja->setCellValue("N{$ventasStartRow}", 0);
+}
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
-// PROFIT LOCAL = VENTA - COSTO
+// --- PROFIT LOCAL (Venta - Costo) ---
 $hoja->setCellValue("K{$ventasStartRow}", "PROFIT LOCAL:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("M{$ventasStartRow}", "CLP");
-// Usa referencias relativas a las filas anteriores
-$hoja->setCellValue('N' . $ventasStartRow, $TotalGastoVentas - $totalGastosCostos);
+$hoja->setCellValue("N{$ventasStartRow}", "=N" . ($ventasStartRow - 2) . "-N" . ($ventasStartRow - 1));
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
-// PROFIT %
+// --- PROFIT % (Profit Local / Total Costo) * 100 ---
 $hoja->setCellValue("K{$ventasStartRow}", "PROFIT %:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("M{$ventasStartRow}", "");
-$hoja->setCellValue('N' . $ventasStartRow, '=IF(N' . ($ventasStartRow - 3) . '>0, N' . ($ventasStartRow - 1) . '/N' . ($ventasStartRow - 3) . ', 0)');
+$hoja->setCellValue("N{$ventasStartRow}", "=IF(N" . ($ventasStartRow - 1) . ">0, N" . ($ventasStartRow - 2) . "/N" . ($ventasStartRow - 1) . "*100, 0)");
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
 $ventasStartRow++;
 
