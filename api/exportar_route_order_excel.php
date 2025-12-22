@@ -110,8 +110,8 @@ $row = 11;
 
 // === Nº Cotización ===
 $hoja->setCellValue("B{$row}", "Nº Cotización:");
-$hoja->setCellValue("C{$row}", $prospecto['concatenado'] ?? 'N_A');
-$hoja->getStyle("B{$row}:C{$row}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("D{$row}", $prospecto['concatenado'] ?? 'N_A');
+$hoja->getStyle("B{$row}:D{$row}")->applyFromArray($estiloTitulo);
 $row += 2;
 
 // === SHIPPER (A13) ===
@@ -468,7 +468,7 @@ $hoja->setCellValue("B" . ($lastRow + 1), $servicio['notas_comerciales'] ?? '');
 
 // === ANCHOS FIJOS DE COLUMNAS - Layout del Route Order ===
 // Columnas izquierda: datos generales (SHIPPER, Servicio, Notas)
-$hoja->getColumnDimension('A')->setWidth(10); // Labels (ej: "Razón Social:")
+$hoja->getColumnDimension('A')->setWidth(10); // Columna vacía
 $hoja->getColumnDimension('B')->setWidth(10); // Valores (ej: "Empresa XYZ")
 $hoja->getColumnDimension('C')->setWidth(10); // Valores (ej: "Empresa XYZ")
 
