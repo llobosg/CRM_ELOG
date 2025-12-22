@@ -460,7 +460,7 @@ foreach ($gastosVentas as $g) {
 // --- Total ---
 $primeraFilaGastosVentas = $ventasStartRow - count($gastosVentas); // Primera fila de datos
 $hoja->setCellValue("K{$ventasStartRow}", "TOTAL:");
-$hoja->setCellValue("N{$ventasStartRow}", "=SUM(G{$primeraFilaGastosVentas}:G" . ($ventasStartRow - 1) . ")");
+$hoja->setCellValue("N{$ventasStartRow}", "=SUM(N{$primeraFilaGastosVentas}:N" . ($ventasStartRow - 1) . ")");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}"); // Total también ocupa 2 columnas
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloTitulo);
@@ -499,57 +499,59 @@ foreach ($gastosCostos as $g) {
 }
 
 // --- Total ---
+$primeraFilaGastosCostos = $ventasStartRow - count($gastosCostos); // Primera fila de datos
 $hoja->setCellValue("K{$ventasStartRow}", "TOTAL:");
-$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
-$hoja->setCellValue("N{$ventasStartRow}", $totalGastosCostos);
+$hoja->setCellValue("N{$ventasStartRow}", "=SUM(N{$primeraFilaGastosCostos}:N" . ($ventasStartRow - 1) . ")");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}"); // Total también ocupa 2 columnas
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow += 2;
 
 
+
 // === Total Gastos Locales + Profit Local ===
-$hoja->setCellValue("J{$ventasStartRow}", "Total Gastos Locales más Profit Local");
-$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("K{$ventasStartRow}", "Total Gastos Locales más Profit Local");
+$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
 
 // Encabezados
-$hoja->setCellValue("L{$ventasStartRow}", "Moneda");
-$hoja->setCellValue("M{$ventasStartRow}", "Monto");
-$hoja->getStyle("L{$ventasStartRow}:M{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->setCellValue("M{$ventasStartRow}", "Moneda");
+$hoja->setCellValue("N{$ventasStartRow}", "Monto");
+$hoja->getStyle("M{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 // TOTAL VENTA (referencia a la celda real donde está el total de Gastos Ventas)
 // Supongamos que el total de Gastos Ventas está en la celda M65
-$hoja->setCellValue("J{$ventasStartRow}", "TOTAL VENTA:");
-$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
-$hoja->setCellValue("L{$ventasStartRow}", "CLP");
-$hoja->setCellValue('M' . $ventasStartRow, '=$M$65'); // ← Comillas simples + referencia absoluta
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue("K{$ventasStartRow}", "TOTAL VENTA:");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
+$hoja->setCellValue("M{$ventasStartRow}", "CLP");
+$hoja->setCellValue('N' . $ventasStartRow, '=$M$65'); // ← Comillas simples + referencia absoluta
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // TOTAL COSTO (supongamos M66)
-$hoja->setCellValue("J{$ventasStartRow}", "TOTAL COSTO:");
-$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
-$hoja->setCellValue("L{$ventasStartRow}", "CLP");
-$hoja->setCellValue('M' . $ventasStartRow, '=$M$66');
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue("K{$ventasStartRow}", "TOTAL COSTO:");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
+$hoja->setCellValue("M{$ventasStartRow}", "CLP");
+$hoja->setCellValue('N' . $ventasStartRow, '=$M$66');
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // PROFIT LOCAL = VENTA - COSTO
-$hoja->setCellValue("J{$ventasStartRow}", "PROFIT LOCAL:");
-$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
-$hoja->setCellValue("L{$ventasStartRow}", "CLP");
+$hoja->setCellValue("K{$ventasStartRow}", "PROFIT LOCAL:");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
+$hoja->setCellValue("M{$ventasStartRow}", "CLP");
 // Usa referencias relativas a las filas anteriores
-$hoja->setCellValue('M' . $ventasStartRow, '=M' . ($ventasStartRow - 2) . '-M' . ($ventasStartRow - 1));
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue('N' . $ventasStartRow, '=N' . ($ventasStartRow - 2) . '-N' . ($ventasStartRow - 1));
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // PROFIT %
-$hoja->setCellValue("J{$ventasStartRow}", "PROFIT %:");
-$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
-$hoja->setCellValue("L{$ventasStartRow}", "");
-$hoja->setCellValue('M' . $ventasStartRow, '=IF(M' . ($ventasStartRow - 3) . '>0, (M' . ($ventasStartRow - 1) . ')/M' . ($ventasStartRow - 3) . ', 0)');
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
+$hoja->setCellValue("K{$ventasStartRow}", "PROFIT %:");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
+$hoja->setCellValue("M{$ventasStartRow}", "");
+$hoja->setCellValue('N' . $ventasStartRow, '=IF(N' . ($ventasStartRow - 3) . '>0, (N' . ($ventasStartRow - 1) . ')/N' . ($ventasStartRow - 3) . ', 0)');
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
 $ventasStartRow++;
 
 // === NOTAS finales (abajo de todo) ===
