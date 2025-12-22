@@ -173,7 +173,7 @@ $row++;
 $hoja->setCellValue("B{$row}", "R.U.T:");
 $hoja->setCellValue("D{$row}", $consignatarioRut);
 
-// === Datos del Servicio (A23) ===
+// === Datos del Servicio (A25) ===
 $row += 2;
 $hoja->setCellValue("B{$row}", "INCOTERM:");
 $hoja->setCellValue("D{$row}", $servicio['incoterm'] ?? '');
@@ -325,13 +325,26 @@ $row++;
 $hoja->fromArray(['', '', '', '', '', '', ''], null, "B{$row}");
 $row += 2;
 
-// === VENTAS (J23) ===
-$ventasStartRow = 36; // 36 + "PROFIT SHARE" + "Costos"
+// === VENTAS (J35) ===
+$ventasStartRow = 35;
 $hoja->setCellValue("J{$ventasStartRow}", "Ventas");
 $hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
 $hoja->fromArray(['Concepto', 'Moneda', 'Qty', 'Venta', 'Total', 'Aplica'], null, "J{$ventasStartRow}");
-$hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCabecera);
+
+// Fusionar J y K para "Concepto"
+$hoja->setCellValue("J{$ventasStartRow}", "Ventas");
+$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
+
+// Otros encabezados en L, M, N, O, P
+$hoja->setCellValue("L{$ventasStartRow}", "Moneda");
+$hoja->setCellValue("M{$ventasStartRow}", "Qty");
+$hoja->setCellValue("N{$ventasStartRow}", "Venta");
+$hoja->setCellValue("O{$ventasStartRow}", "Total");
+$hoja->setCellValue("P{$ventasStartRow}", "Aplica");
+
+// Aplicar estilo a todo el rango
+$hoja->getStyle("J{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 foreach ($costos as $c) {
@@ -346,8 +359,8 @@ foreach ($costos as $c) {
         $total,
         $c['aplica'] ?? ''
     ], null, "J{$ventasStartRow}");
-    $hoja->getStyle("J{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("L{$ventasStartRow}:M{$ventasStartRow}")->applyFromArray($estiloNumero);
+    $hoja->getStyle("J{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("M{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloNumero);
     $ventasStartRow++;
 }
 $ventasStartRow++;
