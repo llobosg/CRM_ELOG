@@ -86,7 +86,7 @@ $estiloCabecera = [
 ];
 $estiloCelda = ['alignment' => ['vertical' => Alignment::VERTICAL_TOP]];
 $estiloTexto = ['alignment' => ['wrapText' => true, 'vertical' => Alignment::VERTICAL_TOP]];
-$estiloNumero = ['numberFormat' => ['formatCode' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER]];
+$estiloNumeroEntero = ['numberFormat' => ['formatCode' => '#,##0']];
 $estiloPorcentaje1Dec = ['numberFormat' => ['formatCode' => '0.0"%"']];
 
 function nombreArchivoSeguro($str) {
@@ -233,11 +233,13 @@ $hoja->setCellValue("H{$row}", "Aplica");
 $hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCabecera);
 $row++;
 
-// Datos
+// Datos + cálculo del total en una sola pasada
+$totalCostosFinal = 0;
 foreach ($costos as $c) {
     $qty = $c['qty'] ?? 0;
     $costo = $c['costo'] ?? 0;
     $total = $qty * $costo;
+    $totalCostosFinal += $total; // ← Acumular total aquí
 
     $hoja->setCellValue("B{$row}", $c['concepto'] ?? '');
     $hoja->setCellValue("D{$row}", $c['moneda'] ?? '');
@@ -247,25 +249,15 @@ foreach ($costos as $c) {
     $hoja->setCellValue("H{$row}", $c['aplica'] ?? '');
 
     $hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloNumero);
+    $hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloNumeroEntero); // Usa el estilo con separador de miles
     $row++;
 }
-$totalCostosFinal = 0;
-foreach ($costos as $c) {
-    $qty = $c['qty'] ?? 0;
-    $costo = $c['costo'] ?? 0;
-    $total = $qty * $costo;
-    $totalCostosFinal += $total;
 
-    // ... (celdas y estilos como antes) ...
-    $hoja->getStyle("D{$row}:F{$row}")->applyFromArray($estiloNumero);
-    $row++;
-}
-// === TOTAL Costos ===
-$hoja->setCellValue("E{$row}", "TOTAL:");
-$hoja->setCellValue("F{$row}", $totalCostosFinal);
-$hoja->getStyle("E{$row}")->applyFromArray(['font' => ['bold' => true]]);
-$hoja->getStyle("F{$row}")->applyFromArray($estiloNumero);
+// === TOTAL Costos === (inmediatamente después del último dato)
+$hoja->setCellValue("F{$row}", "TOTAL:");
+$hoja->setCellValue("G{$row}", $totalCostosFinal);
+$hoja->getStyle("F{$row}")->applyFromArray(['font' => ['bold' => true]]);
+$hoja->getStyle("G{$row}")->applyFromArray($estiloNumeroEntero);
 $row++;
 $row += 7;
 
@@ -382,58 +374,39 @@ $ventasStartRow++;
 // --- Encabezados ---
 $hoja->setCellValue("K{$ventasStartRow}", "Concepto");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
-
 $hoja->setCellValue("M{$ventasStartRow}", "Moneda");
 $hoja->setCellValue("N{$ventasStartRow}", "Qty");
 $hoja->setCellValue("O{$ventasStartRow}", "Venta");
 $hoja->setCellValue("P{$ventasStartRow}", "Total");
 $hoja->setCellValue("Q{$ventasStartRow}", "Aplica");
-
 $hoja->getStyle("K{$ventasStartRow}:Q{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
-// --- Datos ---
-foreach ($costos as $c) {
-    $qty = $c['qty'] ?? 0;
-    $tarifa = $c['tarifa'] ?? 0;
-    $total = $qty * $tarifa;
-
-    // Concepto (fusionado en K-L)
-    $hoja->setCellValue("K{$ventasStartRow}", $c['concepto'] ?? '');
-    // Moneda en M
-    $hoja->setCellValue("M{$ventasStartRow}", $c['moneda'] ?? '');
-    // Qty en N
-    $hoja->setCellValue("N{$ventasStartRow}", $qty);
-    // Venta en O
-    $hoja->setCellValue("O{$ventasStartRow}", $tarifa);
-    // Total en P
-    $hoja->setCellValue("P{$ventasStartRow}", $total);
-    // Aplica en Q
-    $hoja->setCellValue("Q{$ventasStartRow}", $c['aplica'] ?? '');
-
-    // Estilos
-    $hoja->getStyle("K{$ventasStartRow}:Q{$ventasStartRow}")->applyFromArray($estiloCelda);
-    // Aplicar formato numérico a Qty, Venta, Total
-    $hoja->getStyle("N{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray($estiloNumero);
-
-    $ventasStartRow++;
-}
+// --- Datos + cálculo del total en una sola pasada ---
 $totalVentasFinal = 0;
 foreach ($costos as $c) {
     $qty = $c['qty'] ?? 0;
     $tarifa = $c['tarifa'] ?? 0;
     $total = $qty * $tarifa;
-    $totalVentasFinal += $total;
+    $totalVentasFinal += $total; // ← Acumular aquí
 
-    // ... (celdas y estilos como antes) ...
-    $hoja->getStyle("M{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloNumero);
+    $hoja->setCellValue("K{$ventasStartRow}", $c['concepto'] ?? '');
+    $hoja->setCellValue("M{$ventasStartRow}", $c['moneda'] ?? '');
+    $hoja->setCellValue("N{$ventasStartRow}", $qty);
+    $hoja->setCellValue("O{$ventasStartRow}", $tarifa);
+    $hoja->setCellValue("P{$ventasStartRow}", $total);
+    $hoja->setCellValue("Q{$ventasStartRow}", $c['aplica'] ?? '');
+
+    $hoja->getStyle("K{$ventasStartRow}:Q{$ventasStartRow}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("N{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray($estiloNumeroEntero); // ← Usa estilo con separador de miles
     $ventasStartRow++;
 }
-$hoja->setCellValue("N{$ventasStartRow}", "TOTAL:");
-$hoja->setCellValue("O{$ventasStartRow}", $totalVentasFinal);
-$hoja->getStyle("N{$ventasStartRow}")->applyFromArray(['font' => ['bold' => true]]);
-$hoja->getStyle("O{$ventasStartRow}")->applyFromArray($estiloNumero);
 
+// === TOTAL Ventas === (inmediatamente después del último dato)
+$hoja->setCellValue("O{$ventasStartRow}", "TOTAL:"); // ← Columna O (debajo de "Venta")
+$hoja->setCellValue("P{$ventasStartRow}", $totalVentasFinal); // ← Columna P (debajo de "Total")
+$hoja->getStyle("O{$ventasStartRow}")->applyFromArray(['font' => ['bold' => true]]);
+$hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
 $ventasStartRow++;
 $ventasStartRow = 47;
 
@@ -547,18 +520,18 @@ $values = [$totalGastosVentas, $totalGastosCostos, $profitLocal, $profitPct]; //
 $monedas = ['CLP', 'CLP', 'CLP', ''];
 
 for ($i = 0; $i < count($labels); $i++) {
-    $hoja->setCellValue("J{$ventasStartRow}", $labels[$i]);
-    $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
-    $hoja->setCellValue("L{$ventasStartRow}", $monedas[$i]);
+    $hoja->setCellValue("K{$ventasStartRow}", $labels[$i]);
+    $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
+    $hoja->setCellValue("M{$ventasStartRow}", $monedas[$i]);
 
     if ($i < 3) {
         // Números enteros
-        $hoja->setCellValue("M{$ventasStartRow}", $values[$i]);
-        $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+        $hoja->setCellValue("N{$ventasStartRow}", $values[$i]);
+        $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
     } else {
         // Porcentaje con 1 decimal
-        $hoja->setCellValue("M{$ventasStartRow}", $values[$i]);
-        $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
+        $hoja->setCellValue("N{$ventasStartRow}", $values[$i]);
+        $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
     }
     $ventasStartRow++;
 }
