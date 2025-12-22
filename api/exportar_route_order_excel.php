@@ -130,25 +130,8 @@ $row++;
 $hoja->setCellValue("B{$row}", "R.U.T:");
 $hoja->setCellValue("D{$row}", $shipperRut);
 
-// === CONSIGNATARIO (A19) ===
-$row += 2;
-$hoja->setCellValue("B{$row}", "CONSIGNATARIO:");
-$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
-$row++;
-$hoja->setCellValue("B{$row}", "Razón Social:");
-$hoja->setCellValue("D{$row}", $consignatarioRS);
-$row++;
-$hoja->setCellValue("B{$row}", "DIRECCIÓN:");
-$hoja->setCellValue("D{$row}", $consignatarioDir);
-$row++;
-$hoja->setCellValue("B{$row}", "CONTACTO:");
-$hoja->setCellValue("D{$row}", $consignatarioCont);
-$row++;
-$hoja->setCellValue("B{$row}", "R.U.T:");
-$hoja->setCellValue("D{$row}", $consignatarioRut);
-
 // === DATOS ADICIONALES DEL SERVICIO (F3) ===
-$row += 2;
+$row += 13;
 $hoja->setCellValue("F{$row}", "TIPO CAMBIO CLIENTE:");
 $hoja->setCellValue("H{$row}", number_format($servicio['tipo_cambio'] ?? 1, 4, ',', '.'));
 $row++;
@@ -173,8 +156,25 @@ $row++;
 $hoja->setCellValue("F{$row}", "EMBALAJE:");
 $hoja->setCellValue("H{$row}", '');
 
-// === Datos del Servicio (A22) ===
-$row = 22;
+// === CONSIGNATARIO (A19) ===
+$row = 19;
+$hoja->setCellValue("B{$row}", "CONSIGNATARIO:");
+$hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
+$row++;
+$hoja->setCellValue("B{$row}", "Razón Social:");
+$hoja->setCellValue("D{$row}", $consignatarioRS);
+$row++;
+$hoja->setCellValue("B{$row}", "DIRECCIÓN:");
+$hoja->setCellValue("D{$row}", $consignatarioDir);
+$row++;
+$hoja->setCellValue("B{$row}", "CONTACTO:");
+$hoja->setCellValue("D{$row}", $consignatarioCont);
+$row++;
+$hoja->setCellValue("B{$row}", "R.U.T:");
+$hoja->setCellValue("D{$row}", $consignatarioRut);
+
+// === Datos del Servicio (A23) ===
+$row += 2;
 $hoja->setCellValue("B{$row}", "INCOTERM:");
 $hoja->setCellValue("C{$row}", $servicio['incoterm'] ?? '');
 $row++;
@@ -203,17 +203,17 @@ $hoja->setCellValue("C{$row}", $servicio['destino'] ?? '');
 $row++;
 $hoja->setCellValue("B{$row}", "COLOADER:");
 $hoja->setCellValue("C{$row}", $servicio['coloader'] ?? '');
-$row = 22;
 
 // === NOTAS ADICIONALES (A22:A30) ===
+$row = 22;
 $hoja->setCellValue("G{$row}", "NOTAS ADICIONALES:");
 $hoja->getStyle("G{$row}")->applyFromArray($estiloTitulo);
 $hoja->mergeCells("G" . ($row + 1) . ":N" . ($row + 4));
 $hoja->setCellValue("G" . ($row + 1), $servicio['nota_srvc'] ?? '');
 $hoja->getStyle("G" . ($row + 1))->applyFromArray($estiloTexto);
 
-// === COSTOS (A30) ===
-$row = 30;
+// === COSTOS (A34) ===
+$row = 34;
 $hoja->setCellValue("B{$row}", "PROFIT SHARE");
 $hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
 $row++;
