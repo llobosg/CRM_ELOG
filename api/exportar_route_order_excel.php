@@ -468,30 +468,50 @@ $hoja->setCellValue("B" . ($lastRow + 1), $servicio['notas_comerciales'] ?? '');
 
 // === ANCHOS FIJOS DE COLUMNAS - Layout del Route Order ===
 // Columnas izquierda: datos generales (SHIPPER, Servicio, Notas)
-$hoja->getColumnDimension('A')->setWidth(18); // Labels (ej: "Razón Social:")
-$hoja->getColumnDimension('B')->setWidth(25); // Valores (ej: "Empresa XYZ")
+$hoja->getColumnDimension('A')->setWidth(10); // Labels (ej: "Razón Social:")
+$hoja->getColumnDimension('B')->setWidth(10); // Valores (ej: "Empresa XYZ")
+$hoja->getColumnDimension('C')->setWidth(10); // Valores (ej: "Empresa XYZ")
 
 // Columnas centro-izquierda: CONSIGNATARIO y datos adicionales
-$hoja->getColumnDimension('D')->setWidth(18); // Labels CONSIGNATARIO
-$hoja->getColumnDimension('E')->setWidth(25); // Valores CONSIGNATARIO
+$hoja->getColumnDimension('D')->setWidth(10); // Labels CONSIGNATARIO
+$hoja->getColumnDimension('E')->setWidth(10); // Valores CONSIGNATARIO
 
 // Columnas centro-derecha: Datos adicionales del servicio (F-G)
-$hoja->getColumnDimension('F')->setWidth(20); // Labels (ej: "TIPO CAMBIO CLIENTE:")
-$hoja->getColumnDimension('G')->setWidth(22); // Valores (ej: "1,2345")
+$hoja->getColumnDimension('F')->setWidth(10); // Labels (ej: "TIPO CAMBIO CLIENTE:")
+$hoja->getColumnDimension('G')->setWidth(10); // Valores (ej: "1,2345")
+$hoja->getColumnDimension('H')->setWidth(10); // Valores (ej: "Empresa XYZ")
 
 // Columnas derecha: Tablas (Profit Share, Gastos, etc.)
-$hoja->getColumnDimension('I')->setWidth(15); // Concepto / Label
+$hoja->getColumnDimension('I')->setWidth(10); // Concepto / Label
 $hoja->getColumnDimension('J')->setWidth(10); // Moneda / Qty
-$hoja->getColumnDimension('K')->setWidth(12); // Costo / Venta / Monto
-$hoja->getColumnDimension('L')->setWidth(12); // Total / Afecto
+$hoja->getColumnDimension('K')->setWidth(10); // Costo / Venta / Monto
+$hoja->getColumnDimension('L')->setWidth(10); // Total / Afecto
 $hoja->getColumnDimension('M')->setWidth(10); // Aplica (si se usa)
 $hoja->getColumnDimension('N')->setWidth(10); // Extra (por margen)
+$hoja->getColumnDimension('O')->setWidth(10); // Extra (por margen)
 
 // === Desactivar AutoSize en todas las columnas usadas ===
-$columnas = ['A','B','D','E','F','G','I','J','K','L','M','N'];
+$columnas = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
 foreach ($columnas as $col) {
     $hoja->getColumnDimension($col)->setAutoSize(false);
 }
+
+// === ALINEACIÓN HORIZONTAL ===
+
+// Labels (columnas A, D, F) → izquierda
+$hoja->getStyle("A:A")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT]]);
+$hoja->getStyle("D:D")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT]]);
+$hoja->getStyle("F:F")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT]]);
+
+// Valores de texto (columnas B, E, G) → izquierda (o general)
+$hoja->getStyle("B:B,E:E,G:G")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT]]);
+
+// Números (columnas K, L) → derecha
+$hoja->getStyle("K:K,L:L")->applyFromArray(['alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT]]);
+
+// Encabezados de tablas (filas específicas) → centro
+$tablaRows = [$ventasStartRow - count($costos) - 1, /* otras filas de encabezado */];
+// Pero es más fácil aplicarlo al insertar (como ya haces con $estiloCabecera)
 
 // --- Salida ---
 $writer = new Xlsx($spreadsheet);
