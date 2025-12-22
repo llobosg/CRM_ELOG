@@ -410,6 +410,10 @@ $hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
 
 $ventasStartRow = 47;
 
+// Al inicio del archivo, después de obtener $gastos_locales
+$totalGastosVentas = 0;
+$totalGastosCostos = 0;
+
 // === Gastos Locales en Destino (Ventas) ===
 $gastosVentas = array_filter($gastos_locales, fn($g) => strtoupper($g['tipo'] ?? '') === 'VENTAS');
 $hoja->setCellValue("K{$ventasStartRow}", "Gastos Locales en Destino Ventas");
@@ -511,38 +515,37 @@ $hoja->setCellValue("M{$ventasStartRow}", "Monto");
 $hoja->getStyle("L{$ventasStartRow}:M{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
-// Filas de datos (con referencias a celdas reales)
-// Ajusta las celdas de origen según tu layout final
-
-// TOTAL VENTA (asumimos que está en M70)
+// TOTAL VENTA (referencia a la celda real donde está el total de Gastos Ventas)
+// Supongamos que el total de Gastos Ventas está en la celda M65
 $hoja->setCellValue("J{$ventasStartRow}", "TOTAL VENTA:");
 $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
 $hoja->setCellValue("L{$ventasStartRow}", "CLP");
-$hoja->setCellValue("M{$ventasStartRow}", "=$M$70"); // Referencia absoluta
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue('M' . $ventasStartRow, '=$M$65'); // ← Comillas simples + referencia absoluta
+$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
 $ventasStartRow++;
 
-// TOTAL COSTO (asumimos M71)
+// TOTAL COSTO (supongamos M66)
 $hoja->setCellValue("J{$ventasStartRow}", "TOTAL COSTO:");
 $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
 $hoja->setCellValue("L{$ventasStartRow}", "CLP");
-$hoja->setCellValue("M{$ventasStartRow}", "=$M$71");
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue('M' . $ventasStartRow, '=$M$66');
+$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
 $ventasStartRow++;
 
 // PROFIT LOCAL = VENTA - COSTO
 $hoja->setCellValue("J{$ventasStartRow}", "PROFIT LOCAL:");
 $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
 $hoja->setCellValue("L{$ventasStartRow}", "CLP");
-$hoja->setCellValue("M{$ventasStartRow}", "=M" . ($ventasStartRow - 2) . "-M" . ($ventasStartRow - 1)); // Referencia relativa
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+// Usa referencias relativas a las filas anteriores
+$hoja->setCellValue('M' . $ventasStartRow, '=M' . ($ventasStartRow - 2) . '-M' . ($ventasStartRow - 1));
+$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
 $ventasStartRow++;
 
 // PROFIT %
 $hoja->setCellValue("J{$ventasStartRow}", "PROFIT %:");
 $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
 $hoja->setCellValue("L{$ventasStartRow}", "");
-$hoja->setCellValue("M{$ventasStartRow}", "=IF(M" . ($ventasStartRow - 3) . ">0, (M" . ($ventasStartRow - 1) . ")/M" . ($ventasStartRow - 3) . ", 0)");
+$hoja->setCellValue('M' . $ventasStartRow, '=IF(M' . ($ventasStartRow - 3) . '>0, (M' . ($ventasStartRow - 1) . ')/M' . ($ventasStartRow - 3) . ', 0)');
 $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
 $ventasStartRow++;
 
