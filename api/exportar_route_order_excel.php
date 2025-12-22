@@ -86,14 +86,8 @@ $estiloCabecera = [
 ];
 $estiloCelda = ['alignment' => ['vertical' => Alignment::VERTICAL_TOP]];
 $estiloTexto = ['alignment' => ['wrapText' => true, 'vertical' => Alignment::VERTICAL_TOP]];
-// Números enteros (sin decimales)
-$estiloNumeroEntero = [
-    'numberFormat' => ['formatCode' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER]
-];
-// Porcentaje con 1 decimal
-$estiloPorcentaje1Dec = [
-    'numberFormat' => ['formatCode' => '0.0"%"']
-];
+$estiloNumero = ['numberFormat' => ['formatCode' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER]];
+$estiloPorcentaje1Dec = ['numberFormat' => ['formatCode' => '0.0"%"']];
 
 function nombreArchivoSeguro($str) {
     return substr(preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $str ?? ''), 0, 100);
@@ -264,14 +258,14 @@ foreach ($costos as $c) {
     $totalCostosFinal += $total;
 
     // ... (celdas y estilos como antes) ...
-    $hoja->getStyle("D{$row}:F{$row}")->applyFromArray($estiloNumeroEntero);
+    $hoja->getStyle("D{$row}:F{$row}")->applyFromArray($estiloNumero);
     $row++;
 }
 // === TOTAL Costos ===
 $hoja->setCellValue("E{$row}", "TOTAL:");
 $hoja->setCellValue("F{$row}", $totalCostosFinal);
 $hoja->getStyle("E{$row}")->applyFromArray(['font' => ['bold' => true]]);
-$hoja->getStyle("F{$row}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("F{$row}")->applyFromArray($estiloNumero);
 $row++;
 $row += 7;
 
@@ -432,13 +426,13 @@ foreach ($costos as $c) {
     $totalVentasFinal += $total;
 
     // ... (celdas y estilos como antes) ...
-    $hoja->getStyle("M{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+    $hoja->getStyle("M{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloNumero);
     $ventasStartRow++;
 }
 $hoja->setCellValue("N{$ventasStartRow}", "TOTAL:");
 $hoja->setCellValue("O{$ventasStartRow}", $totalVentasFinal);
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray(['font' => ['bold' => true]]);
-$hoja->getStyle("O{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("O{$ventasStartRow}")->applyFromArray($estiloNumero);
 
 $ventasStartRow++;
 $ventasStartRow = 47;
@@ -560,7 +554,7 @@ for ($i = 0; $i < count($labels); $i++) {
     if ($i < 3) {
         // Números enteros
         $hoja->setCellValue("M{$ventasStartRow}", $values[$i]);
-        $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+        $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
     } else {
         // Porcentaje con 1 decimal
         $hoja->setCellValue("M{$ventasStartRow}", $values[$i]);
