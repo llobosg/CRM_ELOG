@@ -539,7 +539,7 @@ $hoja->setCellValue("K{$ventasStartRow}", "TOTAL VENTA:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("M{$ventasStartRow}", "CLP");
 $hoja->setCellValue("N{$ventasStartRow}", "={$coordTotalVentas}"); // ← Usa la variable
-$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // TOTAL COSTO (desde tabla Costos)
@@ -547,7 +547,7 @@ $hoja->setCellValue("K{$ventasStartRow}", "TOTAL COSTO:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("M{$ventasStartRow}", "CLP");
 $hoja->setCellValue("N{$ventasStartRow}", "={$coordTotalCostos}"); // ← Usa la variable
-$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // PROFIT LOCAL = VENTA - COSTO
@@ -555,7 +555,7 @@ $hoja->setCellValue("K{$ventasStartRow}", "PROFIT LOCAL:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("M{$ventasStartRow}", "CLP");
 $hoja->setCellValue("N{$ventasStartRow}", "=N" . ($ventasStartRow - 2) . "-N" . ($ventasStartRow - 1));
-$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // PROFIT % = (PROFIT LOCAL / TOTAL COSTO) * 100
