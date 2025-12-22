@@ -483,7 +483,7 @@ $hoja->setCellValue("K{$ventasStartRow}", "TOTAL:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}"); // Total también ocupa 2 columnas
 $hoja->setCellValue("N{$ventasStartRow}", $totalGastosVentas);
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
-$hoja->getStyle("K{$ventasStartRow} : N{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow += 2;
 
 // === GASTOS LOCALES EN DESTINO (COSTO) ===
@@ -523,7 +523,7 @@ $hoja->setCellValue("K{$ventasStartRow}", "TOTAL:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("N{$ventasStartRow}", $totalGastosCostos);
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
-$hoja->getStyle("K{$ventasStartRow} : N{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow += 2;
 
 
