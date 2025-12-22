@@ -246,8 +246,8 @@ foreach ($costos as $c) {
     $hoja->setCellValue("F{$row}", $total);
     $hoja->setCellValue("G{$row}", $c['aplica'] ?? '');
 
-    $hoja->getStyle("A{$row}:G{$row}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("D{$row}:F{$row}")->applyFromArray($estiloNumero);
+    $hoja->getStyle("B{$row}:I{$row}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloNumero);
     $row++;
 }
 $row++;
@@ -357,22 +357,22 @@ $hoja->getStyle("B{$row}:I{$row}")->applyFromArray($estiloCelda);
 $row += 2;
 
 // === VENTAS ===
-$ventasStartRow = 37;
-$hoja->setCellValue("J{$ventasStartRow}", "Ventas");
-$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$ventasStartRow = 36;
+$hoja->setCellValue("K{$ventasStartRow}", "Ventas");
+$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
 
 // --- Encabezados ---
-$hoja->setCellValue("J{$ventasStartRow}", "Concepto");
-$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
+$hoja->setCellValue("K{$ventasStartRow}", "Concepto");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 
-$hoja->setCellValue("L{$ventasStartRow}", "Moneda");
-$hoja->setCellValue("M{$ventasStartRow}", "Qty");
-$hoja->setCellValue("N{$ventasStartRow}", "Venta");
-$hoja->setCellValue("O{$ventasStartRow}", "Total");
-$hoja->setCellValue("P{$ventasStartRow}", "Aplica");
+$hoja->setCellValue("M{$ventasStartRow}", "Moneda");
+$hoja->setCellValue("N{$ventasStartRow}", "Qty");
+$hoja->setCellValue("O{$ventasStartRow}", "Venta");
+$hoja->setCellValue("P{$ventasStartRow}", "Total");
+$hoja->setCellValue("Q{$ventasStartRow}", "Aplica");
 
-$hoja->getStyle("J{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->getStyle("K{$ventasStartRow}:Q{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 // --- Datos ---
@@ -381,23 +381,23 @@ foreach ($costos as $c) {
     $tarifa = $c['tarifa'] ?? 0;
     $total = $qty * $tarifa;
 
-    // Concepto (fusionado en J-K)
-    $hoja->setCellValue("J{$ventasStartRow}", $c['concepto'] ?? '');
-    // Moneda en L
-    $hoja->setCellValue("L{$ventasStartRow}", $c['moneda'] ?? '');
-    // Qty en M
-    $hoja->setCellValue("M{$ventasStartRow}", $qty);
-    // Venta en N
-    $hoja->setCellValue("N{$ventasStartRow}", $tarifa);
-    // Total en O
-    $hoja->setCellValue("O{$ventasStartRow}", $total);
-    // Aplica en P
-    $hoja->setCellValue("P{$ventasStartRow}", $c['aplica'] ?? '');
+    // Concepto (fusionado en K-L)
+    $hoja->setCellValue("K{$ventasStartRow}", $c['concepto'] ?? '');
+    // Moneda en M
+    $hoja->setCellValue("M{$ventasStartRow}", $c['moneda'] ?? '');
+    // Qty en N
+    $hoja->setCellValue("N{$ventasStartRow}", $qty);
+    // Venta en O
+    $hoja->setCellValue("O{$ventasStartRow}", $tarifa);
+    // Total en P
+    $hoja->setCellValue("P{$ventasStartRow}", $total);
+    // Aplica en Q
+    $hoja->setCellValue("Q{$ventasStartRow}", $c['aplica'] ?? '');
 
     // Estilos
-    $hoja->getStyle("J{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("K{$ventasStartRow}:Q{$ventasStartRow}")->applyFromArray($estiloCelda);
     // Aplicar formato numérico a Qty, Venta, Total
-    $hoja->getStyle("M{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloNumero);
+    $hoja->getStyle("N{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray($estiloNumero);
 
     $ventasStartRow++;
 }
@@ -405,22 +405,22 @@ $ventasStartRow++;
 
 // === Gastos Locales en Destino (Ventas) ===
 $gastosVentas = array_filter($gastos_locales, fn($g) => strtoupper($g['tipo'] ?? '') === 'VENTAS');
-$hoja->setCellValue("J{$ventasStartRow}", "Gastos Locales en Destino");
-$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("K{$ventasStartRow}", "Gastos Locales en Destino");
+$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
 
 // --- Encabezados ---
 // Fusionar J y K para "Concepto"
-$hoja->setCellValue("J{$ventasStartRow}", "Concepto");
-$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
+$hoja->setCellValue("K{$ventasStartRow}", "Concepto");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 
 // Otros encabezados en L, M, N
-$hoja->setCellValue("L{$ventasStartRow}", "Moneda");
-$hoja->setCellValue("M{$ventasStartRow}", "Monto");
-$hoja->setCellValue("N{$ventasStartRow}", "Afecto");
+$hoja->setCellValue("M{$ventasStartRow}", "Moneda");
+$hoja->setCellValue("N{$ventasStartRow}", "Monto");
+$hoja->setCellValue("O{$ventasStartRow}", "Afecto");
 
 // Aplicar estilo a todo el rango
-$hoja->getStyle("J{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->getStyle("K{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 // --- Datos ---
@@ -429,41 +429,40 @@ foreach ($gastosVentas as $g) {
     $monto = $g['monto'] ?? 0;
     $totalGastosVentas += $monto;
 
-    // Concepto ocupa J y K (solo se escribe en J, K queda vacío por el merge)
-    $hoja->setCellValue("J{$ventasStartRow}", $g['gasto'] ?? '');
-    // Moneda en L
-    $hoja->setCellValue("L{$ventasStartRow}", $g['moneda'] ?? '');
-    // Monto en M
-    $hoja->setCellValue("M{$ventasStartRow}", $monto);
-    // Afecto en N
-    $hoja->setCellValue("N{$ventasStartRow}", $g['afecto'] ?? '');
-
+    // Concepto ocupa K y L (solo se escribe en K, L queda vacío por el merge)
+    $hoja->setCellValue("K{$ventasStartRow}", $g['gasto'] ?? '');
+    // Moneda en M
+    $hoja->setCellValue("M{$ventasStartRow}", $g['moneda'] ?? '');
+    // Monto en N
+    $hoja->setCellValue("N{$ventasStartRow}", $monto);
+    // Afecto en O
+    $hoja->setCellValue("O{$ventasStartRow}", $g['afecto'] ?? '');
     // Estilos
-    $hoja->getStyle("J{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero); // Solo Monto es número
+    $hoja->getStyle("K{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero); // Solo Monto es número
 
     $ventasStartRow++;
 }
 
 // --- Total ---
-$hoja->setCellValue("J{$ventasStartRow}", "TOTAL MONTO:");
-$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}"); // Total también ocupa 2 columnas
-$hoja->setCellValue("M{$ventasStartRow}", $totalGastosVentas);
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue("K{$ventasStartRow}", "TOTAL MONTO:");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}"); // Total también ocupa 2 columnas
+$hoja->setCellValue("N{$ventasStartRow}", $totalGastosVentas);
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow += 2;
 
 // === Total Gastos Locales + Profit Local ===
 $profitLocal = $totalGastosVentas - $totalGastosCostos;
 $profitPct = $totalGastosVentas > 0 ? ($profitLocal / $totalGastosVentas * 100) : 0;
 
-$hoja->setCellValue("J{$ventasStartRow}", "Total Gastos Locales más Profit Local");
-$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("K{$ventasStartRow}", "Total Gastos Locales más Profit Local");
+$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
 
 // Encabezados (sin fusionar, ya que no hay "Concepto")
-$hoja->setCellValue("L{$ventasStartRow}", "Moneda");
-$hoja->setCellValue("M{$ventasStartRow}", "Monto");
-$hoja->getStyle("L{$ventasStartRow}:M{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->setCellValue("M{$ventasStartRow}", "Moneda");
+$hoja->setCellValue("N{$ventasStartRow}", "Monto");
+$hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 // Filas de datos: fusionar J-K para el label
@@ -472,17 +471,17 @@ $values = [$totalGastosVentas, $totalGastosCostos, $profitLocal, $profitPct . '%
 $monedas = ['CLP', 'CLP', 'CLP', ''];
 
 for ($i = 0; $i < count($labels); $i++) {
-    $hoja->setCellValue("J{$ventasStartRow}", $labels[$i]);
-    $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
-    $hoja->setCellValue("L{$ventasStartRow}", $monedas[$i]);
+    $hoja->setCellValue("K{$ventasStartRow}", $labels[$i]);
+    $hoja->mergeCells("K{$ventasStartRow}:K{$ventasStartRow}");
+    $hoja->setCellValue("M{$ventasStartRow}", $monedas[$i]);
     
     if ($i < 3) {
         // Números
-        $hoja->setCellValue("M{$ventasStartRow}", $values[$i]);
-        $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+        $hoja->setCellValue("N{$ventasStartRow}", $values[$i]);
+        $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
     } else {
         // Porcentaje (texto)
-        $hoja->setCellValue("M{$ventasStartRow}", $values[$i]);
+        $hoja->setCellValue("N{$ventasStartRow}", $values[$i]);
     }
     $ventasStartRow++;
 }
