@@ -249,7 +249,7 @@ foreach ($costos as $c) {
     $hoja->setCellValue("H{$row}", $c['aplica'] ?? '');
 
     $hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloNumeroEntero); // Usa el estilo con separador de miles
+    $hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloNumero); // Usa el estilo con separador de miles
     $row++;
 }
 
@@ -257,7 +257,7 @@ foreach ($costos as $c) {
 $hoja->setCellValue("F{$row}", "TOTAL:");
 $hoja->setCellValue("G{$row}", $totalCostosFinal);
 $hoja->getStyle("F{$row}")->applyFromArray(['font' => ['bold' => true]]);
-$hoja->getStyle("G{$row}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("G{$row}")->applyFromArray($estiloNumero);
 $row++;
 $row += 7;
 
@@ -398,7 +398,7 @@ foreach ($costos as $c) {
     $hoja->setCellValue("Q{$ventasStartRow}", $c['aplica'] ?? '');
 
     $hoja->getStyle("K{$ventasStartRow}:Q{$ventasStartRow}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("N{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray($estiloNumeroEntero); // ← Usa estilo con separador de miles
+    $hoja->getStyle("N{$ventasStartRow}:P{$ventasStartRow}")->applyFromArray($estiloNumero); // ← Usa estilo con separador de miles
     $ventasStartRow++;
 }
 
@@ -406,7 +406,7 @@ foreach ($costos as $c) {
 $hoja->setCellValue("O{$ventasStartRow}", "TOTAL:"); // ← Columna O (debajo de "Venta")
 $hoja->setCellValue("P{$ventasStartRow}", $totalVentasFinal); // ← Columna P (debajo de "Total")
 $hoja->getStyle("O{$ventasStartRow}")->applyFromArray(['font' => ['bold' => true]]);
-$hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 $ventasStartRow = 47;
 
