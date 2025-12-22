@@ -389,6 +389,7 @@ foreach ($costos as $c) {
     $tarifa = $c['tarifa'] ?? 0;
     $total = $qty * $tarifa;
     $totalVentasFinal += $total; // ← Acumular aquí
+    $profitElog = $totalVentasFinal - $totalCostosFinal;
 
     $hoja->setCellValue("K{$ventasStartRow}", $c['concepto'] ?? '');
     $hoja->setCellValue("M{$ventasStartRow}", $c['moneda'] ?? '');
@@ -408,6 +409,18 @@ $hoja->setCellValue("P{$ventasStartRow}", $totalVentasFinal); // ← Columna P (
 $hoja->getStyle("O{$ventasStartRow}")->applyFromArray(['font' => ['bold' => true]]);
 $hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
+
+// === Profit Elog ===
+$profitElog = $totalGastosVentas - $totalGastosCostos;
+$profitElogPct = $totalGastosVentas > 0 ? ($profitElog / $totalGastosVentas * 100) : 0;
+$hoja->setCellValue("O{$ventasStartRow}", "TOTAL PROFIT ELOG:");
+$hoja->setCellValue("P{$ventasStartRow}", $profitElog);
+$hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloNumero);
+$ventasStartRow++;
+$hoja->setCellValue("O{$ventasStartRow}", "TOTAL PROFIT %:");
+$hoja->setCellValue("P{$ventasStartRow}", $profitElogPct);
+$hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
+
 $ventasStartRow = 47;
 
 // === Gastos Locales en Destino (Ventas) ===
