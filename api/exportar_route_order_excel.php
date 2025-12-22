@@ -131,7 +131,7 @@ $hoja->setCellValue("B{$row}", "R.U.T:");
 $hoja->setCellValue("D{$row}", $shipperRut);
 
 // === DATOS ADICIONALES DEL SERVICIO (F3) ===
-$row += 13;
+$row = 13;
 $hoja->setCellValue("F{$row}", "TIPO CAMBIO CLIENTE:");
 $hoja->setCellValue("H{$row}", number_format($servicio['tipo_cambio'] ?? 1, 4, ',', '.'));
 $row++;
