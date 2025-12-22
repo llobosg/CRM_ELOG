@@ -513,10 +513,10 @@ $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}"); // Total también oc
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloTitulo);
 // Después del total de Gastos Costos:
-$hoja->setCellValue("M{$fila}", "TOTAL MONTO:");
-$hoja->setCellValue("N{$fila}", $totalGastosCostos);
+$hoja->setCellValue("M{$ventasStartRow}", "TOTAL MONTO:");
+$hoja->setCellValue("N{$ventasStartRow}", $totalGastosCostos);
 // ...
-$coordTotalGastosCostos = 'N' . $fila;
+$coordTotalGastosCostos = 'N' . $ventasStartRow;
 $ventasStartRow += 2;
 
 // === Total Gastos Locales más Profit Local ===
