@@ -239,12 +239,12 @@ foreach ($costos as $c) {
     $costo = $c['costo'] ?? 0;
     $total = $qty * $costo;
 
-    $hoja->setCellValue("A{$row}", $c['concepto'] ?? '');
-    $hoja->setCellValue("C{$row}", $c['moneda'] ?? '');
-    $hoja->setCellValue("D{$row}", $qty);
-    $hoja->setCellValue("E{$row}", $costo);
-    $hoja->setCellValue("F{$row}", $total);
-    $hoja->setCellValue("G{$row}", $c['aplica'] ?? '');
+    $hoja->setCellValue("B{$row}", $c['concepto'] ?? '');
+    $hoja->setCellValue("D{$row}", $c['moneda'] ?? '');
+    $hoja->setCellValue("E{$row}", $qty);
+    $hoja->setCellValue("F{$row}", $costo);
+    $hoja->setCellValue("G{$row}", $total);
+    $hoja->setCellValue("H{$row}", $c['aplica'] ?? '');
 
     $hoja->getStyle("B{$row}:I{$row}")->applyFromArray($estiloCelda);
     $hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloNumero);
@@ -472,7 +472,7 @@ $monedas = ['CLP', 'CLP', 'CLP', ''];
 
 for ($i = 0; $i < count($labels); $i++) {
     $hoja->setCellValue("K{$ventasStartRow}", $labels[$i]);
-    $hoja->mergeCells("K{$ventasStartRow}:K{$ventasStartRow}");
+    $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
     $hoja->setCellValue("M{$ventasStartRow}", $monedas[$i]);
     
     if ($i < 3) {
