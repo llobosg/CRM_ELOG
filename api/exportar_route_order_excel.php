@@ -468,11 +468,9 @@ $hoja->setCellValue("N{$ventasStartRow}", "=SUM(N{$primeraFilaGastosVentas}:N" .
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}"); // Total también ocupa 2 columnas
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloTitulo);
-// Después del total de Gastos Ventas:
-$hoja->setCellValue("M{$fila}", "TOTAL MONTO:");
-$hoja->setCellValue("N{$fila}", $totalGastosVentas);
-// ...
-$coordTotalGastosVentas = 'N' . $fila;
+
+// ✅ Guardar coordenada del total
+$coordTotalGastosVentas = 'N' . $ventasStartRow;
 $ventasStartRow += 2;
 
 // === GASTOS LOCALES EN DESTINO (COSTO) ===
