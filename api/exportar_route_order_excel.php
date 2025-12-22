@@ -33,6 +33,10 @@ $costos = $datosRO['costos'] ?? [];
 $gastos_locales = $datosRO['gastos_locales'] ?? [];
 $transporte = $datosRO['transporte_nac'] ?? null;
 
+// Inicializar variables para evitar "Undefined variable"
+$totalGastosVentas = 0;
+$totalGastosCostos = 0;
+
 // Datos de SHIPPER/CONSIGNATARIO
 $operacion = ($prospecto['operacion'] ?? '') ?: ($datosRO['servicio']['operacion'] ?? '');
 $esImportacion = strtolower($operacion) === 'im';
@@ -410,10 +414,6 @@ $hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
 
 $ventasStartRow = 47;
 
-// Al inicio del archivo, después de obtener $gastos_locales
-$totalGastosVentas = 0;
-$totalGastosCostos = 0;
-
 // === Gastos Locales en Destino (Ventas) ===
 $gastosVentas = array_filter($gastos_locales, fn($g) => strtoupper($g['tipo'] ?? '') === 'VENTAS');
 $hoja->setCellValue("K{$ventasStartRow}", "Gastos Locales en Destino Ventas");
@@ -521,7 +521,7 @@ $hoja->setCellValue("J{$ventasStartRow}", "TOTAL VENTA:");
 $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
 $hoja->setCellValue("L{$ventasStartRow}", "CLP");
 $hoja->setCellValue('M' . $ventasStartRow, '=$M$65'); // ← Comillas simples + referencia absoluta
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // TOTAL COSTO (supongamos M66)
@@ -529,7 +529,7 @@ $hoja->setCellValue("J{$ventasStartRow}", "TOTAL COSTO:");
 $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
 $hoja->setCellValue("L{$ventasStartRow}", "CLP");
 $hoja->setCellValue('M' . $ventasStartRow, '=$M$66');
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // PROFIT LOCAL = VENTA - COSTO
@@ -538,7 +538,7 @@ $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
 $hoja->setCellValue("L{$ventasStartRow}", "CLP");
 // Usa referencias relativas a las filas anteriores
 $hoja->setCellValue('M' . $ventasStartRow, '=M' . ($ventasStartRow - 2) . '-M' . ($ventasStartRow - 1));
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // PROFIT %
