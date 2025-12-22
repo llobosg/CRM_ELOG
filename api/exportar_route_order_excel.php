@@ -86,7 +86,7 @@ $estiloCabecera = [
 ];
 $estiloCelda = ['alignment' => ['vertical' => Alignment::VERTICAL_TOP]];
 $estiloTexto = ['alignment' => ['wrapText' => true, 'vertical' => Alignment::VERTICAL_TOP]];
-$estiloNumeroEntero = ['numberFormat' => ['formatCode' => '#,##0']];
+$estiloNumero = ['numberFormat' => ['formatCode' => '#,##0']];
 $estiloPorcentaje1Dec = ['numberFormat' => ['formatCode' => '0.0"%"']];
 
 function nombreArchivoSeguro($str) {
