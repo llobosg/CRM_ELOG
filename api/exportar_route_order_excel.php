@@ -205,15 +205,15 @@ $hoja->setCellValue("B{$row}", "COLOADER:");
 $hoja->setCellValue("C{$row}", $servicio['coloader'] ?? '');
 
 // === NOTAS ADICIONALES (A22:A30) ===
-$row = 22;
-$hoja->setCellValue("G{$row}", "NOTAS ADICIONALES:");
-$hoja->getStyle("G{$row}")->applyFromArray($estiloTitulo);
-$hoja->mergeCells("G" . ($row + 1) . ":N" . ($row + 4));
-$hoja->setCellValue("G" . ($row + 1), $servicio['nota_srvc'] ?? '');
-$hoja->getStyle("G" . ($row + 1))->applyFromArray($estiloTexto);
+$row = 25;
+$hoja->setCellValue("F{$row}", "NOTAS ADICIONALES:");
+$hoja->getStyle("F{$row}")->applyFromArray($estiloTitulo);
+$hoja->mergeCells("F" . ($row + 1) . ":N" . ($row + 7));
+$hoja->setCellValue("F" . ($row + 1), $servicio['nota_srvc'] ?? '');
+$hoja->getStyle("F" . ($row + 1))->applyFromArray($estiloTexto);
 
 // === COSTOS (A34) ===
-$row = 34;
+$row = 35;
 $hoja->setCellValue("B{$row}", "PROFIT SHARE");
 $hoja->getStyle("B{$row}")->applyFromArray($estiloTitulo);
 $row++;
@@ -326,7 +326,7 @@ $hoja->fromArray(['', '', '', '', '', '', ''], null, "B{$row}");
 $row += 2;
 
 // === VENTAS (J23) ===
-$ventasStartRow = 25; // 23 + "PROFIT SHARE" + "Costos"
+$ventasStartRow = 35; // 35 + "PROFIT SHARE" + "Costos"
 $hoja->setCellValue("J{$ventasStartRow}", "Ventas");
 $hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
