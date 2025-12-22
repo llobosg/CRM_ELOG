@@ -272,7 +272,7 @@ if ($estadoCredito) {
 $hoja->setCellValue("B{$row}", "CRÉDITO:" . $simboloCredito);
 $row++;
 $hoja->setCellValue("B{$row}", "CONTADO:" . $simboloContado);
-$row += 2;
+$row += 4;
 
 // === TRANSPORTE NACIONAL (B debajo) ===
 $hoja->setCellValue("B{$row}", "TRANSPORTE NACIONAL");
@@ -450,19 +450,19 @@ $hoja->setCellValue("N{$ventasStartRow}", $totalGastosVentas);
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow += 2;
 
-// === Gastos Locales en Destino Costo ===
+// === GASTOS LOCALES EN DESTINO (COSTO) ===
 $gastosCostos = array_filter($gastos_locales, fn($g) => strtoupper($g['tipo'] ?? '') === 'COSTO');
-$hoja->setCellValue("J{$ventasStartRow}", "Gastos Locales en Destino Costo");
-$hoja->getStyle("J{$ventasStartRow}")->applyFromArray($estiloTitulo);
+$hoja->setCellValue("K{$ventasStartRow}", "Gastos Locales en Destino Costo");
+$hoja->getStyle("K{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow++;
 
 // --- Encabezados ---
-$hoja->setCellValue("J{$ventasStartRow}", "Concepto");
-$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
-$hoja->setCellValue("L{$ventasStartRow}", "Moneda");
-$hoja->setCellValue("M{$ventasStartRow}", "Monto");
-$hoja->setCellValue("N{$ventasStartRow}", "Afecto");
-$hoja->getStyle("J{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCabecera);
+$hoja->setCellValue("K{$ventasStartRow}", "Concepto");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
+$hoja->setCellValue("M{$ventasStartRow}", "Moneda");
+$hoja->setCellValue("N{$ventasStartRow}", "Monto");
+$hoja->setCellValue("O{$ventasStartRow}", "Afecto");
+$hoja->getStyle("K{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
 // --- Datos ---
@@ -471,13 +471,13 @@ foreach ($gastosCostos as $g) {
     $monto = $g['monto'] ?? 0;
     $totalGastosCostos += $monto;
 
-    $hoja->setCellValue("J{$ventasStartRow}", $g['gasto'] ?? '');
-    $hoja->setCellValue("L{$ventasStartRow}", $g['moneda'] ?? '');
-    $hoja->setCellValue("M{$ventasStartRow}", $monto);
-    $hoja->setCellValue("N{$ventasStartRow}", $g['afecto'] ?? '');
+    $hoja->setCellValue("K{$ventasStartRow}", $g['gasto'] ?? '');
+    $hoja->setCellValue("M{$ventasStartRow}", $g['moneda'] ?? '');
+    $hoja->setCellValue("N{$ventasStartRow}", $monto);
+    $hoja->setCellValue("O{$ventasStartRow}", $g['afecto'] ?? '');
 
-    $hoja->getStyle("J{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCelda);
-    $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero); // Solo Monto
+    $hoja->getStyle("K{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloCelda);
+    $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero); // Solo Monto
 
     $ventasStartRow++;
 }
