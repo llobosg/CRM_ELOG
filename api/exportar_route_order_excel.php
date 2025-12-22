@@ -85,8 +85,15 @@ $estiloCabecera = [
     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
 ];
 $estiloCelda = ['alignment' => ['vertical' => Alignment::VERTICAL_TOP]];
-$estiloNumero = ['numberFormat' => ['formatCode' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1]];
 $estiloTexto = ['alignment' => ['wrapText' => true, 'vertical' => Alignment::VERTICAL_TOP]];
+// Números enteros (sin decimales)
+$estiloNumeroEntero = [
+    'numberFormat' => ['formatCode' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER]
+];
+// Porcentaje con 1 decimal
+$estiloPorcentaje1Dec = [
+    'numberFormat' => ['formatCode' => '0.0"%"']
+];
 
 function nombreArchivoSeguro($str) {
     return substr(preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $str ?? ''), 0, 100);
@@ -249,6 +256,23 @@ foreach ($costos as $c) {
     $hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloNumero);
     $row++;
 }
+$totalCostosFinal = 0;
+foreach ($costos as $c) {
+    $qty = $c['qty'] ?? 0;
+    $costo = $c['costo'] ?? 0;
+    $total = $qty * $costo;
+    $totalCostosFinal += $total;
+
+    // ... (celdas y estilos como antes) ...
+    $hoja->getStyle("D{$row}:F{$row}")->applyFromArray($estiloNumeroEntero);
+    $row++;
+}
+// === TOTAL Costos ===
+$hoja->setCellValue("E{$row}", "TOTAL:");
+$hoja->setCellValue("F{$row}", $totalCostosFinal);
+$hoja->getStyle("E{$row}")->applyFromArray(['font' => ['bold' => true]]);
+$hoja->getStyle("F{$row}")->applyFromArray($estiloNumeroEntero);
+$row++;
 $row += 7;
 
 // === CONDICIONES COMERCIALES (B debajo de Costos) ===
@@ -400,6 +424,23 @@ foreach ($costos as $c) {
 
     $ventasStartRow++;
 }
+$totalVentasFinal = 0;
+foreach ($costos as $c) {
+    $qty = $c['qty'] ?? 0;
+    $tarifa = $c['tarifa'] ?? 0;
+    $total = $qty * $tarifa;
+    $totalVentasFinal += $total;
+
+    // ... (celdas y estilos como antes) ...
+    $hoja->getStyle("M{$ventasStartRow}:O{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+    $ventasStartRow++;
+}
+$hoja->setCellValue("N{$ventasStartRow}", "TOTAL:");
+$hoja->setCellValue("O{$ventasStartRow}", $totalVentasFinal);
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray(['font' => ['bold' => true]]);
+$hoja->getStyle("O{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
+
+$ventasStartRow++;
 $ventasStartRow = 47;
 
 // === Gastos Locales en Destino (Ventas) ===
@@ -444,10 +485,11 @@ foreach ($gastosVentas as $g) {
 }
 
 // --- Total ---
-$hoja->setCellValue("K{$ventasStartRow}", "TOTAL MONTO:");
+$hoja->setCellValue("K{$ventasStartRow}", "TOTAL:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}"); // Total también ocupa 2 columnas
 $hoja->setCellValue("N{$ventasStartRow}", $totalGastosVentas);
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->getStyle("K{$ventasStartRow} : N{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow += 2;
 
 // === GASTOS LOCALES EN DESTINO (COSTO) ===
@@ -483,10 +525,11 @@ foreach ($gastosCostos as $g) {
 }
 
 // --- Total ---
-$hoja->setCellValue("J{$ventasStartRow}", "TOTAL MONTO:");
-$hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
-$hoja->setCellValue("M{$ventasStartRow}", $totalGastosCostos);
-$hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->setCellValue("K{$ventasStartRow}", "TOTAL:");
+$hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
+$hoja->setCellValue("N{$ventasStartRow}", $totalGastosCostos);
+$hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
+$hoja->getStyle("K{$ventasStartRow} : N{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow += 2;
 
 
@@ -504,23 +547,24 @@ $hoja->setCellValue("N{$ventasStartRow}", "Monto");
 $hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloCabecera);
 $ventasStartRow++;
 
-// Filas de datos: fusionar J-K para el label
+// Filas de datos: fusionar J-K para el label.
 $labels = ['TOTAL VENTA:', 'TOTAL COSTO:', 'PROFIT LOCAL:', 'PROFIT %:'];
-$values = [$totalGastosVentas, $totalGastosCostos, $profitLocal, $profitPct . '%'];
+$values = [$totalGastosVentas, $totalGastosCostos, $profitLocal, $profitPct]; // ← sin '%'
 $monedas = ['CLP', 'CLP', 'CLP', ''];
 
 for ($i = 0; $i < count($labels); $i++) {
-    $hoja->setCellValue("K{$ventasStartRow}", $labels[$i]);
-    $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
-    $hoja->setCellValue("M{$ventasStartRow}", $monedas[$i]);
-    
+    $hoja->setCellValue("J{$ventasStartRow}", $labels[$i]);
+    $hoja->mergeCells("J{$ventasStartRow}:K{$ventasStartRow}");
+    $hoja->setCellValue("L{$ventasStartRow}", $monedas[$i]);
+
     if ($i < 3) {
-        // Números
-        $hoja->setCellValue("N{$ventasStartRow}", $values[$i]);
-        $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
+        // Números enteros
+        $hoja->setCellValue("M{$ventasStartRow}", $values[$i]);
+        $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloNumeroEntero);
     } else {
-        // Porcentaje (texto)
-        $hoja->setCellValue("N{$ventasStartRow}", $values[$i]);
+        // Porcentaje con 1 decimal
+        $hoja->setCellValue("M{$ventasStartRow}", $values[$i]);
+        $hoja->getStyle("M{$ventasStartRow}")->applyFromArray($estiloPorcentaje1Dec);
     }
     $ventasStartRow++;
 }
