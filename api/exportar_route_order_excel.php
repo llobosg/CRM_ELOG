@@ -253,9 +253,11 @@ foreach ($costos as $c) {
 
 // === TOTAL Costos ===
 $primeraFilaDatos = $row - count($costos); // Primera fila de datos
+$hoja->setCellValue("E{$row}", "TOTAL:");
 $hoja->setCellValue("G{$row}", "=SUM(G{$primeraFilaDatos}:G" . ($row - 1) . ")");
 $hoja->getStyle("G{$row}")->applyFromArray(['font' => ['bold' => true]]);
 $hoja->getStyle("G{$row}")->applyFromArray($estiloNumero);
+$hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloTitulo);
 $row++;
 $row += 7;
 
@@ -456,9 +458,10 @@ foreach ($gastosVentas as $g) {
 }
 
 // --- Total ---
+$primeraFilaGastosVentas = $ventasStartRow - count($gastosVentas); // Primera fila de datos
 $hoja->setCellValue("K{$ventasStartRow}", "TOTAL:");
+$hoja->setCellValue("N{$ventasStartRow}", "=SUM(G{$primeraFilaGastosVentas}:G" . ($ventasStartRow - 1) . ")");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}"); // Total también ocupa 2 columnas
-$hoja->setCellValue("N{$ventasStartRow}", $totalGastosVentas);
 $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $hoja->getStyle("K{$ventasStartRow}:N{$ventasStartRow}")->applyFromArray($estiloTitulo);
 $ventasStartRow += 2;
