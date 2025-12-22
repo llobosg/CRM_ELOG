@@ -36,6 +36,8 @@ $transporte = $datosRO['transporte_nac'] ?? null;
 // Inicializar variables para evitar "Undefined variable"
 $totalGastosVentas = 0;
 $totalGastosCostos = 0;
+$totalCostos = 0;
+$totalventas = 0;
 
 // Datos de SHIPPER/CONSIGNATARIO
 $operacion = ($prospecto['operacion'] ?? '') ?: ($datosRO['servicio']['operacion'] ?? '');
@@ -238,7 +240,9 @@ $hoja->getStyle("B{$row}:H{$row}")->applyFromArray($estiloCabecera);
 $row++;
 
 // Datos + fórmulas
+$totalCostos = 0;
 foreach ($costos as $c) {
+    $totalCostos += $c['costo'] ?? 0;
     $hoja->setCellValue("B{$row}", $c['concepto'] ?? '');
     $hoja->setCellValue("D{$row}", $c['moneda'] ?? '');
     $hoja->setCellValue("E{$row}", $c['qty'] ?? 0);
@@ -385,7 +389,9 @@ $hoja->getStyle("K{$ventasStartRow}:Q{$ventasStartRow}")->applyFromArray($estilo
 $ventasStartRow++;
 
 // Datos + fórmulas
+$totalventas = 0;
 foreach ($costos as $c) {
+    $totalVentas += $c['venta'] ?? 0;
     $hoja->setCellValue("K{$ventasStartRow}", $c['concepto'] ?? '');
     $hoja->setCellValue("M{$ventasStartRow}", $c['moneda'] ?? '');
     $hoja->setCellValue("N{$ventasStartRow}", $c['qty'] ?? 0);
@@ -408,8 +414,8 @@ $coordTotalVentas = 'P' . $ventasStartRow;
 $ventasStartRow++;
 
 // === Profit Elog ===
-$profitElog = $totalGastosVentas - $totalGastosCostos;
-$profitElogPct = $totalGastosVentas > 0 ? ($profitElog / $totalGastosVentas * 100) : 0;
+$profitElog = $totalVentas - $totalCostos;
+$profitElogPct = $totalVentas > 0 ? ($profitElog / $totalCostos * 100) : 0;
 $hoja->setCellValue("N{$ventasStartRow}", "TOTAL PROFIT ELOG:");
 $hoja->setCellValue("P{$ventasStartRow}", $profitElog);
 $hoja->getStyle("P{$ventasStartRow}")->applyFromArray($estiloNumero);
