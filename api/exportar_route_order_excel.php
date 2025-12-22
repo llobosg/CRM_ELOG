@@ -576,10 +576,10 @@ $hoja->setCellValue("B{$lastRow}", "NOTAS A OPERACIONES");
 $hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTitulo);
 $hoja->mergeCells("B" . ($lastRow + 1) . ":O" . ($lastRow + 7));
 $hoja->setCellValue("B" . ($lastRow + 1), $prospecto['notas_operaciones'] ?? '');
-$lastRow += 3;
+$lastRow += 10;
 $hoja->setCellValue("B{$lastRow}", "NOTAS COMERCIALES");
 $hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTitulo);
-//$hoja->mergeCells("B" . ($lastRow + 1) . ":O" . ($lastRow + 7));
+$hoja->mergeCells("B" . ($lastRow + 1) . ":O" . ($lastRow + 7));
 $hoja->setCellValue("B" . ($lastRow + 1), $prospecto['notas_comerciales'] ?? '');
 
 // === ANCHOS FIJOS DE COLUMNAS - Layout del Route Order ===
