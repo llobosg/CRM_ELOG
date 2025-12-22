@@ -250,7 +250,7 @@ foreach ($costos as $c) {
     $hoja->getStyle("E{$row}:G{$row}")->applyFromArray($estiloNumero);
     $row++;
 }
-$row++;
+$row += 7;
 
 // === CONDICIONES COMERCIALES (B debajo de Costos) ===
 $hoja->setCellValue("B{$row}", "CONDICIONES COMERCIALES");
