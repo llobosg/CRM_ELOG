@@ -549,7 +549,6 @@ $hoja->getStyle("N{$ventasStartRow}")->applyFromArray($estiloNumero);
 $ventasStartRow++;
 
 // PROFIT %
-$ProfitLocalPct = $totalGastosVentas > 0 ? (($TotalGastoVentas - $totalGastosCostos) / $TotalGastoVentas * 100) : 0;
 $hoja->setCellValue("K{$ventasStartRow}", "PROFIT %:");
 $hoja->mergeCells("K{$ventasStartRow}:L{$ventasStartRow}");
 $hoja->setCellValue("M{$ventasStartRow}", "");
