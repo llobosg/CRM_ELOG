@@ -574,11 +574,13 @@ $ventasStartRow++;
 $lastRow = max($row, $ventasStartRow) + 2;
 $hoja->setCellValue("B{$lastRow}", "NOTAS A OPERACIONES");
 $hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTitulo);
-$hoja->setCellValue("B" . ($lastRow + 1), $servicio['notas_operaciones'] ?? '');
+$hoja->mergeCells("B" . ($lastRow + 1) . ":O" . ($lastRow + 7));
+$hoja->setCellValue("B" . ($lastRow + 1), $prospecto['notas_operaciones'] ?? '');
 $lastRow += 3;
 $hoja->setCellValue("B{$lastRow}", "NOTAS COMERCIALES");
 $hoja->getStyle("B{$lastRow}")->applyFromArray($estiloTitulo);
-$hoja->setCellValue("B" . ($lastRow + 1), $servicio['notas_comerciales'] ?? '');
+$hoja->mergeCells("B" . ($lastRow + 1) . ":O" . ($lastRow + 7));
+$hoja->setCellValue("B" . ($lastRow + 1), $prospecto['notas_comerciales'] ?? '');
 
 // === ANCHOS FIJOS DE COLUMNAS - Layout del Route Order ===
 // Columnas izquierda: datos generales (SHIPPER, Servicio, Notas)
