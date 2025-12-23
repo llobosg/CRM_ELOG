@@ -3073,13 +3073,17 @@
             const direccion = document.getElementById('prospecto_direccion')?.value || '';
             const rutEmpresa = document.getElementById('prospecto_rut_empresa')?.value || '';
             const contactoNombre = document.getElementById('prospecto_contacto_nombre')?.value || '';
+            const notas_comerciales = document.getElementById('prospecto_notas_comerciales')?.value || '';
+            const notas_operaciones = document.getElementById('prospecto_notas_operaciones')?.value || '';
 
             const prospectoCompleto = {
                 operacion: operacion,
                 razon_social: razonSocial,
                 direccion: direccion,
                 rut_empresa: rutEmpresa,
-                contacto_nombre: contactoNombre
+                contacto_nombre: contactoNombre,
+                notas_comerciales: notas_comerciales,
+                notas_operaciones: notas_operaciones
             };
 
             console.log('📄 [ROUTE_ORDER] Datos del prospecto:', {

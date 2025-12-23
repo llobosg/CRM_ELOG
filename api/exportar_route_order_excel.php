@@ -389,7 +389,6 @@ $hoja->getStyle("K{$ventasStartRow}:Q{$ventasStartRow}")->applyFromArray($estilo
 $ventasStartRow++;
 
 // Datos + fórmulas
-$totalventas = 0;
 foreach ($costos as $c) {
     $totalVentas += $c['venta'] ?? 0;
     $hoja->setCellValue("K{$ventasStartRow}", $c['concepto'] ?? '');
