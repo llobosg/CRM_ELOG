@@ -39,6 +39,8 @@
     <input type="hidden" id="prospecto_direccion" value="<?= htmlspecialchars($prospecto['direccion'] ?? '') ?>">
     <input type="hidden" id="prospecto_rut_empresa" value="<?= htmlspecialchars($prospecto['rut_empresa'] ?? '') ?>">
     <input type="hidden" id="prospecto_contacto_nombre" value="<?= htmlspecialchars($contacto['nombre'] ?? '') ?>">
+    <input type="hidden" id="prospecto_notas_comerciales" value="<?php echo htmlspecialchars($prospecto['notas_comerciales'] ?? ''); ?>">
+    <input type="hidden" id="prospecto_notas_operaciones" value="<?php echo htmlspecialchars($prospecto['notas_operaciones'] ?? ''); ?>">
 
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem; position: relative;">
@@ -1275,6 +1277,14 @@
                 .then(data => {
                     if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
                     const p = data.prospecto;
+
+                    // Actualizar campos ocultos del prospecto
+                    document.getElementById('prospecto_notas_comerciales').value = p.notas_comerciales || '';
+                    document.getElementById('prospecto_notas_operaciones').value = p.notas_operaciones || '';
+                    document.getElementById('prospecto_razon_social').value = p.razon_social || '';
+                    document.getElementById('prospecto_direccion').value = p.direccion || '';
+                    document.getElementById('prospecto_rut_empresa').value = p.rut_empresa || '';
+                    document.getElementById('operacion').value = p.operacion || '';
 
                     // === Actualizar el select de Razón Social ===
                     const razonSelect = document.getElementById('razon_social_select');
