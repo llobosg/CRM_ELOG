@@ -42,11 +42,12 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Apache
-RUN a2enmod rewrite
+# 🔥 FIX DEFINITIVO MPM
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load \
+          /etc/apache2/mods-enabled/mpm_*.conf \
+    && a2enmod mpm_prefork rewrite
 
 WORKDIR /var/www/html
-
 COPY --from=vendor /app /var/www/html
 
 RUN chown -R www-data:www-data /var/www/html \
