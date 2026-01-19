@@ -1,7 +1,5 @@
 <?php
-// ✅ NO usar session_start() — ya está activa desde index.php
-
-// Verificación de rol
+// Rol ya verificado en index.php
 $rol = $_SESSION['rol'] ?? '';
 if ($rol !== 'admin' && $rol !== 'comercial') {
     http_response_code(403);
@@ -13,7 +11,8 @@ $prospectos = [];
 if (php_sapi_name() !== 'cli') {
     try {
         require_once __DIR__ . '/../config.php';
-        
+
+        // ✅ Consulta mejorada: muestra prospectos incluso sin costos/gastos
         $stmt = $pdo->prepare("
             SELECT
                 p.id_ppl,
@@ -25,15 +24,28 @@ if (php_sapi_name() !== 'cli') {
                 p.servicio,
                 p.trafico,
                 c.nombre_clt AS cliente_nombre,
-                COALESCE(SUM(cost.costo * cost.qty), 0) AS total_costo,
-                COALESCE(SUM(cost.tarifa * cost.qty), 0) AS total_venta,
-                COALESCE(SUM(CASE WHEN g.tipo = 'COSTO' THEN g.monto ELSE 0 END), 0) AS gdc,
-                COALESCE(SUM(CASE WHEN g.tipo = 'VENTAS' THEN g.monto ELSE 0 END), 0) AS gdv
+                COALESCE(cost_data.total_costo, 0) AS total_costo,
+                COALESCE(cost_data.total_venta, 0) AS total_venta,
+                COALESCE(gasto_data.gdc, 0) AS gdc,
+                COALESCE(gasto_data.gdv, 0) AS gdv
             FROM prospectos p
             LEFT JOIN clientes c ON p.cliente_ppl = c.id_clt
-            LEFT JOIN costos cost ON p.id_ppl = cost.id_ppl
-            LEFT JOIN gastos_locales g ON p.id_ppl = g.id_ppl
-            GROUP BY p.id_ppl
+            LEFT JOIN (
+                SELECT 
+                    id_ppl,
+                    SUM(costo * qty) AS total_costo,
+                    SUM(tarifa * qty) AS total_venta
+                FROM costos
+                GROUP BY id_ppl
+            ) cost_data ON p.id_ppl = cost_data.id_ppl
+            LEFT JOIN (
+                SELECT 
+                    id_ppl,
+                    SUM(CASE WHEN tipo = 'COSTO' THEN monto ELSE 0 END) AS gdc,
+                    SUM(CASE WHEN tipo = 'VENTAS' THEN monto ELSE 0 END) AS gdv
+                FROM gastos_locales
+                GROUP BY id_ppl
+            ) gasto_data ON p.id_ppl = gasto_data.id_ppl
             ORDER BY p.fecha_ppl DESC
             LIMIT 10
         ");
@@ -57,18 +69,20 @@ if (php_sapi_name() !== 'cli') {
         function confirmarEliminacion(id, concatenado) {
             const mensaje = `¿Está seguro de eliminar el prospecto ${concatenado}?\n\n⚠️ Esta acción eliminará todos los Gastos, Ventas, Costos y Servicios asociados.`;
             if (confirm(mensaje)) {
-                window.location.href = `/pages/prospectos_logic.php?action=eliminar&id=${id}`;
+                window.location.href = '/pages/prospectos_logic.php?action=eliminar&id=' + id;
             }
         }
     </script>
 </head>
 <body>
+<?php include __DIR__ . '/../includes/header.php'; ?>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
         <h2 style="font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
             <i class="fas fa-file-alt"></i> Lista de Prospectos
         </h2>
-        <a href="/pages/prospectos.php" class="btn-primary" style="text-decoration: none; padding: 0.4rem 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
+        <!-- ✅ Redirección correcta al sistema de rutas -->
+        <a href="/?page=prospectos" class="btn-primary" style="text-decoration: none; padding: 0.4rem 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
             <i class="fas fa-plus"></i> Crear Prospecto
         </a>
     </div>
@@ -112,7 +126,7 @@ if (php_sapi_name() !== 'cli') {
                         <td><?= number_format((float)$p['gdc'], 0, ',', '.') ?></td>
                         <td><?= number_format((float)$p['gdv'], 0, ',', '.') ?></td>
                         <td>
-                            <a href="/pages/prospectos.php?seleccionar=<?= $p['id_ppl'] ?>" class="btn-primary" title="Editar">
+                            <a href="/?page=prospectos&seleccionar=<?= $p['id_ppl'] ?>" class="btn-primary" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <button type="button" class="btn-danger" title="Eliminar" 
