@@ -29,8 +29,10 @@ COPY . .
 # =========================
 # STAGE 2: Apache Runtime
 # =========================
+# Apache + PHP
 FROM php:8.2-apache
 
+# Dependencias PHP
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg62-turbo-dev \
@@ -42,9 +44,8 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔥 FIX DEFINITIVO MPM
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.load \
-          /etc/apache2/mods-enabled/mpm_*.conf \
+# 🔥 FIX REAL DEL PROBLEMA MPM
+RUN a2dismod mpm_event mpm_worker \
     && a2enmod mpm_prefork rewrite
 
 WORKDIR /var/www/html
