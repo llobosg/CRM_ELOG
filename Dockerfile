@@ -1,33 +1,25 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
-WORKDIR /var/www/html
-
-# Dependencias del sistema + PHP extensions
 RUN apt-get update && apt-get install -y \
-    libfreetype6-dev \
-    libjpeg62-turbo-dev \
-    libpng-dev \
-    zip \
+    git \
     unzip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd mysqli pdo pdo_mysql \
+    libzip-dev \
+    default-mysql-client \
+    && docker-php-ext-install pdo pdo_mysql mysqli zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔥 ELIMINACIÓN FORZADA DE MPMs CONFLICTIVOS
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.* \
-          /etc/apache2/mods-enabled/mpm_worker.* \
-          /etc/apache2/mods-available/mpm_event.* \
-          /etc/apache2/mods-available/mpm_worker.*
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# 🔒 Forzar solo prefork
-RUN a2enmod mpm_prefork rewrite
+WORKDIR /app
 
-# Copiar proyecto
+# Copiar solo composer primero
+COPY composer.json composer.lock* ./
+
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Copiar el resto del código (SIN vendor)
 COPY . .
 
-# Permisos
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
-
-EXPOSE 80
+EXPOSE 8080
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "."]
