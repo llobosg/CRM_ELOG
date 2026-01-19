@@ -11,6 +11,15 @@ if (php_sapi_name() !== 'cli') {
     try {
         require_once __DIR__ . '/../config.php';
 
+        // 🔍 Log 1: Verificar conexión
+        error_log("✅ [DEBUG] Conexión a DB establecida.");
+
+        // Contar total de prospectos
+        $countStmt = $pdo->query("SELECT COUNT(*) as total FROM prospectos");
+        $totalProspectos = $countStmt->fetch()['total'];
+        error_log("📊 [DEBUG] Total de prospectos en tabla: " . $totalProspectos);
+
+        // Ejecutar consulta principal
         $stmt = $pdo->prepare("
             SELECT
                 p.id_ppl,
@@ -49,8 +58,15 @@ if (php_sapi_name() !== 'cli') {
         ");
         $stmt->execute();
         $prospectos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 🔍 Log 2: Resultados obtenidos
+        error_log("🔍 [DEBUG] Número de prospectos devueltos por la consulta: " . count($prospectos));
+        if (!empty($prospectos)) {
+            error_log("📋 [DEBUG] Primer prospecto: " . json_encode($prospectos[0]));
+        }
+
     } catch (Exception $e) {
-        error_log("Error al cargar lista de prospectos: " . $e->getMessage());
+        error_log("❌ [ERROR] Exception al cargar prospectos: " . $e->getMessage());
         $prospectos = [];
     }
 }
