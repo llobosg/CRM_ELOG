@@ -1,6 +1,6 @@
 FROM php:8.2-apache-bookworm
 
-# Dependencias del sistema
+# Instalar dependencias del sistema
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libfreetype6-dev \
@@ -10,20 +10,21 @@ RUN apt-get update && \
         zip \
         unzip \
         default-mysql-client \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd mysqli pdo pdo_mysql zip \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+        && docker-php-ext-configure gd --with-freetype --with-jpeg \
+        && docker-php-ext-install gd mysqli pdo pdo_mysql zip \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
 
-# Apache MPM correcto
-RUN a2dismod mpm_event mpm_worker \
-    && a2enmod mpm_prefork rewrite
+# 🔥 Solución real: deshabilitar MPMs y habilitar prefork EN EL MISMO COMANDO
+RUN echo "LoadModule mpm_prefork_module /usr/lib/apache2/modules/mod_mpm_prefork.so" > /etc/apache2/mods-enabled/mpm_prefork.load && \
+    rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_worker.load && \
+    a2enmod rewrite
 
-# Copiar app
+# Copiar proyecto
 COPY . /var/www/html/
 
 # Permisos
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
+RUN chown -R www-data:www-data /var/www/html/ && \
+    chmod -R 755 /var/www/html/
 
 EXPOSE 80
