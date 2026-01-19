@@ -11,15 +11,6 @@ if (php_sapi_name() !== 'cli') {
     try {
         require_once __DIR__ . '/../config.php';
 
-        // 🔍 Log 1: Verificar conexión
-        error_log("✅ [DEBUG] Conexión a DB establecida.");
-
-        // Contar total de prospectos
-        $countStmt = $pdo->query("SELECT COUNT(*) as total FROM prospectos");
-        $totalProspectos = $countStmt->fetch()['total'];
-        error_log("📊 [DEBUG] Total de prospectos en tabla: " . $totalProspectos);
-
-        // Ejecutar consulta principal
         $stmt = $pdo->prepare("
             SELECT
                 p.id_ppl,
@@ -39,32 +30,27 @@ if (php_sapi_name() !== 'cli') {
             LEFT JOIN clientes c ON p.cliente_ppl = c.id_clt
             LEFT JOIN (
                 SELECT 
-                    id_ppl,
-                    SUM(costo * qty) AS total_costo,
-                    SUM(tarifa * qty) AS total_venta
-                FROM costos
-                GROUP BY id_ppl
+                    s.id_ppl,
+                    SUM(cs.costo * cs.qty) AS total_costo,
+                    SUM(cs.tarifa * cs.qty) AS total_venta
+                FROM servicios s
+                LEFT JOIN costos_servicios cs ON s.id_srv = cs.id_srv
+                GROUP BY s.id_ppl
             ) cost_data ON p.id_ppl = cost_data.id_ppl
             LEFT JOIN (
                 SELECT 
-                    id_ppl,
-                    SUM(CASE WHEN tipo = 'COSTO' THEN monto ELSE 0 END) AS gdc,
-                    SUM(CASE WHEN tipo = 'VENTAS' THEN monto ELSE 0 END) AS gdv
-                FROM gastos_locales
-                GROUP BY id_ppl
+                    s.id_ppl,
+                    SUM(CASE WHEN gld.tipo = 'COSTO' THEN gld.monto ELSE 0 END) AS gdc,
+                    SUM(CASE WHEN gld.tipo = 'VENTAS' THEN gld.monto ELSE 0 END) AS gdv
+                FROM servicios s
+                LEFT JOIN gastos_locales_detalle gld ON s.id_srv = gld.id_srv
+                GROUP BY s.id_ppl
             ) gasto_data ON p.id_ppl = gasto_data.id_ppl
             ORDER BY p.fecha_ppl DESC
             LIMIT 10
         ");
         $stmt->execute();
         $prospectos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // 🔍 Log 2: Resultados obtenidos
-        error_log("🔍 [DEBUG] Número de prospectos devueltos por la consulta: " . count($prospectos));
-        if (!empty($prospectos)) {
-            error_log("📋 [DEBUG] Primer prospecto: " . json_encode($prospectos[0]));
-        }
-
     } catch (Exception $e) {
         error_log("❌ [ERROR] Exception al cargar prospectos: " . $e->getMessage());
         $prospectos = [];
