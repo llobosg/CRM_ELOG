@@ -1,7 +1,7 @@
 # ========================
 # STAGE 1: Build (Composer)
 # ========================
-FROM php:8.2-cli
+FROM php:8.2-cli AS build
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -20,11 +20,8 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
-
 COPY composer.json composer.lock* ./
-
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-
 COPY . .
 
 # =========================
@@ -41,12 +38,13 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# ✅ Apache: solo desactivar MPMs conflictivos
+# Apache: evitar conflicto MPM
 RUN a2dismod mpm_event mpm_worker || true \
     && a2enmod rewrite
 
 WORKDIR /var/www/html
 
+# 👉 COPIA CORRECTA DESDE BUILD
 COPY --from=build /app /var/www/html
 
 RUN chown -R www-data:www-data /var/www/html \
