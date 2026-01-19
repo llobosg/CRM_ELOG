@@ -41,11 +41,13 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Apache config
+# 🔥 Apache MPM FIX DEFINITIVO
 RUN rm -f /etc/apache2/mods-enabled/mpm_event.* \
           /etc/apache2/mods-enabled/mpm_worker.* \
+          /etc/apache2/mods-enabled/mpm_prefork.* \
           /etc/apache2/mods-available/mpm_event.* \
           /etc/apache2/mods-available/mpm_worker.* \
+          /etc/apache2/mods-available/mpm_prefork.* \
     && a2enmod mpm_prefork rewrite
 
 WORKDIR /var/www/html
