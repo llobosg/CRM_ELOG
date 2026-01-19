@@ -1,9 +1,8 @@
 <?php
-require_once __DIR__ . '/../config.php';
-
-$rol = $_SESSION['rol'] ?? '';
-if ($rol !== 'admin' && $rol !== 'comercial') {
-    header('HTTP/1.1 403 Forbidden');
+// Control de sesión (ajusta según tu sistema real)
+session_start();
+if (!isset($_SESSION['rol']) || !in_array($_SESSION['rol'], ['admin', 'comercial'])) {
+    http_response_code(403);
     exit('Acceso denegado.');
 }
 
@@ -11,37 +10,13 @@ $prospectos = [];
 
 if (php_sapi_name() !== 'cli') {
     try {
-        $pdo = getDBConnection();
-        if ($pdo) {
-            // Consulta: últimos 10 prospectos con datos resumidos
-            $stmt = $pdo->prepare("
-                SELECT
-                    p.id_ppl,
-                    p.fecha_ppl,
-                    p.cliente_ppl,
-                    p.operacion,
-                    p.tipo_oper,
-                    p.concatenado,
-                    p.servicio,
-                    p.trafico,
-                    c.nombre_clt AS cliente_nombre,
-                    COALESCE(SUM(cost.costo * cost.qty), 0) AS total_costo,
-                    COALESCE(SUM(cost.tarifa * cost.qty), 0) AS total_venta,
-                    COALESCE(SUM(CASE WHEN g.tipo = 'COSTO' THEN g.monto ELSE 0 END), 0) AS gdc,
-                    COALESCE(SUM(CASE WHEN g.tipo = 'VENTAS' THEN g.monto ELSE 0 END), 0) AS gdv
-                FROM prospectos p
-                LEFT JOIN clientes c ON p.cliente_ppl = c.id_clt
-                LEFT JOIN costos cost ON p.id_ppl = cost.id_ppl
-                LEFT JOIN gastos_locales g ON p.id_ppl = g.id_ppl
-                GROUP BY p.id_ppl
-                ORDER BY p.fecha_ppl DESC
-                LIMIT 10
-            ");
-            $stmt->execute();
-            $prospectos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
+        require_once __DIR__ . '/../config.php'; // ← Incluir configuración
+        
+        $stmt = $pdo->prepare("..."); // ← Usar $pdo directamente
+        $stmt->execute();
+        $prospectos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
-        error_log("Error al cargar lista de prospectos: " . $e->getMessage());
+        error_log("Error: " . $e->getMessage());
         $prospectos = [];
     }
 }
