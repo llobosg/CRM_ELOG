@@ -38,16 +38,16 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Apache: evitar conflicto MPM
-RUN a2dismod mpm_event mpm_worker || true \
-    && a2enmod rewrite
+# 🔥 FIX REAL: eliminar TODOS los MPM y dejar solo prefork
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load \
+          /etc/apache2/mods-enabled/mpm_*.conf \
+    && a2enmod mpm_prefork rewrite
 
 WORKDIR /var/www/html
-
-# 👉 COPIA CORRECTA DESDE BUILD
 COPY --from=build /app /var/www/html
 
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
 EXPOSE 80
+
