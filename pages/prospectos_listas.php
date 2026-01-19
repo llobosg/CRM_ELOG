@@ -1,5 +1,4 @@
 <?php
-// Rol ya verificado en index.php
 $rol = $_SESSION['rol'] ?? '';
 if ($rol !== 'admin' && $rol !== 'comercial') {
     http_response_code(403);
@@ -12,7 +11,6 @@ if (php_sapi_name() !== 'cli') {
     try {
         require_once __DIR__ . '/../config.php';
 
-        // ✅ Consulta mejorada: muestra prospectos incluso sin costos/gastos
         $stmt = $pdo->prepare("
             SELECT
                 p.id_ppl,
