@@ -2,7 +2,7 @@ FROM php:8.2-apache
 
 WORKDIR /var/www/html
 
-# Instalar dependencias del sistema
+# Dependencias del sistema + PHP extensions
 RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
@@ -14,9 +14,14 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔥 CORRECCIÓN CRÍTICA: dejar solo mpm_prefork
-RUN a2dismod mpm_event mpm_worker \
-    && a2enmod mpm_prefork rewrite
+# 🔥 ELIMINACIÓN FORZADA DE MPMs CONFLICTIVOS
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.* \
+          /etc/apache2/mods-enabled/mpm_worker.* \
+          /etc/apache2/mods-available/mpm_event.* \
+          /etc/apache2/mods-available/mpm_worker.*
+
+# 🔒 Forzar solo prefork
+RUN a2enmod mpm_prefork rewrite
 
 # Copiar proyecto
 COPY . .
