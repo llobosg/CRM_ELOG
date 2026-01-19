@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php if ($safePage === 'prospectos'): ?>
+<?php if ($safePage === 'prospectos_listas'): ?>
 <script>
 const USER_ROLE = '<?php echo htmlspecialchars($_SESSION["rol"] ?? "comercial"); ?>';
 console.log('✅ Rol cargado:', USER_ROLE);

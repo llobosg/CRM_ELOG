@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../config.php';
+
 $rol = $_SESSION['rol'] ?? '';
 if ($rol !== 'admin' && $rol !== 'comercial') {
     header('HTTP/1.1 403 Forbidden');
