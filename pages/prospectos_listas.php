@@ -75,7 +75,6 @@ if (php_sapi_name() !== 'cli') {
     </script>
 </head>
 <body>
-<?php include __DIR__ . '/../includes/header.php'; ?>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
         <h2 style="font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
