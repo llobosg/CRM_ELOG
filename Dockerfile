@@ -41,18 +41,13 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔥 Apache MPM FIX DEFINITIVO
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.* \
-          /etc/apache2/mods-enabled/mpm_worker.* \
-          /etc/apache2/mods-enabled/mpm_prefork.* \
-          /etc/apache2/mods-available/mpm_event.* \
-          /etc/apache2/mods-available/mpm_worker.* \
-          /etc/apache2/mods-available/mpm_prefork.* \
-    && a2enmod mpm_prefork rewrite
+# ✅ Apache: solo desactivar MPMs conflictivos
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod rewrite
 
 WORKDIR /var/www/html
 
-COPY --from=0 /app /var/www/html
+COPY --from=build /app /var/www/html
 
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
