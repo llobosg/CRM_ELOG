@@ -32,7 +32,7 @@ require_once __DIR__ . '/config.php';
 $validPages = [
     'agentes', 'aplicacion_costos', 'comerciales', 'commoditys', 'conceptos',
     'contactos', 'incoterm', 'lugares', 'medios_transporte', 'operacion',
-    'proveedor_pnac', 'tservicios', 'trafico', 'dashboard', 'prospectos',
+    'proveedor_pnac', 'tservicios', 'trafico', 'dashboard', 'prospectos', 'prospectos_listas',
     'ficha_cliente', 'facturacion', 'condiciones_trafico'
 ];
 
