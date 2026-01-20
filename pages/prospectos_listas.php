@@ -101,10 +101,10 @@ if (php_sapi_name() !== 'cli') {
                 <thead>
                     <tr>
                         <th style="width: 18%;">Cliente</th>      <!-- +10% -->
-                        <th style="width: 12%;">Fecha</th>        <!-- +10% -->
+                        <th style="width: 10%;">Fecha</th>        <!-- +10% -->
                         <th>Operación</th>
                         <th>Tipo Oper</th>
-                        <th>Concatenado</th>
+                        <th style="width: 13%;">Concatenado</th>
                         <th>Servicio</th>
                         <th>Tráfico</th>
                         <th>Costo</th>
@@ -135,7 +135,7 @@ if (php_sapi_name() !== 'cli') {
                         <td><?= number_format((float)$p['gdv'], 0, ',', '.') ?></td>
                         <td>
                             <a href="/?page=prospectos&seleccionar=<?= $p['id_ppl'] ?>" class="btn-primary" title="Editar">
-                                <i class="fas fa-edit"></i>
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
                             <button type="button" class="btn-danger" title="Eliminar" 
                                 onclick="confirmarEliminacion(<?= $p['id_ppl'] ?>, '<?= addslashes($p['concatenado']) ?>')">
