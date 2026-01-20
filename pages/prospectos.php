@@ -2411,7 +2411,6 @@
             cargarClientesEnSelect();
 
             // === 3. Manejo de mensajes de éxito/error ===
-            const params = new URLSearchParams(window.location.search);
             const msg = params.get('exito');
             if (msg) {
                 exito(decodeURIComponent(msg));
