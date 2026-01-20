@@ -84,7 +84,7 @@ if (php_sapi_name() !== 'cli') {
     </script>
 </head>
 <body>
-<div class="container" style="max-width: 1800px; width: 95%; margin: 0 auto; padding: 0 1rem;">
+<div class="container" style="max-width: 2100px; width: 95%; margin: 0 auto; padding: 0 1rem;">
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
         <h2 style="font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
