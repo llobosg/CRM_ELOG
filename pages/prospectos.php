@@ -2626,31 +2626,25 @@
                 return;
             }
 
-            fetch(`/api/get_contacto_primario.php?rut_cliente=${encodeURIComponent(rut_empresa)}`)
+            fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut_empresa)}`)
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     return response.json();
                 })
                 .then(data => {
-                    if (data.success && data.contacto) {
-                        // Llenar los campos con los datos del contacto primario
-                        document.getElementById('contacto').value = data.contacto.nom_contacto || '';
-                        document.getElementById('email').value = data.contacto.email || '';
+                    // Buscar el contacto con primario = "S"
+                    const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
+                    
+                    if (contactoPrimario) {
+                        document.getElementById('contacto').value = contactoPrimario.nom_contacto || '';
+                        document.getElementById('email').value = contactoPrimario.email || '';
                     } else {
-                        // Si no hay contacto primario o hay un error, limpiar los campos
                         limpiarCamposContacto();
-                        // Opcional: Mostrar un mensaje informativo
-                        // info('No se encontró contacto primario para este cliente.');
                     }
                 })
-                .catch(error => {
-                    console.error('Error al cargar contacto primario:', error);
-                    // En caso de error, limpiar los campos para evitar datos inconsistentes
+                .catch(err => {
+                    console.error('Error al cargar contacto primario:', err);
                     limpiarCamposContacto();
-                    // Opcional: Mostrar un mensaje de error
-                    // error('Error al cargar el contacto primario.');
                 });
         }
 
