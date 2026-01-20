@@ -630,9 +630,174 @@
                 function error(msg) { mostrarNotificacion(msg, 'error'); }
                 function advertencia(msg) { mostrarNotificacion(msg, 'advertencia'); }
 
-                // ===================================================================
-                // === FUNCIONES DE CLIENTE Y PROSPECTO ===
-                // ===================================================================
+                // === SELECCIONAR PROSPECTO ===
+                function seleccionarProspecto(id) {
+                        fetch(`/api/get_prospecto.php?id=${id}`)
+                            // === Validación antes de r.json()
+                            .then(r => {
+                                if (!r.ok) {
+                                    throw new Error(`HTTP ${r.status}`);
+                                }
+                                return r.text().then(text => {
+                                    try {
+                                        return JSON.parse(text);
+                                    } catch (e) {
+                                        console.error('❌ Respuesta no es JSON:', text);
+                                        throw new Error('La API devolvió HTML en lugar de JSON');
+                                    }
+                                });
+                            })
+                            .then(data => {
+                                if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
+                                const p = data.prospecto;
+
+                                // Actualizar campos ocultos del prospecto
+                                document.getElementById('prospecto_notas_comerciales').value = p.notas_comerciales || '';
+                                document.getElementById('prospecto_notas_operaciones').value = p.notas_operaciones || '';
+                                document.getElementById('prospecto_razon_social').value = p.razon_social || '';
+                                document.getElementById('prospecto_direccion').value = p.direccion || '';
+                                document.getElementById('prospecto_rut_empresa').value = p.rut_empresa || '';
+                                document.getElementById('operacion').value = p.operacion || '';
+
+                                // === Actualizar el select de Razón Social ===
+                                const razonSelect = document.getElementById('razon_social_select');
+                                if (razonSelect) {
+                                    let optionFound = false;
+                                    for (let i = 0; i < razonSelect.options.length; i++) {
+                                        const opt = razonSelect.options[i];
+                                        if (opt.value === p.rut_empresa) {
+                                            opt.selected = true;
+                                            optionFound = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!optionFound && p.rut_empresa && p.razon_social) {
+                                        const opt = document.createElement('option');
+                                        opt.value = p.rut_empresa;
+                                        opt.textContent = p.razon_social;
+                                        razonSelect.appendChild(opt);
+                                        razonSelect.value = p.rut_empresa;
+                                    }
+                                }
+
+                                // === Cargar campos del formulario ===
+                                const fields = [
+                                    { id: 'rut_empresa', value: p.rut_empresa },
+                                    { id: 'fono_empresa', value: p.fono_empresa },
+                                    { id: 'direccion', value: p.direccion },
+                                    { id: 'booking', value: p.booking },
+                                    { id: 'incoterm', value: p.incoterm },
+                                    { id: 'fecha_alta', value: p.fecha_alta },
+                                    { id: 'fecha_estado', value: p.fecha_estado },
+                                    { id: 'nombre', value: p.nombre },
+                                    { id: 'pais', value: p.pais }
+                                ];
+                                fields.forEach(f => {
+                                    const el = document.getElementById(f.id);
+                                    if (el) el.value = f.value || '';
+                                });
+
+                                // === Cargar operación y tipo_oper ===
+                                const opSel = document.getElementById('operacion');
+                                const tipoSel = document.getElementById('tipo_oper');
+                                if (opSel && p.operacion) {
+                                    opSel.value = p.operacion;
+                                    fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
+                                        .then(r => r.json())
+                                        .then(data => {
+                                            tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                                            (data.tipos || []).forEach(t => {
+                                                const opt = document.createElement('option');
+                                                opt.value = t;
+                                                opt.textContent = t;
+                                                tipoSel.appendChild(opt);
+                                            });
+                                            if (p.tipo_oper) tipoSel.value = p.tipo_oper;
+                                        });
+                                }
+
+                                // === Notas comerciales y operaciones ===
+                                const setNota = (name, val) => {
+                                    const inp = document.getElementById(name);
+                                    if (inp) inp.value = val || '';
+                                    const ta = document.getElementById(`${name}_input`);
+                                    if (ta) ta.value = val || '';
+                                };
+                                setNota('notas_comerciales', p.notas_comerciales);
+                                setNota('notas_operaciones', p.notas_operaciones);
+
+                                // === Cargar servicios (si existen) ===
+                                // Extraer Razón Social del <select> (texto de la opción seleccionada)
+                                const razonSocialSelect = document.getElementById('razon_social_select');
+                                let razonSocialProspecto = '';
+                                if (razonSocialSelect && razonSocialSelect.selectedIndex >= 0) {
+                                    const selectedOption = razonSocialSelect.options[razonSocialSelect.selectedIndex];
+                                    if (selectedOption && selectedOption.textContent) {
+                                        razonSocialProspecto = selectedOption.textContent.trim();
+                                    }
+                                }
+
+                                const prospectoData = {
+                                    razon_social: razonSocialProspecto,
+                                    direccion: p.direccion || '',
+                                    rut_empresa: p.rut_empresa || '',
+                                    contacto_nombre: p.nombre || '' // Comercial asignado (o usa contacto primario si aplica)
+                                };
+
+                                servicios = (data.servicios || []).map(s => ({
+                                    ...s,
+                                    // Inyectar datos del prospecto en cada servicio
+                                    razon_social: prospectoData.razon_social,
+                                    direccion: s.direccion || prospectoData.direccion,
+                                    rut_empresa: prospectoData.rut_empresa,
+                                    contacto_nombre: s.contacto_nombre || prospectoData.contacto_nombre,
+                                    // Campos numéricos
+                                    costo: parseFloat(s.costo) || 0,
+                                    venta: parseFloat(s.venta) || 0,
+                                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
+                                }));
+                                tieneServiciosIniciales = servicios.length > 0;
+                                actualizarTabla();
+
+                                // NUEVO: Cargar contacto primario basado en el RUT del prospecto cargado
+                                cargarContactoPrimario(p.rut_empresa);
+
+                                // ✅✅✅ ASIGNACIONES CLAVE PARA EL BOTÓN "AGREGAR SERVICIO" ✅✅✅
+                                const idPplInput = document.getElementById('id_ppl');
+                                const concatenadoInput = document.getElementById('concatenado');
+                                if (idPplInput) idPplInput.value = p.id_ppl || '';
+                                if (concatenadoInput) concatenadoInput.value = p.concatenado || '';
+
+                                // === Habilitar campos y botones ===
+                                const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
+                                const selects = document.querySelectorAll('select');
+                                inputs.forEach(i => { i.readOnly = false; i.style.backgroundColor = ''; });
+                                selects.forEach(s => s.disabled = false);
+                                // Mostrar botón de agregar servicio si el prospecto ya existe
+                                const btnAgregar = document.getElementById('btn-agregar-servicio');
+                                if (btnAgregar && p.id_ppl && p.id_ppl > 0) {
+                                    btnAgregar.style.display = 'inline-flex'; // o 'inline-block'
+                                }
+
+                            })
+                            .catch(err => {
+                                console.error('Error al cargar prospecto:', err);
+                                error('No se pudo cargar el prospecto');
+                            });
+                }
+
+                function setSelectValue(selectId, value) {
+                    const select = document.getElementById(selectId);
+                    if (select) {
+                        for (let i = 0; i < select.options.length; i++) {
+                            if (select.options[i].value === value) {
+                                select.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }
 
                 // === CARGAR PROSPECTO ===
                 function cargarProspectoDesdeURL() {
@@ -652,19 +817,6 @@
                         const el = document.getElementById(field.id);
                         if (el) el.value = field.value || '';
                     });
-
-                    // Llenar selects
-                    const setSelectValue = (selectId, value) => {
-                        const select = document.getElementById(selectId);
-                        if (select) {
-                            for (let i = 0; i < select.options.length; i++) {
-                                if (select.options[i].value === value) {
-                                    select.selectedIndex = i;
-                                    break;
-                                }
-                            }
-                        }
-                    };
 
                     setSelectValue('operacion', PROSPECTO_CARGADO.operacion || '');
                     setSelectValue('tipo_oper', PROSPECTO_CARGADO.tipo_oper || '');
@@ -706,39 +858,6 @@
 
                     exito('Prospecto cargado correctamente');
                     console.log('PROSPECTO_CARGADO:', PROSPECTO_CARGADO);
-                }
-
-                // Función auxiliar para selects
-                function setSelectValue(selectId, value) {
-                    const select = document.getElementById(selectId);
-                    if (!select) {
-                        console.warn(`[WARN] Select con ID "${selectId}" no encontrado.`);
-                        return;
-                    }
-
-                    // Si las opciones aún no están cargadas, esperar
-                    if (select.options.length <= 1) {
-                        const observer = new MutationObserver(() => {
-                            if (select.options.length > 1) {
-                                applyValue();
-                                observer.disconnect();
-                            }
-                        });
-                        observer.observe(select, { childList: true });
-                        return;
-                    }
-
-                    applyValue();
-
-                    function applyValue() {
-                        for (let i = 0; i < select.options.length; i++) {
-                            if (select.options[i].value === value) {
-                                select.selectedIndex = i;
-                                return;
-                            }
-                        }
-                        select.selectedIndex = 0;
-                    }
                 }
 
                 function actualizarTabla() {
@@ -1622,166 +1741,7 @@
                     }
 
                     // ===================================================================
-                    // === 4. MANEJO DE PROSPECTOS ===
-                    // ===================================================================
-                    function seleccionarProspecto(id) {
-                        fetch(`/api/get_prospecto.php?id=${id}`)
-                            // === Validación antes de r.json()
-                            .then(r => {
-                                if (!r.ok) {
-                                    throw new Error(`HTTP ${r.status}`);
-                                }
-                                return r.text().then(text => {
-                                    try {
-                                        return JSON.parse(text);
-                                    } catch (e) {
-                                        console.error('❌ Respuesta no es JSON:', text);
-                                        throw new Error('La API devolvió HTML en lugar de JSON');
-                                    }
-                                });
-                            })
-                            .then(data => {
-                                if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
-                                const p = data.prospecto;
-
-                                // Actualizar campos ocultos del prospecto
-                                document.getElementById('prospecto_notas_comerciales').value = p.notas_comerciales || '';
-                                document.getElementById('prospecto_notas_operaciones').value = p.notas_operaciones || '';
-                                document.getElementById('prospecto_razon_social').value = p.razon_social || '';
-                                document.getElementById('prospecto_direccion').value = p.direccion || '';
-                                document.getElementById('prospecto_rut_empresa').value = p.rut_empresa || '';
-                                document.getElementById('operacion').value = p.operacion || '';
-
-                                // === Actualizar el select de Razón Social ===
-                                const razonSelect = document.getElementById('razon_social_select');
-                                if (razonSelect) {
-                                    let optionFound = false;
-                                    for (let i = 0; i < razonSelect.options.length; i++) {
-                                        const opt = razonSelect.options[i];
-                                        if (opt.value === p.rut_empresa) {
-                                            opt.selected = true;
-                                            optionFound = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!optionFound && p.rut_empresa && p.razon_social) {
-                                        const opt = document.createElement('option');
-                                        opt.value = p.rut_empresa;
-                                        opt.textContent = p.razon_social;
-                                        razonSelect.appendChild(opt);
-                                        razonSelect.value = p.rut_empresa;
-                                    }
-                                }
-
-                                // === Cargar campos del formulario ===
-                                const fields = [
-                                    { id: 'rut_empresa', value: p.rut_empresa },
-                                    { id: 'fono_empresa', value: p.fono_empresa },
-                                    { id: 'direccion', value: p.direccion },
-                                    { id: 'booking', value: p.booking },
-                                    { id: 'incoterm', value: p.incoterm },
-                                    { id: 'fecha_alta', value: p.fecha_alta },
-                                    { id: 'fecha_estado', value: p.fecha_estado },
-                                    { id: 'nombre', value: p.nombre },
-                                    { id: 'pais', value: p.pais }
-                                ];
-                                fields.forEach(f => {
-                                    const el = document.getElementById(f.id);
-                                    if (el) el.value = f.value || '';
-                                });
-
-                                // === Cargar operación y tipo_oper ===
-                                const opSel = document.getElementById('operacion');
-                                const tipoSel = document.getElementById('tipo_oper');
-                                if (opSel && p.operacion) {
-                                    opSel.value = p.operacion;
-                                    fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
-                                        .then(r => r.json())
-                                        .then(data => {
-                                            tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                                            (data.tipos || []).forEach(t => {
-                                                const opt = document.createElement('option');
-                                                opt.value = t;
-                                                opt.textContent = t;
-                                                tipoSel.appendChild(opt);
-                                            });
-                                            if (p.tipo_oper) tipoSel.value = p.tipo_oper;
-                                        });
-                                }
-
-                                // === Notas comerciales y operaciones ===
-                                const setNota = (name, val) => {
-                                    const inp = document.getElementById(name);
-                                    if (inp) inp.value = val || '';
-                                    const ta = document.getElementById(`${name}_input`);
-                                    if (ta) ta.value = val || '';
-                                };
-                                setNota('notas_comerciales', p.notas_comerciales);
-                                setNota('notas_operaciones', p.notas_operaciones);
-
-                                // === Cargar servicios (si existen) ===
-                                // Extraer Razón Social del <select> (texto de la opción seleccionada)
-                                const razonSocialSelect = document.getElementById('razon_social_select');
-                                let razonSocialProspecto = '';
-                                if (razonSocialSelect && razonSocialSelect.selectedIndex >= 0) {
-                                    const selectedOption = razonSocialSelect.options[razonSocialSelect.selectedIndex];
-                                    if (selectedOption && selectedOption.textContent) {
-                                        razonSocialProspecto = selectedOption.textContent.trim();
-                                    }
-                                }
-
-                                const prospectoData = {
-                                    razon_social: razonSocialProspecto,
-                                    direccion: p.direccion || '',
-                                    rut_empresa: p.rut_empresa || '',
-                                    contacto_nombre: p.nombre || '' // Comercial asignado (o usa contacto primario si aplica)
-                                };
-
-                                servicios = (data.servicios || []).map(s => ({
-                                    ...s,
-                                    // Inyectar datos del prospecto en cada servicio
-                                    razon_social: prospectoData.razon_social,
-                                    direccion: s.direccion || prospectoData.direccion,
-                                    rut_empresa: prospectoData.rut_empresa,
-                                    contacto_nombre: s.contacto_nombre || prospectoData.contacto_nombre,
-                                    // Campos numéricos
-                                    costo: parseFloat(s.costo) || 0,
-                                    venta: parseFloat(s.venta) || 0,
-                                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
-                                }));
-                                tieneServiciosIniciales = servicios.length > 0;
-                                actualizarTabla();
-
-                                // NUEVO: Cargar contacto primario basado en el RUT del prospecto cargado
-                                cargarContactoPrimario(p.rut_empresa);
-
-                                // ✅✅✅ ASIGNACIONES CLAVE PARA EL BOTÓN "AGREGAR SERVICIO" ✅✅✅
-                                const idPplInput = document.getElementById('id_ppl');
-                                const concatenadoInput = document.getElementById('concatenado');
-                                if (idPplInput) idPplInput.value = p.id_ppl || '';
-                                if (concatenadoInput) concatenadoInput.value = p.concatenado || '';
-
-                                // === Habilitar campos y botones ===
-                                const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
-                                const selects = document.querySelectorAll('select');
-                                inputs.forEach(i => { i.readOnly = false; i.style.backgroundColor = ''; });
-                                selects.forEach(s => s.disabled = false);
-                                // Mostrar botón de agregar servicio si el prospecto ya existe
-                                const btnAgregar = document.getElementById('btn-agregar-servicio');
-                                if (btnAgregar && p.id_ppl && p.id_ppl > 0) {
-                                    btnAgregar.style.display = 'inline-flex'; // o 'inline-block'
-                                }
-
-                            })
-                            .catch(err => {
-                                console.error('Error al cargar prospecto:', err);
-                                error('No se pudo cargar el prospecto');
-                            });
-                    }
-
-                    // ===================================================================
-                    // === 5. MODALES Y SUBMODALES ===
+                    // === MODALES Y SUBMODALES ===
                     // ===================================================================
                     function abrirModalComercial() { document.getElementById('modal-comercial').style.display = 'block'; }
                     function cerrarModalComercial() { document.getElementById('modal-comercial').style.display = 'none'; }
