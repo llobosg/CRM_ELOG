@@ -102,8 +102,6 @@ if (php_sapi_name() !== 'cli') {
                     <tr>
                         <th style="width: 35%;">Cliente</th>      <!-- +10% -->
                         <th style="width: 10%;">Fecha</th>        <!-- +10% -->
-                        <th>Operación</th>
-                        <th style="width: 10%;">Tipo Oper</th>
                         <th style="width: 13%;">Concatenado</th>
                         <th>Servicio</th>
                         <th>Tráfico</th>
