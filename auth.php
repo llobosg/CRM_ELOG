@@ -44,7 +44,7 @@ try {
         $_SESSION['rol'] = $usuario['rol'];
 
         session_write_close();
-        header('Location: /index.php?page=prospectos');
+        header('Location: /');
         exit;
     } else {
         header('Location: /login.php?error=1');
