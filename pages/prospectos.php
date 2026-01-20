@@ -96,7 +96,11 @@
             <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
             <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
             <!-- Selects -->
-            <input type="hidden" id="operacion" value="<?= htmlspecialchars($prospecto['operacion'] ?? '') ?>">
+            <!-- ✅ Correcto: el select debe tener id="operacion" -->
+            <select name="operacion" id="operacion" style="..." required>
+                <option value="">Seleccionar</option>
+                <!-- Opciones se cargarán vía JS -->
+            </select>
             <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
             <input type="hidden" id="prospecto_razon_social" value="<?= htmlspecialchars($prospecto['razon_social'] ?? '') ?>">
             <input type="hidden" id="prospecto_direccion" value="<?= htmlspecialchars($prospecto['direccion'] ?? '') ?>">
@@ -706,23 +710,24 @@
                     if (btnAgregar) btnAgregar.style.display = 'block';
 
                     exito('Prospecto cargado correctamente');
+                    console.log('PROSPECTO_CARGADO:', PROSPECTO_CARGADO);
                 }
 
                 // Función auxiliar para selects
                 function setSelectValue(selectId, value) {
-                const select = document.getElementById(selectId);
-                if (!select) {
-                    console.warn(`[WARN] Select con ID "${selectId}" no encontrado.`);
-                    return;
-                }
-                for (let i = 0; i < select.options.length; i++) {
-                    if (select.options[i].value === value) {
-                        select.selectedIndex = i;
+                    const select = document.getElementById(selectId);
+                    if (!select) {
+                        console.warn(`[WARN] Select con ID "${selectId}" no encontrado.`);
                         return;
                     }
-                }
-                // Opcional: si no se encuentra, seleccionar el primero
-                select.selectedIndex = 0;
+                    for (let i = 0; i < select.options.length; i++) {
+                        if (select.options[i].value === value) {
+                            select.selectedIndex = i;
+                            return;
+                        }
+                    }
+                    // Si no se encuentra, selecciona la primera opción
+                    select.selectedIndex = 0;
                 }
 
                 function actualizarTabla() {
