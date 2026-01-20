@@ -41,7 +41,7 @@ if (php_sapi_name() !== 'cli') {
                     SUM(cs.costo * cs.qty) AS total_costo,
                     SUM(cs.tarifa * cs.qty) AS total_venta
                 FROM servicios s
-                LEFT JOIN costos_servicios cs ON s.id_srvc = cs.id_srv
+                LEFT JOIN costos_servicios cs ON s.id_srvc = cs.id_servicio
                 GROUP BY s.id_ppl
             ) cost_data ON p.id_ppl = cost_data.id_ppl
             LEFT JOIN (
@@ -50,7 +50,7 @@ if (php_sapi_name() !== 'cli') {
                     SUM(CASE WHEN gld.tipo = 'COSTO' THEN gld.monto ELSE 0 END) AS gdc,
                     SUM(CASE WHEN gld.tipo = 'VENTAS' THEN gld.monto ELSE 0 END) AS gdv
                 FROM servicios s
-                LEFT JOIN gastos_locales_detalle gld ON s.id_srvc = gld.id_srv
+                LEFT JOIN gastos_locales_detalle gld ON s.id_srvc = gld.id_servicio
                 GROUP BY s.id_ppl
             ) gasto_data ON p.id_ppl = gasto_data.id_ppl
             ORDER BY p.fecha_ppl DESC
