@@ -88,11 +88,6 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
     <input type="text" id="concatenado" readonly>
     <!-- Selects -->
     <input type="hidden" id="operacion" value="<?= htmlspecialchars($prospecto['operacion'] ?? '') ?>">
-    <select id="tipo_oper" name="tipo_oper">...</select>
-    <select id="estado" name="estado">...</select>
-    <!-- Fechas -->
-    <input type="date" id="fecha_alta" name="fecha_alta">
-    <input type="date" id="fecha_estado" name="fecha_estado">
     <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
     <input type="hidden" id="prospecto_razon_social" value="<?= htmlspecialchars($prospecto['razon_social'] ?? '') ?>">
     <input type="hidden" id="prospecto_direccion" value="<?= htmlspecialchars($prospecto['direccion'] ?? '') ?>">
