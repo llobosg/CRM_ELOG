@@ -133,13 +133,20 @@ if (php_sapi_name() !== 'cli') {
                         <td><?= number_format((float)$p['total_venta'], 0, ',', '.') ?></td>
                         <td><?= number_format((float)$p['gdc'], 0, ',', '.') ?></td>
                         <td><?= number_format((float)$p['gdv'], 0, ',', '.') ?></td>
-                        <td>
-                            <a href="/?page=prospectos&seleccionar=<?= $p['id_ppl'] ?>" class="btn-primary" title="Editar">
-                                <i class="fas fa-pencil-alt"></i>
-                            </a>
-                            <button type="button" class="btn-danger" title="Eliminar" 
-                                onclick="confirmarEliminacion(<?= $p['id_ppl'] ?>, '<?= addslashes($p['concatenado']) ?>')">
-                                <i class="fas fa-trash"></i>
+                        <td style="text-align: center; padding: 0.4rem;">
+                            <!-- ✏️ Editar -->
+                            <button type="button"
+                                    onclick="window.location.href='/?page=prospectos&seleccionar=<?= $p['id_ppl'] ?>'"
+                                    title="Editar"
+                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-right: 0.5rem; padding: 0;">
+                                ✏️
+                            </button>
+                            <!-- 🗑️ Eliminar -->
+                            <button type="button"
+                                    onclick="confirmarEliminacion(<?= $p['id_ppl'] ?>, '<?= addslashes($p['concatenado']) ?>')"
+                                    title="Eliminar"
+                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
+                                🗑️
                             </button>
                         </td>
                     </tr>
