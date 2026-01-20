@@ -710,15 +710,19 @@
 
                 // Función auxiliar para selects
                 function setSelectValue(selectId, value) {
-                    const select = document.getElementById(selectId);
-                    if (select) {
-                        for (let i = 0; i < select.options.length; i++) {
-                            if (select.options[i].value === value) {
-                                select.selectedIndex = i;
-                                break;
-                            }
-                        }
+                const select = document.getElementById(selectId);
+                if (!select) {
+                    console.warn(`[WARN] Select con ID "${selectId}" no encontrado.`);
+                    return;
+                }
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === value) {
+                        select.selectedIndex = i;
+                        return;
                     }
+                }
+                // Opcional: si no se encuentra, seleccionar el primero
+                select.selectedIndex = 0;
                 }
 
                 function actualizarTabla() {
