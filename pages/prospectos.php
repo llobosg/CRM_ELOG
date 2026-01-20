@@ -1,4 +1,13 @@
 <?php
+require_once __DIR__ . '/../session_check.php';
+require_once __DIR__ . '/../config.php';
+
+$rol = $_SESSION['rol'] ?? '';
+if ($rol !== 'admin' && $rol !== 'comercial') {
+    http_response_code(403);
+    exit('Acceso denegado.');
+}
+
 // Cargar prospecto si se pasa ?seleccionar=ID
 $prospecto_data = null;
 $servicios_data = [];
@@ -49,6 +58,18 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
     }
 }
 ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prospectos - CRM ELOG</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<?php include __DIR__ . '/../includes/header.php'; ?>
 
 <!-- Mini consola de depuración -->
 <div id="debug-trace" style="margin: 1rem; padding: 0.5rem; background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
@@ -693,89 +714,6 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
             }
         }
 
-        function cargarClientesEnSelect() {
-            fetch('/api/get_todos_clientes.php')
-                .then(r => r.json())
-                .then(data => {
-                    const sel = document.getElementById('razon_social_select');
-                    if (!sel) return;
-                    sel.innerHTML = '<option value="">Seleccionar cliente</option>';
-                    (data.clientes || []).forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.rut;
-                        opt.textContent = c.razon_social;
-                        sel.appendChild(opt);
-                    });
-                })
-                .catch(err => error('No se pudieron cargar los clientes'));
-        }
-
-        document.getElementById('razon_social_select')?.addEventListener('change', function() {
-            const rut = this.value;
-            if (!rut) {
-                ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-                return;
-            }
-            fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.existe) {
-                        const c = data.cliente;
-                        document.getElementById('rut_empresa').value = c.rut || '';
-                        document.getElementById('pais').value = c.pais || '';
-                        document.getElementById('direccion').value = c.direccion || '';
-                        document.getElementById('nombre').value = c.nombre_comercial || '';
-                        document.querySelector('input[name="razon_social"]').value = c.razon_social || '';
-                        fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
-                            .then(r2 => r2.json())
-                            .then(data2 => {
-                                const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
-                                document.getElementById('fono_empresa').value = primario?.fono || '';
-                            });
-                    }
-                });
-        });
-
-        function validarRut(rut) {
-            if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
-            const cuerpo = rut.slice(0, -1);
-            const dv = rut.slice(-1).toUpperCase();
-            let suma = 0, multiplo = 2;
-            for (let i = cuerpo.length - 1; i >= 0; i--) {
-                suma += parseInt(cuerpo[i]) * multiplo;
-                multiplo = multiplo < 7 ? multiplo + 1 : 2;
-            }
-            const dvEsperado = (11 - (suma % 11)).toString();
-            const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
-            return dv === dvCalculado;
-        }
-
-        function calcularConcatenado() {
-            const opSelect = document.getElementById('operacion');
-            const tipoSelect = document.getElementById('tipo_oper');
-            const op = opSelect?.value || '';
-            const tipo = tipoSelect?.value || '';
-            
-            if (!op || !tipo) {
-                document.getElementById('concatenado').value = '';
-                return;
-            }
-
-            // Extraer abreviaturas
-            const opClean = op.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 2) || 'XX';
-            const tipoClean = tipo.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 4) || 'XXXX';
-
-            const fecha = new Date().toISOString().slice(2, 10).replace(/-/g, '');
-            const idProspect = parseInt(document.getElementById('id_prospect')?.value || '0') + 1;
-            const correlativo = idProspect.toString().padStart(2, '0');
-
-            const concatenado = `${opClean}${tipoClean}${fecha}-${correlativo}`;
-            document.getElementById('concatenado').value = concatenado;
-        }
-
         function actualizarTabla() {
             const tbody = document.getElementById('servicios-body');
             if (!tbody) return;
@@ -996,1542 +934,14 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
 
         } // Fin de actualizarTabla()
 
-        // --- Función para generar el PDF (v3 - Solicita PDF desde el servidor) ---
-        function generarPDFCotizacion(servicioIndex) {
-            const servicio = servicios[servicioIndex];
-            if (!servicio || !servicio.id_srvc) {
-                error('Servicio no encontrado o no tiene ID válido.');
-                return;
-            }
-
-            // Construir la URL para el PDF
-            const urlPdf = `/api/pdf_servicio.php?id_srvc=${encodeURIComponent(servicio.id_srvc)}`;
-
-            // Abrir el PDF en una nueva pestaña/ventana
-            // Esto hará que el navegador haga una petición GET a pdf_servicio.php
-            window.open(urlPdf, '_blank');
-        }
-
-        // === NUEVA FUNCIÓN: Gestión de notificaciones de costos ===
-        function manejarNotificacionCostos(servicio, index) {
-            const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
-            const estadoActual = servicio.estado_costos || 'pendiente';
-
-            // === Cualquiera puede enviar un servicio SIN costos ===
-            if (estadoActual === 'pendiente') {
-                if (!confirm('¿Solicitar costos al equipo de Pricing?')) return;
-                enviarNotificacionCostos(servicio.id_srvc, 'solicitado', index);
-                return;
-            }
-
-            // === Solo Pricing puede marcar como completado ===
-            if (estadoActual === 'solicitado') {
-                if (rolUsuario !== 'pricing') {
-                    alert('Solo el rol Pricing puede marcar los costos como completados.');
-                    return;
-                }
-                if (!servicio.costos || servicio.costos.length === 0) {
-                    alert('Debe agregar al menos un costo antes de notificar.');
-                    return;
-                }
-                if (!confirm('¿Notificar al Comercial que los costos están listos?')) return;
-                enviarNotificacionCostos(servicio.id_srvc, 'completado', index);
-                return;
-            }
-
-            // === Solo Comercial puede aprobar (opcional) ===
-            if (estadoActual === 'completado') {
-                if (rolUsuario !== 'comercial') {
-                    alert('Solo el Comercial puede aprobar los costos.');
-                    return;
-                }
-                if (!confirm('¿Confirmar que los costos han sido revisados?')) return;
-                enviarNotificacionCostos(servicio.id_srvc, 'revisado', index);
-                return;
-            }
-
-            alert('Acción no permitida en este estado.');
-        }
-
-        function enviarNotificacionCostos(idSrvc, nuevoEstado, index) {
-            fetch('/api/notificar_costos.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id_srvc: idSrvc,
-                    estado: nuevoEstado,
-                    usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
-                    rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
-                })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    // ✅ Actualizar estado localmente
-                    servicios[index].estado_costos = nuevoEstado;
-                    if (nuevoEstado === 'solicitado') {
-                        servicios[index].solicitado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
-                        servicios[index].fecha_solicitado = new Date().toISOString().slice(0, 19).replace('T', ' ');
-                    } else if (nuevoEstado === 'completado') {
-                        servicios[index].completado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
-                        servicios[index].fecha_completado = new Date().toISOString().slice(0, 19).replace('T', ' ');
-                    }
-                    // ✅ Refrescar la tabla para que el ícono cambie inmediatamente
-                    actualizarTabla();
-                    alert(data.message);
-                } else {
-                    alert('Error: ' + (data.message || 'Intente nuevamente'));
-                }
-            })
-            .catch(() => alert('Error de conexión'));
-        }
-
-        // --- Submodal Notas Servicio ---
-        // Variable para almacenar el índice del servicio que se está editando (si se abre desde la tabla)
-        let servicioIndexActual = -1;
-
-        function abrirSubmodalNotasServicio(index = -1) {
-            servicioIndexActual = index; // Guardar el índice del servicio actual
-            if (index >= 0 && index < servicios.length) {
-                // Cargar la nota existente del servicio seleccionado
-                document.getElementById('nota_servicio_textarea').value = servicios[index].nota_srvc || '';
-            } else {
-                // Si se abre desde el botón dentro del modal-servicio, pero sin un servicio en edición,
-                // limpiar el textarea. Si se está editando un servicio, se puede precargar la nota si ya existía.
-                // Para simplificar, aquí limpiamos.
-                document.getElementById('nota_servicio_textarea').value = '';
-                // Si se abre desde el modal de servicio, y se está editando, se podría cargar la nota aquí si se almacena temporalmente.
-                // Por ahora, asumimos que si no hay índice, es para un nuevo servicio o se limpiaría.
-                // Si se llama desde el botón del modal-servicio, servicioEnEdicion !== null implica edición.
-                if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-                    document.getElementById('nota_servicio_textarea').value = servicios[servicioEnEdicion].nota_srvc || '';
-                }
-            }
-            document.getElementById('submodal-notas-servicio').style.display = 'block';
-        }
-
-        function cerrarSubmodalNotasServicio() {
-            document.getElementById('submodal-notas-servicio').style.display = 'none';
-        }
-
-        function guardarNotasServicio() {
-            const nuevaNota = document.getElementById('nota_servicio_textarea').value.trim();
-
-            if (servicioIndexActual >= 0 && servicioIndexActual < servicios.length) {
-                // Caso 1: Se abrió desde la tabla, actualizamos el array y la vista previa
-                servicios[servicioIndexActual].nota_srvc = nuevaNota;
-                // Actualizar la vista previa en la tabla
-                const icono = document.querySelector(`.nota-servicio-icono[data-index="${servicioIndexActual}"]`);
-                if (icono) {
-                    let previewCell = icono.parentElement.querySelector('.nota-preview');
-                    if (!previewCell) {
-                        // Si no encuentra el span, lo creamos (esto es improbable si se cargó correctamente)
-                        previewCell = document.createElement('span');
-                        previewCell.className = 'nota-preview';
-                        icono.parentElement.appendChild(document.createTextNode(' ')); // Espacio
-                        icono.parentElement.appendChild(previewCell);
-                    }
-                    previewCell.textContent = nuevaNota ? nuevaNota : '(Sin notas)';
-                    previewCell.title = nuevaNota; // Actualizar el título del tooltip
-                }
-                exito('Notas del servicio guardadas');
-            } else if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-                // Caso 2: Se abrió desde el botón dentro del modal-servicio en modo edición
-                servicios[servicioEnEdicion].nota_srvc = nuevaNota;
-                exito('Notas del servicio guardadas (temporalmente)');
-            } else {
-                // Caso 3: Se abrió desde el botón dentro del modal-servicio en modo creación
-                // No hay un objeto en servicios[] aún, solo actualizamos una variable temporal o el objeto local en el modal.
-                // Para que se guarde con el servicio, debemos asegurarnos que el campo nota_srvc se incluya en el objeto enviado a la API.
-                // Esto se maneja en el paso 7.
-                exito('Notas del servicio listas para guardar con el servicio');
-            }
-            cerrarSubmodalNotasServicio();
-        }
-
-        // ===================================================================
-        // === 3. CARGA DE DATOS ===
-        // ===================================================================
-        function cargarOperacionesYTipos() {
-            // Cargar operaciones
-            fetch('/api/get_operaciones.php')
-                .then(r => r.json())
-                .then(data => {
-                    const opSel = document.getElementById('operacion');
-                    if (!opSel) return;
-                    opSel.innerHTML = '<option value="">Seleccionar</option>';
-                    (data.operaciones || []).forEach(op => {
-                        const opt = document.createElement('option');
-                        opt.value = op;
-                        opt.textContent = op;
-                        opSel.appendChild(opt);
-                    });
-                })
-                .catch(err => console.error('Error al cargar operaciones:', err));
-
-            // Listener para cargar tipos al cambiar operación
-            const opSel = document.getElementById('operacion');
-            if (opSel) {
-                const handler = function() {
-                    const op = this.value;
-                    const tipoSel = document.getElementById('tipo_oper');
-                    if (!op || !tipoSel) return;
-                    fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(op)}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                            (data.tipos || []).forEach(t => {
-                                const opt = document.createElement('option');
-                                opt.value = t;
-                                opt.textContent = t;
-                                tipoSel.appendChild(opt);
-                            });
-                            // Recalcular concatenado si ya hay un tipo seleccionado
-                            setTimeout(() => {
-                                if (tipoSel.value) calcularConcatenado();
-                            }, 100);
-                        })
-                        .catch(err => console.error('Error al cargar tipos:', err));
-                };
-                opSel.removeEventListener('change', handler);
-                opSel.addEventListener('change', handler);
-            }
-
-            // Listener para tipo_oper → recalcular concatenado
-            const tipoSel = document.getElementById('tipo_oper');
-            if (tipoSel) {
-                const handler = function() {
-                    if (document.getElementById('operacion').value) {
-                        calcularConcatenado();
-                    }
-                };
-                tipoSel.removeEventListener('change', handler);
-                tipoSel.addEventListener('change', handler);
-            }
-        }
-
-        function cargarDatosModalServicio(callback = null) {
-            let cargas = 0;
-            const total = 4;
-            const check = () => {
-                cargas++;
-                if (cargas === total && callback) callback();
-            };
-
-            // 1. Commodity
-            fetch('/api/get_commoditys.php')
-                .then(r => r.json())
-                .then(data => {
-                    const sel = document.getElementById('serv_commodity');
-                    if (sel) {
-                        sel.innerHTML = '<option value="">Seleccionar</option>';
-                        const list = Array.isArray(data)
-                            ? data
-                            : (Array.isArray(data.commoditys) ? data.commoditys : []);
-                        list.forEach(item => {
-                            const val = typeof item === 'string' ? item : (item.commodity || item);
-                            const opt = document.createElement('option');
-                            opt.value = val;
-                            opt.textContent = val;
-                            sel.appendChild(opt);
-                        });
-                    }
-                    check();
-                })
-                .catch(() => check());
-
-            // 2. Medios de transporte
-            fetch('/api/get_medios_transporte.php')
-                .then(r => r.json())
-                .then(data => {
-                    const sel = document.getElementById('serv_medio_transporte');
-                    if (sel) {
-                        sel.innerHTML = '<option value="">Seleccionar</option>';
-                        const list = Array.isArray(data)
-                            ? data
-                            : (Array.isArray(data.medios_transporte) ? data.medios_transporte : []);
-                        list.forEach(item => {
-                            const val = typeof item === 'string' ? item : item;
-                            const opt = document.createElement('option');
-                            opt.value = val;
-                            opt.textContent = val;
-                            sel.appendChild(opt);
-                        });
-                    }
-                    check();
-                })
-                .catch(() => check());
-
-            // 3. Agentes
-            fetch('/api/get_agentes.php')
-                .then(r => r.json())
-                .then(data => {
-                    const sel = document.getElementById('serv_agente');
-                    if (sel) {
-                        sel.innerHTML = '<option value="">Seleccionar</option>';
-                        const list = Array.isArray(data)
-                            ? data
-                            : (Array.isArray(data.agentes) ? data.agentes : []);
-                        list.forEach(item => {
-                            const val = typeof item === 'string' ? item : item;
-                            const opt = document.createElement('option');
-                            opt.value = val;
-                            opt.textContent = val;
-                            sel.appendChild(opt);
-                        });
-                    }
-                    check();
-                })
-                .catch(() => check());
-
-            // 4. Proveedores nacionales
-            fetch('/api/get_proveedores_pnac.php')
-                .then(r => r.json())
-                .then(data => {
-                    const sel = document.getElementById('serv_proveedor_nac');
-                    if (sel) {
-                        sel.innerHTML = '<option value="">Seleccionar</option>';
-                        const list = Array.isArray(data)
-                            ? data
-                            : (Array.isArray(data.proveedores) ? data.proveedores : []);
-                        list.forEach(item => {
-                            const val = typeof item === 'string' ? item : item;
-                            const opt = document.createElement('option');
-                            opt.value = val;
-                            opt.textContent = val;
-                            sel.appendChild(opt);
-                        });
-                    }
-                    check();
-                })
-                .catch(() => check());
-        }
-
-        function cargarLugaresPorMedio(medio, origenSeleccionado = null, paisOrigenSeleccionado = null) {
-            const origenSel = document.getElementById('serv_origen');
-            const destinoSel = document.getElementById('serv_destino');
-            if (!origenSel || !destinoSel) return Promise.resolve();
-
-            if (!medio) {
-                origenSel.innerHTML = '<option value="">Seleccionar</option>';
-                destinoSel.innerHTML = '<option value="">Seleccionar</option>';
-                return Promise.resolve();
-            }
-
-            return fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
-                .then(r => r.json())
-                .then(data => {
-                    const lugares = data.lugares || [];
-
-                    // Generar opciones para Origen
-                    const origenOptions = lugares.map(l => 
-                        `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
-                    ).join('');
-                    origenSel.innerHTML = '<option value="">Seleccionar</option>' + origenOptions;
-
-                    // Filtrar Destino: excluir dupla completa (lugar + pais)
-                    const destinosFiltrados = lugares.filter(l => 
-                        !(l.lugar === origenSeleccionado && l.pais === paisOrigenSeleccionado)
-                    );
-
-                    const destinoOptions = destinosFiltrados.map(l => 
-                        `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
-                    ).join('');
-                    destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoOptions;
-
-                    // Listener para Origen → País Origen + recargar Destino
-                    const handlerOrigen = () => {
-                        const opt = origenSel.options[origenSel.selectedIndex];
-                        const lugar = opt?.value || '';
-                        const pais = opt ? opt.getAttribute('data-pais') || '' : '';
-                        document.getElementById('serv_pais_origen').value = pais;
-
-                        // Recargar Destino excluyendo (lugar, pais)
-                        const nuevosDestinos = lugares.filter(l => 
-                            !(l.lugar === lugar && l.pais === pais)
-                        );
-                        const nuevasOpciones = nuevosDestinos.map(l => 
-                            `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
-                        ).join('');
-                        destinoSel.innerHTML = '<option value="">Seleccionar</option>' + nuevasOpciones;
-
-                        // Limpiar país destino
-                        document.getElementById('serv_pais_destino').value = '';
-                    };
-
-                    // Listener para Destino → País Destino
-                    const handlerDestino = () => {
-                        const opt = destinoSel.options[destinoSel.selectedIndex];
-                        const pais = opt ? opt.getAttribute('data-pais') || '' : '';
-                        document.getElementById('serv_pais_destino').value = pais;
-                    };
-
-                    // Limpiar y asignar listeners
-                    origenSel.removeEventListener('change', handlerOrigen);
-                    destinoSel.removeEventListener('change', handlerDestino);
-                    origenSel.addEventListener('change', handlerOrigen);
-                    destinoSel.addEventListener('change', handlerDestino);
-                })
-                .catch(err => {
-                    console.error('Error al cargar lugares por medio:', err);
-                    error('No se pudieron cargar los lugares para este medio de transporte');
-                    return Promise.resolve();
-                });
-        }
-
-        // ===================================================================
-        // === 4. MANEJO DE PROSPECTOS ===
-        // ===================================================================
-        function seleccionarProspecto(id) {
-            fetch(`/api/get_prospecto.php?id=${id}`)
-                // === Validación antes de r.json()
-                .then(r => {
-                    if (!r.ok) {
-                        throw new Error(`HTTP ${r.status}`);
-                    }
-                    return r.text().then(text => {
-                        try {
-                            return JSON.parse(text);
-                        } catch (e) {
-                            console.error('❌ Respuesta no es JSON:', text);
-                            throw new Error('La API devolvió HTML en lugar de JSON');
-                        }
-                    });
-                })
-                .then(data => {
-                    if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
-                    const p = data.prospecto;
-
-                    // Actualizar campos ocultos del prospecto
-                    document.getElementById('prospecto_notas_comerciales').value = p.notas_comerciales || '';
-                    document.getElementById('prospecto_notas_operaciones').value = p.notas_operaciones || '';
-                    document.getElementById('prospecto_razon_social').value = p.razon_social || '';
-                    document.getElementById('prospecto_direccion').value = p.direccion || '';
-                    document.getElementById('prospecto_rut_empresa').value = p.rut_empresa || '';
-                    document.getElementById('operacion').value = p.operacion || '';
-
-                    // === Actualizar el select de Razón Social ===
-                    const razonSelect = document.getElementById('razon_social_select');
-                    if (razonSelect) {
-                        let optionFound = false;
-                        for (let i = 0; i < razonSelect.options.length; i++) {
-                            const opt = razonSelect.options[i];
-                            if (opt.value === p.rut_empresa) {
-                                opt.selected = true;
-                                optionFound = true;
-                                break;
-                            }
-                        }
-                        if (!optionFound && p.rut_empresa && p.razon_social) {
-                            const opt = document.createElement('option');
-                            opt.value = p.rut_empresa;
-                            opt.textContent = p.razon_social;
-                            razonSelect.appendChild(opt);
-                            razonSelect.value = p.rut_empresa;
-                        }
-                    }
-
-                    // === Cargar campos del formulario ===
-                    const fields = [
-                        { id: 'rut_empresa', value: p.rut_empresa },
-                        { id: 'fono_empresa', value: p.fono_empresa },
-                        { id: 'direccion', value: p.direccion },
-                        { id: 'booking', value: p.booking },
-                        { id: 'incoterm', value: p.incoterm },
-                        { id: 'fecha_alta', value: p.fecha_alta },
-                        { id: 'fecha_estado', value: p.fecha_estado },
-                        { id: 'nombre', value: p.nombre },
-                        { id: 'pais', value: p.pais }
-                    ];
-                    fields.forEach(f => {
-                        const el = document.getElementById(f.id);
-                        if (el) el.value = f.value || '';
-                    });
-
-                    // === Cargar operación y tipo_oper ===
-                    const opSel = document.getElementById('operacion');
-                    const tipoSel = document.getElementById('tipo_oper');
-                    if (opSel && p.operacion) {
-                        opSel.value = p.operacion;
-                        fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
-                            .then(r => r.json())
-                            .then(data => {
-                                tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                                (data.tipos || []).forEach(t => {
-                                    const opt = document.createElement('option');
-                                    opt.value = t;
-                                    opt.textContent = t;
-                                    tipoSel.appendChild(opt);
-                                });
-                                if (p.tipo_oper) tipoSel.value = p.tipo_oper;
-                            });
-                    }
-
-                    // === Notas comerciales y operaciones ===
-                    const setNota = (name, val) => {
-                        const inp = document.getElementById(name);
-                        if (inp) inp.value = val || '';
-                        const ta = document.getElementById(`${name}_input`);
-                        if (ta) ta.value = val || '';
-                    };
-                    setNota('notas_comerciales', p.notas_comerciales);
-                    setNota('notas_operaciones', p.notas_operaciones);
-
-                    // === Cargar servicios (si existen) ===
-                    // Extraer Razón Social del <select> (texto de la opción seleccionada)
-                    const razonSocialSelect = document.getElementById('razon_social_select');
-                    let razonSocialProspecto = '';
-                    if (razonSocialSelect && razonSocialSelect.selectedIndex >= 0) {
-                        const selectedOption = razonSocialSelect.options[razonSocialSelect.selectedIndex];
-                        if (selectedOption && selectedOption.textContent) {
-                            razonSocialProspecto = selectedOption.textContent.trim();
-                        }
-                    }
-
-                    const prospectoData = {
-                        razon_social: razonSocialProspecto,
-                        direccion: p.direccion || '',
-                        rut_empresa: p.rut_empresa || '',
-                        contacto_nombre: p.nombre || '' // Comercial asignado (o usa contacto primario si aplica)
-                    };
-
-                    servicios = (data.servicios || []).map(s => ({
-                        ...s,
-                        // Inyectar datos del prospecto en cada servicio
-                        razon_social: prospectoData.razon_social,
-                        direccion: s.direccion || prospectoData.direccion,
-                        rut_empresa: prospectoData.rut_empresa,
-                        contacto_nombre: s.contacto_nombre || prospectoData.contacto_nombre,
-                        // Campos numéricos
-                        costo: parseFloat(s.costo) || 0,
-                        venta: parseFloat(s.venta) || 0,
-                        costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                        ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
-                    }));
-                    tieneServiciosIniciales = servicios.length > 0;
-                    actualizarTabla();
-
-                    // NUEVO: Cargar contacto primario basado en el RUT del prospecto cargado
-                    cargarContactoPrimario(p.rut_empresa);
-
-                    // ✅✅✅ ASIGNACIONES CLAVE PARA EL BOTÓN "AGREGAR SERVICIO" ✅✅✅
-                    const idPplInput = document.getElementById('id_ppl');
-                    const concatenadoInput = document.getElementById('concatenado');
-                    if (idPplInput) idPplInput.value = p.id_ppl || '';
-                    if (concatenadoInput) concatenadoInput.value = p.concatenado || '';
-
-                    // === Habilitar campos y botones ===
-                    const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
-                    const selects = document.querySelectorAll('select');
-                    inputs.forEach(i => { i.readOnly = false; i.style.backgroundColor = ''; });
-                    selects.forEach(s => s.disabled = false);
-                    // Mostrar botón de agregar servicio si el prospecto ya existe
-                    const btnAgregar = document.getElementById('btn-agregar-servicio');
-                    if (btnAgregar && p.id_ppl && p.id_ppl > 0) {
-                        btnAgregar.style.display = 'inline-flex'; // o 'inline-block'
-                    }
-
-                })
-                .catch(err => {
-                    console.error('Error al cargar prospecto:', err);
-                    error('No se pudo cargar el prospecto');
-                });
-        }
-
-        // ===================================================================
-        // === 5. MODALES Y SUBMODALES ===
-        // ===================================================================
-        function abrirModalComercial() { document.getElementById('modal-comercial').style.display = 'block'; }
-        function cerrarModalComercial() { document.getElementById('modal-comercial').style.display = 'none'; }
-        function abrirModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'block'; }
-        function cerrarModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'none'; }
-
-        function guardarNotasComerciales() {
-            const id = document.getElementById('id_ppl')?.value;
-            if (!id || id === '0') return error('Prospecto no válido');
-            const val = document.getElementById('notas_comerciales_input').value.trim();
-            fetch('/api/guardar_nota.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id_ppl: id, campo: 'notas_comerciales', valor: val})
-            }).then(r => r.json()).then(d => {
-                if (d.success) exito('Notas guardadas');
-                else error(d.message || 'Error');
-                cerrarModalComercial();
-            });
-        }
-        function guardarNotasOperaciones() {
-            const id = document.getElementById('id_ppl')?.value;
-            if (!id || id === '0') return error('Prospecto no válido');
-            const val = document.getElementById('notas_operaciones_input').value.trim();
-            fetch('/api/guardar_nota.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id_ppl: id, campo: 'notas_operaciones', valor: val})
-            }).then(r => r.json()).then(d => {
-                if (d.success) exito('Notas guardadas');
-                else error(d.message || 'Error');
-                cerrarModalOperaciones();
-            });
-        }
-
-        // --- FUNCIÓN CORREGIDA: abrirModalServicio ---
-        function abrirModalServicio(index = null) {
-            const idPpl = document.getElementById('id_ppl')?.value;
-            const concatenado = document.getElementById('concatenado')?.value;
-            if (!idPpl || idPpl === '0' || !concatenado) {
-                error('Guarde el prospecto primero antes de agregar servicios.');
-                return;
-            }
-
-            // Limpiar modal
-            const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
-            modalInputs.forEach(el => {
-                if (el.type === 'number') el.value = '';
-                else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
-                else if (el.tagName === 'SELECT') el.selectedIndex = 0;
-            });
-
-            document.getElementById('id_prospect_serv').value = idPpl;
-            document.getElementById('concatenado_serv').value = concatenado;
-            document.getElementById('serv_titulo_concatenado').textContent = concatenado;
-            costosServicio = [];
-            gastosLocales = [];
-
-            // Cargar datos del modal (commodity, medios, etc.)
-            cargarDatosModalServicio(() => {
-                if (index !== null) {
-                    // Editar servicio existente
-                    servicioEnEdicion = index;
-                    const s = servicios[index];
-                    costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
-                    gastosLocales = Array.isArray(s.gastos_locales) 
-                        ? s.gastos_locales.map(g => ({
-                            ...g,
-                            monto: parseFloat(g.monto) || 0,
-                            iva: parseFloat(g.iva) || 0
-                        }))
-                        : [];
-
-                    // Rellenar campos básicos
-                    document.getElementById('serv_servicio').value = s.servicio || '';
-                    document.getElementById('serv_transportador').value = s.transportador || '';
-                    document.getElementById('serv_incoterm').value = s.incoterm || '';
-                    document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
-                    document.getElementById('serv_transito').value = s.transito || '';
-                    document.getElementById('serv_frecuencia').value = s.frecuencia || '';
-                    document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
-                    document.getElementById('serv_sector').value = s.sector || '';
-                    document.getElementById('serv_mercancia').value = s.mercancia || '';
-                    document.getElementById('serv_bultos').value = s.bultos || '';
-                    document.getElementById('serv_peso').value = s.peso || '';
-                    document.getElementById('serv_volumen').value = s.volumen || '';
-                    document.getElementById('serv_dimensiones').value = s.dimensiones || '';
-                    document.getElementById('serv_moneda').value = s.moneda || 'USD';
-                    document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
-                    document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
-                    document.getElementById('serv_aol').value = s.aol || '';
-                    document.getElementById('serv_aod').value = s.aod || '';
-                    document.getElementById('serv_agente').value = s.agente || '';
-                    document.getElementById('serv_validez').value = s.validez || '';
-
-                    // Cargar lugares si hay medio guardado
-                    const medioGuardado = (s.trafico || '').trim();
-                    if (medioGuardado) {
-                        // ✅ PASAR ORIGEN + PAÍS_ORIGEN para filtrado preciso
-                        cargarLugaresPorMedio(medioGuardado, s.origen, s.pais_origen).then(() => {
-                            const origenSel = document.getElementById('serv_origen');
-                            const destinoSel = document.getElementById('serv_destino');
-
-                            // Preseleccionar Origen (por valor + país)
-                            if (origenSel && s.origen && s.pais_origen) {
-                                for (let i = 0; i < origenSel.options.length; i++) {
-                                    const opt = origenSel.options[i];
-                                    if (opt.value === s.origen && opt.getAttribute('data-pais') === s.pais_origen) {
-                                        origenSel.selectedIndex = i;
-                                        document.getElementById('serv_pais_origen').value = s.pais_origen;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // Preseleccionar Destino (por valor + país)
-                            if (destinoSel && s.destino && s.pais_destino) {
-                                for (let i = 0; i < destinoSel.options.length; i++) {
-                                    const opt = destinoSel.options[i];
-                                    if (opt.value === s.destino && opt.getAttribute('data-pais') === s.pais_destino) {
-                                        destinoSel.selectedIndex = i;
-                                        document.getElementById('serv_pais_destino').value = s.pais_destino;
-                                        break;
-                                    }
-                                }
-                            }
-                        });
-                    }
-
-                    // Cargar commodity y medio
-                    const medioSel = document.getElementById('serv_medio_transporte');
-                    const commoditySel = document.getElementById('serv_commodity');
-                    if (medioSel && s.trafico) medioSel.value = s.trafico;
-                    if (commoditySel && s.commodity) commoditySel.value = s.commodity;
-                } else {
-                    // Nuevo servicio
-                    servicioEnEdicion = null;
-                }
-            });
-
-            // Listener para cargar lugares al cambiar el medio de transporte
-            const medioSel = document.getElementById('serv_medio_transporte');
-            if (medioSel) {
-                const newMedioSel = medioSel.cloneNode(true);
-                medioSel.parentNode.replaceChild(newMedioSel, medioSel);
-                newMedioSel.addEventListener('change', function() {
-                    const medioSeleccionado = this.value;
-                    if (medioSeleccionado) {
-                        // --- CORRECCIÓN: Mapear medios específicos al genérico ---
-                        let medioParaCarga = medioSeleccionado;
-                        if (medioSeleccionado === 'Marítimo FCL' || medioSeleccionado === 'Marítimo LCL') {
-                            medioParaCarga = 'Marítimo';
-                        }
-                        // Puedes añadir más mapeos aquí si aplica para Aéreo o Terrestre en el futuro
-                        // else if (medioSeleccionado === 'Aéreo Internacional' || medioSeleccionado === 'Aéreo Nacional') {
-                        //     medioParaCarga = 'Aéreo';
-                        // }
-                        // else if (medioSeleccionado === 'Terrestre Regional') {
-                        //     medioParaCarga = 'Terrestre';
-                        // }
-                        // --- FIN CORRECCIÓN ---
-
-                        // Llamar a la función con el valor mapeado
-                        cargarLugaresPorMedio(medioParaCarga); // Sin origen → cargar todos
-                    } else {
-                        document.getElementById('serv_origen').innerHTML = '<option value="">Seleccionar</option>';
-                        document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>';
-                        document.getElementById('serv_pais_origen').value = '';
-                        document.getElementById('serv_pais_destino').value = '';
-                    }
-                });
-            }
-
-            document.getElementById('modal-servicio').style.display = 'flex';
-        }
-
-        function cerrarModalServicio() {
-            document.getElementById('modal-servicio').style.display = 'none';
-        }
-
-        function cerrarModalServicioConConfirmacion() {
-            if (confirm('¿Desea cancelar sin guardar los cambios?')) {
-                cerrarModalServicio();
-            }
-        }
-
-        // === FUNCIÓN AUXILIAR: Extrae la base (sin correlativo) desde el concatenado ===
-        function extraerBaseDesdeConcatenado(concatenado) {
-            if (!concatenado || !concatenado.includes('-')) return null;
-            const partes = concatenado.split('-');
-            if (partes.length < 2) return null;
-            // Todo menos el último segmento (que es el correlativo del prospecto)
-            return partes.slice(0, -1).join('-');
-        }
-
-        // === FUNCIÓN AUXILIAR: Genera id_srvc permanente correctamente ===
-        function generarIdSrvcPermanente(concatenado, cantidadServicios) {
-            const base = extraerBaseDesdeConcatenado(concatenado);
-            if (!base) {
-                console.error('❌ No se pudo extraer la base desde el concatenado:', concatenado);
-                return null;
-            }
-            const correlativo = (cantidadServicios + 1).toString().padStart(2, '0');
-            return `${base}-${correlativo}`; // Ej: EXAIR251119-01
-        }
-
-        // === FUNCIÓN PRINCIPAL: guardarServicio ===
-        function guardarServicio() {
-            console.log('🔍 [SERVICIO] Iniciando guardarServicio en BD');
-            const servicio = document.getElementById('serv_servicio').value.trim();
-            if (!servicio) {
-                error('Servicio es obligatorio');
-                return;
-            }
-            const origen = document.getElementById('serv_origen').value;
-            const destino = document.getElementById('serv_destino').value;
-            if (origen && destino && origen === destino) {
-                error('Origen y Destino no pueden ser iguales');
-                return;
-            }
-
-            const idPpl = document.getElementById('id_prospect_serv')?.value;
-            if (!idPpl || idPpl === '0') {
-                error('Prospecto no válido');
-                return;
-            }
-
-            const totalVenta = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
-            const rutCliente = document.getElementById('rut_empresa')?.value.trim();
-
-            // Validar crédito si aplica
-            if (rutCliente && totalVenta > 0) {
-                fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.error) {
-                            error(data.error);
-                            return;
-                        }
-                        if (totalVenta > data.saldo_credito) {
-                            error(`Sobregiro: El servicio excede el crédito disponible (${data.saldo_credito}).`);
-                            return;
-                        }
-                        enviarServicioABD();
-                    })
-                    .catch(() => error('Error al verificar crédito'));
-            } else {
-                enviarServicioABD();
-            }
-        }
-
-        function enviarServicioABD() {
-            const idPpl = document.getElementById('id_prospect_serv')?.value;
-            const concatenado = document.getElementById('concatenado_serv')?.value;
-
-            if (!idPpl || idPpl === '0' || !concatenado) {
-                error('Prospecto no válido');
-                return;
-            }
-
-            // ✅ Incluir costos y gastos en el objeto de datos
-            const data = {
-                modo: servicioEnEdicion !== null ? 'editar' : 'crear',
-                id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : null,
-                id_prospect: document.getElementById('id_prospect_serv').value,
-                servicio: document.getElementById('serv_servicio').value.trim(),
-                trafico: document.getElementById('serv_medio_transporte').value,
-                commodity: document.getElementById('serv_commodity').value,
-                origen: document.getElementById('serv_origen').value,
-                pais_origen: document.getElementById('serv_pais_origen').value,
-                destino: document.getElementById('serv_destino').value,
-                pais_destino: document.getElementById('serv_pais_destino').value,
-                transito: document.getElementById('serv_transito').value,
-                frecuencia: document.getElementById('serv_frecuencia').value,
-                lugar_carga: document.getElementById('serv_lugar_carga').value,
-                sector: document.getElementById('serv_sector').value,
-                mercancia: document.getElementById('serv_mercancia').value,
-                bultos: document.getElementById('serv_bultos').value,
-                peso: document.getElementById('serv_peso').value,
-                volumen: document.getElementById('serv_volumen').value,
-                dimensiones: document.getElementById('serv_dimensiones').value,
-                moneda: document.getElementById('serv_moneda').value,
-                tipo_cambio: document.getElementById('serv_tipo_cambio').value,
-                proveedor_nac: document.getElementById('serv_proveedor_nac').value,
-                desconsolidac: '0',
-                aol: document.getElementById('serv_aol').value,
-                aod: document.getElementById('serv_aod').value,
-                agente: document.getElementById('serv_agente').value,
-                transportador: document.getElementById('serv_transportador').value,
-                incoterm: document.getElementById('serv_incoterm').value,
-                ref_cliente: document.getElementById('serv_ref_cliente').value,
-                costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
-                venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
-                costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
-                ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
-                // ✅ ¡ESTAS SON LAS LÍNEAS CLAVE!
-                costos: [...costosServicio],
-                gastos_locales: [...gastosLocales],
-                estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente',
-                nota_srvc: servicios[servicioEnEdicion]?.nota_srvc || '', // Tomar la nota del servicio en edición o vacío si es nuevo
-                validez: document.getElementById('serv_validez').value
-            };
-
-            console.log('✅ [SERVICIO] Datos a enviar:', data);
-            fetch('/api/guardar_servicio.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    // Inyectar datos del prospecto en el nuevo servicio
-                    const prospectoRazonSocial = document.getElementById('razon_social_select').selectedOptions[0]?.textContent || '';
-                    const prospectoRut = document.getElementById('rut_empresa')?.value || '';
-                    const prospectoDireccion = document.getElementById('direccion')?.value || '';
-                    const prospectoContacto = document.getElementById('contacto')?.value || '';
-
-                    const servicioGuardado = {
-                        ...data,
-                        id_srvc: res.id_srvc,
-                        // Campos heredados del prospecto
-                        razon_social: prospectoRazonSocial,
-                        rut_empresa: prospectoRut,
-                        direccion: prospectoDireccion,
-                        contacto_nombre: prospectoContacto
-                    };
-                    if (servicioEnEdicion !== null) {
-                        servicios[servicioEnEdicion] = servicioGuardado;
-                    } else {
-                        servicios.push(servicioGuardado);
-                    }
-                    actualizarTabla();
-                    cerrarModalServicio();
-                    exito('Servicio guardado en la base de datos');
-                } else {
-                    error('Error: ' + (res.message || 'Intente nuevamente'));
-                }
-            })
-            .catch(err => {
-                console.error('Error al guardar servicio:', err);
-                error('Error de conexión al guardar el servicio');
-            });
-        }
-
-        // --- Submodales ---
-        function abrirSubmodalCostos() {
-            if (document.getElementById('modal-servicio').style.display === 'none') {
-                return error('Abra primero el modal de Servicio');
-            }
-
-            // ✅ Cargar datos actuales del servicio
-            if (servicioEnEdicion !== null) {
-                costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) ? [...servicios[servicioEnEdicion].costos] : [];
-            }
-
-            // ✅ Establecer moneda
-            document.getElementById('costo_moneda').value = document.getElementById('serv_moneda')?.value || 'USD';
-
-            // ✅ Cargar conceptos y aplicaciones
-            fetch('/api/get_conceptos_costos.php')
-                .then(r => r.json())
-                .then(data => {
-                    const sel = document.getElementById('costo_concepto');
-                    if (sel) {
-                        sel.innerHTML = '<option value="">Seleccionar concepto</option>';
-                        (data.conceptos || data).forEach(c => {
-                            const opt = document.createElement('option');
-                            opt.value = c.concepto || c;
-                            opt.textContent = c.concepto || c;
-                            sel.appendChild(opt);
-                        });
-                    }
-                });
-
-            const medio = document.getElementById('serv_medio_transporte')?.value || '';
-            fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
-                .then(r => r.json())
-                .then(data => {
-                    const sel = document.getElementById('costo_aplica');
-                    if (sel) {
-                        sel.innerHTML = '<option value="">Seleccionar aplica</option>';
-                        (Array.isArray(data) ? data : (data.aplicaciones || [])).forEach(item => {
-                            const val = typeof item === 'string' ? item : item.aplica;
-                            if (val) {
-                                const opt = document.createElement('option');
-                                opt.value = val;
-                                opt.textContent = val;
-                                sel.appendChild(opt);
-                            }
-                        });
-                    }
-                });
-
-            // ✅ Determinar permisos por rol
-            const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
-            const esPricingOAdmin = (rolUsuario === 'pricing' || rolUsuario === 'admin');
-
-            // ✅ Deshabilitar campos de costo (solo edición para Pricing/Admin)
-            const camposCosto = ['costo_concepto', 'costo_qty', 'costo_costo', 'costo_aplica'];
-            camposCosto.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.disabled = !esPricingOAdmin;
-            });
-
-            // ✅ El campo "tarifa" siempre editable
-            const campoTarifa = document.getElementById('costo_tarifa');
-            if (campoTarifa) campoTarifa.disabled = false;
-
-            // ✅ Actualizar tabla y mostrar modal
-            actualizarTablaCostos();
-            document.getElementById('submodal-costos').style.display = 'block';
-        }
-
-        // --- Submodal Gastos Locales ---
-        function abrirSubmodalGastosLocales() {
-            if (document.getElementById('modal-servicio').style.display === 'none') return error('Abra primero el modal de Servicio');
-
-            // Cargar datos actuales del servicio (si está en edición)
-            // Asegurar que gastosLocales sea un array y que sus valores numéricos sean números
-            if (servicioEnEdicion !== null) {
-                gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) ? servicios[servicioEnEdicion].gastos_locales.map(g => ({
-                    ...g,
-                    // Asegurar que monto e iva sean números, con 0 como valor por defecto si no lo son
-                    monto: parseFloat(g.monto) || 0,
-                    iva: parseFloat(g.iva) || 0
-                })) : [];
-            } else {
-                // Si no está en edición, asegurar que gastosLocales sea un array vacío o el que esté en el estado actual
-                gastosLocales = Array.isArray(gastosLocales) ? gastosLocales.map(g => ({
-                    ...g,
-                    monto: parseFloat(g.monto) || 0,
-                    iva: parseFloat(g.iva) || 0
-                })) : [];
-            }
-
-            // Cargar tipos de gastos (si aplica)
-            const tipo = document.getElementById('gasto_tipo')?.value;
-            if (tipo) {
-                fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        const sel = document.getElementById('gasto_gasto');
-                        if (sel) {
-                            sel.innerHTML = '<option value="">Seleccionar gasto</option>';
-                            (Array.isArray(data) ? data : (data.gastos_locales || [])).forEach(item => {
-                                const val = typeof item === 'string' ? item : (item.gasto || item);
-                                if (val) {
-                                    const opt = document.createElement('option');
-                                    opt.value = val;
-                                    opt.textContent = val;
-                                    sel.appendChild(opt);
-                                }
-                            });
-                        }
-                    });
-            }
-            // Actualizar tabla y mostrar modal
-            actualizarTablaGastosLocales();
-            document.getElementById('submodal-gastos-locales').style.display = 'block';
-        }
-
-        ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', () => {
-                const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
-                const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
-                const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-                document.getElementById('costo_total_costo').value = (qty * costo).toFixed(2);
-                document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
-            });
-        });
-
-        function actualizarTablaGastosLocales() {
-            const tbody = document.getElementById('gastos-locales-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            // Inicializar totales por moneda
-            let totales = {
-                'USD': { costo: 0, venta: 0 },
-                'EUR': { costo: 0, venta: 0 },
-                'CLP': { costo: 0, venta: 0 }
-            };
-
-            gastosLocales.forEach((g, i) => {
-                // Asegurar que monto e iva sean números antes de usarlos
-                const monto = parseFloat(g.monto) || 0;
-                const iva = parseFloat(g.iva) || 0;
-                const tipo = g.tipo || '';
-                const moneda = g.moneda || 'CLP'; // Valor por defecto
-
-                // Calcular subtotal (monto * (1 + iva/100)) si es afecto
-                const esAfecto = g.afecto === 'SI' || g.afecto === true;
-                const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
-
-                // Acumular totales por tipo y moneda
-                if (tipo.toLowerCase() === 'costo') {
-                    totales[moneda.toUpperCase()].costo += subtotal;
-                } else if (tipo.toLowerCase() === 'ventas') { // O 'sales' si se usa inglés
-                    totales[moneda.toUpperCase()].venta += subtotal;
-                }
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${tipo}</td>
-                    <td>${g.gasto}</td>
-                    <td>${moneda}</td>
-                    <td style="text-align:right;">${monto.toFixed(2)}</td>
-                    <td>${g.afecto}</td>
-                    <td style="text-align:right;">${iva.toFixed(2)}</td>
-                    <td style="text-align:right;">${subtotal.toFixed(2)}</td>
-                    <td style="text-align: center;">
-                        <i class="fas fa-pencil-alt edit-gasto-icon" data-index="${i}" style="cursor: pointer; color: #007bff; margin-right: 0.5rem;" title="Editar Gasto"></i>
-                        <button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            // Calcular profit y profit % por moneda
-            for (const moneda in totales) {
-                const t = totales[moneda];
-                t.profit = t.venta - t.costo;
-                t.profit_pct = t.venta > 0 ? ((t.venta - t.costo) / t.venta * 100) : 0;
-            }
-
-            // Actualizar los elementos HTML con los totales calculados
-            document.getElementById('cgld_usd').textContent = totales['USD'].costo.toFixed(2);
-            document.getElementById('vgld_usd').textContent = totales['USD'].venta.toFixed(2);
-            document.getElementById('pgld_usd').textContent = totales['USD'].profit.toFixed(2);
-            document.getElementById('ppgld_usd').textContent = totales['USD'].profit_pct.toFixed(2) + ' %';
-
-            document.getElementById('cgld_eur').textContent = totales['EUR'].costo.toFixed(2);
-            document.getElementById('vgld_eur').textContent = totales['EUR'].venta.toFixed(2);
-            document.getElementById('pgld_eur').textContent = totales['EUR'].profit.toFixed(2);
-            document.getElementById('ppgld_eur').textContent = totales['EUR'].profit_pct.toFixed(2) + ' %';
-
-            document.getElementById('cgld_clp').textContent = totales['CLP'].costo.toFixed(2);
-            document.getElementById('vgld_clp').textContent = totales['CLP'].venta.toFixed(2);
-            document.getElementById('pgld_clp').textContent = totales['CLP'].profit.toFixed(2);
-            document.getElementById('ppgld_clp').textContent = totales['CLP'].profit_pct.toFixed(2) + ' %';
-
-            // Opcional: Actualizar también los totales antiguos si se usan en otro lugar
-            // const tv = totales['USD'].venta + totales['EUR'].venta + totales['CLP'].venta;
-            // const tc = totales['USD'].costo + totales['EUR'].costo + totales['CLP'].costo;
-            // document.getElementById('total-venta-gastos').textContent = tv.toFixed(2);
-            // document.getElementById('total-costo-gastos').textContent = tc.toFixed(2);
-            // document.getElementById('profit-local').textContent = (tv - tc).toFixed(2);
-            // const pct = tv > 0 ? ((tv - tc) / tv * 100) : 0;
-            // document.getElementById('profit-porcentaje').textContent = pct.toFixed(2) + ' %';
-
-            // --- Añadir listeners para los íconos de edición ---
-            setTimeout(() => {
-                document.querySelectorAll('.edit-gasto-icon').forEach(icon => {
-                    icon.addEventListener('click', function() {
-                        const index = parseInt(this.getAttribute('data-index'));
-                        editarGastoLocal(index);
-                    });
-                });
-            }, 0);
-        }
-
-        // Mantener también la corrección en eliminarGastoLocal
-        function eliminarGastoLocal(i) {
-            if (confirm('¿Eliminar este gasto?')) {
-                gastosLocales.splice(i, 1);
-                actualizarTablaGastosLocales(); // Actualizar tabla y totales
-                exito('Gasto eliminado');
-            }
-        }
-
-        // Y en cerrarSubmodalGastosLocales
-        function cerrarSubmodalGastosLocales() {
-            if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
-                // Asegurar que los gastos locales se actualicen en el objeto servicio
-                // y que los valores numéricos se mantengan como números
-                servicios[servicioEnEdicion].gastos_locales = gastosLocales.map(g => ({
-                    ...g,
-                    monto: parseFloat(g.monto) || 0,
-                    iva: parseFloat(g.iva) || 0
-                }));
-            }
-            document.getElementById('submodal-gastos-locales').style.display = 'none';
-        }
-
-        function guardarCosto() {
-            const concepto = document.getElementById('costo_concepto').value;
-            const aplica = document.getElementById('costo_aplica').value;
-            const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
-            const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
-            const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-            const moneda = document.getElementById('costo_moneda').value || 'CLP';
-            if (!concepto || !aplica) return error('Concepto y Aplica son obligatorios');
-            const nuevo = { concepto, moneda, qty, costo, total_costo: qty * costo, tarifa, total_tarifa: qty * tarifa, aplica };
-            if (window.indiceCostoEdicion !== undefined) {
-                costosServicio[window.indiceCostoEdicion] = nuevo;
-                delete window.indiceCostoEdicion;
-            } else {
-                costosServicio.push(nuevo);
-            }
-            actualizarTablaCostos();
-            ['costo_concepto', 'costo_qty', 'costo_costo', 'costo_tarifa', 'costo_aplica'].forEach(id => {
-                if (id.includes('concepto') || id.includes('aplica')) {
-                    document.getElementById(id).selectedIndex = 0;
-                } else {
-                    document.getElementById(id).value = '';
-                }
-            });
-            document.getElementById('costo_total_costo').value = '0.00';
-            document.getElementById('costo_total_tarifa').value = '0.00';
-            exito('Costo guardado');
-        }
-
-        function actualizarTablaCostos() {
-            const tbody = document.getElementById('costos-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            let tc = 0, tt = 0;
-            costosServicio.forEach((c, i) => {
-                const qty = parseFloat(c.qty) || 0;
-                const costo = parseFloat(c.costo) || 0;
-                const tarifa = parseFloat(c.tarifa) || 0;
-                const tcosto = qty * costo;
-                const ttarifa = qty * tarifa;
-                tc += tcosto; tt += ttarifa;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${c.concepto}</td>
-                    <td>${c.moneda}</td>
-                    <td style="text-align: right;">${qty.toFixed(2)}</td>
-                    <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
-                    <td style="text-align: right; background-color: #fff9db;">${tcosto.toFixed(2)}</td>
-                    <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
-                    <td style="text-align: right; background-color: #e6f7ff;">${ttarifa.toFixed(2)}</td>
-                    <td>${c.aplica}</td>
-                    <td>
-                        <button type="button" onclick="editarCosto(${i})">✏️</button>
-                        <button type="button" onclick="eliminarCosto(${i})">🗑️</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            document.getElementById('total-costo-costos').textContent = tc.toFixed(2);
-            document.getElementById('total-tarifa-costos').textContent = tt.toFixed(2);
-        }
-
-        function editarCosto(i) {
-            const c = costosServicio[i];
-            if (!c) return;
-            document.getElementById('costo_concepto').value = c.concepto || '';
-            document.getElementById('costo_qty').value = c.qty || '';
-            document.getElementById('costo_costo').value = c.costo || '';
-            document.getElementById('costo_tarifa').value = c.tarifa || '';
-            document.getElementById('costo_aplica').value = c.aplica || '';
-            document.getElementById('costo_total_costo').value = (parseFloat(c.qty || 0) * parseFloat(c.costo || 0)).toFixed(2);
-            document.getElementById('costo_total_tarifa').value = (parseFloat(c.qty || 0) * parseFloat(c.tarifa || 0)).toFixed(2);
-            window.indiceCostoEdicion = i;
-        }
-
-        function eliminarCosto(i) {
-            if (confirm('¿Eliminar costo?')) {
-                costosServicio.splice(i, 1);
-                actualizarTablaCostos();
-                exito('Costo eliminado');
-            }
-        }
-
-        function cerrarSubmodalCostos() {
-            if (servicioEnEdicion !== null) {
-                servicios[servicioEnEdicion].costos = [...costosServicio];
-            }
-            document.getElementById('submodal-costos').style.display = 'none';
-        }
-
-        document.getElementById('gasto_tipo')?.addEventListener('change', function() {
-            const tipo = this.value;
-            if (!tipo) {
-                document.getElementById('gasto_gasto').innerHTML = '<option value="">Gastos</option>';
-                return;
-            }
-            fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
-                .then(r => r.json())
-                .then(data => {
-                    const sel = document.getElementById('gasto_gasto');
-                    if (sel) {
-                        sel.innerHTML = '<option value="">Gastos</option>';
-                        (data.gastos || []).forEach(g => {
-                            const opt = document.createElement('option');
-                            opt.value = g;
-                            opt.textContent = g;
-                            sel.appendChild(opt);
-                        });
-                    }
-                });
-        });
-
-        function guardarGastoLocal() {
-            const tipo = document.getElementById('gasto_tipo').value;
-            const gasto = document.getElementById('gasto_gasto').value;
-            const moneda = document.getElementById('gasto_moneda').value;
-            const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
-            const afecto = document.getElementById('gasto_afecto').value;
-            const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
-            if (!tipo || !gasto) return error('Tipo y Gasto son obligatorios');
-            gastosLocales.push({ tipo, gasto, moneda, monto, afecto, iva });
-            actualizarTablaGastosLocales();
-            ['gasto_tipo', 'gasto_gasto', 'gasto_moneda', 'gasto_monto', 'gasto_afecto', 'gasto_iva'].forEach(id => {
-                if (id.includes('tipo') || id.includes('gasto') || id.includes('moneda') || id.includes('afecto')) {
-                    document.getElementById(id).selectedIndex = 0;
-                } else {
-                    document.getElementById(id).value = '';
-                }
-            });
-            exito('Gasto local agregado');
-        }
-
-        function editarGastoLocal(index) {
-            const gasto = gastosLocales[index];
-            if (!gasto) {
-                error('Gasto no encontrado.');
-                return;
-            }
-
-            // Cargar los valores en los campos del formulario
-            document.getElementById('gasto_tipo').value = gasto.tipo || '';
-            // --- CORRECCIÓN: Seleccionar la opción correcta en el select gasto_gasto ---
-            const gastoSelect = document.getElementById('gasto_gasto');
-            gastoSelect.value = gasto.gasto || ''; // Intentar seleccionar por valor
-            document.getElementById('gasto_moneda').value = gasto.moneda || 'USD';
-            document.getElementById('gasto_monto').value = gasto.monto || '';
-            document.getElementById('gasto_afecto').value = gasto.afecto || 'NO';
-            document.getElementById('gasto_iva').value = gasto.iva || '';
-
-            // Cambiar el botón "Agregar" a "Actualizar" temporalmente
-            const btnAgregar = document.querySelector('#submodal-gastos-locales button[onclick="guardarGastoLocal()"]');
-            if (btnAgregar) {
-                btnAgregar.textContent = 'Actualizar';
-                // Almacenar el índice del gasto que se está editando en un lugar accesible
-                window.indiceGastoEdicion = index;
-
-                // Cambiar la acción del botón para que actualice en lugar de agregar
-                btnAgregar.onclick = function() {
-                    actualizarGastoLocal(window.indiceGastoEdicion);
-                    // Restaurar botón a su estado original después de actualizar
-                    btnAgregar.textContent = 'Agregar';
-                    btnAgregar.onclick = function() { guardarGastoLocal(); };
-                    // Limpiar la variable global
-                    delete window.indiceGastoEdicion;
-                };
-            }
-        }
-
-        function actualizarGastoLocal(index) {
-            const tipo = document.getElementById('gasto_tipo').value;
-            const gasto_nombre = document.getElementById('gasto_gasto').value;
-            const moneda = document.getElementById('gasto_moneda').value;
-            const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
-            const afecto = document.getElementById('gasto_afecto').value;
-            const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
-
-            if (!tipo || !gasto_nombre) {
-                error('Tipo y Gasto son obligatorios');
-                return;
-            }
-
-            // Actualizar el objeto en el array
-            gastosLocales[index] = { tipo, gasto: gasto_nombre, moneda, monto, afecto, iva };
-
-            // Actualizar la tabla visual
-            actualizarTablaGastosLocales();
-
-            // Limpiar campos (opcional, puedes dejar los valores si prefieres que sea como un "update & add next")
-            ['gasto_tipo', 'gasto_gasto', 'gasto_moneda', 'gasto_monto', 'gasto_afecto', 'gasto_iva'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    if (el.tagName === 'SELECT') {
-                        el.selectedIndex = 0; // Seleccionar primera opción
-                    } else {
-                        el.value = '';
-                    }
-                }
-            });
-
-            exito('Gasto local actualizado');
-        }
-
-        // === FUNCIONES DE SERVICIOS ===
-        function editarServicio(index) {
-            if (index < 0 || index >= servicios.length) {
-                error('Índice inválido');
-                return;
-            }
-
-            // ✅ Obtener el objeto del servicio del array global 'servicios' usando el índice
-            const servicioSeleccionado = servicios[index];
-
-            // ✅ Asignar el ID del servicio al campo oculto del modal
-            document.getElementById('id_srvc_edit').value = servicioSeleccionado.id_srvc || '';
-
-            // Continuar con la lógica de abrir el modal y cargar los datos
-            abrirModalServicio(index);
-        }
-
-        function eliminarServicio(index) {
-            if (index < 0 || index >= servicios.length) return;
-
-            const servicio = servicios[index];
-            // ✅ Validar que el servicio tenga un ID permanente
-            if (!servicio.id_srvc || servicio.id_srvc.startsWith('TEMP_')) {
-                // Si es temporal, eliminar localmente sin API
-                servicios.splice(index, 1);
-                actualizarTabla();
-                exito('Servicio eliminado');
-                return;
-            }
-
-            // ✅ Validar que no tenga costos/gastos (opcional, según regla de negocio)
-            if ((servicio.costos && servicio.costos.length > 0) || (servicio.gastos_locales && servicio.gastos_locales.length > 0)) {
-                return error('No se puede eliminar: tiene costos o gastos asociados.');
-            }
-
-            if (confirm('¿Eliminar este servicio de forma permanente?')) {
-                fetch('/api/eliminar_servicio.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_srvc: servicio.id_srvc })
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        servicios.splice(index, 1);
-                        actualizarTabla();
-                        exito('Servicio eliminado correctamente');
-                    } else {
-                        error('Error: ' + (data.message || 'Intente nuevamente'));
-                    }
-                })
-                .catch(err => {
-                    console.error('Error al eliminar servicio:', err);
-                    error('No se pudo conectar con el servidor');
-                });
-            }
-        }
-
-        // ===================================================================
-        // === 6. CUBICADOR ===
-        // ===================================================================
-        function abrirSubmodalCubicador() {
-            document.getElementById('cubicador_qty').value = document.getElementById('serv_bultos').value || 1;
-            document.getElementById('cubicador_peso').value = document.getElementById('serv_peso').value || '';
-            document.getElementById('cubicador_largo').value = '';
-            document.getElementById('cubicador_ancho').value = '';
-            document.getElementById('cubicador_alto').value = '';
-            calcularCubicacion();
-            const ids = ['cubicador_qty', 'cubicador_peso', 'cubicador_largo', 'cubicador_ancho', 'cubicador_alto'];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    const clone = el.cloneNode(true);
-                    el.parentNode.replaceChild(clone, el);
-                    clone.addEventListener('input', calcularCubicacion);
-                }
-            });
-            document.getElementById('submodal-cubicador').style.display = 'block';
-        }
-
-        function calcularCubicacion() {
-            const qty = parseFloat(document.getElementById('cubicador_qty').value) || 0;
-            const pesoPorBulto = parseFloat(document.getElementById('cubicador_peso').value) || 0;
-            const largo = parseFloat(document.getElementById('cubicador_largo').value) || 0;
-            const ancho = parseFloat(document.getElementById('cubicador_ancho').value) || 0;
-            const alto = parseFloat(document.getElementById('cubicador_alto').value) || 0;
-            const pesoRealTotal = pesoPorBulto * qty;
-            const volumenCm3 = largo * ancho * alto * qty;
-            const volumenM3 = volumenCm3 / 1000000;
-            const pesoVolumetrico = volumenCm3 / 5000;
-            const pesoFinal = Math.max(pesoRealTotal, pesoVolumetrico);
-            document.getElementById('cubicador_volumen').textContent = volumenM3.toFixed(3) + ' m³';
-            document.getElementById('cubicador_peso_vol').textContent = pesoVolumetrico.toFixed(2) + ' kg';
-            document.getElementById('cubicador_peso_final').textContent = pesoFinal.toFixed(2) + ' kg';
-        }
-
-        function aplicarCubicacion() {
-            const qty = document.getElementById('cubicador_qty').value;
-            const pesoFinal = parseFloat(document.getElementById('cubicador_peso_final').textContent);
-            const volumen = document.getElementById('cubicador_volumen').textContent.split(' ')[0];
-            const l = document.getElementById('cubicador_largo').value;
-            const a = document.getElementById('cubicador_ancho').value;
-            const h = document.getElementById('cubicador_alto').value;
-            document.getElementById('serv_bultos').value = qty;
-            document.getElementById('serv_peso').value = pesoFinal;
-            document.getElementById('serv_volumen').value = volumen;
-            document.getElementById('serv_dimensiones').value = `${l}x${a}x${h} cm`;
-            cerrarSubmodalCubicador();
-            exito('Cubicación aplicada');
-        }
-
-        function cerrarSubmodalCubicador() {
-            document.getElementById('submodal-cubicador').style.display = 'none';
-        }
-
-        function cargarPaises() {
-            const selectPais = document.getElementById('pais') || document.getElementById('cliente_pais');
-            if (!selectPais) return;
-            fetch('/api/get_paises.php')
-                .then(r => r.json())
-                .then(data => {
-                    selectPais.innerHTML = '<option value="">Seleccionar país</option>';
-                    (data.paises || []).forEach(pais => {
-                        const opt = document.createElement('option');
-                        opt.value = pais;
-                        opt.textContent = pais;
-                        selectPais.appendChild(opt);
-                    });
-                })
-                .catch(err => {
-                    console.error('Error al cargar países:', err);
-                    // Fallback básico
-                    const fallback = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
-                    selectPais.innerHTML = '<option value="">Seleccionar país</option>';
-                    fallback.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p;
-                        opt.textContent = p;
-                        selectPais.appendChild(opt);
-                    });
-                });
-        }
-
-        function reiniciarFormProspecto() {
-            // Verificar si hay cambios relevantes
-            const idPpl = document.getElementById('id_ppl')?.value;
-            const tieneId = idPpl && idPpl !== '0';
-            const tieneServicios = servicios.length > 0;
-            const tieneNotasComerciales = (document.getElementById('notas_comerciales')?.value || '').trim() !== '';
-            const tieneNotasOperaciones = (document.getElementById('notas_operaciones')?.value || '').trim() !== '';
-
-            if (tieneId || tieneServicios || tieneNotasComerciales || tieneNotasOperaciones) {
-                const confirmar = confirm(
-                    '⚠️ ATENCIÓN:\n\nEstá a punto de salir de Prospectos.\n' +
-                    'Todos los datos no guardados (Prospecto, Servicios, Notas) se perderán.\n\n' +
-                    '¿Desea continuar?'
-                );
-                if (!confirmar) {
-                    advertencia('Abandono cancelado por el usuario');
-                    return;
-                }
-            }
-
-            // Limpiar formulario
-            document.getElementById('form-prospecto').reset();
-
-            // Limpiar campos ocultos y no reseteables
-            ['id_ppl', 'id_prospect', 'razon_social', 'notas_comerciales', 'notas_operaciones'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
-
-            // Limpiar selects personalizados
-            const selects = ['razon_social_select', 'operacion', 'tipo_oper', 'estado'];
-            selects.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.selectedIndex = 0;
-            });
-
-            // NUEVO: Limpiar campos de contacto
-            limpiarCamposContacto();
-
-            // Limpiar servicios
-            servicios = [];
-            actualizarTabla();
-
-            // Resetear concatenado
-            document.getElementById('concatenado').value = '';
-
-            // Ocultar botón de agregar servicio
-            const btnAgregar = document.getElementById('btn-agregar-servicio');
-            if (btnAgregar) btnAgregar.style.display = 'none';
-
-            // ✅ NUEVO: Redirigir a la lista de prospectos
-            window.location.href = '/?page=prospectos_listas';
-        }
-
         // ===================================================================
         // === 7. INICIALIZACIÓN ===
         // ===================================================================
         document.addEventListener('DOMContentLoaded', () => {
+            cargarProspectoDesdeURL();
             cargarPaises();
             cargarOperacionesYTipos();
             cargarClientesEnSelect();
-            cargarProspectoDesdeURL();
 
             const params = new URLSearchParams(window.location.search);
             const msg = params.get('exito');
@@ -2698,1295 +1108,2907 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
                 // Limpiar la URL para evitar recargas innecesarias
                 history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
             }
-        });
+        
+            function reiniciarFormProspecto() {
+                // Verificar si hay cambios relevantes
+                const idPpl = document.getElementById('id_ppl')?.value;
+                const tieneId = idPpl && idPpl !== '0';
+                const tieneServicios = servicios.length > 0;
+                const tieneNotasComerciales = (document.getElementById('notas_comerciales')?.value || '').trim() !== '';
+                const tieneNotasOperaciones = (document.getElementById('notas_operaciones')?.value || '').trim() !== '';
 
-        // --- Funciones para manejo de Contactos ---
-
-        // Función para cargar contacto primario basado en rut_empresa
-        function cargarContactoPrimario(rut_empresa) {
-            if (!rut_empresa) {
-                limpiarCamposContacto();
-                return;
-            }
-
-            fetch(`/api/get_contacto_primario.php?rut_cliente=${encodeURIComponent(rut_empresa)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                if (tieneId || tieneServicios || tieneNotasComerciales || tieneNotasOperaciones) {
+                    const confirmar = confirm(
+                        '⚠️ ATENCIÓN:\n\nEstá a punto de salir de Prospectos.\n' +
+                        'Todos los datos no guardados (Prospecto, Servicios, Notas) se perderán.\n\n' +
+                        '¿Desea continuar?'
+                    );
+                    if (!confirmar) {
+                        advertencia('Abandono cancelado por el usuario');
+                        return;
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success && data.contacto) {
-                        // Llenar los campos con los datos del contacto primario
-                        document.getElementById('contacto').value = data.contacto.nom_contacto || '';
-                        document.getElementById('email').value = data.contacto.email || '';
-                    } else {
-                        // Si no hay contacto primario o hay un error, limpiar los campos
-                        limpiarCamposContacto();
-                        // Opcional: Mostrar un mensaje informativo
-                        // info('No se encontró contacto primario para este cliente.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al cargar contacto primario:', error);
-                    // En caso de error, limpiar los campos para evitar datos inconsistentes
-                    limpiarCamposContacto();
-                    // Opcional: Mostrar un mensaje de error
-                    // error('Error al cargar el contacto primario.');
+                }
+
+                // Limpiar formulario
+                document.getElementById('form-prospecto').reset();
+
+                // Limpiar campos ocultos y no reseteables
+                ['id_ppl', 'id_prospect', 'razon_social', 'notas_comerciales', 'notas_operaciones'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
                 });
-        }
 
-        // Función para limpiar los campos de contacto
-        function limpiarCamposContacto() {
-            document.getElementById('contacto').value = '';
-            document.getElementById('email').value = '';
-        }
+                // Limpiar selects personalizados
+                const selects = ['razon_social_select', 'operacion', 'tipo_oper', 'estado'];
+                selects.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.selectedIndex = 0;
+                });
 
-        // Evento para detectar cambios en el campo rut_empresa
-        document.getElementById('rut_empresa').addEventListener('change', function() {
-            const rut = this.value.trim();
-            if (rut) {
-                cargarContactoPrimario(rut);
-            } else {
+                // NUEVO: Limpiar campos de contacto
                 limpiarCamposContacto();
+
+                // Limpiar servicios
+                servicios = [];
+                actualizarTabla();
+
+                // Resetear concatenado
+                document.getElementById('concatenado').value = '';
+
+                // Ocultar botón de agregar servicio
+                const btnAgregar = document.getElementById('btn-agregar-servicio');
+                if (btnAgregar) btnAgregar.style.display = 'none';
+
+                // ✅ NUEVO: Redirigir a la lista de prospectos
+                window.location.href = '/?page=prospectos_listas';
             }
-        });
 
-        // --- Variables globales para adjuntos ---
-        let adjuntosProspecto = []; // Array para almacenar los adjuntos del prospecto actual
-        let idProspectoActual = null; // Para saber a qué prospecto pertenecen los adjuntos
-
-        // --- Funciones para manejo de Adjuntos ---
-
-        // Abrir submodal de adjuntos
-        function abrirSubmodalAdjuntos() {
-            const idPpl = document.getElementById('id_ppl')?.value;
-            if (!idPpl || idPpl === '0') {
-                error('No hay un prospecto seleccionado para adjuntar archivos.');
-                return;
+            
+            function cargarClientesEnSelect() {
+                fetch('/api/get_todos_clientes.php')
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('razon_social_select');
+                        if (!sel) return;
+                        sel.innerHTML = '<option value="">Seleccionar cliente</option>';
+                        (data.clientes || []).forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.rut;
+                            opt.textContent = c.razon_social;
+                            sel.appendChild(opt);
+                        });
+                    })
+                    .catch(err => error('No se pudieron cargar los clientes'));
             }
-            idProspectoActual = idPpl; // Guardar ID del prospecto actual
-            cargarAdjuntosProspecto(idPpl); // Cargar adjuntos del prospecto
-            document.getElementById('submodal-adjuntos').style.display = 'block';
-            // Prevenir el submit del form principal si el submodal está dentro de él
-            event?.preventDefault?.(); // Agregar esta línea si el evento click lo provee
-        }
 
-        // Cerrar submodal de adjuntos
-        function cerrarSubmodalAdjuntos() {
-            document.getElementById('submodal-adjuntos').style.display = 'none';
-            // Opcional: Limpiar el input de archivo al cerrar
-            document.getElementById('archivo-input').value = '';
-            // Prevenir el submit del form principal si el submodal está dentro de él
-            event?.preventDefault?.(); // Agregar esta línea si el evento click lo provee
-        }
+            document.getElementById('razon_social_select')?.addEventListener('change', function() {
+                const rut = this.value;
+                if (!rut) {
+                    ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.value = '';
+                    });
+                    return;
+                }
+                fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.existe) {
+                            const c = data.cliente;
+                            document.getElementById('rut_empresa').value = c.rut || '';
+                            document.getElementById('pais').value = c.pais || '';
+                            document.getElementById('direccion').value = c.direccion || '';
+                            document.getElementById('nombre').value = c.nombre_comercial || '';
+                            document.querySelector('input[name="razon_social"]').value = c.razon_social || '';
+                            fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
+                                .then(r2 => r2.json())
+                                .then(data2 => {
+                                    const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
+                                    document.getElementById('fono_empresa').value = primario?.fono || '';
+                                });
+                        }
+                    });
+            });
 
-        // Cargar adjuntos desde la API
-        function cargarAdjuntosProspecto(idPpl) {
-            // Limpiar lista antes de cargar
-            document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #666; text-align: center;">Cargando...</p>';
+            function validarRut(rut) {
+                if (!/^(\d{7,8})([0-9K])$/.test(rut)) return false;
+                const cuerpo = rut.slice(0, -1);
+                const dv = rut.slice(-1).toUpperCase();
+                let suma = 0, multiplo = 2;
+                for (let i = cuerpo.length - 1; i >= 0; i--) {
+                    suma += parseInt(cuerpo[i]) * multiplo;
+                    multiplo = multiplo < 7 ? multiplo + 1 : 2;
+                }
+                const dvEsperado = (11 - (suma % 11)).toString();
+                const dvCalculado = dvEsperado === '11' ? '0' : dvEsperado === '10' ? 'K' : dvEsperado;
+                return dv === dvCalculado;
+            }
 
-            fetch(`/api/get_adjuntos_prospecto.php?id_prospect=${encodeURIComponent(idPpl)}`)
+            function calcularConcatenado() {
+                const opSelect = document.getElementById('operacion');
+                const tipoSelect = document.getElementById('tipo_oper');
+                const op = opSelect?.value || '';
+                const tipo = tipoSelect?.value || '';
+                
+                if (!op || !tipo) {
+                    document.getElementById('concatenado').value = '';
+                    return;
+                }
+
+                // Extraer abreviaturas
+                const opClean = op.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 2) || 'XX';
+                const tipoClean = tipo.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 4) || 'XXXX';
+
+                const fecha = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+                const idProspect = parseInt(document.getElementById('id_prospect')?.value || '0') + 1;
+                const correlativo = idProspect.toString().padStart(2, '0');
+
+                const concatenado = `${opClean}${tipoClean}${fecha}-${correlativo}`;
+                document.getElementById('concatenado').value = concatenado;
+            }
+
+            // --- Función para generar el PDF (v3 - Solicita PDF desde el servidor) ---
+            function generarPDFCotizacion(servicioIndex) {
+                const servicio = servicios[servicioIndex];
+                if (!servicio || !servicio.id_srvc) {
+                    error('Servicio no encontrado o no tiene ID válido.');
+                    return;
+                }
+
+                // Construir la URL para el PDF
+                const urlPdf = `/api/pdf_servicio.php?id_srvc=${encodeURIComponent(servicio.id_srvc)}`;
+
+                // Abrir el PDF en una nueva pestaña/ventana
+                // Esto hará que el navegador haga una petición GET a pdf_servicio.php
+                window.open(urlPdf, '_blank');
+            }
+
+            // === NUEVA FUNCIÓN: Gestión de notificaciones de costos ===
+            function manejarNotificacionCostos(servicio, index) {
+                const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+                const estadoActual = servicio.estado_costos || 'pendiente';
+
+                // === Cualquiera puede enviar un servicio SIN costos ===
+                if (estadoActual === 'pendiente') {
+                    if (!confirm('¿Solicitar costos al equipo de Pricing?')) return;
+                    enviarNotificacionCostos(servicio.id_srvc, 'solicitado', index);
+                    return;
+                }
+
+                // === Solo Pricing puede marcar como completado ===
+                if (estadoActual === 'solicitado') {
+                    if (rolUsuario !== 'pricing') {
+                        alert('Solo el rol Pricing puede marcar los costos como completados.');
+                        return;
+                    }
+                    if (!servicio.costos || servicio.costos.length === 0) {
+                        alert('Debe agregar al menos un costo antes de notificar.');
+                        return;
+                    }
+                    if (!confirm('¿Notificar al Comercial que los costos están listos?')) return;
+                    enviarNotificacionCostos(servicio.id_srvc, 'completado', index);
+                    return;
+                }
+
+                // === Solo Comercial puede aprobar (opcional) ===
+                if (estadoActual === 'completado') {
+                    if (rolUsuario !== 'comercial') {
+                        alert('Solo el Comercial puede aprobar los costos.');
+                        return;
+                    }
+                    if (!confirm('¿Confirmar que los costos han sido revisados?')) return;
+                    enviarNotificacionCostos(servicio.id_srvc, 'revisado', index);
+                    return;
+                }
+
+                alert('Acción no permitida en este estado.');
+            }
+
+            function enviarNotificacionCostos(idSrvc, nuevoEstado, index) {
+                fetch('/api/notificar_costos.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_srvc: idSrvc,
+                        estado: nuevoEstado,
+                        usuario_id: '<?php echo $_SESSION["user_id"] ?? 0; ?>',
+                        rol: '<?php echo $_SESSION["rol"] ?? "comercial"; ?>'
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        // ✅ Actualizar estado localmente
+                        servicios[index].estado_costos = nuevoEstado;
+                        if (nuevoEstado === 'solicitado') {
+                            servicios[index].solicitado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
+                            servicios[index].fecha_solicitado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                        } else if (nuevoEstado === 'completado') {
+                            servicios[index].completado_por = '<?php echo $_SESSION["user_id"] ?? 0; ?>';
+                            servicios[index].fecha_completado = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                        }
+                        // ✅ Refrescar la tabla para que el ícono cambie inmediatamente
+                        actualizarTabla();
+                        alert(data.message);
+                    } else {
+                        alert('Error: ' + (data.message || 'Intente nuevamente'));
+                    }
+                })
+                .catch(() => alert('Error de conexión'));
+            }
+
+            // --- Submodal Notas Servicio ---
+            // Variable para almacenar el índice del servicio que se está editando (si se abre desde la tabla)
+            let servicioIndexActual = -1;
+
+            function abrirSubmodalNotasServicio(index = -1) {
+                servicioIndexActual = index; // Guardar el índice del servicio actual
+                if (index >= 0 && index < servicios.length) {
+                    // Cargar la nota existente del servicio seleccionado
+                    document.getElementById('nota_servicio_textarea').value = servicios[index].nota_srvc || '';
+                } else {
+                    // Si se abre desde el botón dentro del modal-servicio, pero sin un servicio en edición,
+                    // limpiar el textarea. Si se está editando un servicio, se puede precargar la nota si ya existía.
+                    // Para simplificar, aquí limpiamos.
+                    document.getElementById('nota_servicio_textarea').value = '';
+                    // Si se abre desde el modal de servicio, y se está editando, se podría cargar la nota aquí si se almacena temporalmente.
+                    // Por ahora, asumimos que si no hay índice, es para un nuevo servicio o se limpiaría.
+                    // Si se llama desde el botón del modal-servicio, servicioEnEdicion !== null implica edición.
+                    if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+                        document.getElementById('nota_servicio_textarea').value = servicios[servicioEnEdicion].nota_srvc || '';
+                    }
+                }
+                document.getElementById('submodal-notas-servicio').style.display = 'block';
+            }
+
+            function cerrarSubmodalNotasServicio() {
+                document.getElementById('submodal-notas-servicio').style.display = 'none';
+            }
+
+            function guardarNotasServicio() {
+                const nuevaNota = document.getElementById('nota_servicio_textarea').value.trim();
+
+                if (servicioIndexActual >= 0 && servicioIndexActual < servicios.length) {
+                    // Caso 1: Se abrió desde la tabla, actualizamos el array y la vista previa
+                    servicios[servicioIndexActual].nota_srvc = nuevaNota;
+                    // Actualizar la vista previa en la tabla
+                    const icono = document.querySelector(`.nota-servicio-icono[data-index="${servicioIndexActual}"]`);
+                    if (icono) {
+                        let previewCell = icono.parentElement.querySelector('.nota-preview');
+                        if (!previewCell) {
+                            // Si no encuentra el span, lo creamos (esto es improbable si se cargó correctamente)
+                            previewCell = document.createElement('span');
+                            previewCell.className = 'nota-preview';
+                            icono.parentElement.appendChild(document.createTextNode(' ')); // Espacio
+                            icono.parentElement.appendChild(previewCell);
+                        }
+                        previewCell.textContent = nuevaNota ? nuevaNota : '(Sin notas)';
+                        previewCell.title = nuevaNota; // Actualizar el título del tooltip
+                    }
+                    exito('Notas del servicio guardadas');
+                } else if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+                    // Caso 2: Se abrió desde el botón dentro del modal-servicio en modo edición
+                    servicios[servicioEnEdicion].nota_srvc = nuevaNota;
+                    exito('Notas del servicio guardadas (temporalmente)');
+                } else {
+                    // Caso 3: Se abrió desde el botón dentro del modal-servicio en modo creación
+                    // No hay un objeto en servicios[] aún, solo actualizamos una variable temporal o el objeto local en el modal.
+                    // Para que se guarde con el servicio, debemos asegurarnos que el campo nota_srvc se incluya en el objeto enviado a la API.
+                    // Esto se maneja en el paso 7.
+                    exito('Notas del servicio listas para guardar con el servicio');
+                }
+                cerrarSubmodalNotasServicio();
+            }
+
+            // ===================================================================
+            // === 3. CARGA DE DATOS ===
+            // ===================================================================
+            function cargarOperacionesYTipos() {
+                // Cargar operaciones
+                fetch('/api/get_operaciones.php')
+                    .then(r => r.json())
+                    .then(data => {
+                        const opSel = document.getElementById('operacion');
+                        if (!opSel) return;
+                        opSel.innerHTML = '<option value="">Seleccionar</option>';
+                        (data.operaciones || []).forEach(op => {
+                            const opt = document.createElement('option');
+                            opt.value = op;
+                            opt.textContent = op;
+                            opSel.appendChild(opt);
+                        });
+                    })
+                    .catch(err => console.error('Error al cargar operaciones:', err));
+
+                // Listener para cargar tipos al cambiar operación
+                const opSel = document.getElementById('operacion');
+                if (opSel) {
+                    const handler = function() {
+                        const op = this.value;
+                        const tipoSel = document.getElementById('tipo_oper');
+                        if (!op || !tipoSel) return;
+                        fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(op)}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                                (data.tipos || []).forEach(t => {
+                                    const opt = document.createElement('option');
+                                    opt.value = t;
+                                    opt.textContent = t;
+                                    tipoSel.appendChild(opt);
+                                });
+                                // Recalcular concatenado si ya hay un tipo seleccionado
+                                setTimeout(() => {
+                                    if (tipoSel.value) calcularConcatenado();
+                                }, 100);
+                            })
+                            .catch(err => console.error('Error al cargar tipos:', err));
+                    };
+                    opSel.removeEventListener('change', handler);
+                    opSel.addEventListener('change', handler);
+                }
+
+                // Listener para tipo_oper → recalcular concatenado
+                const tipoSel = document.getElementById('tipo_oper');
+                if (tipoSel) {
+                    const handler = function() {
+                        if (document.getElementById('operacion').value) {
+                            calcularConcatenado();
+                        }
+                    };
+                    tipoSel.removeEventListener('change', handler);
+                    tipoSel.addEventListener('change', handler);
+                }
+            }
+
+            function cargarDatosModalServicio(callback = null) {
+                let cargas = 0;
+                const total = 4;
+                const check = () => {
+                    cargas++;
+                    if (cargas === total && callback) callback();
+                };
+
+                // 1. Commodity
+                fetch('/api/get_commoditys.php')
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('serv_commodity');
+                        if (sel) {
+                            sel.innerHTML = '<option value="">Seleccionar</option>';
+                            const list = Array.isArray(data)
+                                ? data
+                                : (Array.isArray(data.commoditys) ? data.commoditys : []);
+                            list.forEach(item => {
+                                const val = typeof item === 'string' ? item : (item.commodity || item);
+                                const opt = document.createElement('option');
+                                opt.value = val;
+                                opt.textContent = val;
+                                sel.appendChild(opt);
+                            });
+                        }
+                        check();
+                    })
+                    .catch(() => check());
+
+                // 2. Medios de transporte
+                fetch('/api/get_medios_transporte.php')
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('serv_medio_transporte');
+                        if (sel) {
+                            sel.innerHTML = '<option value="">Seleccionar</option>';
+                            const list = Array.isArray(data)
+                                ? data
+                                : (Array.isArray(data.medios_transporte) ? data.medios_transporte : []);
+                            list.forEach(item => {
+                                const val = typeof item === 'string' ? item : item;
+                                const opt = document.createElement('option');
+                                opt.value = val;
+                                opt.textContent = val;
+                                sel.appendChild(opt);
+                            });
+                        }
+                        check();
+                    })
+                    .catch(() => check());
+
+                // 3. Agentes
+                fetch('/api/get_agentes.php')
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('serv_agente');
+                        if (sel) {
+                            sel.innerHTML = '<option value="">Seleccionar</option>';
+                            const list = Array.isArray(data)
+                                ? data
+                                : (Array.isArray(data.agentes) ? data.agentes : []);
+                            list.forEach(item => {
+                                const val = typeof item === 'string' ? item : item;
+                                const opt = document.createElement('option');
+                                opt.value = val;
+                                opt.textContent = val;
+                                sel.appendChild(opt);
+                            });
+                        }
+                        check();
+                    })
+                    .catch(() => check());
+
+                // 4. Proveedores nacionales
+                fetch('/api/get_proveedores_pnac.php')
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('serv_proveedor_nac');
+                        if (sel) {
+                            sel.innerHTML = '<option value="">Seleccionar</option>';
+                            const list = Array.isArray(data)
+                                ? data
+                                : (Array.isArray(data.proveedores) ? data.proveedores : []);
+                            list.forEach(item => {
+                                const val = typeof item === 'string' ? item : item;
+                                const opt = document.createElement('option');
+                                opt.value = val;
+                                opt.textContent = val;
+                                sel.appendChild(opt);
+                            });
+                        }
+                        check();
+                    })
+                    .catch(() => check());
+            }
+
+            function cargarLugaresPorMedio(medio, origenSeleccionado = null, paisOrigenSeleccionado = null) {
+                const origenSel = document.getElementById('serv_origen');
+                const destinoSel = document.getElementById('serv_destino');
+                if (!origenSel || !destinoSel) return Promise.resolve();
+
+                if (!medio) {
+                    origenSel.innerHTML = '<option value="">Seleccionar</option>';
+                    destinoSel.innerHTML = '<option value="">Seleccionar</option>';
+                    return Promise.resolve();
+                }
+
+                return fetch(`/api/get_lugares_por_medio.php?medio=${encodeURIComponent(medio)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const lugares = data.lugares || [];
+
+                        // Generar opciones para Origen
+                        const origenOptions = lugares.map(l => 
+                            `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                        ).join('');
+                        origenSel.innerHTML = '<option value="">Seleccionar</option>' + origenOptions;
+
+                        // Filtrar Destino: excluir dupla completa (lugar + pais)
+                        const destinosFiltrados = lugares.filter(l => 
+                            !(l.lugar === origenSeleccionado && l.pais === paisOrigenSeleccionado)
+                        );
+
+                        const destinoOptions = destinosFiltrados.map(l => 
+                            `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                        ).join('');
+                        destinoSel.innerHTML = '<option value="">Seleccionar</option>' + destinoOptions;
+
+                        // Listener para Origen → País Origen + recargar Destino
+                        const handlerOrigen = () => {
+                            const opt = origenSel.options[origenSel.selectedIndex];
+                            const lugar = opt?.value || '';
+                            const pais = opt ? opt.getAttribute('data-pais') || '' : '';
+                            document.getElementById('serv_pais_origen').value = pais;
+
+                            // Recargar Destino excluyendo (lugar, pais)
+                            const nuevosDestinos = lugares.filter(l => 
+                                !(l.lugar === lugar && l.pais === pais)
+                            );
+                            const nuevasOpciones = nuevosDestinos.map(l => 
+                                `<option value="${l.lugar}" data-pais="${l.pais || ''}">${l.lugar}</option>`
+                            ).join('');
+                            destinoSel.innerHTML = '<option value="">Seleccionar</option>' + nuevasOpciones;
+
+                            // Limpiar país destino
+                            document.getElementById('serv_pais_destino').value = '';
+                        };
+
+                        // Listener para Destino → País Destino
+                        const handlerDestino = () => {
+                            const opt = destinoSel.options[destinoSel.selectedIndex];
+                            const pais = opt ? opt.getAttribute('data-pais') || '' : '';
+                            document.getElementById('serv_pais_destino').value = pais;
+                        };
+
+                        // Limpiar y asignar listeners
+                        origenSel.removeEventListener('change', handlerOrigen);
+                        destinoSel.removeEventListener('change', handlerDestino);
+                        origenSel.addEventListener('change', handlerOrigen);
+                        destinoSel.addEventListener('change', handlerDestino);
+                    })
+                    .catch(err => {
+                        console.error('Error al cargar lugares por medio:', err);
+                        error('No se pudieron cargar los lugares para este medio de transporte');
+                        return Promise.resolve();
+                    });
+            }
+
+            // ===================================================================
+            // === 4. MANEJO DE PROSPECTOS ===
+            // ===================================================================
+            function seleccionarProspecto(id) {
+                fetch(`/api/get_prospecto.php?id=${id}`)
+                    // === Validación antes de r.json()
+                    .then(r => {
+                        if (!r.ok) {
+                            throw new Error(`HTTP ${r.status}`);
+                        }
+                        return r.text().then(text => {
+                            try {
+                                return JSON.parse(text);
+                            } catch (e) {
+                                console.error('❌ Respuesta no es JSON:', text);
+                                throw new Error('La API devolvió HTML en lugar de JSON');
+                            }
+                        });
+                    })
+                    .then(data => {
+                        if (!data.success || !data.prospecto) return error('Prospecto no encontrado');
+                        const p = data.prospecto;
+
+                        // Actualizar campos ocultos del prospecto
+                        document.getElementById('prospecto_notas_comerciales').value = p.notas_comerciales || '';
+                        document.getElementById('prospecto_notas_operaciones').value = p.notas_operaciones || '';
+                        document.getElementById('prospecto_razon_social').value = p.razon_social || '';
+                        document.getElementById('prospecto_direccion').value = p.direccion || '';
+                        document.getElementById('prospecto_rut_empresa').value = p.rut_empresa || '';
+                        document.getElementById('operacion').value = p.operacion || '';
+
+                        // === Actualizar el select de Razón Social ===
+                        const razonSelect = document.getElementById('razon_social_select');
+                        if (razonSelect) {
+                            let optionFound = false;
+                            for (let i = 0; i < razonSelect.options.length; i++) {
+                                const opt = razonSelect.options[i];
+                                if (opt.value === p.rut_empresa) {
+                                    opt.selected = true;
+                                    optionFound = true;
+                                    break;
+                                }
+                            }
+                            if (!optionFound && p.rut_empresa && p.razon_social) {
+                                const opt = document.createElement('option');
+                                opt.value = p.rut_empresa;
+                                opt.textContent = p.razon_social;
+                                razonSelect.appendChild(opt);
+                                razonSelect.value = p.rut_empresa;
+                            }
+                        }
+
+                        // === Cargar campos del formulario ===
+                        const fields = [
+                            { id: 'rut_empresa', value: p.rut_empresa },
+                            { id: 'fono_empresa', value: p.fono_empresa },
+                            { id: 'direccion', value: p.direccion },
+                            { id: 'booking', value: p.booking },
+                            { id: 'incoterm', value: p.incoterm },
+                            { id: 'fecha_alta', value: p.fecha_alta },
+                            { id: 'fecha_estado', value: p.fecha_estado },
+                            { id: 'nombre', value: p.nombre },
+                            { id: 'pais', value: p.pais }
+                        ];
+                        fields.forEach(f => {
+                            const el = document.getElementById(f.id);
+                            if (el) el.value = f.value || '';
+                        });
+
+                        // === Cargar operación y tipo_oper ===
+                        const opSel = document.getElementById('operacion');
+                        const tipoSel = document.getElementById('tipo_oper');
+                        if (opSel && p.operacion) {
+                            opSel.value = p.operacion;
+                            fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                                    (data.tipos || []).forEach(t => {
+                                        const opt = document.createElement('option');
+                                        opt.value = t;
+                                        opt.textContent = t;
+                                        tipoSel.appendChild(opt);
+                                    });
+                                    if (p.tipo_oper) tipoSel.value = p.tipo_oper;
+                                });
+                        }
+
+                        // === Notas comerciales y operaciones ===
+                        const setNota = (name, val) => {
+                            const inp = document.getElementById(name);
+                            if (inp) inp.value = val || '';
+                            const ta = document.getElementById(`${name}_input`);
+                            if (ta) ta.value = val || '';
+                        };
+                        setNota('notas_comerciales', p.notas_comerciales);
+                        setNota('notas_operaciones', p.notas_operaciones);
+
+                        // === Cargar servicios (si existen) ===
+                        // Extraer Razón Social del <select> (texto de la opción seleccionada)
+                        const razonSocialSelect = document.getElementById('razon_social_select');
+                        let razonSocialProspecto = '';
+                        if (razonSocialSelect && razonSocialSelect.selectedIndex >= 0) {
+                            const selectedOption = razonSocialSelect.options[razonSocialSelect.selectedIndex];
+                            if (selectedOption && selectedOption.textContent) {
+                                razonSocialProspecto = selectedOption.textContent.trim();
+                            }
+                        }
+
+                        const prospectoData = {
+                            razon_social: razonSocialProspecto,
+                            direccion: p.direccion || '',
+                            rut_empresa: p.rut_empresa || '',
+                            contacto_nombre: p.nombre || '' // Comercial asignado (o usa contacto primario si aplica)
+                        };
+
+                        servicios = (data.servicios || []).map(s => ({
+                            ...s,
+                            // Inyectar datos del prospecto en cada servicio
+                            razon_social: prospectoData.razon_social,
+                            direccion: s.direccion || prospectoData.direccion,
+                            rut_empresa: prospectoData.rut_empresa,
+                            contacto_nombre: s.contacto_nombre || prospectoData.contacto_nombre,
+                            // Campos numéricos
+                            costo: parseFloat(s.costo) || 0,
+                            venta: parseFloat(s.venta) || 0,
+                            costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                            ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
+                        }));
+                        tieneServiciosIniciales = servicios.length > 0;
+                        actualizarTabla();
+
+                        // NUEVO: Cargar contacto primario basado en el RUT del prospecto cargado
+                        cargarContactoPrimario(p.rut_empresa);
+
+                        // ✅✅✅ ASIGNACIONES CLAVE PARA EL BOTÓN "AGREGAR SERVICIO" ✅✅✅
+                        const idPplInput = document.getElementById('id_ppl');
+                        const concatenadoInput = document.getElementById('concatenado');
+                        if (idPplInput) idPplInput.value = p.id_ppl || '';
+                        if (concatenadoInput) concatenadoInput.value = p.concatenado || '';
+
+                        // === Habilitar campos y botones ===
+                        const inputs = document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])');
+                        const selects = document.querySelectorAll('select');
+                        inputs.forEach(i => { i.readOnly = false; i.style.backgroundColor = ''; });
+                        selects.forEach(s => s.disabled = false);
+                        // Mostrar botón de agregar servicio si el prospecto ya existe
+                        const btnAgregar = document.getElementById('btn-agregar-servicio');
+                        if (btnAgregar && p.id_ppl && p.id_ppl > 0) {
+                            btnAgregar.style.display = 'inline-flex'; // o 'inline-block'
+                        }
+
+                    })
+                    .catch(err => {
+                        console.error('Error al cargar prospecto:', err);
+                        error('No se pudo cargar el prospecto');
+                    });
+            }
+
+            // ===================================================================
+            // === 5. MODALES Y SUBMODALES ===
+            // ===================================================================
+            function abrirModalComercial() { document.getElementById('modal-comercial').style.display = 'block'; }
+            function cerrarModalComercial() { document.getElementById('modal-comercial').style.display = 'none'; }
+            function abrirModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'block'; }
+            function cerrarModalOperaciones() { document.getElementById('modal-operaciones').style.display = 'none'; }
+
+            function guardarNotasComerciales() {
+                const id = document.getElementById('id_ppl')?.value;
+                if (!id || id === '0') return error('Prospecto no válido');
+                const val = document.getElementById('notas_comerciales_input').value.trim();
+                fetch('/api/guardar_nota.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id_ppl: id, campo: 'notas_comerciales', valor: val})
+                }).then(r => r.json()).then(d => {
+                    if (d.success) exito('Notas guardadas');
+                    else error(d.message || 'Error');
+                    cerrarModalComercial();
+                });
+            }
+            function guardarNotasOperaciones() {
+                const id = document.getElementById('id_ppl')?.value;
+                if (!id || id === '0') return error('Prospecto no válido');
+                const val = document.getElementById('notas_operaciones_input').value.trim();
+                fetch('/api/guardar_nota.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id_ppl: id, campo: 'notas_operaciones', valor: val})
+                }).then(r => r.json()).then(d => {
+                    if (d.success) exito('Notas guardadas');
+                    else error(d.message || 'Error');
+                    cerrarModalOperaciones();
+                });
+            }
+
+            // --- FUNCIÓN CORREGIDA: abrirModalServicio ---
+            function abrirModalServicio(index = null) {
+                const idPpl = document.getElementById('id_ppl')?.value;
+                const concatenado = document.getElementById('concatenado')?.value;
+                if (!idPpl || idPpl === '0' || !concatenado) {
+                    error('Guarde el prospecto primero antes de agregar servicios.');
+                    return;
+                }
+
+                // Limpiar modal
+                const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
+                modalInputs.forEach(el => {
+                    if (el.type === 'number') el.value = '';
+                    else if (el.type === 'text' || el.tagName === 'TEXTAREA') el.value = '';
+                    else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                });
+
+                document.getElementById('id_prospect_serv').value = idPpl;
+                document.getElementById('concatenado_serv').value = concatenado;
+                document.getElementById('serv_titulo_concatenado').textContent = concatenado;
+                costosServicio = [];
+                gastosLocales = [];
+
+                // Cargar datos del modal (commodity, medios, etc.)
+                cargarDatosModalServicio(() => {
+                    if (index !== null) {
+                        // Editar servicio existente
+                        servicioEnEdicion = index;
+                        const s = servicios[index];
+                        costosServicio = Array.isArray(s.costos) ? [...s.costos] : [];
+                        gastosLocales = Array.isArray(s.gastos_locales) 
+                            ? s.gastos_locales.map(g => ({
+                                ...g,
+                                monto: parseFloat(g.monto) || 0,
+                                iva: parseFloat(g.iva) || 0
+                            }))
+                            : [];
+
+                        // Rellenar campos básicos
+                        document.getElementById('serv_servicio').value = s.servicio || '';
+                        document.getElementById('serv_transportador').value = s.transportador || '';
+                        document.getElementById('serv_incoterm').value = s.incoterm || '';
+                        document.getElementById('serv_ref_cliente').value = s.ref_cliente || '';
+                        document.getElementById('serv_transito').value = s.transito || '';
+                        document.getElementById('serv_frecuencia').value = s.frecuencia || '';
+                        document.getElementById('serv_lugar_carga').value = s.lugar_carga || '';
+                        document.getElementById('serv_sector').value = s.sector || '';
+                        document.getElementById('serv_mercancia').value = s.mercancia || '';
+                        document.getElementById('serv_bultos').value = s.bultos || '';
+                        document.getElementById('serv_peso').value = s.peso || '';
+                        document.getElementById('serv_volumen').value = s.volumen || '';
+                        document.getElementById('serv_dimensiones').value = s.dimensiones || '';
+                        document.getElementById('serv_moneda').value = s.moneda || 'USD';
+                        document.getElementById('serv_tipo_cambio').value = s.tipo_cambio || 1;
+                        document.getElementById('serv_proveedor_nac').value = s.proveedor_nac || '';
+                        document.getElementById('serv_aol').value = s.aol || '';
+                        document.getElementById('serv_aod').value = s.aod || '';
+                        document.getElementById('serv_agente').value = s.agente || '';
+                        document.getElementById('serv_validez').value = s.validez || '';
+
+                        // Cargar lugares si hay medio guardado
+                        const medioGuardado = (s.trafico || '').trim();
+                        if (medioGuardado) {
+                            // ✅ PASAR ORIGEN + PAÍS_ORIGEN para filtrado preciso
+                            cargarLugaresPorMedio(medioGuardado, s.origen, s.pais_origen).then(() => {
+                                const origenSel = document.getElementById('serv_origen');
+                                const destinoSel = document.getElementById('serv_destino');
+
+                                // Preseleccionar Origen (por valor + país)
+                                if (origenSel && s.origen && s.pais_origen) {
+                                    for (let i = 0; i < origenSel.options.length; i++) {
+                                        const opt = origenSel.options[i];
+                                        if (opt.value === s.origen && opt.getAttribute('data-pais') === s.pais_origen) {
+                                            origenSel.selectedIndex = i;
+                                            document.getElementById('serv_pais_origen').value = s.pais_origen;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                // Preseleccionar Destino (por valor + país)
+                                if (destinoSel && s.destino && s.pais_destino) {
+                                    for (let i = 0; i < destinoSel.options.length; i++) {
+                                        const opt = destinoSel.options[i];
+                                        if (opt.value === s.destino && opt.getAttribute('data-pais') === s.pais_destino) {
+                                            destinoSel.selectedIndex = i;
+                                            document.getElementById('serv_pais_destino').value = s.pais_destino;
+                                            break;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        // Cargar commodity y medio
+                        const medioSel = document.getElementById('serv_medio_transporte');
+                        const commoditySel = document.getElementById('serv_commodity');
+                        if (medioSel && s.trafico) medioSel.value = s.trafico;
+                        if (commoditySel && s.commodity) commoditySel.value = s.commodity;
+                    } else {
+                        // Nuevo servicio
+                        servicioEnEdicion = null;
+                    }
+                });
+
+                // Listener para cargar lugares al cambiar el medio de transporte
+                const medioSel = document.getElementById('serv_medio_transporte');
+                if (medioSel) {
+                    const newMedioSel = medioSel.cloneNode(true);
+                    medioSel.parentNode.replaceChild(newMedioSel, medioSel);
+                    newMedioSel.addEventListener('change', function() {
+                        const medioSeleccionado = this.value;
+                        if (medioSeleccionado) {
+                            // --- CORRECCIÓN: Mapear medios específicos al genérico ---
+                            let medioParaCarga = medioSeleccionado;
+                            if (medioSeleccionado === 'Marítimo FCL' || medioSeleccionado === 'Marítimo LCL') {
+                                medioParaCarga = 'Marítimo';
+                            }
+                            // Puedes añadir más mapeos aquí si aplica para Aéreo o Terrestre en el futuro
+                            // else if (medioSeleccionado === 'Aéreo Internacional' || medioSeleccionado === 'Aéreo Nacional') {
+                            //     medioParaCarga = 'Aéreo';
+                            // }
+                            // else if (medioSeleccionado === 'Terrestre Regional') {
+                            //     medioParaCarga = 'Terrestre';
+                            // }
+                            // --- FIN CORRECCIÓN ---
+
+                            // Llamar a la función con el valor mapeado
+                            cargarLugaresPorMedio(medioParaCarga); // Sin origen → cargar todos
+                        } else {
+                            document.getElementById('serv_origen').innerHTML = '<option value="">Seleccionar</option>';
+                            document.getElementById('serv_destino').innerHTML = '<option value="">Seleccionar</option>';
+                            document.getElementById('serv_pais_origen').value = '';
+                            document.getElementById('serv_pais_destino').value = '';
+                        }
+                    });
+                }
+
+                document.getElementById('modal-servicio').style.display = 'flex';
+            }
+
+            function cerrarModalServicio() {
+                document.getElementById('modal-servicio').style.display = 'none';
+            }
+
+            function cerrarModalServicioConConfirmacion() {
+                if (confirm('¿Desea cancelar sin guardar los cambios?')) {
+                    cerrarModalServicio();
+                }
+            }
+
+            // === FUNCIÓN AUXILIAR: Extrae la base (sin correlativo) desde el concatenado ===
+            function extraerBaseDesdeConcatenado(concatenado) {
+                if (!concatenado || !concatenado.includes('-')) return null;
+                const partes = concatenado.split('-');
+                if (partes.length < 2) return null;
+                // Todo menos el último segmento (que es el correlativo del prospecto)
+                return partes.slice(0, -1).join('-');
+            }
+
+            // === FUNCIÓN AUXILIAR: Genera id_srvc permanente correctamente ===
+            function generarIdSrvcPermanente(concatenado, cantidadServicios) {
+                const base = extraerBaseDesdeConcatenado(concatenado);
+                if (!base) {
+                    console.error('❌ No se pudo extraer la base desde el concatenado:', concatenado);
+                    return null;
+                }
+                const correlativo = (cantidadServicios + 1).toString().padStart(2, '0');
+                return `${base}-${correlativo}`; // Ej: EXAIR251119-01
+            }
+
+            // === FUNCIÓN PRINCIPAL: guardarServicio ===
+            function guardarServicio() {
+                console.log('🔍 [SERVICIO] Iniciando guardarServicio en BD');
+                const servicio = document.getElementById('serv_servicio').value.trim();
+                if (!servicio) {
+                    error('Servicio es obligatorio');
+                    return;
+                }
+                const origen = document.getElementById('serv_origen').value;
+                const destino = document.getElementById('serv_destino').value;
+                if (origen && destino && origen === destino) {
+                    error('Origen y Destino no pueden ser iguales');
+                    return;
+                }
+
+                const idPpl = document.getElementById('id_prospect_serv')?.value;
+                if (!idPpl || idPpl === '0') {
+                    error('Prospecto no válido');
+                    return;
+                }
+
+                const totalVenta = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
+                const rutCliente = document.getElementById('rut_empresa')?.value.trim();
+
+                // Validar crédito si aplica
+                if (rutCliente && totalVenta > 0) {
+                    fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.error) {
+                                error(data.error);
+                                return;
+                            }
+                            if (totalVenta > data.saldo_credito) {
+                                error(`Sobregiro: El servicio excede el crédito disponible (${data.saldo_credito}).`);
+                                return;
+                            }
+                            enviarServicioABD();
+                        })
+                        .catch(() => error('Error al verificar crédito'));
+                } else {
+                    enviarServicioABD();
+                }
+            }
+
+            function enviarServicioABD() {
+                const idPpl = document.getElementById('id_prospect_serv')?.value;
+                const concatenado = document.getElementById('concatenado_serv')?.value;
+
+                if (!idPpl || idPpl === '0' || !concatenado) {
+                    error('Prospecto no válido');
+                    return;
+                }
+
+                // ✅ Incluir costos y gastos en el objeto de datos
+                const data = {
+                    modo: servicioEnEdicion !== null ? 'editar' : 'crear',
+                    id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : null,
+                    id_prospect: document.getElementById('id_prospect_serv').value,
+                    servicio: document.getElementById('serv_servicio').value.trim(),
+                    trafico: document.getElementById('serv_medio_transporte').value,
+                    commodity: document.getElementById('serv_commodity').value,
+                    origen: document.getElementById('serv_origen').value,
+                    pais_origen: document.getElementById('serv_pais_origen').value,
+                    destino: document.getElementById('serv_destino').value,
+                    pais_destino: document.getElementById('serv_pais_destino').value,
+                    transito: document.getElementById('serv_transito').value,
+                    frecuencia: document.getElementById('serv_frecuencia').value,
+                    lugar_carga: document.getElementById('serv_lugar_carga').value,
+                    sector: document.getElementById('serv_sector').value,
+                    mercancia: document.getElementById('serv_mercancia').value,
+                    bultos: document.getElementById('serv_bultos').value,
+                    peso: document.getElementById('serv_peso').value,
+                    volumen: document.getElementById('serv_volumen').value,
+                    dimensiones: document.getElementById('serv_dimensiones').value,
+                    moneda: document.getElementById('serv_moneda').value,
+                    tipo_cambio: document.getElementById('serv_tipo_cambio').value,
+                    proveedor_nac: document.getElementById('serv_proveedor_nac').value,
+                    desconsolidac: '0',
+                    aol: document.getElementById('serv_aol').value,
+                    aod: document.getElementById('serv_aod').value,
+                    agente: document.getElementById('serv_agente').value,
+                    transportador: document.getElementById('serv_transportador').value,
+                    incoterm: document.getElementById('serv_incoterm').value,
+                    ref_cliente: document.getElementById('serv_ref_cliente').value,
+                    costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
+                    venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
+                    costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
+                    ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
+                    // ✅ ¡ESTAS SON LAS LÍNEAS CLAVE!
+                    costos: [...costosServicio],
+                    gastos_locales: [...gastosLocales],
+                    estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente',
+                    nota_srvc: servicios[servicioEnEdicion]?.nota_srvc || '', // Tomar la nota del servicio en edición o vacío si es nuevo
+                    validez: document.getElementById('serv_validez').value
+                };
+
+                console.log('✅ [SERVICIO] Datos a enviar:', data);
+                fetch('/api/guardar_servicio.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        // Inyectar datos del prospecto en el nuevo servicio
+                        const prospectoRazonSocial = document.getElementById('razon_social_select').selectedOptions[0]?.textContent || '';
+                        const prospectoRut = document.getElementById('rut_empresa')?.value || '';
+                        const prospectoDireccion = document.getElementById('direccion')?.value || '';
+                        const prospectoContacto = document.getElementById('contacto')?.value || '';
+
+                        const servicioGuardado = {
+                            ...data,
+                            id_srvc: res.id_srvc,
+                            // Campos heredados del prospecto
+                            razon_social: prospectoRazonSocial,
+                            rut_empresa: prospectoRut,
+                            direccion: prospectoDireccion,
+                            contacto_nombre: prospectoContacto
+                        };
+                        if (servicioEnEdicion !== null) {
+                            servicios[servicioEnEdicion] = servicioGuardado;
+                        } else {
+                            servicios.push(servicioGuardado);
+                        }
+                        actualizarTabla();
+                        cerrarModalServicio();
+                        exito('Servicio guardado en la base de datos');
+                    } else {
+                        error('Error: ' + (res.message || 'Intente nuevamente'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error al guardar servicio:', err);
+                    error('Error de conexión al guardar el servicio');
+                });
+            }
+
+            // --- Submodales ---
+            function abrirSubmodalCostos() {
+                if (document.getElementById('modal-servicio').style.display === 'none') {
+                    return error('Abra primero el modal de Servicio');
+                }
+
+                // ✅ Cargar datos actuales del servicio
+                if (servicioEnEdicion !== null) {
+                    costosServicio = Array.isArray(servicios[servicioEnEdicion].costos) ? [...servicios[servicioEnEdicion].costos] : [];
+                }
+
+                // ✅ Establecer moneda
+                document.getElementById('costo_moneda').value = document.getElementById('serv_moneda')?.value || 'USD';
+
+                // ✅ Cargar conceptos y aplicaciones
+                fetch('/api/get_conceptos_costos.php')
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('costo_concepto');
+                        if (sel) {
+                            sel.innerHTML = '<option value="">Seleccionar concepto</option>';
+                            (data.conceptos || data).forEach(c => {
+                                const opt = document.createElement('option');
+                                opt.value = c.concepto || c;
+                                opt.textContent = c.concepto || c;
+                                sel.appendChild(opt);
+                            });
+                        }
+                    });
+
+                const medio = document.getElementById('serv_medio_transporte')?.value || '';
+                fetch(`/api/get_aplicaciones_costos.php?medio=${encodeURIComponent(medio)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('costo_aplica');
+                        if (sel) {
+                            sel.innerHTML = '<option value="">Seleccionar aplica</option>';
+                            (Array.isArray(data) ? data : (data.aplicaciones || [])).forEach(item => {
+                                const val = typeof item === 'string' ? item : item.aplica;
+                                if (val) {
+                                    const opt = document.createElement('option');
+                                    opt.value = val;
+                                    opt.textContent = val;
+                                    sel.appendChild(opt);
+                                }
+                            });
+                        }
+                    });
+
+                // ✅ Determinar permisos por rol
+                const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+                const esPricingOAdmin = (rolUsuario === 'pricing' || rolUsuario === 'admin');
+
+                // ✅ Deshabilitar campos de costo (solo edición para Pricing/Admin)
+                const camposCosto = ['costo_concepto', 'costo_qty', 'costo_costo', 'costo_aplica'];
+                camposCosto.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.disabled = !esPricingOAdmin;
+                });
+
+                // ✅ El campo "tarifa" siempre editable
+                const campoTarifa = document.getElementById('costo_tarifa');
+                if (campoTarifa) campoTarifa.disabled = false;
+
+                // ✅ Actualizar tabla y mostrar modal
+                actualizarTablaCostos();
+                document.getElementById('submodal-costos').style.display = 'block';
+            }
+
+            // --- Submodal Gastos Locales ---
+            function abrirSubmodalGastosLocales() {
+                if (document.getElementById('modal-servicio').style.display === 'none') return error('Abra primero el modal de Servicio');
+
+                // Cargar datos actuales del servicio (si está en edición)
+                // Asegurar que gastosLocales sea un array y que sus valores numéricos sean números
+                if (servicioEnEdicion !== null) {
+                    gastosLocales = Array.isArray(servicios[servicioEnEdicion].gastos_locales) ? servicios[servicioEnEdicion].gastos_locales.map(g => ({
+                        ...g,
+                        // Asegurar que monto e iva sean números, con 0 como valor por defecto si no lo son
+                        monto: parseFloat(g.monto) || 0,
+                        iva: parseFloat(g.iva) || 0
+                    })) : [];
+                } else {
+                    // Si no está en edición, asegurar que gastosLocales sea un array vacío o el que esté en el estado actual
+                    gastosLocales = Array.isArray(gastosLocales) ? gastosLocales.map(g => ({
+                        ...g,
+                        monto: parseFloat(g.monto) || 0,
+                        iva: parseFloat(g.iva) || 0
+                    })) : [];
+                }
+
+                // Cargar tipos de gastos (si aplica)
+                const tipo = document.getElementById('gasto_tipo')?.value;
+                if (tipo) {
+                    fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            const sel = document.getElementById('gasto_gasto');
+                            if (sel) {
+                                sel.innerHTML = '<option value="">Seleccionar gasto</option>';
+                                (Array.isArray(data) ? data : (data.gastos_locales || [])).forEach(item => {
+                                    const val = typeof item === 'string' ? item : (item.gasto || item);
+                                    if (val) {
+                                        const opt = document.createElement('option');
+                                        opt.value = val;
+                                        opt.textContent = val;
+                                        sel.appendChild(opt);
+                                    }
+                                });
+                            }
+                        });
+                }
+                // Actualizar tabla y mostrar modal
+                actualizarTablaGastosLocales();
+                document.getElementById('submodal-gastos-locales').style.display = 'block';
+            }
+
+            ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', () => {
+                    const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+                    const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+                    const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+                    document.getElementById('costo_total_costo').value = (qty * costo).toFixed(2);
+                    document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
+                });
+            });
+
+            function actualizarTablaGastosLocales() {
+                const tbody = document.getElementById('gastos-locales-body');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+
+                // Inicializar totales por moneda
+                let totales = {
+                    'USD': { costo: 0, venta: 0 },
+                    'EUR': { costo: 0, venta: 0 },
+                    'CLP': { costo: 0, venta: 0 }
+                };
+
+                gastosLocales.forEach((g, i) => {
+                    // Asegurar que monto e iva sean números antes de usarlos
+                    const monto = parseFloat(g.monto) || 0;
+                    const iva = parseFloat(g.iva) || 0;
+                    const tipo = g.tipo || '';
+                    const moneda = g.moneda || 'CLP'; // Valor por defecto
+
+                    // Calcular subtotal (monto * (1 + iva/100)) si es afecto
+                    const esAfecto = g.afecto === 'SI' || g.afecto === true;
+                    const subtotal = esAfecto ? monto * (1 + iva / 100) : monto;
+
+                    // Acumular totales por tipo y moneda
+                    if (tipo.toLowerCase() === 'costo') {
+                        totales[moneda.toUpperCase()].costo += subtotal;
+                    } else if (tipo.toLowerCase() === 'ventas') { // O 'sales' si se usa inglés
+                        totales[moneda.toUpperCase()].venta += subtotal;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${tipo}</td>
+                        <td>${g.gasto}</td>
+                        <td>${moneda}</td>
+                        <td style="text-align:right;">${monto.toFixed(2)}</td>
+                        <td>${g.afecto}</td>
+                        <td style="text-align:right;">${iva.toFixed(2)}</td>
+                        <td style="text-align:right;">${subtotal.toFixed(2)}</td>
+                        <td style="text-align: center;">
+                            <i class="fas fa-pencil-alt edit-gasto-icon" data-index="${i}" style="cursor: pointer; color: #007bff; margin-right: 0.5rem;" title="Editar Gasto"></i>
+                            <button type="button" onclick="eliminarGastoLocal(${i})">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Calcular profit y profit % por moneda
+                for (const moneda in totales) {
+                    const t = totales[moneda];
+                    t.profit = t.venta - t.costo;
+                    t.profit_pct = t.venta > 0 ? ((t.venta - t.costo) / t.venta * 100) : 0;
+                }
+
+                // Actualizar los elementos HTML con los totales calculados
+                document.getElementById('cgld_usd').textContent = totales['USD'].costo.toFixed(2);
+                document.getElementById('vgld_usd').textContent = totales['USD'].venta.toFixed(2);
+                document.getElementById('pgld_usd').textContent = totales['USD'].profit.toFixed(2);
+                document.getElementById('ppgld_usd').textContent = totales['USD'].profit_pct.toFixed(2) + ' %';
+
+                document.getElementById('cgld_eur').textContent = totales['EUR'].costo.toFixed(2);
+                document.getElementById('vgld_eur').textContent = totales['EUR'].venta.toFixed(2);
+                document.getElementById('pgld_eur').textContent = totales['EUR'].profit.toFixed(2);
+                document.getElementById('ppgld_eur').textContent = totales['EUR'].profit_pct.toFixed(2) + ' %';
+
+                document.getElementById('cgld_clp').textContent = totales['CLP'].costo.toFixed(2);
+                document.getElementById('vgld_clp').textContent = totales['CLP'].venta.toFixed(2);
+                document.getElementById('pgld_clp').textContent = totales['CLP'].profit.toFixed(2);
+                document.getElementById('ppgld_clp').textContent = totales['CLP'].profit_pct.toFixed(2) + ' %';
+
+                // Opcional: Actualizar también los totales antiguos si se usan en otro lugar
+                // const tv = totales['USD'].venta + totales['EUR'].venta + totales['CLP'].venta;
+                // const tc = totales['USD'].costo + totales['EUR'].costo + totales['CLP'].costo;
+                // document.getElementById('total-venta-gastos').textContent = tv.toFixed(2);
+                // document.getElementById('total-costo-gastos').textContent = tc.toFixed(2);
+                // document.getElementById('profit-local').textContent = (tv - tc).toFixed(2);
+                // const pct = tv > 0 ? ((tv - tc) / tv * 100) : 0;
+                // document.getElementById('profit-porcentaje').textContent = pct.toFixed(2) + ' %';
+
+                // --- Añadir listeners para los íconos de edición ---
+                setTimeout(() => {
+                    document.querySelectorAll('.edit-gasto-icon').forEach(icon => {
+                        icon.addEventListener('click', function() {
+                            const index = parseInt(this.getAttribute('data-index'));
+                            editarGastoLocal(index);
+                        });
+                    });
+                }, 0);
+            }
+
+            // Mantener también la corrección en eliminarGastoLocal
+            function eliminarGastoLocal(i) {
+                if (confirm('¿Eliminar este gasto?')) {
+                    gastosLocales.splice(i, 1);
+                    actualizarTablaGastosLocales(); // Actualizar tabla y totales
+                    exito('Gasto eliminado');
+                }
+            }
+
+            // Y en cerrarSubmodalGastosLocales
+            function cerrarSubmodalGastosLocales() {
+                if (servicioEnEdicion !== null && servicios[servicioEnEdicion]) {
+                    // Asegurar que los gastos locales se actualicen en el objeto servicio
+                    // y que los valores numéricos se mantengan como números
+                    servicios[servicioEnEdicion].gastos_locales = gastosLocales.map(g => ({
+                        ...g,
+                        monto: parseFloat(g.monto) || 0,
+                        iva: parseFloat(g.iva) || 0
+                    }));
+                }
+                document.getElementById('submodal-gastos-locales').style.display = 'none';
+            }
+
+            function guardarCosto() {
+                const concepto = document.getElementById('costo_concepto').value;
+                const aplica = document.getElementById('costo_aplica').value;
+                const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+                const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
+                const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+                const moneda = document.getElementById('costo_moneda').value || 'CLP';
+                if (!concepto || !aplica) return error('Concepto y Aplica son obligatorios');
+                const nuevo = { concepto, moneda, qty, costo, total_costo: qty * costo, tarifa, total_tarifa: qty * tarifa, aplica };
+                if (window.indiceCostoEdicion !== undefined) {
+                    costosServicio[window.indiceCostoEdicion] = nuevo;
+                    delete window.indiceCostoEdicion;
+                } else {
+                    costosServicio.push(nuevo);
+                }
+                actualizarTablaCostos();
+                ['costo_concepto', 'costo_qty', 'costo_costo', 'costo_tarifa', 'costo_aplica'].forEach(id => {
+                    if (id.includes('concepto') || id.includes('aplica')) {
+                        document.getElementById(id).selectedIndex = 0;
+                    } else {
+                        document.getElementById(id).value = '';
+                    }
+                });
+                document.getElementById('costo_total_costo').value = '0.00';
+                document.getElementById('costo_total_tarifa').value = '0.00';
+                exito('Costo guardado');
+            }
+
+            function actualizarTablaCostos() {
+                const tbody = document.getElementById('costos-body');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                let tc = 0, tt = 0;
+                costosServicio.forEach((c, i) => {
+                    const qty = parseFloat(c.qty) || 0;
+                    const costo = parseFloat(c.costo) || 0;
+                    const tarifa = parseFloat(c.tarifa) || 0;
+                    const tcosto = qty * costo;
+                    const ttarifa = qty * tarifa;
+                    tc += tcosto; tt += ttarifa;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${c.concepto}</td>
+                        <td>${c.moneda}</td>
+                        <td style="text-align: right;">${qty.toFixed(2)}</td>
+                        <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
+                        <td style="text-align: right; background-color: #fff9db;">${tcosto.toFixed(2)}</td>
+                        <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
+                        <td style="text-align: right; background-color: #e6f7ff;">${ttarifa.toFixed(2)}</td>
+                        <td>${c.aplica}</td>
+                        <td>
+                            <button type="button" onclick="editarCosto(${i})">✏️</button>
+                            <button type="button" onclick="eliminarCosto(${i})">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                document.getElementById('total-costo-costos').textContent = tc.toFixed(2);
+                document.getElementById('total-tarifa-costos').textContent = tt.toFixed(2);
+            }
+
+            function editarCosto(i) {
+                const c = costosServicio[i];
+                if (!c) return;
+                document.getElementById('costo_concepto').value = c.concepto || '';
+                document.getElementById('costo_qty').value = c.qty || '';
+                document.getElementById('costo_costo').value = c.costo || '';
+                document.getElementById('costo_tarifa').value = c.tarifa || '';
+                document.getElementById('costo_aplica').value = c.aplica || '';
+                document.getElementById('costo_total_costo').value = (parseFloat(c.qty || 0) * parseFloat(c.costo || 0)).toFixed(2);
+                document.getElementById('costo_total_tarifa').value = (parseFloat(c.qty || 0) * parseFloat(c.tarifa || 0)).toFixed(2);
+                window.indiceCostoEdicion = i;
+            }
+
+            function eliminarCosto(i) {
+                if (confirm('¿Eliminar costo?')) {
+                    costosServicio.splice(i, 1);
+                    actualizarTablaCostos();
+                    exito('Costo eliminado');
+                }
+            }
+
+            function cerrarSubmodalCostos() {
+                if (servicioEnEdicion !== null) {
+                    servicios[servicioEnEdicion].costos = [...costosServicio];
+                }
+                document.getElementById('submodal-costos').style.display = 'none';
+            }
+
+            document.getElementById('gasto_tipo')?.addEventListener('change', function() {
+                const tipo = this.value;
+                if (!tipo) {
+                    document.getElementById('gasto_gasto').innerHTML = '<option value="">Gastos</option>';
+                    return;
+                }
+                fetch(`/api/get_gastos_locales.php?tipo=${encodeURIComponent(tipo)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('gasto_gasto');
+                        if (sel) {
+                            sel.innerHTML = '<option value="">Gastos</option>';
+                            (data.gastos || []).forEach(g => {
+                                const opt = document.createElement('option');
+                                opt.value = g;
+                                opt.textContent = g;
+                                sel.appendChild(opt);
+                            });
+                        }
+                    });
+            });
+
+            function guardarGastoLocal() {
+                const tipo = document.getElementById('gasto_tipo').value;
+                const gasto = document.getElementById('gasto_gasto').value;
+                const moneda = document.getElementById('gasto_moneda').value;
+                const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
+                const afecto = document.getElementById('gasto_afecto').value;
+                const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
+                if (!tipo || !gasto) return error('Tipo y Gasto son obligatorios');
+                gastosLocales.push({ tipo, gasto, moneda, monto, afecto, iva });
+                actualizarTablaGastosLocales();
+                ['gasto_tipo', 'gasto_gasto', 'gasto_moneda', 'gasto_monto', 'gasto_afecto', 'gasto_iva'].forEach(id => {
+                    if (id.includes('tipo') || id.includes('gasto') || id.includes('moneda') || id.includes('afecto')) {
+                        document.getElementById(id).selectedIndex = 0;
+                    } else {
+                        document.getElementById(id).value = '';
+                    }
+                });
+                exito('Gasto local agregado');
+            }
+
+            function editarGastoLocal(index) {
+                const gasto = gastosLocales[index];
+                if (!gasto) {
+                    error('Gasto no encontrado.');
+                    return;
+                }
+
+                // Cargar los valores en los campos del formulario
+                document.getElementById('gasto_tipo').value = gasto.tipo || '';
+                // --- CORRECCIÓN: Seleccionar la opción correcta en el select gasto_gasto ---
+                const gastoSelect = document.getElementById('gasto_gasto');
+                gastoSelect.value = gasto.gasto || ''; // Intentar seleccionar por valor
+                document.getElementById('gasto_moneda').value = gasto.moneda || 'USD';
+                document.getElementById('gasto_monto').value = gasto.monto || '';
+                document.getElementById('gasto_afecto').value = gasto.afecto || 'NO';
+                document.getElementById('gasto_iva').value = gasto.iva || '';
+
+                // Cambiar el botón "Agregar" a "Actualizar" temporalmente
+                const btnAgregar = document.querySelector('#submodal-gastos-locales button[onclick="guardarGastoLocal()"]');
+                if (btnAgregar) {
+                    btnAgregar.textContent = 'Actualizar';
+                    // Almacenar el índice del gasto que se está editando en un lugar accesible
+                    window.indiceGastoEdicion = index;
+
+                    // Cambiar la acción del botón para que actualice en lugar de agregar
+                    btnAgregar.onclick = function() {
+                        actualizarGastoLocal(window.indiceGastoEdicion);
+                        // Restaurar botón a su estado original después de actualizar
+                        btnAgregar.textContent = 'Agregar';
+                        btnAgregar.onclick = function() { guardarGastoLocal(); };
+                        // Limpiar la variable global
+                        delete window.indiceGastoEdicion;
+                    };
+                }
+            }
+
+            function actualizarGastoLocal(index) {
+                const tipo = document.getElementById('gasto_tipo').value;
+                const gasto_nombre = document.getElementById('gasto_gasto').value;
+                const moneda = document.getElementById('gasto_moneda').value;
+                const monto = parseFloat(document.getElementById('gasto_monto').value) || 0;
+                const afecto = document.getElementById('gasto_afecto').value;
+                const iva = parseFloat(document.getElementById('gasto_iva').value) || 0;
+
+                if (!tipo || !gasto_nombre) {
+                    error('Tipo y Gasto son obligatorios');
+                    return;
+                }
+
+                // Actualizar el objeto en el array
+                gastosLocales[index] = { tipo, gasto: gasto_nombre, moneda, monto, afecto, iva };
+
+                // Actualizar la tabla visual
+                actualizarTablaGastosLocales();
+
+                // Limpiar campos (opcional, puedes dejar los valores si prefieres que sea como un "update & add next")
+                ['gasto_tipo', 'gasto_gasto', 'gasto_moneda', 'gasto_monto', 'gasto_afecto', 'gasto_iva'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        if (el.tagName === 'SELECT') {
+                            el.selectedIndex = 0; // Seleccionar primera opción
+                        } else {
+                            el.value = '';
+                        }
+                    }
+                });
+
+                exito('Gasto local actualizado');
+            }
+
+            // === FUNCIONES DE SERVICIOS ===
+            function editarServicio(index) {
+                if (index < 0 || index >= servicios.length) {
+                    error('Índice inválido');
+                    return;
+                }
+
+                // ✅ Obtener el objeto del servicio del array global 'servicios' usando el índice
+                const servicioSeleccionado = servicios[index];
+
+                // ✅ Asignar el ID del servicio al campo oculto del modal
+                document.getElementById('id_srvc_edit').value = servicioSeleccionado.id_srvc || '';
+
+                // Continuar con la lógica de abrir el modal y cargar los datos
+                abrirModalServicio(index);
+            }
+
+            function eliminarServicio(index) {
+                if (index < 0 || index >= servicios.length) return;
+
+                const servicio = servicios[index];
+                // ✅ Validar que el servicio tenga un ID permanente
+                if (!servicio.id_srvc || servicio.id_srvc.startsWith('TEMP_')) {
+                    // Si es temporal, eliminar localmente sin API
+                    servicios.splice(index, 1);
+                    actualizarTabla();
+                    exito('Servicio eliminado');
+                    return;
+                }
+
+                // ✅ Validar que no tenga costos/gastos (opcional, según regla de negocio)
+                if ((servicio.costos && servicio.costos.length > 0) || (servicio.gastos_locales && servicio.gastos_locales.length > 0)) {
+                    return error('No se puede eliminar: tiene costos o gastos asociados.');
+                }
+
+                if (confirm('¿Eliminar este servicio de forma permanente?')) {
+                    fetch('/api/eliminar_servicio.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id_srvc: servicio.id_srvc })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            servicios.splice(index, 1);
+                            actualizarTabla();
+                            exito('Servicio eliminado correctamente');
+                        } else {
+                            error('Error: ' + (data.message || 'Intente nuevamente'));
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error al eliminar servicio:', err);
+                        error('No se pudo conectar con el servidor');
+                    });
+                }
+            }
+
+            // ===================================================================
+            // === 6. CUBICADOR ===
+            // ===================================================================
+            function abrirSubmodalCubicador() {
+                document.getElementById('cubicador_qty').value = document.getElementById('serv_bultos').value || 1;
+                document.getElementById('cubicador_peso').value = document.getElementById('serv_peso').value || '';
+                document.getElementById('cubicador_largo').value = '';
+                document.getElementById('cubicador_ancho').value = '';
+                document.getElementById('cubicador_alto').value = '';
+                calcularCubicacion();
+                const ids = ['cubicador_qty', 'cubicador_peso', 'cubicador_largo', 'cubicador_ancho', 'cubicador_alto'];
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const clone = el.cloneNode(true);
+                        el.parentNode.replaceChild(clone, el);
+                        clone.addEventListener('input', calcularCubicacion);
+                    }
+                });
+                document.getElementById('submodal-cubicador').style.display = 'block';
+            }
+
+            function calcularCubicacion() {
+                const qty = parseFloat(document.getElementById('cubicador_qty').value) || 0;
+                const pesoPorBulto = parseFloat(document.getElementById('cubicador_peso').value) || 0;
+                const largo = parseFloat(document.getElementById('cubicador_largo').value) || 0;
+                const ancho = parseFloat(document.getElementById('cubicador_ancho').value) || 0;
+                const alto = parseFloat(document.getElementById('cubicador_alto').value) || 0;
+                const pesoRealTotal = pesoPorBulto * qty;
+                const volumenCm3 = largo * ancho * alto * qty;
+                const volumenM3 = volumenCm3 / 1000000;
+                const pesoVolumetrico = volumenCm3 / 5000;
+                const pesoFinal = Math.max(pesoRealTotal, pesoVolumetrico);
+                document.getElementById('cubicador_volumen').textContent = volumenM3.toFixed(3) + ' m³';
+                document.getElementById('cubicador_peso_vol').textContent = pesoVolumetrico.toFixed(2) + ' kg';
+                document.getElementById('cubicador_peso_final').textContent = pesoFinal.toFixed(2) + ' kg';
+            }
+
+            function aplicarCubicacion() {
+                const qty = document.getElementById('cubicador_qty').value;
+                const pesoFinal = parseFloat(document.getElementById('cubicador_peso_final').textContent);
+                const volumen = document.getElementById('cubicador_volumen').textContent.split(' ')[0];
+                const l = document.getElementById('cubicador_largo').value;
+                const a = document.getElementById('cubicador_ancho').value;
+                const h = document.getElementById('cubicador_alto').value;
+                document.getElementById('serv_bultos').value = qty;
+                document.getElementById('serv_peso').value = pesoFinal;
+                document.getElementById('serv_volumen').value = volumen;
+                document.getElementById('serv_dimensiones').value = `${l}x${a}x${h} cm`;
+                cerrarSubmodalCubicador();
+                exito('Cubicación aplicada');
+            }
+
+            function cerrarSubmodalCubicador() {
+                document.getElementById('submodal-cubicador').style.display = 'none';
+            }
+
+            function cargarPaises() {
+                const selectPais = document.getElementById('pais') || document.getElementById('cliente_pais');
+                if (!selectPais) return;
+                fetch('/api/get_paises.php')
+                    .then(r => r.json())
+                    .then(data => {
+                        selectPais.innerHTML = '<option value="">Seleccionar país</option>';
+                        (data.paises || []).forEach(pais => {
+                            const opt = document.createElement('option');
+                            opt.value = pais;
+                            opt.textContent = pais;
+                            selectPais.appendChild(opt);
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Error al cargar países:', err);
+                        // Fallback básico
+                        const fallback = ["Chile", "Argentina", "Perú", "Colombia", "México", "Estados Unidos", "España"];
+                        selectPais.innerHTML = '<option value="">Seleccionar país</option>';
+                        fallback.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p;
+                            opt.textContent = p;
+                            selectPais.appendChild(opt);
+                        });
+                    });
+            }
+
+            // --- Funciones para manejo de Contactos ---
+
+            // Función para cargar contacto primario basado en rut_empresa
+            function cargarContactoPrimario(rut_empresa) {
+                if (!rut_empresa) {
+                    limpiarCamposContacto();
+                    return;
+                }
+
+                fetch(`/api/get_contacto_primario.php?rut_cliente=${encodeURIComponent(rut_empresa)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success && data.contacto) {
+                            // Llenar los campos con los datos del contacto primario
+                            document.getElementById('contacto').value = data.contacto.nom_contacto || '';
+                            document.getElementById('email').value = data.contacto.email || '';
+                        } else {
+                            // Si no hay contacto primario o hay un error, limpiar los campos
+                            limpiarCamposContacto();
+                            // Opcional: Mostrar un mensaje informativo
+                            // info('No se encontró contacto primario para este cliente.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al cargar contacto primario:', error);
+                        // En caso de error, limpiar los campos para evitar datos inconsistentes
+                        limpiarCamposContacto();
+                        // Opcional: Mostrar un mensaje de error
+                        // error('Error al cargar el contacto primario.');
+                    });
+            }
+
+            // Función para limpiar los campos de contacto
+            function limpiarCamposContacto() {
+                document.getElementById('contacto').value = '';
+                document.getElementById('email').value = '';
+            }
+
+            // Evento para detectar cambios en el campo rut_empresa
+            document.getElementById('rut_empresa').addEventListener('change', function() {
+                const rut = this.value.trim();
+                if (rut) {
+                    cargarContactoPrimario(rut);
+                } else {
+                    limpiarCamposContacto();
+                }
+            });
+
+            // --- Variables globales para adjuntos ---
+            let adjuntosProspecto = []; // Array para almacenar los adjuntos del prospecto actual
+            let idProspectoActual = null; // Para saber a qué prospecto pertenecen los adjuntos
+
+            // --- Funciones para manejo de Adjuntos ---
+
+            // Abrir submodal de adjuntos
+            function abrirSubmodalAdjuntos() {
+                const idPpl = document.getElementById('id_ppl')?.value;
+                if (!idPpl || idPpl === '0') {
+                    error('No hay un prospecto seleccionado para adjuntar archivos.');
+                    return;
+                }
+                idProspectoActual = idPpl; // Guardar ID del prospecto actual
+                cargarAdjuntosProspecto(idPpl); // Cargar adjuntos del prospecto
+                document.getElementById('submodal-adjuntos').style.display = 'block';
+                // Prevenir el submit del form principal si el submodal está dentro de él
+                event?.preventDefault?.(); // Agregar esta línea si el evento click lo provee
+            }
+
+            // Cerrar submodal de adjuntos
+            function cerrarSubmodalAdjuntos() {
+                document.getElementById('submodal-adjuntos').style.display = 'none';
+                // Opcional: Limpiar el input de archivo al cerrar
+                document.getElementById('archivo-input').value = '';
+                // Prevenir el submit del form principal si el submodal está dentro de él
+                event?.preventDefault?.(); // Agregar esta línea si el evento click lo provee
+            }
+
+            // Cargar adjuntos desde la API
+            function cargarAdjuntosProspecto(idPpl) {
+                // Limpiar lista antes de cargar
+                document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #666; text-align: center;">Cargando...</p>';
+
+                fetch(`/api/get_adjuntos_prospecto.php?id_prospect=${encodeURIComponent(idPpl)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            const adjuntos = data.adjuntos || [];
+                            if (adjuntos.length === 0) {
+                                document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #666; text-align: center;">No hay adjuntos para este prospecto.</p>';
+                                return;
+                            }
+                            document.getElementById('lista-adjuntos').innerHTML = adjuntos.map(adj => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #eee;">
+                                    <a href="${adj.ruta_archivo}" target="_blank" style="text-decoration: none; color: #007bff; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        <i class="fas fa-file"></i> ${adj.nombre_archivo}
+                                    </a>
+                                    <button type="button" class="btn-delete" onclick="eliminarAdjunto(${adj.id_adjunto})" style="margin-left: 0.5rem; background: #dc3545; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                                        🗑️
+                                    </button>
+                                </div>
+                            `).join('');
+                        } else {
+                            document.getElementById('lista-adjuntos').innerHTML = `<p style="color: #dc3545; text-align: center;">Error: ${data.message || 'No se pudieron cargar los adjuntos.'}</p>`;
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error al cargar adjuntos:', err);
+                        document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #dc3545; text-align: center;">Error de conexión al cargar adjuntos.</p>';
+                    });
+            }
+
+            // Subir un adjunto
+            function subirAdjunto() {
+                const input = document.getElementById('archivo-input');
+                const archivo = input.files[0];
+                if (!archivo) {
+                    error('Seleccione un archivo para subir.');
+                    return;
+                }
+
+                if (!idProspectoActual) {
+                    error('No se puede subir: No hay prospecto seleccionado.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('archivo', archivo);
+                formData.append('id_prospect', idProspectoActual);
+
+                // Opcional: Mostrar indicador de carga
+                document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #666; text-align: center;">Subiendo archivo...</p>';
+
+                fetch('/api/subir_adjunto_prospecto.php', {
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json().then(errData => { throw new Error(errData.message || `HTTP error! status: ${response.status}`); });
                     }
                     return response.json();
                 })
                 .then(data => {
                     if (data.success) {
-                        const adjuntos = data.adjuntos || [];
-                        if (adjuntos.length === 0) {
-                            document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #666; text-align: center;">No hay adjuntos para este prospecto.</p>';
-                            return;
-                        }
-                        document.getElementById('lista-adjuntos').innerHTML = adjuntos.map(adj => `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #eee;">
-                                <a href="${adj.ruta_archivo}" target="_blank" style="text-decoration: none; color: #007bff; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    <i class="fas fa-file"></i> ${adj.nombre_archivo}
-                                </a>
-                                <button type="button" class="btn-delete" onclick="eliminarAdjunto(${adj.id_adjunto})" style="margin-left: 0.5rem; background: #dc3545; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
-                                    🗑️
-                                </button>
-                            </div>
-                        `).join('');
+                        exito(data.message || 'Archivo subido correctamente.');
+                        input.value = ''; // Limpiar input
+                        cargarAdjuntosProspecto(idProspectoActual); // Recargar lista
                     } else {
-                        document.getElementById('lista-adjuntos').innerHTML = `<p style="color: #dc3545; text-align: center;">Error: ${data.message || 'No se pudieron cargar los adjuntos.'}</p>`;
+                        error('Error al subir archivo: ' + (data.message || 'Intente nuevamente'));
                     }
                 })
                 .catch(err => {
-                    console.error('Error al cargar adjuntos:', err);
-                    document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #dc3545; text-align: center;">Error de conexión al cargar adjuntos.</p>';
+                    console.error('Error en la solicitud de subida:', err);
+                    error('Error de conexión al subir el archivo: ' + err.message);
+                    // Recargar lista por si acaso la subida falló pero el estado del frontend quedó desactualizado
+                    cargarAdjuntosProspecto(idProspectoActual);
                 });
-        }
-
-        // Subir un adjunto
-        function subirAdjunto() {
-            const input = document.getElementById('archivo-input');
-            const archivo = input.files[0];
-            if (!archivo) {
-                error('Seleccione un archivo para subir.');
-                return;
             }
 
-            if (!idProspectoActual) {
-                error('No se puede subir: No hay prospecto seleccionado.');
-                return;
+            // Eliminar un adjunto
+            function eliminarAdjunto(idAdjunto) {
+                if (!confirm('¿Eliminar este archivo adjunto?')) return;
+
+                fetch('/api/eliminar_adjunto_prospecto.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_adjunto: idAdjunto })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errData => { throw new Error(errData.message || `HTTP error! status: ${response.status}`); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        exito(data.message || 'Archivo eliminado correctamente.');
+                        cargarAdjuntosProspecto(idProspectoActual); // Recargar lista
+                    } else {
+                        error('Error al eliminar archivo: ' + (data.message || 'Intente nuevamente'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error en la solicitud de eliminación:', err);
+                    error('Error de conexión al eliminar el archivo: ' + err.message);
+                    // Recargar lista por si acaso la eliminación falló pero el estado del frontend quedó desactualizado
+                    cargarAdjuntosProspecto(idProspectoActual);
+                });
             }
 
-            const formData = new FormData();
-            formData.append('archivo', archivo);
-            formData.append('id_prospect', idProspectoActual);
-
-            // Opcional: Mostrar indicador de carga
-            document.getElementById('lista-adjuntos').innerHTML = '<p style="color: #666; text-align: center;">Subiendo archivo...</p>';
-
-            fetch('/api/subir_adjunto_prospecto.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(errData => { throw new Error(errData.message || `HTTP error! status: ${response.status}`); });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    exito(data.message || 'Archivo subido correctamente.');
-                    input.value = ''; // Limpiar input
-                    cargarAdjuntosProspecto(idProspectoActual); // Recargar lista
-                } else {
-                    error('Error al subir archivo: ' + (data.message || 'Intente nuevamente'));
-                }
-            })
-            .catch(err => {
-                console.error('Error en la solicitud de subida:', err);
-                error('Error de conexión al subir el archivo: ' + err.message);
-                // Recargar lista por si acaso la subida falló pero el estado del frontend quedó desactualizado
-                cargarAdjuntosProspecto(idProspectoActual);
+            // Asignar listener al botón de adjuntos (ajusta el selector si es necesario)
+            // Busca el botón real en tu HTML principal (por ejemplo, en la barra de herramientas del formulario prospecto)
+            // y asegúrate de que su ID o clase coincida con el selector aquí.
+            // Ejemplo (ajusta 'btn-adjuntos' por el ID o clase real):
+            document.getElementById('btn-adjuntos')?.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevenir cualquier comportamiento por defecto del botón
+                abrirSubmodalAdjuntos();
             });
-        }
 
-        // Eliminar un adjunto
-        function eliminarAdjunto(idAdjunto) {
-            if (!confirm('¿Eliminar este archivo adjunto?')) return;
-
-            fetch('/api/eliminar_adjunto_prospecto.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_adjunto: idAdjunto })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(errData => { throw new Error(errData.message || `HTTP error! status: ${response.status}`); });
+            // --- Funciones para manejo del submodal Route Order ---
+            function abrirModalTransporteNac(accion) {
+                // Obtener datos del contexto actual
+                const idPpl = document.getElementById('id_ppl')?.value || '';
+                const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+                if (!idPpl || !idSrvc) {
+                    alert('No hay un servicio seleccionado.');
+                    return;
                 }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    exito(data.message || 'Archivo eliminado correctamente.');
-                    cargarAdjuntosProspecto(idProspectoActual); // Recargar lista
+
+                if (accion === 'editar') {
+                    // Cargar registro existente
+                    fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.success) {
+                                mostrarFormularioTransporteNac(res.data, 'editar');
+                            } else {
+                                alert('No existe registro. Usa "Grabar Transporte" para crear uno.');
+                                mostrarFormularioTransporteNac(null, 'crear');
+                            }
+                        })
+                        .catch(e => {
+                            console.error(e);
+                            alert('Error al cargar el registro.');
+                        });
                 } else {
-                    error('Error al eliminar archivo: ' + (data.message || 'Intente nuevamente'));
+                    mostrarFormularioTransporteNac(null, 'crear');
                 }
-            })
-            .catch(err => {
-                console.error('Error en la solicitud de eliminación:', err);
-                error('Error de conexión al eliminar el archivo: ' + err.message);
-                // Recargar lista por si acaso la eliminación falló pero el estado del frontend quedó desactualizado
-                cargarAdjuntosProspecto(idProspectoActual);
-            });
-        }
-
-        // Asignar listener al botón de adjuntos (ajusta el selector si es necesario)
-        // Busca el botón real en tu HTML principal (por ejemplo, en la barra de herramientas del formulario prospecto)
-        // y asegúrate de que su ID o clase coincida con el selector aquí.
-        // Ejemplo (ajusta 'btn-adjuntos' por el ID o clase real):
-        document.getElementById('btn-adjuntos')?.addEventListener('click', function(event) {
-            event.preventDefault(); // Prevenir cualquier comportamiento por defecto del botón
-            abrirSubmodalAdjuntos();
-        });
-
-        // --- Funciones para manejo del submodal Route Order ---
-        function abrirModalTransporteNac(accion) {
-            // Obtener datos del contexto actual
-            const idPpl = document.getElementById('id_ppl')?.value || '';
-            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
-            if (!idPpl || !idSrvc) {
-                alert('No hay un servicio seleccionado.');
-                return;
             }
 
-            if (accion === 'editar') {
-                // Cargar registro existente
+            function mostrarFormularioTransporteNac(data, modo) {
+                let html = `
+                    <div style="padding: 1rem; background: #f9f9f9; border: 1px solid #ccc; border-radius: 6px;">
+                        <h4 style="margin-top: 0;">${modo === 'crear' ? 'Nuevo' : 'Editar'} Transporte Nacional</h4>
+                        <input type="hidden" id="transp_nac_id" value="${data?.id_transp_nac || ''}">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; font-size: 9pt;">
+                            <div>
+                                <label>Moneda:</label>
+                                <select id="transp_nac_moneda" style="width: 100%;">
+                                    <option value="CLP" ${(!data?.moneda || data.moneda === 'CLP') ? 'selected' : ''}>CLP</option>
+                                    <option value="USD" ${data?.moneda === 'USD' ? 'selected' : ''}>USD</option>
+                                    <option value="EUR" ${data?.moneda === 'EUR' ? 'selected' : ''}>EUR</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Costo:</label>
+                                <input type="number" id="transp_nac_costo" step="0.01" value="${data?.costo || '0.00'}" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Venta:</label>
+                                <input type="number" id="transp_nac_venta" step="0.01" value="${data?.venta || '0.00'}" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Acepta:</label>
+                                <select id="transp_nac_acepta" style="width: 100%;">
+                                    <option value="Si" ${data?.acepta === 'Si' ? 'selected' : ''}>Si</option>
+                                    <option value="No" ${!data?.acepta || data.acepta === 'No' ? 'selected' : ''}>No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Afecto:</label>
+                                <select id="transp_nac_afecto" style="width: 100%;">
+                                    <option value="Si" ${data?.afecto === 'Si' ? 'selected' : ''}>Si</option>
+                                    <option value="No" ${!data?.afecto || data.afecto === 'No' ? 'selected' : ''}>No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Transportista:</label>
+                                <input type="text" id="transp_nac_transportista" value="${data?.transportista || ''}" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Direc. Retiro:</label>
+                                <input type="text" id="transp_nac_direc_retiro" value="${data?.direc_retiro || ''}" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Contacto Retiro:</label>
+                                <input type="text" id="transp_nac_contacto_retiro" value="${data?.contacto_retiro || ''}" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Fono Retiro:</label>
+                                <input type="text" id="transp_nac_fono_retiro" value="${data?.fono_retiro || ''}" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Direc. Entrega:</label>
+                                <input type="text" id="transp_nac_direc_entrega" value="${data?.direc_entrega || ''}" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Fono Entrega:</label>
+                                <input type="text" id="transp_nac_fono_entrega" value="${data?.fono_entrega || ''}" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Empresa Entrega:</label>
+                                <input type="text" id="transp_nac_empresa_entrega" value="${data?.empresa_entrega || ''}" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Contacto Entrega:</label>
+                                <input type="text" id="transp_nac_contacto_entrega" value="${data?.contacto_entrega || ''}" style="width: 100%;">
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; text-align: right;">
+                            <button onclick="guardarTransporteNac()" style="background: #007bff; color: white; padding: 0.3rem 0.6rem; border: none; border-radius: 4px; margin-right: 0.5rem;">Guardar</button>
+                            <button onclick="cerrarFormularioTransporteNac()" style="background: #6c757d; color: white; padding: 0.3rem 0.6rem; border: none; border-radius: 4px;">Cancelar</button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('route-order-content').insertAdjacentHTML('beforeend', `<div id="modal-transporte-nac">${html}</div>`);
+            }
+
+            function cerrarFormularioTransporteNac() {
+                const modal = document.getElementById('modal-transporte-nac');
+                if (modal) modal.remove();
+            }
+
+            function guardarTransporteNac() {
+                const idPpl = document.getElementById('id_ppl')?.value || '';
+                const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+                const id = document.getElementById('transp_nac_id')?.value || null;
+
+                const data = {
+                    id_transp_nac: id || null,
+                    id_prospect: idPpl,
+                    id_srvc: idSrvc,
+                    moneda: document.getElementById('transp_nac_moneda').value,
+                    costo: document.getElementById('transp_nac_costo').value,
+                    venta: document.getElementById('transp_nac_venta').value,
+                    acepta: document.getElementById('transp_nac_acepta').value,
+                    afecto: document.getElementById('transp_nac_afecto').value,
+                    transportista: document.getElementById('transp_nac_transportista').value,
+                    direc_retiro: document.getElementById('transp_nac_direc_retiro').value,
+                    contacto_retiro: document.getElementById('transp_nac_contacto_retiro').value,
+                    fono_retiro: document.getElementById('transp_nac_fono_retiro').value,
+                    direc_entrega: document.getElementById('transp_nac_direc_entrega').value,
+                    fono_entrega: document.getElementById('transp_nac_fono_entrega').value,
+                    empresa_entrega: document.getElementById('transp_nac_empresa_entrega').value,
+                    contacto_entrega: document.getElementById('transp_nac_contacto_entrega').value
+                };
+
+                fetch('/pages/ro_transp_nac_logic.php?action=save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        alert(res.message);
+                        cerrarFormularioTransporteNac();
+                        
+                        // === Recargar y mostrar los datos guardados ===
+                        const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+                        fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
+                            .then(r2 => r2.json())
+                            .then(res2 => {
+                                if (res2.success && res2.data) {
+                                    renderizarTablaTransporteNac(res2.data);
+                                    renderizarCamposTransporteNac(res2.data);
+                                } else {
+                                    renderizarTablaTransporteNac(null);
+                                    renderizarCamposTransporteNac(null);
+                                }
+                            })
+                            .catch(e => {
+                                console.error('Error al recargar transporte:', e);
+                                renderizarTablaTransporteNac(null);
+                                renderizarCamposTransporteNac(null);
+                            });
+                        // ================================================
+                    } else {
+                        alert('Error: ' + res.message);
+                    }
+                })
+                .catch(e => {
+                    console.error(e);
+                    alert('Error de conexión.');
+                });
+            }
+
+            function eliminarTransporteNac() {
+                if (!confirm('¿Eliminar registro de Transporte Nacional?')) return;
+
+                const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
                 fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
                     .then(r => r.json())
                     .then(res => {
-                        if (res.success) {
-                            mostrarFormularioTransporteNac(res.data, 'editar');
+                        if (res.success && res.data?.id_transp_nac) {
+                            const id = res.data.id_transp_nac;
+                            fetch(`/pages/ro_transp_nac_logic.php?action=delete&id=${id}`)
+                                .then(r => r.json())
+                                .then(res2 => {
+                                    alert(res2.message || 'Eliminado.');
+                                })
+                                .catch(e => alert('Error al eliminar.'));
                         } else {
-                            alert('No existe registro. Usa "Grabar Transporte" para crear uno.');
-                            mostrarFormularioTransporteNac(null, 'crear');
+                            alert('No hay registro para eliminar.');
                         }
                     })
-                    .catch(e => {
-                        console.error(e);
-                        alert('Error al cargar el registro.');
-                    });
-            } else {
-                mostrarFormularioTransporteNac(null, 'crear');
+                    .catch(e => alert('Error al verificar registro.'));
+                renderizarTablaTransporteNac(null);
+                renderizarCamposTransporteNac(null);
             }
-        }
 
-        function mostrarFormularioTransporteNac(data, modo) {
-            let html = `
-                <div style="padding: 1rem; background: #f9f9f9; border: 1px solid #ccc; border-radius: 6px;">
-                    <h4 style="margin-top: 0;">${modo === 'crear' ? 'Nuevo' : 'Editar'} Transporte Nacional</h4>
-                    <input type="hidden" id="transp_nac_id" value="${data?.id_transp_nac || ''}">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; font-size: 9pt;">
-                        <div>
-                            <label>Moneda:</label>
-                            <select id="transp_nac_moneda" style="width: 100%;">
-                                <option value="CLP" ${(!data?.moneda || data.moneda === 'CLP') ? 'selected' : ''}>CLP</option>
-                                <option value="USD" ${data?.moneda === 'USD' ? 'selected' : ''}>USD</option>
-                                <option value="EUR" ${data?.moneda === 'EUR' ? 'selected' : ''}>EUR</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Costo:</label>
-                            <input type="number" id="transp_nac_costo" step="0.01" value="${data?.costo || '0.00'}" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label>Venta:</label>
-                            <input type="number" id="transp_nac_venta" step="0.01" value="${data?.venta || '0.00'}" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label>Acepta:</label>
-                            <select id="transp_nac_acepta" style="width: 100%;">
-                                <option value="Si" ${data?.acepta === 'Si' ? 'selected' : ''}>Si</option>
-                                <option value="No" ${!data?.acepta || data.acepta === 'No' ? 'selected' : ''}>No</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Afecto:</label>
-                            <select id="transp_nac_afecto" style="width: 100%;">
-                                <option value="Si" ${data?.afecto === 'Si' ? 'selected' : ''}>Si</option>
-                                <option value="No" ${!data?.afecto || data.afecto === 'No' ? 'selected' : ''}>No</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Transportista:</label>
-                            <input type="text" id="transp_nac_transportista" value="${data?.transportista || ''}" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label>Direc. Retiro:</label>
-                            <input type="text" id="transp_nac_direc_retiro" value="${data?.direc_retiro || ''}" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label>Contacto Retiro:</label>
-                            <input type="text" id="transp_nac_contacto_retiro" value="${data?.contacto_retiro || ''}" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label>Fono Retiro:</label>
-                            <input type="text" id="transp_nac_fono_retiro" value="${data?.fono_retiro || ''}" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label>Direc. Entrega:</label>
-                            <input type="text" id="transp_nac_direc_entrega" value="${data?.direc_entrega || ''}" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label>Fono Entrega:</label>
-                            <input type="text" id="transp_nac_fono_entrega" value="${data?.fono_entrega || ''}" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label>Empresa Entrega:</label>
-                            <input type="text" id="transp_nac_empresa_entrega" value="${data?.empresa_entrega || ''}" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label>Contacto Entrega:</label>
-                            <input type="text" id="transp_nac_contacto_entrega" value="${data?.contacto_entrega || ''}" style="width: 100%;">
-                        </div>
+            // Renderiza la TABLA de Transporte Nacional (7 columnas)
+            function renderizarTablaTransporteNac(data = null) {
+                const tbody = document.querySelector('#tabla-transporte-nac tbody');
+                if (!tbody) return;
+
+                if (data) {
+                    const profit = (parseFloat(data.venta) || 0) - (parseFloat(data.costo) || 0);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(data.concepto || 'NACIONAL')}</td>
+                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.moneda || 'CLP')}</td>
+                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${parseFloat(data.costo).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${parseFloat(data.venta).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${profit.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.acepta || 'No')}</td>
+                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.afecto || 'No')}</td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                            <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                            <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                        </tr>
+                    `;
+                }
+            }
+
+            // Renderiza los CAMPOS de transporte (a la derecha de los labels)
+            function renderizarCamposTransporteNac(data = null) {
+                const contenedor = document.getElementById('campos-transporte-nac');
+                if (!contenedor) return;
+
+                const getVal = (val) => sanitizeText(val || '&nbsp;');
+
+                contenedor.innerHTML = `
+                    <div style="display: grid; grid-template-columns: max-content auto 1fr max-content auto; gap: 0.5rem; font-size: 9pt; margin-top: 0.8rem;">
+                        <!-- Columna 1: Labels izquierda -->
+                        <div><strong>TRANSPORTISTA:</strong></div>
+                        <div>${getVal(data?.transportista)}</div>
+                        <div></div>
+                        <div><strong>DIREC. ENTREGA:</strong></div>
+                        <div>${getVal(data?.direc_entrega)}</div>
+
+                        <div><strong>DIREC. RETIRO:</strong></div>
+                        <div>${getVal(data?.direc_retiro)}</div>
+                        <div></div>
+                        <div><strong>FONO:</strong></div>
+                        <div>${getVal(data?.fono_entrega)}</div>
+
+                        <div><strong>CONTACTO:</strong></div>
+                        <div>${getVal(data?.contacto_retiro)}</div>
+                        <div></div>
+                        <div><strong>EMPRESA:</strong></div>
+                        <div>${getVal(data?.empresa_entrega)}</div>
+
+                        <div><strong>FONO:</strong></div>
+                        <div>${getVal(data?.fono_retiro)}</div>
+                        <div></div>
+                        <div><strong>CONTACTO:</strong></div>
+                        <div>${getVal(data?.contacto_entrega)}</div>
                     </div>
-                    <div style="margin-top: 1rem; text-align: right;">
-                        <button onclick="guardarTransporteNac()" style="background: #007bff; color: white; padding: 0.3rem 0.6rem; border: none; border-radius: 4px; margin-right: 0.5rem;">Guardar</button>
-                        <button onclick="cerrarFormularioTransporteNac()" style="background: #6c757d; color: white; padding: 0.3rem 0.6rem; border: none; border-radius: 4px;">Cancelar</button>
-                    </div>
-                </div>
-            `;
-            document.getElementById('route-order-content').insertAdjacentHTML('beforeend', `<div id="modal-transporte-nac">${html}</div>`);
-        }
+                `;
+            }
 
-        function cerrarFormularioTransporteNac() {
-            const modal = document.getElementById('modal-transporte-nac');
-            if (modal) modal.remove();
-        }
+            function sanitizeText(text) {
+                if (typeof text !== 'string') {
+                    return text == null ? '' : String(text);
+                }
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;',
+                    '/': '&#x2F;'
+                };
+                return text.replace(/[&<>"'\/]/g, function (s) {
+                    return map[s];
+                });
+            }
 
-        function guardarTransporteNac() {
-            const idPpl = document.getElementById('id_ppl')?.value || '';
-            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
-            const id = document.getElementById('transp_nac_id')?.value || null;
+            function abrirSubmodalRouteOrder() {
+                console.log('🔍 [ROUTE_ORDER] Iniciando apertura de submodal.');
+                const idPpl = document.getElementById('id_ppl')?.value;
+                const concatenado = document.getElementById('concatenado')?.value;
 
-            const data = {
-                id_transp_nac: id || null,
-                id_prospect: idPpl,
-                id_srvc: idSrvc,
-                moneda: document.getElementById('transp_nac_moneda').value,
-                costo: document.getElementById('transp_nac_costo').value,
-                venta: document.getElementById('transp_nac_venta').value,
-                acepta: document.getElementById('transp_nac_acepta').value,
-                afecto: document.getElementById('transp_nac_afecto').value,
-                transportista: document.getElementById('transp_nac_transportista').value,
-                direc_retiro: document.getElementById('transp_nac_direc_retiro').value,
-                contacto_retiro: document.getElementById('transp_nac_contacto_retiro').value,
-                fono_retiro: document.getElementById('transp_nac_fono_retiro').value,
-                direc_entrega: document.getElementById('transp_nac_direc_entrega').value,
-                fono_entrega: document.getElementById('transp_nac_fono_entrega').value,
-                empresa_entrega: document.getElementById('transp_nac_empresa_entrega').value,
-                contacto_entrega: document.getElementById('transp_nac_contacto_entrega').value
-            };
+                // Extraer datos del prospecto desde campos ocultos
+                const operacion = document.getElementById('operacion')?.value || '';
+                const razonSocial = document.getElementById('prospecto_razon_social')?.value || '';
+                const direccion = document.getElementById('prospecto_direccion')?.value || '';
+                const rutEmpresa = document.getElementById('prospecto_rut_empresa')?.value || '';
+                const contactoNombre = document.getElementById('prospecto_contacto_nombre')?.value || '';
+                const notas_comerciales = document.getElementById('prospecto_notas_comerciales')?.value || '';
+                const notas_operaciones = document.getElementById('prospecto_notas_operaciones')?.value || '';
 
-            fetch('/pages/ro_transp_nac_logic.php?action=save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    alert(res.message);
-                    cerrarFormularioTransporteNac();
-                    
-                    // === Recargar y mostrar los datos guardados ===
-                    const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+                const prospectoCompleto = {
+                    operacion: operacion,
+                    razon_social: razonSocial,
+                    direccion: direccion,
+                    rut_empresa: rutEmpresa,
+                    contacto_nombre: contactoNombre,
+                    notas_comerciales: notas_comerciales,
+                    notas_operaciones: notas_operaciones
+                };
+
+                console.log('📄 [ROUTE_ORDER] Datos del prospecto:', {
+                    id_ppl: idPpl,
+                    concatenado: concatenado,
+                    prospecto: prospectoCompleto
+                });
+
+                if (!idPpl || idPpl === '0') {
+                    console.log('⚠️ [ROUTE_ORDER] No hay un prospecto seleccionado (id_ppl vacío o 0).');
+                    error('No hay un prospecto seleccionado.');
+                    return;
+                }
+
+                const idSrvcHidden = document.getElementById('id_srvc_edit');
+                let idSrvc = null;
+                let servicioSeleccionadoParaRO = null;
+
+                if (idSrvcHidden && idSrvcHidden.value) {
+                    idSrvc = idSrvcHidden.value;
+                    servicioSeleccionadoParaRO = servicios.find(s => s.id_srvc === idSrvc);
+                    console.log('📖 [ROUTE_ORDER] Servicio obtenido del campo oculto del modal. ID:', idSrvc, 'Encontrado en array global:', !!servicioSeleccionadoParaRO);
+                } else {
+                    console.log('⚠️ [ROUTE_ORDER] No hay ID de servicio en el modal (posiblemente en modo "Agregar Servicio").');
+                    error('No hay un servicio seleccionado para generar el Route Order.');
+                    return;
+                }
+
+                if (!idSrvc) {
+                    console.log('⚠️ [ROUTE_ORDER] El ID del servicio (idSrvc) obtenido del modal es nulo o vacío.');
+                    error('No se puede generar Route Order: El servicio no tiene un ID definido.');
+                    return;
+                }
+
+                if (idSrvc.startsWith('TEMP_')) {
+                    console.log('⚠️ [ROUTE_ORDER] El ID del servicio obtenido del modal es temporal (TEMP_). No se puede generar para servicios temporales.');
+                    error('Solo se puede generar Route Order para servicios ya guardados.');
+                    return;
+                }
+
+                if (!servicioSeleccionadoParaRO) {
+                    console.warn('⚠️ [ROUTE_ORDER] El ID de servicio del modal (' + idSrvc + ') no se encontró en el array global de servicios.');
+                    error('Datos inconsistentes del servicio.');
+                    return;
+                }
+
+                console.log('✅ [ROUTE_ORDER] ID del servicio válido para generar RO:', idSrvc);
+
+                cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO, prospectoCompleto);
+                document.getElementById('submodal-route-order').style.display = 'block';
+                console.log('🖼️ [ROUTE_ORDER] Submodal de Route Order mostrado.');
+            }
+
+            function cerrarSubmodalRouteOrder() {
+                document.getElementById('submodal-route-order').style.display = 'none';
+                datosRouteOrder = null; // Limpiar datos al cerrar
+            }
+
+            function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null, prospectoCompleto = {}) {
+                // Mostrar indicador de carga
+                document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Cargando datos del Route Order...</p>';
+
+                if (servicioLocal) {
+                    datosRouteOrder = {  // ← Asignación a la variable global (sin let/const)
+                        servicio: servicioLocal,
+                        prospecto: {
+                            concatenado: concatenadoProspecto,
+                            ...prospectoCompleto
+                        },
+                        costos: servicioLocal.costos || [],
+                        gastos_locales: servicioLocal.gastos_locales || []
+                    };
+                    renderizarRouteOrder(datosRouteOrder);
+                } else {
+                    fetch(`/api/get_servicio.php?id_srvc=${encodeURIComponent(idSrvc)}`)
+                        .then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success && data.servicio) {
+                                datosRouteOrder = {  // ← Asignación a la variable global
+                                    servicio: data.servicio,
+                                    prospecto: {
+                                        concatenado: concatenadoProspecto,
+                                        ...prospectoCompleto
+                                    },
+                                    costos: data.servicio.costos || [],
+                                    gastos_locales: data.servicio.gastos_locales || []
+                                };
+                                renderizarRouteOrder(datosRouteOrder);
+                            } else {
+                                error('Error al cargar los datos del servicio para Route Order.');
+                                document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error al cargar los datos.</p>';
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error al cargar servicio para Route Order:', err);
+                            error('Error de conexión al cargar los datos del servicio.');
+                            document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error de conexión.</p>';
+                        });
+                }
+            }
+
+            // --- Función principal para renderizar el contenido del submodal Route Order ---
+            function renderizarRouteOrder(datos) {
+                if (!datos || !datos.servicio) {
+                    document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">No hay datos para mostrar.</p>';
+                    return;
+                }
+
+                const s_raw = datos.servicio;
+                const p = datos.prospecto;
+                const costos_raw = datos.costos || [];
+                const gastos_locales_raw = datos.gastos_locales || [];
+
+                const s = {
+                    ...s_raw,
+                    tipo_cambio: parseFloat(s_raw.tipo_cambio) || 1,
+                    costo: parseFloat(s_raw.costo) || 0,
+                    venta: parseFloat(s_raw.venta) || 0,
+                    costogastoslocalesdestino: parseFloat(s_raw.costogastoslocalesdestino) || 0,
+                    ventasgastoslocalesdestino: parseFloat(s_raw.ventasgastoslocalesdestino) || 0,
+                    peso: parseFloat(s_raw.peso) || 0,
+                    volumen: parseFloat(s_raw.volumen) || 0,
+                    bultos: parseInt(s_raw.bultos) || 0,
+                    iva: parseInt(s_raw.iva) || 19,
+                    validez: s_raw.validez || ''
+                };
+
+                const costos = costos_raw.map(c => ({
+                    ...c,
+                    qty: parseFloat(c.qty) || 0,
+                    costo: parseFloat(c.costo) || 0,
+                    tarifa: parseFloat(c.tarifa) || 0,
+                    total_costo: parseFloat(c.total_costo) || 0,
+                    total_tarifa: parseFloat(c.total_tarifa) || 0
+                }));
+
+                const gastos_locales = gastos_locales_raw.map(g => ({
+                    ...g,
+                    monto: parseFloat(g.monto) || 0,
+                    iva: parseFloat(g.iva) || 0
+                }));
+
+                const tipoTrafico = (s.trafico || '').toLowerCase();
+                let textoTransporte = 'TRANSPORTE';
+                if (tipoTrafico.includes('mar')) textoTransporte = 'NAVIERA';
+                else if (tipoTrafico.includes('aer')) textoTransporte = 'AEROLINEA';
+                else if (tipoTrafico.includes('ter') || tipoTrafico.includes('land')) textoTransporte = 'TRANSPORTE';
+
+                // --- LOG de diagnóstico: contenido del servicio (s) y prospecto (p) ---
+                console.log('🔍 [ROUTE_ORDER] Diagnóstico SHIPPER/CONSIGNATARIO:');
+                console.log('  operacion:', p?.operacion);
+                console.log('  p.razon_social:', p?.razon_social);
+                console.log('  s.razon_social:', s?.razon_social);
+                console.log('  p.direccion:', p?.direccion);
+                console.log('  s.direccion:', s?.direccion);
+                console.log('  p.contacto_nombre:', p?.contacto_nombre);
+                console.log('  s.contacto_nombre:', s?.contacto_nombre);
+                console.log('  p.rut_empresa:', p?.rut_empresa);
+                console.log('  s.rut_empresa:', s?.rut_empresa);
+
+                // --- Lógica corregida para SHIPPER / CONSIGNATARIO ---
+                const operacion = (p?.operacion || '').toLowerCase();
+                let shipperRS = '';
+                let shipperDireccion = '';
+                let shipperContacto = '';
+                let shipperRut = '';
+                let consignatarioRS = '';
+                let consignatarioDireccion = '';
+                let consignatarioContacto = '';
+                let consignatarioRut = '';
+
+                // Priorizar datos del servicio (s), ya que el prospecto (p) puede no tenerlos
+                const razonSocial = s.razon_social || p?.razon_social || '';
+                const direccion = s.direccion || p?.direccion || '';
+                const contactoNombre = s.contacto_nombre || p?.contacto_nombre || '';
+                const rutEmpresa = s.rut_empresa || p?.rut_empresa || '';
+
+                console.log('  → razonSocial seleccionada:', razonSocial);
+                console.log('  → direccion seleccionada:', direccion);
+                console.log('  → contactoNombre seleccionado:', contactoNombre);
+                console.log('  → rutEmpresa seleccionado:', rutEmpresa);
+
+                if (operacion === 'im') {
+                    consignatarioRS = razonSocial;
+                    consignatarioDireccion = direccion;
+                    consignatarioContacto = contactoNombre;
+                    consignatarioRut = rutEmpresa;
+                } else {
+                    shipperRS = razonSocial;
+                    shipperDireccion = direccion;
+                    shipperContacto = contactoNombre;
+                    shipperRut = rutEmpresa;
+                }
+
+                // Cálculo de totales
+                let totalCostos = 0, totalVenta = 0, totalTotalCosto = 0, totalTotalTarifa = 0;
+                costos.forEach(c => {
+                    totalCostos += c.costo;
+                    totalVenta += c.tarifa;
+                    totalTotalCosto += c.total_costo;
+                    totalTotalTarifa += c.total_tarifa;
+                });
+
+                let totalGastosCostos = 0, totalGastosVentas = 0;
+                gastos_locales.forEach(g => {
+                    const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
+                    const subtotal = esAfecto ? g.monto * (1 + g.iva / 100) : g.monto;
+                    if ((g.tipo || '').toUpperCase() === 'COSTO') totalGastosCostos += subtotal;
+                    else if ((g.tipo || '').toUpperCase() === 'VENTAS') totalGastosVentas += subtotal;
+                });
+
+                const totalCostoFinal = s.costo + totalGastosCostos;
+                const totalVentaFinal = s.venta + totalGastosVentas;
+                const profitLocal = totalVentaFinal - totalCostoFinal;
+                const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0;
+
+                // Cargar estado de crédito
+                const rutCliente = s.rut_empresa;
+                let simboloCredito = ' &nbsp;';
+                let simboloContado = ' &nbsp;';
+
+                const renderFinal = (credito, contado) => {
+                    _renderizarRouteOrderConCredito(
+                        datos, s, p, costos, gastos_locales,
+                        totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa,
+                        totalGastosCostos, totalGastosVentas,
+                        shipperRS, shipperDireccion, shipperContacto, shipperRut,
+                        consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut,
+                        totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje,
+                        textoTransporte, credito, contado
+                    );
+                };
+
+                // Definir variables en el scope de renderizarRouteOrder
+                let creditoSimbolo = ' &nbsp;';
+                let contadoSimbolo = ' &nbsp;';
+
+                if (rutCliente) {
+                    fetch(`/api/get_estado_credito_cliente.php?rut=${encodeURIComponent(rutCliente)}`)
+                        .then(response => response.ok ? response.json() : Promise.reject())
+                        .then(creditoData => {
+                            if (creditoData.success && creditoData.estado_credito) {
+                                const estado = creditoData.estado_credito.toLowerCase();
+                                if (estado === 'vigente' || estado === 'activo') {
+                                    creditoSimbolo = ' ✅';
+                                    contadoSimbolo = ' &nbsp;';
+                                } else {
+                                    creditoSimbolo = ' &nbsp;';
+                                    contadoSimbolo = ' ✅';
+                                }
+                            } else {
+                                creditoSimbolo = ' &nbsp;';
+                                contadoSimbolo = ' ✅';
+                            }
+                            // === Agregar a datosRouteOrder ===
+                            if (datosRouteOrder) {
+                                datosRouteOrder.estado_credito = {
+                                    credito: creditoSimbolo,
+                                    contado: contadoSimbolo
+                                };
+                            }
+                            renderFinal(creditoSimbolo, contadoSimbolo);
+                        })
+                        .catch(() => {
+                            creditoSimbolo = ' &nbsp;';
+                            contadoSimbolo = ' ✅';
+                            if (datosRouteOrder) {
+                                datosRouteOrder.estado_credito = {
+                                    credito: creditoSimbolo,
+                                    contado: contadoSimbolo
+                                };
+                            }
+                            renderFinal(creditoSimbolo, contadoSimbolo);
+                        });
+                } else {
+                    // Sin RUT, asumir contado
+                    creditoSimbolo = ' &nbsp;';
+                    contadoSimbolo = ' ✅';
+                    if (datosRouteOrder) {
+                        datosRouteOrder.estado_credito = {
+                            credito: creditoSimbolo,
+                            contado: contadoSimbolo
+                        };
+                    }
+                    renderFinal(creditoSimbolo, contadoSimbolo);
+                }
+                const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
+                // === Cargar y mostrar datos de Transporte Nacional al abrir el submodal ===
+                if (idSrvc) {
                     fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
-                        .then(r2 => r2.json())
-                        .then(res2 => {
-                            if (res2.success && res2.data) {
-                                renderizarTablaTransporteNac(res2.data);
-                                renderizarCamposTransporteNac(res2.data);
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.success && res.data) {
+                                renderizarTablaTransporteNac(res.data);
+                                renderizarCamposTransporteNac(res.data);
                             } else {
                                 renderizarTablaTransporteNac(null);
                                 renderizarCamposTransporteNac(null);
                             }
                         })
                         .catch(e => {
-                            console.error('Error al recargar transporte:', e);
+                            console.error('Error al cargar Transporte Nacional:', e);
                             renderizarTablaTransporteNac(null);
                             renderizarCamposTransporteNac(null);
                         });
-                    // ================================================
                 } else {
-                    alert('Error: ' + res.message);
+                    renderizarTablaTransporteNac(null);
+                    renderizarCamposTransporteNac(null);
                 }
-            })
-            .catch(e => {
-                console.error(e);
-                alert('Error de conexión.');
-            });
-        }
 
-        function eliminarTransporteNac() {
-            if (!confirm('¿Eliminar registro de Transporte Nacional?')) return;
-
-            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
-            fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success && res.data?.id_transp_nac) {
-                        const id = res.data.id_transp_nac;
-                        fetch(`/pages/ro_transp_nac_logic.php?action=delete&id=${id}`)
-                            .then(r => r.json())
-                            .then(res2 => {
-                                alert(res2.message || 'Eliminado.');
-                            })
-                            .catch(e => alert('Error al eliminar.'));
-                    } else {
-                        alert('No hay registro para eliminar.');
-                    }
-                })
-                .catch(e => alert('Error al verificar registro.'));
-            renderizarTablaTransporteNac(null);
-            renderizarCamposTransporteNac(null);
-        }
-
-        // Renderiza la TABLA de Transporte Nacional (7 columnas)
-        function renderizarTablaTransporteNac(data = null) {
-            const tbody = document.querySelector('#tabla-transporte-nac tbody');
-            if (!tbody) return;
-
-            if (data) {
-                const profit = (parseFloat(data.venta) || 0) - (parseFloat(data.costo) || 0);
-                tbody.innerHTML = `
-                    <tr>
-                        <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(data.concepto || 'NACIONAL')}</td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.moneda || 'CLP')}</td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${parseFloat(data.costo).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${parseFloat(data.venta).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${profit.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.acepta || 'No')}</td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(data.afecto || 'No')}</td>
-                    </tr>
-                `;
-            } else {
-                tbody.innerHTML = `
-                    <tr>
-                        <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                        <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                    </tr>
-                `;
-            }
-        }
-
-        // Renderiza los CAMPOS de transporte (a la derecha de los labels)
-        function renderizarCamposTransporteNac(data = null) {
-            const contenedor = document.getElementById('campos-transporte-nac');
-            if (!contenedor) return;
-
-            const getVal = (val) => sanitizeText(val || '&nbsp;');
-
-            contenedor.innerHTML = `
-                <div style="display: grid; grid-template-columns: max-content auto 1fr max-content auto; gap: 0.5rem; font-size: 9pt; margin-top: 0.8rem;">
-                    <!-- Columna 1: Labels izquierda -->
-                    <div><strong>TRANSPORTISTA:</strong></div>
-                    <div>${getVal(data?.transportista)}</div>
-                    <div></div>
-                    <div><strong>DIREC. ENTREGA:</strong></div>
-                    <div>${getVal(data?.direc_entrega)}</div>
-
-                    <div><strong>DIREC. RETIRO:</strong></div>
-                    <div>${getVal(data?.direc_retiro)}</div>
-                    <div></div>
-                    <div><strong>FONO:</strong></div>
-                    <div>${getVal(data?.fono_entrega)}</div>
-
-                    <div><strong>CONTACTO:</strong></div>
-                    <div>${getVal(data?.contacto_retiro)}</div>
-                    <div></div>
-                    <div><strong>EMPRESA:</strong></div>
-                    <div>${getVal(data?.empresa_entrega)}</div>
-
-                    <div><strong>FONO:</strong></div>
-                    <div>${getVal(data?.fono_retiro)}</div>
-                    <div></div>
-                    <div><strong>CONTACTO:</strong></div>
-                    <div>${getVal(data?.contacto_entrega)}</div>
-                </div>
-            `;
-        }
-
-        function sanitizeText(text) {
-            if (typeof text !== 'string') {
-                return text == null ? '' : String(text);
-            }
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;',
-                '/': '&#x2F;'
-            };
-            return text.replace(/[&<>"'\/]/g, function (s) {
-                return map[s];
-            });
-        }
-
-        function abrirSubmodalRouteOrder() {
-            console.log('🔍 [ROUTE_ORDER] Iniciando apertura de submodal.');
-            const idPpl = document.getElementById('id_ppl')?.value;
-            const concatenado = document.getElementById('concatenado')?.value;
-
-            // Extraer datos del prospecto desde campos ocultos
-            const operacion = document.getElementById('operacion')?.value || '';
-            const razonSocial = document.getElementById('prospecto_razon_social')?.value || '';
-            const direccion = document.getElementById('prospecto_direccion')?.value || '';
-            const rutEmpresa = document.getElementById('prospecto_rut_empresa')?.value || '';
-            const contactoNombre = document.getElementById('prospecto_contacto_nombre')?.value || '';
-            const notas_comerciales = document.getElementById('prospecto_notas_comerciales')?.value || '';
-            const notas_operaciones = document.getElementById('prospecto_notas_operaciones')?.value || '';
-
-            const prospectoCompleto = {
-                operacion: operacion,
-                razon_social: razonSocial,
-                direccion: direccion,
-                rut_empresa: rutEmpresa,
-                contacto_nombre: contactoNombre,
-                notas_comerciales: notas_comerciales,
-                notas_operaciones: notas_operaciones
-            };
-
-            console.log('📄 [ROUTE_ORDER] Datos del prospecto:', {
-                id_ppl: idPpl,
-                concatenado: concatenado,
-                prospecto: prospectoCompleto
-            });
-
-            if (!idPpl || idPpl === '0') {
-                console.log('⚠️ [ROUTE_ORDER] No hay un prospecto seleccionado (id_ppl vacío o 0).');
-                error('No hay un prospecto seleccionado.');
-                return;
-            }
-
-            const idSrvcHidden = document.getElementById('id_srvc_edit');
-            let idSrvc = null;
-            let servicioSeleccionadoParaRO = null;
-
-            if (idSrvcHidden && idSrvcHidden.value) {
-                idSrvc = idSrvcHidden.value;
-                servicioSeleccionadoParaRO = servicios.find(s => s.id_srvc === idSrvc);
-                console.log('📖 [ROUTE_ORDER] Servicio obtenido del campo oculto del modal. ID:', idSrvc, 'Encontrado en array global:', !!servicioSeleccionadoParaRO);
-            } else {
-                console.log('⚠️ [ROUTE_ORDER] No hay ID de servicio en el modal (posiblemente en modo "Agregar Servicio").');
-                error('No hay un servicio seleccionado para generar el Route Order.');
-                return;
-            }
-
-            if (!idSrvc) {
-                console.log('⚠️ [ROUTE_ORDER] El ID del servicio (idSrvc) obtenido del modal es nulo o vacío.');
-                error('No se puede generar Route Order: El servicio no tiene un ID definido.');
-                return;
-            }
-
-            if (idSrvc.startsWith('TEMP_')) {
-                console.log('⚠️ [ROUTE_ORDER] El ID del servicio obtenido del modal es temporal (TEMP_). No se puede generar para servicios temporales.');
-                error('Solo se puede generar Route Order para servicios ya guardados.');
-                return;
-            }
-
-            if (!servicioSeleccionadoParaRO) {
-                console.warn('⚠️ [ROUTE_ORDER] El ID de servicio del modal (' + idSrvc + ') no se encontró en el array global de servicios.');
-                error('Datos inconsistentes del servicio.');
-                return;
-            }
-
-            console.log('✅ [ROUTE_ORDER] ID del servicio válido para generar RO:', idSrvc);
-
-            cargarDatosRouteOrder(idSrvc, concatenado, servicioSeleccionadoParaRO, prospectoCompleto);
-            document.getElementById('submodal-route-order').style.display = 'block';
-            console.log('🖼️ [ROUTE_ORDER] Submodal de Route Order mostrado.');
-        }
-
-        function cerrarSubmodalRouteOrder() {
-            document.getElementById('submodal-route-order').style.display = 'none';
-            datosRouteOrder = null; // Limpiar datos al cerrar
-        }
-
-        function cargarDatosRouteOrder(idSrvc, concatenadoProspecto, servicioLocal = null, prospectoCompleto = {}) {
-            // Mostrar indicador de carga
-            document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Cargando datos del Route Order...</p>';
-
-            if (servicioLocal) {
-                datosRouteOrder = {  // ← Asignación a la variable global (sin let/const)
-                    servicio: servicioLocal,
-                    prospecto: {
-                        concatenado: concatenadoProspecto,
-                        ...prospectoCompleto
-                    },
-                    costos: servicioLocal.costos || [],
-                    gastos_locales: servicioLocal.gastos_locales || []
-                };
-                renderizarRouteOrder(datosRouteOrder);
-            } else {
-                fetch(`/api/get_servicio.php?id_srvc=${encodeURIComponent(idSrvc)}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success && data.servicio) {
-                            datosRouteOrder = {  // ← Asignación a la variable global
-                                servicio: data.servicio,
-                                prospecto: {
-                                    concatenado: concatenadoProspecto,
-                                    ...prospectoCompleto
-                                },
-                                costos: data.servicio.costos || [],
-                                gastos_locales: data.servicio.gastos_locales || []
-                            };
-                            renderizarRouteOrder(datosRouteOrder);
-                        } else {
-                            error('Error al cargar los datos del servicio para Route Order.');
-                            document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error al cargar los datos.</p>';
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Error al cargar servicio para Route Order:', err);
-                        error('Error de conexión al cargar los datos del servicio.');
-                        document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">Error de conexión.</p>';
-                    });
-            }
-        }
-
-        // --- Función principal para renderizar el contenido del submodal Route Order ---
-        function renderizarRouteOrder(datos) {
-            if (!datos || !datos.servicio) {
-                document.getElementById('route-order-content').innerHTML = '<p style="text-align: center; color: red;">No hay datos para mostrar.</p>';
-                return;
-            }
-
-            const s_raw = datos.servicio;
-            const p = datos.prospecto;
-            const costos_raw = datos.costos || [];
-            const gastos_locales_raw = datos.gastos_locales || [];
-
-            const s = {
-                ...s_raw,
-                tipo_cambio: parseFloat(s_raw.tipo_cambio) || 1,
-                costo: parseFloat(s_raw.costo) || 0,
-                venta: parseFloat(s_raw.venta) || 0,
-                costogastoslocalesdestino: parseFloat(s_raw.costogastoslocalesdestino) || 0,
-                ventasgastoslocalesdestino: parseFloat(s_raw.ventasgastoslocalesdestino) || 0,
-                peso: parseFloat(s_raw.peso) || 0,
-                volumen: parseFloat(s_raw.volumen) || 0,
-                bultos: parseInt(s_raw.bultos) || 0,
-                iva: parseInt(s_raw.iva) || 19,
-                validez: s_raw.validez || ''
-            };
-
-            const costos = costos_raw.map(c => ({
-                ...c,
-                qty: parseFloat(c.qty) || 0,
-                costo: parseFloat(c.costo) || 0,
-                tarifa: parseFloat(c.tarifa) || 0,
-                total_costo: parseFloat(c.total_costo) || 0,
-                total_tarifa: parseFloat(c.total_tarifa) || 0
-            }));
-
-            const gastos_locales = gastos_locales_raw.map(g => ({
-                ...g,
-                monto: parseFloat(g.monto) || 0,
-                iva: parseFloat(g.iva) || 0
-            }));
-
-            const tipoTrafico = (s.trafico || '').toLowerCase();
-            let textoTransporte = 'TRANSPORTE';
-            if (tipoTrafico.includes('mar')) textoTransporte = 'NAVIERA';
-            else if (tipoTrafico.includes('aer')) textoTransporte = 'AEROLINEA';
-            else if (tipoTrafico.includes('ter') || tipoTrafico.includes('land')) textoTransporte = 'TRANSPORTE';
-
-            // --- LOG de diagnóstico: contenido del servicio (s) y prospecto (p) ---
-            console.log('🔍 [ROUTE_ORDER] Diagnóstico SHIPPER/CONSIGNATARIO:');
-            console.log('  operacion:', p?.operacion);
-            console.log('  p.razon_social:', p?.razon_social);
-            console.log('  s.razon_social:', s?.razon_social);
-            console.log('  p.direccion:', p?.direccion);
-            console.log('  s.direccion:', s?.direccion);
-            console.log('  p.contacto_nombre:', p?.contacto_nombre);
-            console.log('  s.contacto_nombre:', s?.contacto_nombre);
-            console.log('  p.rut_empresa:', p?.rut_empresa);
-            console.log('  s.rut_empresa:', s?.rut_empresa);
-
-            // --- Lógica corregida para SHIPPER / CONSIGNATARIO ---
-            const operacion = (p?.operacion || '').toLowerCase();
-            let shipperRS = '';
-            let shipperDireccion = '';
-            let shipperContacto = '';
-            let shipperRut = '';
-            let consignatarioRS = '';
-            let consignatarioDireccion = '';
-            let consignatarioContacto = '';
-            let consignatarioRut = '';
-
-            // Priorizar datos del servicio (s), ya que el prospecto (p) puede no tenerlos
-            const razonSocial = s.razon_social || p?.razon_social || '';
-            const direccion = s.direccion || p?.direccion || '';
-            const contactoNombre = s.contacto_nombre || p?.contacto_nombre || '';
-            const rutEmpresa = s.rut_empresa || p?.rut_empresa || '';
-
-            console.log('  → razonSocial seleccionada:', razonSocial);
-            console.log('  → direccion seleccionada:', direccion);
-            console.log('  → contactoNombre seleccionado:', contactoNombre);
-            console.log('  → rutEmpresa seleccionado:', rutEmpresa);
-
-            if (operacion === 'im') {
-                consignatarioRS = razonSocial;
-                consignatarioDireccion = direccion;
-                consignatarioContacto = contactoNombre;
-                consignatarioRut = rutEmpresa;
-            } else {
-                shipperRS = razonSocial;
-                shipperDireccion = direccion;
-                shipperContacto = contactoNombre;
-                shipperRut = rutEmpresa;
-            }
-
-            // Cálculo de totales
-            let totalCostos = 0, totalVenta = 0, totalTotalCosto = 0, totalTotalTarifa = 0;
-            costos.forEach(c => {
-                totalCostos += c.costo;
-                totalVenta += c.tarifa;
-                totalTotalCosto += c.total_costo;
-                totalTotalTarifa += c.total_tarifa;
-            });
-
-            let totalGastosCostos = 0, totalGastosVentas = 0;
-            gastos_locales.forEach(g => {
-                const esAfecto = (g.afecto || 'NO').toUpperCase() === 'SI';
-                const subtotal = esAfecto ? g.monto * (1 + g.iva / 100) : g.monto;
-                if ((g.tipo || '').toUpperCase() === 'COSTO') totalGastosCostos += subtotal;
-                else if ((g.tipo || '').toUpperCase() === 'VENTAS') totalGastosVentas += subtotal;
-            });
-
-            const totalCostoFinal = s.costo + totalGastosCostos;
-            const totalVentaFinal = s.venta + totalGastosVentas;
-            const profitLocal = totalVentaFinal - totalCostoFinal;
-            const profitPorcentaje = totalVentaFinal > 0 ? ((totalVentaFinal - totalCostoFinal) / totalVentaFinal) * 100 : 0;
-
-            // Cargar estado de crédito
-            const rutCliente = s.rut_empresa;
-            let simboloCredito = ' &nbsp;';
-            let simboloContado = ' &nbsp;';
-
-            const renderFinal = (credito, contado) => {
-                _renderizarRouteOrderConCredito(
-                    datos, s, p, costos, gastos_locales,
-                    totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa,
-                    totalGastosCostos, totalGastosVentas,
-                    shipperRS, shipperDireccion, shipperContacto, shipperRut,
-                    consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut,
-                    totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje,
-                    textoTransporte, credito, contado
-                );
-            };
-
-            // Definir variables en el scope de renderizarRouteOrder
-            let creditoSimbolo = ' &nbsp;';
-            let contadoSimbolo = ' &nbsp;';
-
-            if (rutCliente) {
-                fetch(`/api/get_estado_credito_cliente.php?rut=${encodeURIComponent(rutCliente)}`)
-                    .then(response => response.ok ? response.json() : Promise.reject())
-                    .then(creditoData => {
-                        if (creditoData.success && creditoData.estado_credito) {
-                            const estado = creditoData.estado_credito.toLowerCase();
-                            if (estado === 'vigente' || estado === 'activo') {
-                                creditoSimbolo = ' ✅';
-                                contadoSimbolo = ' &nbsp;';
+                // Al final de renderizarRouteOrder, después de mostrar el HTML
+                if (idSrvc) {
+                    fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.success && res.data) {
+                                // === AGREGAR transporte_nac a datosRouteOrder ===
+                                if (datosRouteOrder) {
+                                    datosRouteOrder.transporte_nac = res.data;
+                                }
+                                renderizarTablaTransporteNac(res.data);
+                                renderizarCamposTransporteNac(res.data);
                             } else {
-                                creditoSimbolo = ' &nbsp;';
-                                contadoSimbolo = ' ✅';
+                                if (datosRouteOrder) {
+                                    datosRouteOrder.transporte_nac = null;
+                                }
+                                renderizarTablaTransporteNac(null);
+                                renderizarCamposTransporteNac(null);
                             }
-                        } else {
-                            creditoSimbolo = ' &nbsp;';
-                            contadoSimbolo = ' ✅';
-                        }
-                        // === Agregar a datosRouteOrder ===
-                        if (datosRouteOrder) {
-                            datosRouteOrder.estado_credito = {
-                                credito: creditoSimbolo,
-                                contado: contadoSimbolo
-                            };
-                        }
-                        renderFinal(creditoSimbolo, contadoSimbolo);
-                    })
-                    .catch(() => {
-                        creditoSimbolo = ' &nbsp;';
-                        contadoSimbolo = ' ✅';
-                        if (datosRouteOrder) {
-                            datosRouteOrder.estado_credito = {
-                                credito: creditoSimbolo,
-                                contado: contadoSimbolo
-                            };
-                        }
-                        renderFinal(creditoSimbolo, contadoSimbolo);
-                    });
-            } else {
-                // Sin RUT, asumir contado
-                creditoSimbolo = ' &nbsp;';
-                contadoSimbolo = ' ✅';
-                if (datosRouteOrder) {
-                    datosRouteOrder.estado_credito = {
-                        credito: creditoSimbolo,
-                        contado: contadoSimbolo
-                    };
-                }
-                renderFinal(creditoSimbolo, contadoSimbolo);
-            }
-            const idSrvc = document.getElementById('id_srvc_edit')?.value || '';
-            // === Cargar y mostrar datos de Transporte Nacional al abrir el submodal ===
-            if (idSrvc) {
-                fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
-                    .then(r => r.json())
-                    .then(res => {
-                        if (res.success && res.data) {
-                            renderizarTablaTransporteNac(res.data);
-                            renderizarCamposTransporteNac(res.data);
-                        } else {
-                            renderizarTablaTransporteNac(null);
-                            renderizarCamposTransporteNac(null);
-                        }
-                    })
-                    .catch(e => {
-                        console.error('Error al cargar Transporte Nacional:', e);
-                        renderizarTablaTransporteNac(null);
-                        renderizarCamposTransporteNac(null);
-                    });
-            } else {
-                renderizarTablaTransporteNac(null);
-                renderizarCamposTransporteNac(null);
-            }
-
-            // Al final de renderizarRouteOrder, después de mostrar el HTML
-            if (idSrvc) {
-                fetch(`/pages/ro_transp_nac_logic.php?action=get&id_srvc=${encodeURIComponent(idSrvc)}`)
-                    .then(r => r.json())
-                    .then(res => {
-                        if (res.success && res.data) {
-                            // === AGREGAR transporte_nac a datosRouteOrder ===
-                            if (datosRouteOrder) {
-                                datosRouteOrder.transporte_nac = res.data;
-                            }
-                            renderizarTablaTransporteNac(res.data);
-                            renderizarCamposTransporteNac(res.data);
-                        } else {
+                        })
+                        .catch(e => {
+                            console.error('Error al cargar Transporte Nacional:', e);
                             if (datosRouteOrder) {
                                 datosRouteOrder.transporte_nac = null;
                             }
                             renderizarTablaTransporteNac(null);
                             renderizarCamposTransporteNac(null);
-                        }
-                    })
-                    .catch(e => {
-                        console.error('Error al cargar Transporte Nacional:', e);
-                        if (datosRouteOrder) {
-                            datosRouteOrder.transporte_nac = null;
-                        }
-                        renderizarTablaTransporteNac(null);
-                        renderizarCamposTransporteNac(null);
-                    });
-            }
-        }
-
-        // --- Función auxiliar para construir el HTML con el estado de crédito y datos del servicio ---
-        function _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado) {
-            let html = `
-                <div style="font-size: 9pt; line-height: 1.4;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                        <div style="text-align: left;">
-                            <strong>Nº Cotización:</strong> ${p?.concatenado || s.concatenado || 'N/A'}<br>
-                            <strong>TRÁFICO:</strong> <strong>${s.trafico || ''}</strong><br>
-                        </div>
-                        <div style="text-align: left;">
-                            <strong>TIPO CAMBIO CLIENTE:</strong> ${(s.tipo_cambio || 1).toFixed(4)}<br>
-                            <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
-                            <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
-                            <strong>PROV. NACIONAL:</strong> ${s.proveedor_nac || ''}<br>
-                            <strong>TERRESTRE:</strong><br>
-                            <strong>DESCONSOLIDACIÓN:</strong> ${s.desconsolidac || ''}<br>
-                            <strong>GRÚAS:</strong><br>
-                            <strong>EMBALAJE:</strong>
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                        <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
-                            <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #007bff;">SHIPPER</h4>
-                            <div><strong>Razón Social:</strong> ${sanitizeText(shipperRS)}</div>
-                            <div><strong>Dirección:</strong> ${sanitizeText(shipperDireccion)}</div>
-                            <div><strong>Contacto:</strong> ${sanitizeText(shipperContacto)}</div>
-                            <div><strong>R.U.T.:</strong> ${sanitizeText(shipperRut)}</div>
-                        </div>
-                        <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
-                            <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #28a745;">CONSIGNATARIO</h4>
-                            <div><strong>Razón Social:</strong> ${sanitizeText(consignatarioRS)}</div>
-                            <div><strong>Dirección:</strong> ${sanitizeText(consignatarioDireccion)}</div>
-                            <div><strong>Contacto:</strong> ${sanitizeText(consignatarioContacto)}</div>
-                            <div><strong>R.U.T.:</strong> ${sanitizeText(consignatarioRut)}</div>
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <strong>INCOTERM:</strong> ${s.incoterm || ''}<br>
-                        <strong>COMMODITY:</strong> ${s.commodity || ''}<br>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
-                            <div><strong>VOLUMEN:</strong> ${(s.volumen || 0).toFixed(2)}</div>
-                            <div><strong>PESO BRUTO:</strong> ${(s.peso || 0).toFixed(2)} kg</div>
-                            <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
-                            <div><strong>UNIDADES:</strong> ${s.bultos || 0}</div>
-                        </div>
-                        <div><strong>POD:</strong> ${s.destino || ''}</div>
-                        <div><strong>POL:</strong> ${s.origen || ''}</div>
-                        <div><strong>COLOADER:</strong></div>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <strong>NOTAS ADICIONALES:</strong><br>
-                        <div style="white-space: pre-line; margin-left: 1rem;">${sanitizeText(s.nota_srvc || '')}</div>
-                    </div>
-
-                    <!-- PROFIT SHARE ACTUALIZADO -->
-                                            <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
-                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                                <!-- BLOQUE COSTOS -->
-                                                <div>
-                                                    <h5 style="margin-bottom: 0.5rem;">Costos</h5>
-                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                                        <thead>
-                                                            <tr style="background-color: #f2f2f2;">
-                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                    `;
-
-                                    // Calcular total costo real (qty * costo)
-                                    let totalCostoCalculado = 0;
-                                    costos.forEach(c => {
-                                        const qty = c.qty || 0;
-                                        const costo = c.costo || 0;
-                                        const total = qty * costo;
-                                        totalCostoCalculado += total;
-                                        html += `
-                                                            <tr>
-                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${costo.toFixed(2)}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
-                                                            </tr>
-                                        `;
-                                    });
-
-                                    html += `
-                                                        </tbody>
-                                                        <tfoot>
-                                                            <tr style="font-weight: bold;">
-                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL COSTO:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalCostoCalculado.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                                <td style="border: 1px solid #ddd;"></td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    </table>
-
-                                                    <!-- CONDICIONES COMERCIALES (izquierda) -->
-                                                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
-                                                    <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem;">
-                                                        <strong>CREDITO:${simboloCredito}</strong>
-                                                        <strong>CONTADO:${simboloContado}</strong>
-                                                    </div>
-
-                                                    <!-- TRANSPORTE NACIONAL (izquierda) -->
-                                                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">TRANSPORTE NACIONAL</h4>
-                                                    <table id="tabla-transporte-nac" style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                                        <thead>
-                                                            <tr style="background-color: #f2f2f2;">
-                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Acepta</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-
-                                                    <!-- CAMPOS TRANSPORTE (dinámicos) -->
-                                                    <div id="campos-transporte-nac" style="margin-top: 0.8rem;"></div>
-
-                                                    <!-- BOTONES TRANSPORTE NACIONAL -->
-                                                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                                                        <button type="button" onclick="abrirModalTransporteNac('crear')" 
-                                                            style="padding: 0.3rem 0.6rem; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">
-                                                            🚚 Grabar Transporte
-                                                        </button>
-                                                        <button type="button" onclick="abrirModalTransporteNac('editar')" 
-                                                            style="padding: 0.3rem 0.6rem; background-color: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">
-                                                            ✏️ Editar
-                                                        </button>
-                                                        <button type="button" onclick="eliminarTransporteNac()" 
-                                                            style="padding: 0.3rem 0.6rem; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">
-                                                            🗑️ Eliminar
-                                                        </button>
-                                                    </div>
-
-                                                    <!-- SEGURO (izquierda) -->
-                                                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">SEGURO</h4>
-                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                                        <thead>
-                                                            <tr style="background-color: #f2f2f2;">
-                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Min.</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">V.Venta</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-
-                                                <!-- BLOQUE VENTAS -->
-                                                <div>
-                                                    <h5 style="margin-bottom: 0.5rem;">Ventas</h5>
-                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                                        <thead>
-                                                            <tr style="background-color: #f2f2f2;">
-                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                    `;
-
-                                    // Calcular total venta real (qty * tarifa)
-                                    let totalVentaCalculado = 0;
-                                    costos.forEach(c => {
-                                        const qty = c.qty || 0;
-                                        const tarifa = c.tarifa || 0;
-                                        const total = qty * tarifa;
-                                        totalVentaCalculado += total;
-                                        html += `
-                                                            <tr>
-                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${tarifa.toFixed(2)}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
-                                                            </tr>
-                                        `;
-                                    });
-
-                                    // Calcular profit y profit %
-                                    const totalProfit = totalVentaCalculado - totalCostoCalculado;
-                                    const totalProfitPorcentaje = totalVentaCalculado > 0 ? ((totalProfit / totalVentaCalculado) * 100) : 0;
-
-                                    html += `
-                                                        </tbody>
-                                                        <tfoot>
-                                                            <tr style="font-weight: bold;">
-                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL VENTAS:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalVentaCalculado.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                                <td style="border: 1px solid #ddd;"></td>
-                                                            </tr>
-                                                            <tr style="font-weight: bold;">
-                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfit.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                                <td style="border: 1px solid #ddd;"></td>
-                                                            </tr>
-                                                            <tr style="font-weight: bold;">
-                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT %:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfitPorcentaje.toFixed(2)}%</td>
-                                                                <td style="border: 1px solid #ddd;"></td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    </table>
-
-                                                    <!-- GASTOS LOCALES EN DESTINO (VENTAS) -->
-                                                    <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Gastos Locales en Destino</h5>
-                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                                        <thead>
-                                                            <tr style="background-color: #f2f2f2;">
-                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                    `;
-
-                                    // Filtrar y renderizar solo Gastos Locales de tipo "Ventas"
-                                    let totalGastosVentasMonto = 0;
-                                    const gastosVentas = gastos_locales.filter(g => (g.tipo || '').toUpperCase() === 'VENTAS');
-                                    gastosVentas.forEach(g => {
-                                        const monto = parseFloat(g.monto) || 0;
-                                        totalGastosVentasMonto += monto;
-                                        html += `
-                                                            <tr>
-                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                            </tr>
-                                        `;
-                                    });
-
-                                    html += `
-                                                        </tbody>
-                                                        <tfoot>
-                                                            <tr style="font-weight: bold;">
-                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL MONTO:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosVentasMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    </table>
-
-                                                    <!-- GASTOS LOCALES EN DESTINO COSTO -->
-                                                    <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Gastos Locales en Destino Costo</h5>
-                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                                        <thead>
-                                                            <tr style="background-color: #f2f2f2;">
-                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                    `;
-
-                                    // Filtrar y renderizar solo Gastos Locales de tipo "Costo"
-                                    let totalGastosCostosMonto = 0;
-                                    const gastosCostos = gastos_locales.filter(g => (g.tipo || '').toUpperCase() === 'COSTO');
-                                    gastosCostos.forEach(g => {
-                                        const monto = parseFloat(g.monto) || 0;
-                                        totalGastosCostosMonto += monto;
-                                        html += `
-                                                            <tr>
-                                                                <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                            </tr>
-                                        `;
-                                    });
-
-                                    html += `
-                                                        </tbody>
-                                                        <tfoot>
-                                                            <tr style="font-weight: bold;">
-                                                                <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL MONTO:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosCostosMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    </table>
-
-                                                    <!-- TERCER BLOQUE: TOTAL GASTOS LOCALES MÁS PROFIT LOCAL -->
-                                                    <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Total Gastos Locales más Profit Local</h5>
-                                                    <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
-                                                        <thead>
-                                                            <tr style="background-color: #f2f2f2;">
-                                                                <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;"></th>
-                                                                <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
-                                                                <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total Venta:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">CLP</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosVentasMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total Costo:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">CLP</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosCostosMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                            </tr>
-                                                            <tr style="font-weight: bold;">
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit Local:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">CLP</td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(totalGastosVentasMonto - totalGastosCostosMonto).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
-                                                            </tr>
-                                                            <tr style="font-weight: bold;">
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit %:</td>
-                                                                <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
-                                                                <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">
-                                                                    ${(totalGastosVentasMonto > 0 
-                                                                        ? ((totalGastosVentasMonto - totalGastosCostosMonto) / totalGastosVentasMonto * 100).toFixed(2) + '%' 
-                                                                        : '0.00%')}
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-
-
-                    <!-- NOTAS -->
-                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS A OPERACIONES</h4>
-                    <div>${sanitizeText(s.notas_operaciones || '')}</div>
-                    <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS COMERCIALES</h4>
-                    <div>${sanitizeText(s.notas_comerciales || '')}</div>
-                </div>
-            `;
-
-            document.getElementById('route-order-content').innerHTML = html;
-        }
-
-        // --- Función para exportar a Excel ---
-        function exportarRouteOrderAExcel() {
-            if (!datosRouteOrder) {
-                error('No hay datos para exportar.');
-                return;
-            }
-
-            // Opcional: Mostrar indicador de carga
-            // document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Generando Excel...</p>';
-
-            // Hacer una petición al backend para generar el archivo Excel
-            fetch('/api/exportar_route_order_excel.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(datosRouteOrder)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                        });
                 }
-                // Si la respuesta es correcta, debería ser un archivo para descargar
-                return response.blob(); // Obtener el archivo como Blob
-            })
-            .then(blob => {
-                // Crear un objeto URL para el blob
-                const downloadUrl = window.URL.createObjectURL(blob);
-                // Crear un enlace temporal para descargar el archivo
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = `Route_Order_${datosRouteOrder.servicio.concatenado || 'N/A'}.xlsx`; // Nombre del archivo
-                document.body.appendChild(link); // Añadir al DOM
-                link.click(); // Simular clic para descargar
-                document.body.removeChild(link); // Limpiar
-                window.URL.revokeObjectURL(downloadUrl); // Liberar el objeto URL
-                exito('Archivo Excel descargado correctamente.');
-            })
-            .catch(err => {
-                console.error('Error al exportar a Excel:', err);
-                error('No se pudo generar el archivo Excel.');
-                // Opcional: Volver a renderizar el contenido original si falla la exportación
-                // if (datosRouteOrder) renderizarRouteOrder(datosRouteOrder);
-            });
-        }
+            }
 
-        // Exponer funciones globales
-        window.guardarServicio = guardarServicio;
-        window.abrirModalServicio = abrirModalServicio;
-        window.eliminarServicio = eliminarServicio;
+            // --- Función auxiliar para construir el HTML con el estado de crédito y datos del servicio ---
+            function _renderizarRouteOrderConCredito(datos, s, p, costos, gastos_locales, totalCostos, totalVenta, totalTotalCosto, totalTotalTarifa, totalGastosCostos, totalGastosVentas, shipperRS, shipperDireccion, shipperContacto, shipperRut, consignatarioRS, consignatarioDireccion, consignatarioContacto, consignatarioRut, totalCostoFinal, totalVentaFinal, profitLocal, profitPorcentaje, textoTransporte, simboloCredito, simboloContado) {
+                let html = `
+                    <div style="font-size: 9pt; line-height: 1.4;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="text-align: left;">
+                                <strong>Nº Cotización:</strong> ${p?.concatenado || s.concatenado || 'N/A'}<br>
+                                <strong>TRÁFICO:</strong> <strong>${s.trafico || ''}</strong><br>
+                            </div>
+                            <div style="text-align: left;">
+                                <strong>TIPO CAMBIO CLIENTE:</strong> ${(s.tipo_cambio || 1).toFixed(4)}<br>
+                                <strong>AGENTE / OFICINA:</strong> ${s.agente || ''}<br>
+                                <strong>REF. CLIENTE:</strong> ${s.ref_cliente || ''}<br>
+                                <strong>PROV. NACIONAL:</strong> ${s.proveedor_nac || ''}<br>
+                                <strong>TERRESTRE:</strong><br>
+                                <strong>DESCONSOLIDACIÓN:</strong> ${s.desconsolidac || ''}<br>
+                                <strong>GRÚAS:</strong><br>
+                                <strong>EMBALAJE:</strong>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
+                                <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #007bff;">SHIPPER</h4>
+                                <div><strong>Razón Social:</strong> ${sanitizeText(shipperRS)}</div>
+                                <div><strong>Dirección:</strong> ${sanitizeText(shipperDireccion)}</div>
+                                <div><strong>Contacto:</strong> ${sanitizeText(shipperContacto)}</div>
+                                <div><strong>R.U.T.:</strong> ${sanitizeText(shipperRut)}</div>
+                            </div>
+                            <div style="border: 1px solid #ccc; border-radius: 6px; padding: 1rem; background-color: #f9f9f9;">
+                                <h4 style="margin: 0 0 0.8rem 0; font-size: 10pt; font-weight: bold; color: #28a745;">CONSIGNATARIO</h4>
+                                <div><strong>Razón Social:</strong> ${sanitizeText(consignatarioRS)}</div>
+                                <div><strong>Dirección:</strong> ${sanitizeText(consignatarioDireccion)}</div>
+                                <div><strong>Contacto:</strong> ${sanitizeText(consignatarioContacto)}</div>
+                                <div><strong>R.U.T.:</strong> ${sanitizeText(consignatarioRut)}</div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong>INCOTERM:</strong> ${s.incoterm || ''}<br>
+                            <strong>COMMODITY:</strong> ${s.commodity || ''}<br>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                                <div><strong>VOLUMEN:</strong> ${(s.volumen || 0).toFixed(2)}</div>
+                                <div><strong>PESO BRUTO:</strong> ${(s.peso || 0).toFixed(2)} kg</div>
+                                <div><strong>DIMENSIONES:</strong> ${s.dimensiones || ''}</div>
+                                <div><strong>UNIDADES:</strong> ${s.bultos || 0}</div>
+                            </div>
+                            <div><strong>POD:</strong> ${s.destino || ''}</div>
+                            <div><strong>POL:</strong> ${s.origen || ''}</div>
+                            <div><strong>COLOADER:</strong></div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong>NOTAS ADICIONALES:</strong><br>
+                            <div style="white-space: pre-line; margin-left: 1rem;">${sanitizeText(s.nota_srvc || '')}</div>
+                        </div>
+
+                        <!-- PROFIT SHARE ACTUALIZADO -->
+                                                <h4 style="margin-top: 2rem; margin-bottom: 1rem;">PROFIT SHARE</h4>
+                                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                                    <!-- BLOQUE COSTOS -->
+                                                    <div>
+                                                        <h5 style="margin-bottom: 0.5rem;">Costos</h5>
+                                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                            <thead>
+                                                                <tr style="background-color: #f2f2f2;">
+                                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                        `;
+
+                                        // Calcular total costo real (qty * costo)
+                                        let totalCostoCalculado = 0;
+                                        costos.forEach(c => {
+                                            const qty = c.qty || 0;
+                                            const costo = c.costo || 0;
+                                            const total = qty * costo;
+                                            totalCostoCalculado += total;
+                                            html += `
+                                                                <tr>
+                                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${costo.toFixed(2)}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
+                                                                </tr>
+                                            `;
+                                        });
+
+                                        html += `
+                                                            </tbody>
+                                                            <tfoot>
+                                                                <tr style="font-weight: bold;">
+                                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL COSTO:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalCostoCalculado.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                    <td style="border: 1px solid #ddd;"></td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+
+                                                        <!-- CONDICIONES COMERCIALES (izquierda) -->
+                                                        <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
+                                                        <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem;">
+                                                            <strong>CREDITO:${simboloCredito}</strong>
+                                                            <strong>CONTADO:${simboloContado}</strong>
+                                                        </div>
+
+                                                        <!-- TRANSPORTE NACIONAL (izquierda) -->
+                                                        <h4 style="margin-top: 2rem; margin-bottom: 1rem;">TRANSPORTE NACIONAL</h4>
+                                                        <table id="tabla-transporte-nac" style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                            <thead>
+                                                                <tr style="background-color: #f2f2f2;">
+                                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Acepta</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+
+                                                        <!-- CAMPOS TRANSPORTE (dinámicos) -->
+                                                        <div id="campos-transporte-nac" style="margin-top: 0.8rem;"></div>
+
+                                                        <!-- BOTONES TRANSPORTE NACIONAL -->
+                                                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                                                            <button type="button" onclick="abrirModalTransporteNac('crear')" 
+                                                                style="padding: 0.3rem 0.6rem; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">
+                                                                🚚 Grabar Transporte
+                                                            </button>
+                                                            <button type="button" onclick="abrirModalTransporteNac('editar')" 
+                                                                style="padding: 0.3rem 0.6rem; background-color: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">
+                                                                ✏️ Editar
+                                                            </button>
+                                                            <button type="button" onclick="eliminarTransporteNac()" 
+                                                                style="padding: 0.3rem 0.6rem; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">
+                                                                🗑️ Eliminar
+                                                            </button>
+                                                        </div>
+
+                                                        <!-- SEGURO (izquierda) -->
+                                                        <h4 style="margin-top: 2rem; margin-bottom: 1rem;">SEGURO</h4>
+                                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                            <thead>
+                                                                <tr style="background-color: #f2f2f2;">
+                                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Costo</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Min.</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">V.Venta</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    <!-- BLOQUE VENTAS -->
+                                                    <div>
+                                                        <h5 style="margin-bottom: 0.5rem;">Ventas</h5>
+                                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                            <thead>
+                                                                <tr style="background-color: #f2f2f2;">
+                                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Qty</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Venta</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Aplica</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                        `;
+
+                                        // Calcular total venta real (qty * tarifa)
+                                        let totalVentaCalculado = 0;
+                                        costos.forEach(c => {
+                                            const qty = c.qty || 0;
+                                            const tarifa = c.tarifa || 0;
+                                            const total = qty * tarifa;
+                                            totalVentaCalculado += total;
+                                            html += `
+                                                                <tr>
+                                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(c.concepto || '')}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${qty.toFixed(2)}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${tarifa.toFixed(2)}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${total.toFixed(2)}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(c.aplica || '')}</td>
+                                                                </tr>
+                                            `;
+                                        });
+
+                                        // Calcular profit y profit %
+                                        const totalProfit = totalVentaCalculado - totalCostoCalculado;
+                                        const totalProfitPorcentaje = totalVentaCalculado > 0 ? ((totalProfit / totalVentaCalculado) * 100) : 0;
+
+                                        html += `
+                                                            </tbody>
+                                                            <tfoot>
+                                                                <tr style="font-weight: bold;">
+                                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL VENTAS:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalVentaCalculado.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                    <td style="border: 1px solid #ddd;"></td>
+                                                                </tr>
+                                                                <tr style="font-weight: bold;">
+                                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfit.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                    <td style="border: 1px solid #ddd;"></td>
+                                                                </tr>
+                                                                <tr style="font-weight: bold;">
+                                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL PROFIT %:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalProfitPorcentaje.toFixed(2)}%</td>
+                                                                    <td style="border: 1px solid #ddd;"></td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+
+                                                        <!-- GASTOS LOCALES EN DESTINO (VENTAS) -->
+                                                        <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Gastos Locales en Destino</h5>
+                                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                            <thead>
+                                                                <tr style="background-color: #f2f2f2;">
+                                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                        `;
+
+                                        // Filtrar y renderizar solo Gastos Locales de tipo "Ventas"
+                                        let totalGastosVentasMonto = 0;
+                                        const gastosVentas = gastos_locales.filter(g => (g.tipo || '').toUpperCase() === 'VENTAS');
+                                        gastosVentas.forEach(g => {
+                                            const monto = parseFloat(g.monto) || 0;
+                                            totalGastosVentasMonto += monto;
+                                            html += `
+                                                                <tr>
+                                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                </tr>
+                                            `;
+                                        });
+
+                                        html += `
+                                                            </tbody>
+                                                            <tfoot>
+                                                                <tr style="font-weight: bold;">
+                                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL MONTO:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosVentasMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+
+                                                        <!-- GASTOS LOCALES EN DESTINO COSTO -->
+                                                        <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Gastos Locales en Destino Costo</h5>
+                                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                            <thead>
+                                                                <tr style="background-color: #f2f2f2;">
+                                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;">Concepto</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Afecto</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                        `;
+
+                                        // Filtrar y renderizar solo Gastos Locales de tipo "Costo"
+                                        let totalGastosCostosMonto = 0;
+                                        const gastosCostos = gastos_locales.filter(g => (g.tipo || '').toUpperCase() === 'COSTO');
+                                        gastosCostos.forEach(g => {
+                                            const monto = parseFloat(g.monto) || 0;
+                                            totalGastosCostosMonto += monto;
+                                            html += `
+                                                                <tr>
+                                                                    <td style="border: 1px solid #ddd; padding: 0.3rem;">${sanitizeText(g.gasto || '')}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.moneda || '')}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">${sanitizeText(g.afecto || '')}</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${monto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                </tr>
+                                            `;
+                                        });
+
+                                        html += `
+                                                            </tbody>
+                                                            <tfoot>
+                                                                <tr style="font-weight: bold;">
+                                                                    <td colspan="3" style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">TOTAL MONTO:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosCostosMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+
+                                                        <!-- TERCER BLOQUE: TOTAL GASTOS LOCALES MÁS PROFIT LOCAL -->
+                                                        <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Total Gastos Locales más Profit Local</h5>
+                                                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                                                            <thead>
+                                                                <tr style="background-color: #f2f2f2;">
+                                                                    <th style="border: 1px solid #ddd; text-align: left; padding: 0.3rem;"></th>
+                                                                    <th style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">Moneda</th>
+                                                                    <th style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Monto</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total Venta:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">CLP</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosVentasMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Total Costo:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">CLP</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${totalGastosCostosMonto.toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                </tr>
+                                                                <tr style="font-weight: bold;">
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit Local:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;">CLP</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">${(totalGastosVentasMonto - totalGastosCostosMonto).toLocaleString('es-CL', { minimumFractionDigits: 2 })}</td>
+                                                                </tr>
+                                                                <tr style="font-weight: bold;">
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">Profit %:</td>
+                                                                    <td style="border: 1px solid #ddd; text-align: center; padding: 0.3rem;"></td>
+                                                                    <td style="border: 1px solid #ddd; text-align: right; padding: 0.3rem;">
+                                                                        ${(totalGastosVentasMonto > 0 
+                                                                            ? ((totalGastosVentasMonto - totalGastosCostosMonto) / totalGastosVentasMonto * 100).toFixed(2) + '%' 
+                                                                            : '0.00%')}
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+
+                        <!-- NOTAS -->
+                        <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS A OPERACIONES</h4>
+                        <div>${sanitizeText(s.notas_operaciones || '')}</div>
+                        <h4 style="margin-top: 2rem; margin-bottom: 1rem;">NOTAS COMERCIALES</h4>
+                        <div>${sanitizeText(s.notas_comerciales || '')}</div>
+                    </div>
+                `;
+
+                document.getElementById('route-order-content').innerHTML = html;
+            }
+
+            // --- Función para exportar a Excel ---
+            function exportarRouteOrderAExcel() {
+                if (!datosRouteOrder) {
+                    error('No hay datos para exportar.');
+                    return;
+                }
+
+                // Opcional: Mostrar indicador de carga
+                // document.getElementById('route-order-content').innerHTML = '<p style="text-align: center;">Generando Excel...</p>';
+
+                // Hacer una petición al backend para generar el archivo Excel
+                fetch('/api/exportar_route_order_excel.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(datosRouteOrder)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    // Si la respuesta es correcta, debería ser un archivo para descargar
+                    return response.blob(); // Obtener el archivo como Blob
+                })
+                .then(blob => {
+                    // Crear un objeto URL para el blob
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    // Crear un enlace temporal para descargar el archivo
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = `Route_Order_${datosRouteOrder.servicio.concatenado || 'N/A'}.xlsx`; // Nombre del archivo
+                    document.body.appendChild(link); // Añadir al DOM
+                    link.click(); // Simular clic para descargar
+                    document.body.removeChild(link); // Limpiar
+                    window.URL.revokeObjectURL(downloadUrl); // Liberar el objeto URL
+                    exito('Archivo Excel descargado correctamente.');
+                })
+                .catch(err => {
+                    console.error('Error al exportar a Excel:', err);
+                    error('No se pudo generar el archivo Excel.');
+                    // Opcional: Volver a renderizar el contenido original si falla la exportación
+                    // if (datosRouteOrder) renderizarRouteOrder(datosRouteOrder);
+                });
+            }
+
+            // Exponer funciones globales
+            window.guardarServicio = guardarServicio;
+            window.abrirModalServicio = abrirModalServicio;
+            window.eliminarServicio = eliminarServicio;
+        });
     </script>
 </form>
