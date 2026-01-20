@@ -34,7 +34,6 @@
     <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
     <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
-    <input type="hidden" id="operacion" value="<?= htmlspecialchars($prospecto['operacion'] ?? '') ?>">
     <input type="hidden" id="prospecto_razon_social" value="<?= htmlspecialchars($prospecto['razon_social'] ?? '') ?>">
     <input type="hidden" id="prospecto_direccion" value="<?= htmlspecialchars($prospecto['direccion'] ?? '') ?>">
     <input type="hidden" id="prospecto_rut_empresa" value="<?= htmlspecialchars($prospecto['rut_empresa'] ?? '') ?>">
@@ -2403,10 +2402,23 @@
         // === 7. INICIALIZACIÓN ===
         // ===================================================================
         document.addEventListener('DOMContentLoaded', () => {
+            // === 1. Cargar datos si vienen desde edición ===
+            cargarProspectoDesdeURL();
+
+            // === 2. Cargar siempre los mantenedores (operaciones, tipos, etc.) ===
             cargarPaises();
             cargarOperacionesYTipos();
             cargarClientesEnSelect();
 
+            // === 3. Manejo de mensajes de éxito/error ===
+            const params = new URLSearchParams(window.location.search);
+            const msg = params.get('exito');
+            if (msg) {
+                exito(decodeURIComponent(msg));
+                history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
+            }
+
+            // === 4. Eventos ===
             ['operacion', 'tipo_oper'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', calcularConcatenado);
