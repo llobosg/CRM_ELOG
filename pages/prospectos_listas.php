@@ -26,8 +26,6 @@ if (php_sapi_name() !== 'cli') {
                 p.operacion,
                 p.tipo_oper,
                 p.concatenado,
-                p.servicio,
-                p.trafico,
                 COALESCE(cost_data.total_costo, 0) AS total_costo,
                 COALESCE(cost_data.total_venta, 0) AS total_venta,
                 COALESCE(gasto_data.gdc, 0) AS gdc,
