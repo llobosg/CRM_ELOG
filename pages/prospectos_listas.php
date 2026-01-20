@@ -101,10 +101,8 @@ if (php_sapi_name() !== 'cli') {
             <table class="data-table" style="min-width: 1700px; width: 100%;">
                 <thead>
                     <tr>
-                        <th style="width: 45%;">Cliente</th>
+                        <th style="width: 35%;">Cliente</th>
                         <th style="width: 10%;">Fecha</th>
-                        <th>Operación</th>
-                        <th style="width: 10%;">Tipo Oper</th>
                         <th style="width: 13%;">Concatenado</th>
                         <th>Servicio</th>
                         <th>Tráfico</th>
@@ -125,8 +123,6 @@ if (php_sapi_name() !== 'cli') {
                     <tr>
                         <td><?= htmlspecialchars($p['cliente_nombre'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['fecha'] ? date('d-m-Y', strtotime($p['fecha'])) : '–') ?></td>
-                        <td><?= htmlspecialchars($p['operacion'] ?? '–') ?></td>
-                        <td><?= htmlspecialchars($p['tipo_oper'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['concatenado'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['servicio'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['trafico'] ?? '–') ?></td>
