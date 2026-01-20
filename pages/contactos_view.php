@@ -1,5 +1,18 @@
 <?php
-$registros = $pdo->query("SELECT nom_contacto, fono_contacto, email, cargo, tipo FROM contactos ORDER BY nom_contacto")->fetchAll();
+require_once __DIR__ . '/../config.php';
+
+try {
+    // Solo seleccionar columnas que existen en la tabla
+    $stmt = $pdo->query("
+        SELECT rut_cliente, nom_contacto, fono_contacto, email, rol, primario 
+        FROM contactos 
+        ORDER BY rut_cliente, nom_contacto
+    ");
+    $registros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    error_log("Error al cargar contactos: " . $e->getMessage());
+    $registros = [];
+}
 ?>
 
 <h2 class="section-title"><i class="fas fa-address-book"></i> Contactos</h2>

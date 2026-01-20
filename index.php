@@ -40,9 +40,19 @@ $page = $_GET['page'] ?? 'dashboard';
 $safePage = in_array($page, $validPages) ? $page : 'dashboard';
 
 // Protección por rol
-$paginas_admin_finanzas = ['ficha_cliente', 'facturacion'];
+$paginas_admin_finanzas = ['facturacion']; // Solo facturación es exclusiva
+$paginas_admin_y_finanzas = ['ficha_cliente']; // Ficha cliente para admin y admin_finanzas
+
 if (in_array($safePage, $paginas_admin_finanzas)) {
     if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin_finanzas') {
+        header('Location: ?page=dashboard');
+        exit;
+    }
+}
+
+if (in_array($safePage, $paginas_admin_y_finanzas)) {
+    $rol = $_SESSION['rol'] ?? '';
+    if ($rol !== 'admin' && $rol !== 'admin_finanzas') {
         header('Location: ?page=dashboard');
         exit;
     }
