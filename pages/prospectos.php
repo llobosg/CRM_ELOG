@@ -4001,6 +4001,28 @@
                     window.eliminarServicio = eliminarServicio;
                     window.editarServicio = editarServicio;
                 });
+                // === Cargar prospecto por concatenado (desde lista) ===
+                const params = new URLSearchParams(window.location.search);
+                const buscarConcatenado = params.get('buscar_concatenado');
+                if (buscarConcatenado) {
+                    // Simular búsqueda inteligente
+                    document.getElementById('busqueda-inteligente').value = buscarConcatenado;
+                    // Disparar búsqueda manual
+                    fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(buscarConcatenado)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.length > 0) {
+                                const prospecto = data[0]; // Tomar el primero
+                                seleccionarProspecto(prospecto.id_ppl);
+                            } else {
+                                error('Prospecto no encontrado con ese código');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error al buscar por concatenado:', err);
+                            error('No se pudo cargar el prospecto');
+                        });
+                }
             </script>
         </form>
     </body>

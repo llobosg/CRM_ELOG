@@ -131,7 +131,7 @@ if (php_sapi_name() !== 'cli') {
                             <!-- ✏️ Editar -->
                             <!-- En prospectos_listas.php -->
                             <button type="button" 
-                                    onclick="window.location.href='/?page=prospectos&seleccionar=<?= $p['id_ppl'] ?>'"
+                                    onclick="window.location.href='/?page=prospectos&buscar_concatenado=<?= urlencode($p['concatenado']) ?>'"
                                     title="Editar"
                                     style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
                                 ✏️
