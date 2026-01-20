@@ -21,20 +21,18 @@ if (php_sapi_name() !== 'cli') {
         $stmt = $pdo->prepare("
             SELECT
                 p.id_ppl,
-                p.fecha_ppl,
-                p.cliente_ppl,
+                p.fecha_alta AS fecha,
+                p.razon_social AS cliente_nombre,
                 p.operacion,
                 p.tipo_oper,
                 p.concatenado,
                 p.servicio,
                 p.trafico,
-                c.nombre_clt AS cliente_nombre,
                 COALESCE(cost_data.total_costo, 0) AS total_costo,
                 COALESCE(cost_data.total_venta, 0) AS total_venta,
                 COALESCE(gasto_data.gdc, 0) AS gdc,
                 COALESCE(gasto_data.gdv, 0) AS gdv
             FROM prospectos p
-            LEFT JOIN clientes c ON p.cliente_ppl = c.id_clt
             LEFT JOIN (
                 SELECT 
                     s.id_ppl,
@@ -47,13 +45,13 @@ if (php_sapi_name() !== 'cli') {
             LEFT JOIN (
                 SELECT 
                     s.id_ppl,
-                    SUM(CASE WHEN gld.tipo = 'COSTO' THEN gld.monto ELSE 0 END) AS gdc,
-                    SUM(CASE WHEN gld.tipo = 'VENTAS' THEN gld.monto ELSE 0 END) AS gdv
+                    SUM(CASE WHEN gld.tipo = 'Costo' THEN gld.monto ELSE 0 END) AS gdc,
+                    SUM(CASE WHEN gld.tipo = 'Ventas' THEN gld.monto ELSE 0 END) AS gdv
                 FROM servicios s
                 LEFT JOIN gastos_locales_detalle gld ON s.id_srvc = gld.id_servicio
                 GROUP BY s.id_ppl
             ) gasto_data ON p.id_ppl = gasto_data.id_ppl
-            ORDER BY p.fecha_ppl DESC
+            ORDER BY p.fecha_alta DESC
             LIMIT 10
         ");
         $stmt->execute();
