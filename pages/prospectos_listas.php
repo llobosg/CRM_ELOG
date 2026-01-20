@@ -84,7 +84,7 @@ if (php_sapi_name() !== 'cli') {
     </script>
 </head>
 <body>
-<div class="container" style="max-width: 2000px; width: 95%; margin: 0 auto; padding: 0 1rem;">
+<div class="container" style="max-width: 1800px; width: 95%; margin: 0 auto; padding: 0 1rem;">
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
         <h2 style="font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
@@ -98,7 +98,7 @@ if (php_sapi_name() !== 'cli') {
     <!-- ✅ Card sin restricción de ancho -->
     <div class="card" style="overflow-x: auto; padding: 1rem;">
         <div class="table-container">
-            <table class="data-table" style="min-width: 1300px; width: 100%;">
+            <table class="data-table" style="min-width: 1700px; width: 100%;">
                 <thead>
                     <tr>
                         <th style="width: 45%;">Cliente</th>
