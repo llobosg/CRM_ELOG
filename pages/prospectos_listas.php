@@ -123,7 +123,7 @@ if (php_sapi_name() !== 'cli') {
                     <?php foreach ($prospectos as $p): ?>
                     <tr>
                         <td><?= htmlspecialchars($p['cliente_nombre'] ?? '–') ?></td>
-                        <td><?= htmlspecialchars(date('d-m-Y', strtotime($p['fecha_ppl']))) ?></td>
+                        <td><?= htmlspecialchars($p['fecha'] ? date('d-m-Y', strtotime($p['fecha'])) : '–') ?></td>
                         <td><?= htmlspecialchars($p['operacion'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['tipo_oper'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['concatenado'] ?? '–') ?></td>
