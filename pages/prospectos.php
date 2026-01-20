@@ -2403,7 +2403,7 @@
         // ===================================================================
         document.addEventListener('DOMContentLoaded', () => {
             // === 1. Cargar datos si vienen desde edición ===
-            cargarProspectoDesdeURL();
+            //cargarProspectoDesdeURL();
 
             // === 2. Cargar siempre los mantenedores (operaciones, tipos, etc.) ===
             cargarPaises();
