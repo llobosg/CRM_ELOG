@@ -106,11 +106,11 @@ if (php_sapi_name() !== 'cli') {
                         <th style="width: 13%;">Concatenado</th>
                         <th>Servicio</th>
                         <th>Tráfico</th>
-                        <th style="width: 8%;">Costo</th>
-                        <th style="width: 8%;">Venta</th>
-                        <th style="width: 8%;">GDC</th>
-                        <th style="width: 8%;">GDV</th>
-                        <th style="width: 8%;">Acción</th>
+                        <th style="width: 5%;">Costo</th>
+                        <th style="width: 5%;">Venta</th>
+                        <th style="width: 5%;">GDC</th>
+                        <th style="width: 5%;">GDV</th>
+                        <th style="width: 5%;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
