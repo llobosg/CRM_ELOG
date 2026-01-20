@@ -4,7 +4,15 @@
 // 🔥 NUEVO: Manejo de eliminación vía GET
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'eliminar' && isset($_GET['id'])) {
     require_once __DIR__ . '/../config.php';
-    require_once __DIR__ . '/../includes/auth_check.php';
+
+    // Verificación de sesión manual
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (empty($_SESSION['user_id']) || empty($_SESSION['rol'])) {
+        header('Location: /login.php');
+        exit;
+    }
 
     $rol = $_SESSION['rol'] ?? '';
     if ($rol !== 'admin' && $rol !== 'comercial') {
