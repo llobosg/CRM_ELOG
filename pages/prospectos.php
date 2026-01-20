@@ -96,11 +96,6 @@
             <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
             <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
             <!-- Selects -->
-            <!-- ✅ Correcto: el select debe tener id="operacion" -->
-            <select name="operacion" id="operacion" style="..." required>
-                <option value="">Seleccionar</option>
-                <!-- Opciones se cargarán vía JS -->
-            </select>
             <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
             <input type="hidden" id="prospecto_razon_social" value="<?= htmlspecialchars($prospecto['razon_social'] ?? '') ?>">
             <input type="hidden" id="prospecto_direccion" value="<?= htmlspecialchars($prospecto['direccion'] ?? '') ?>">
@@ -720,14 +715,30 @@
                         console.warn(`[WARN] Select con ID "${selectId}" no encontrado.`);
                         return;
                     }
-                    for (let i = 0; i < select.options.length; i++) {
-                        if (select.options[i].value === value) {
-                            select.selectedIndex = i;
-                            return;
-                        }
+
+                    // Si las opciones aún no están cargadas, esperar
+                    if (select.options.length <= 1) {
+                        const observer = new MutationObserver(() => {
+                            if (select.options.length > 1) {
+                                applyValue();
+                                observer.disconnect();
+                            }
+                        });
+                        observer.observe(select, { childList: true });
+                        return;
                     }
-                    // Si no se encuentra, selecciona la primera opción
-                    select.selectedIndex = 0;
+
+                    applyValue();
+
+                    function applyValue() {
+                        for (let i = 0; i < select.options.length; i++) {
+                            if (select.options[i].value === value) {
+                                select.selectedIndex = i;
+                                return;
+                            }
+                        }
+                        select.selectedIndex = 0;
+                    }
                 }
 
                 function actualizarTabla() {
