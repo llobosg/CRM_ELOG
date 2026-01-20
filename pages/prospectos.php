@@ -1386,8 +1386,31 @@
                     tieneServiciosIniciales = servicios.length > 0;
                     actualizarTabla();
 
-                    // NUEVO: Cargar contacto primario basado en el RUT del prospecto cargado
-                    cargarContactoPrimario(p.rut_empresa);
+                    // ✅✅✅ CARGAR CONTACTO PRIMARIO Y ACTUALIZAR CAMPOS ✅✅✅
+                    if (p.rut_empresa) {
+                        fetch(`/api/get_contacto_primario.php?rut_cliente=${encodeURIComponent(p.rut_empresa)}`)
+                            .then(response => {
+                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                return response.json();
+                            })
+                            .then(contactoData => {
+                                if (contactoData.success && contactoData.contacto) {
+                                    const contacto = contactoData.contacto;
+                                    document.getElementById('contacto').value = contacto.nom_contacto || '';
+                                    document.getElementById('email').value = contacto.email || '';
+                                } else {
+                                    // Limpiar si no hay contacto primario
+                                    document.getElementById('contacto').value = '';
+                                    document.getElementById('email').value = '';
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Error al cargar contacto primario:', err);
+                                // En caso de error, limpiar campos
+                                document.getElementById('contacto').value = '';
+                                document.getElementById('email').value = '';
+                            });
+                    }
 
                     // ✅✅✅ ASIGNACIONES CLAVE PARA EL BOTÓN "AGREGAR SERVICIO" ✅✅✅
                     const idPplInput = document.getElementById('id_ppl');
