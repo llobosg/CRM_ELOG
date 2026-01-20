@@ -89,7 +89,7 @@
 
         <!-- ==============================================   FORM  ============================================== -->
         <form method="POST" id="form-prospecto" action="">
-            <input type="hidden" name="id_ppl" id="id_ppl" />
+            <input type="hidden" name="id_ppl" id="id_ppl" value="" />
             <input type="hidden" name="id_prospect" id="id_prospect" />
             <input type="hidden" name="razon_social" />
             <input type="hidden" id="prospecto_contacto_nombre" value="">
@@ -2674,39 +2674,35 @@
 
                     // --- Funciones para manejo de Contactos ---
 
-                    // Función para cargar contacto primario basado en rut_empresa
+                    // === FUNCIÓN GLOBAL: Cargar contacto primario ===
                     function cargarContactoPrimario(rut_empresa) {
                         if (!rut_empresa) {
                             limpiarCamposContacto();
                             return;
                         }
-
                         fetch(`/api/get_contacto_primario.php?rut_cliente=${encodeURIComponent(rut_empresa)}`)
                             .then(response => {
-                                if (!response.ok) {
-                                    throw new Error(`HTTP error! status: ${response.status}`);
-                                }
+                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                                 return response.json();
                             })
                             .then(data => {
                                 if (data.success && data.contacto) {
-                                    // Llenar los campos con los datos del contacto primario
                                     document.getElementById('contacto').value = data.contacto.nom_contacto || '';
                                     document.getElementById('email').value = data.contacto.email || '';
                                 } else {
-                                    // Si no hay contacto primario o hay un error, limpiar los campos
                                     limpiarCamposContacto();
-                                    // Opcional: Mostrar un mensaje informativo
-                                    // info('No se encontró contacto primario para este cliente.');
                                 }
                             })
-                            .catch(error => {
-                                console.error('Error al cargar contacto primario:', error);
-                                // En caso de error, limpiar los campos para evitar datos inconsistentes
+                            .catch(err => {
+                                console.error('Error al cargar contacto primario:', err);
                                 limpiarCamposContacto();
-                                // Opcional: Mostrar un mensaje de error
-                                // error('Error al cargar el contacto primario.');
                             });
+                    }
+
+                    // === Función auxiliar ===
+                    function limpiarCamposContacto() {
+                        document.getElementById('contacto').value = '';
+                        document.getElementById('email').value = '';
                     }
 
                     // Función para limpiar los campos de contacto
