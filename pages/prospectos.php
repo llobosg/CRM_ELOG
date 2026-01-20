@@ -2396,9 +2396,8 @@
             const btnAgregar = document.getElementById('btn-agregar-servicio');
             if (btnAgregar) btnAgregar.style.display = 'none';
 
-            header('Location: /pages/prospectos_listas.php');
-
-            //exito('Formulario reiniciado correctamente');
+            // ✅ NUEVO: Redirigir a la lista de prospectos
+            window.location.href = '/?page=prospectos_listas';
         }
 
         // ===================================================================
