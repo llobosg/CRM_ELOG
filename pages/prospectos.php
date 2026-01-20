@@ -2356,12 +2356,12 @@
 
             if (tieneId || tieneServicios || tieneNotasComerciales || tieneNotasOperaciones) {
                 const confirmar = confirm(
-                    '⚠️ ATENCIÓN:\n\nEstá a punto de reiniciar el formulario.\n' +
-                    'Todos los datos no guardados (prospecto, servicios, notas) se perderán.\n\n' +
+                    '⚠️ ATENCIÓN:\n\nEstá a punto de salir de Prospectos.\n' +
+                    'Todos los datos no guardados (Prospecto, Servicios, Notas) se perderán.\n\n' +
                     '¿Desea continuar?'
                 );
                 if (!confirmar) {
-                    advertencia('Reinicio cancelado por el usuario');
+                    advertencia('Abandono cancelado por el usuario');
                     return;
                 }
             }
@@ -2396,7 +2396,9 @@
             const btnAgregar = document.getElementById('btn-agregar-servicio');
             if (btnAgregar) btnAgregar.style.display = 'none';
 
-            exito('Formulario reiniciado correctamente');
+            header('Location: /pages/prospectos_listas.php');
+
+            //exito('Formulario reiniciado correctamente');
         }
 
         // ===================================================================

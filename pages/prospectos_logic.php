@@ -1,6 +1,58 @@
 <?php
 // pages/prospectos_logic.php
-// ✅ Solo gestiona el prospecto. Los servicios se guardan desde el modal.
+
+// 🔥 NUEVO: Manejo de eliminación vía GET
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'eliminar' && isset($_GET['id'])) {
+    require_once __DIR__ . '/../config.php';
+    require_once __DIR__ . '/../includes/auth_check.php';
+
+    $rol = $_SESSION['rol'] ?? '';
+    if ($rol !== 'admin' && $rol !== 'comercial') {
+        http_response_code(403);
+        exit('Acceso denegado.');
+    }
+
+    $id_ppl = (int)$_GET['id'];
+
+    try {
+        $pdo->beginTransaction();
+
+        // 1. Obtener todos los id_srvc asociados al prospecto
+        $stmt = $pdo->prepare("SELECT id_srvc FROM servicios WHERE id_ppl = ?");
+        $stmt->execute([$id_ppl]);
+        $servicios = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        if (!empty($servicios)) {
+            $ids_servicios = implode(',', array_map('intval', $servicios));
+
+            // 2. Eliminar costos_servicios
+            $pdo->exec("DELETE FROM costos_servicios WHERE id_servicio IN ($ids_servicios)");
+
+            // 3. Eliminar gastos_locales_detalle
+            $pdo->exec("DELETE FROM gastos_locales_detalle WHERE id_servicio IN ($ids_servicios)");
+
+            // 4. Eliminar servicios
+            $pdo->exec("DELETE FROM servicios WHERE id_ppl = $id_ppl");
+        }
+
+        // 5. Eliminar prospecto
+        $stmt = $pdo->prepare("DELETE FROM prospectos WHERE id_ppl = ?");
+        $stmt->execute([$id_ppl]);
+
+        $pdo->commit();
+
+        header('Location: /?page=prospectos_listas&exito=Prospecto+eliminado+correctamente');
+        exit;
+
+    } catch (Exception $e) {
+        $pdo->rollback();
+        error_log("Error al eliminar prospecto ID $id_ppl: " . $e->getMessage());
+        header('Location: /?page=prospectos_listas&error=Error+al+eliminar+el+prospecto');
+        exit;
+    }
+}
+
+// ✅ Resto del código original (modo POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
     require_once __DIR__ . '/../config.php';
     require_once __DIR__ . '/../includes/auth_check.php';
@@ -121,7 +173,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
         }
 
         // === Procesar servicios (si se envían) ===
-        // Este bloque debe agregarse ANTES del $pdo->commit();
         if (isset($_POST['servicios_json']) && !empty($_POST['servicios_json'])) {
             $servicios_data = json_decode($_POST['servicios_json'], true);
             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -145,21 +196,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                     $ventagasto = (float)($s['ventasgastoslocalesdestino'] ?? 0);
 
                     // --- Generar ID de servicio ---
-                    // Extraer ID del JSON o generar nuevo correlativo
                     $id_srvc_json = $s['id_srvc'] ?? null;
                     if (!$id_srvc_json || strpos($id_srvc_json, 'TEMP_') === 0) {
-                        // Si es temporal o no existe, generar nuevo ID
                         $stmt_last = $pdo->prepare("SELECT MAX(CAST(SUBSTRING_INDEX(id_srvc, '-', -1) AS UNSIGNED)) as max_id FROM servicios WHERE id_prospect = ?");
                         $stmt_last->execute([$id_ppl]);
                         $last = $stmt_last->fetch();
                         $correlativo_srvc = str_pad(((int)($last['max_id'] ?? 0) + 1), 2, '0', STR_PAD_LEFT);
                         $id_srvc = "{$base_servicio}-{$correlativo_srvc}";
                     } else {
-                        // Usar el ID existente del JSON
                         $id_srvc = $id_srvc_json;
                     }
 
-                    // --- Cálculo de totales por moneda para gastos locales (dentro del bucle foreach) ---
+                    // --- Cálculo de totales por moneda para gastos locales ---
                     $cgld_usd = 0; $cgld_eur = 0; $cgld_clp = 0;
                     $vgld_usd = 0; $vgld_eur = 0; $vgld_clp = 0;
 
@@ -202,19 +250,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         }
                     }
 
-                    // Calcular profit y profit % por moneda
                     $pgld_usd = $vgld_usd - $cgld_usd;
                     $ppgld_usd = $vgld_usd > 0 ? (($vgld_usd - $cgld_usd) / $vgld_usd * 100) : 0;
-
                     $pgld_eur = $vgld_eur - $cgld_eur;
                     $ppgld_eur = $vgld_eur > 0 ? (($vgld_eur - $cgld_eur) / $vgld_eur * 100) : 0;
-
                     $pgld_clp = $vgld_clp - $cgld_clp;
                     $ppgld_clp = $vgld_clp > 0 ? (($vgld_clp - $cgld_clp) / $vgld_clp * 100) : 0;
 
-                    // --- Fin cálculo ---
-
-                    // --- INSERT EN servicios (dentro del bucle foreach) ---
+                    // --- INSERT EN servicios ---
                     $stmt_serv = $pdo->prepare("
                         INSERT INTO servicios (
                             id_srvc, id_ppl, id_prospect,
@@ -226,12 +269,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac,
                             tipo_cambio, ciudad, pais, direc_serv,
                             estado_costos, nota_srvc,
-                            -- Campos nuevos para gastos locales por moneda
                             cgld_usd, cgld_eur, cgld_clp,
                             vgld_usd, vgld_eur, vgld_clp,
                             pgld_usd, pgld_eur, pgld_clp,
                             ppgld_usd, ppgld_eur, ppgld_clp,
-                            --
                             solicitado_por, fecha_solicitado,
                             completado_por, fecha_completado,
                             revisado_por, fecha_revisado, validez
@@ -242,8 +283,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                             ?, ?, ?, ?
-                            )
+                        )
                     ");
                     $stmt_serv->execute([
                         $id_srvc, $id_ppl, $id_ppl,
@@ -255,16 +297,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         $s['agente'] ?? '', $s['aol'] ?? '', $s['aod'] ?? '', $s['transportador'] ?? '', $s['incoterm'] ?? '', $s['ref_cliente'] ?? '', $s['proveedor_nac'] ?? '',
                         (float)($s['tipo_cambio'] ?? 1), $s['ciudad'] ?? '', $s['pais'] ?? '', $s['direc_serv'] ?? '',
                         $s['estado_costos'] ?? 'pendiente', $s['nota_srvc'] ?? '',
-                        // Valores calculados para nuevos campos
                         $cgld_usd, $cgld_eur, $cgld_clp,
                         $vgld_usd, $vgld_eur, $vgld_clp,
                         $pgld_usd, $pgld_eur, $pgld_clp,
                         $ppgld_usd, $ppgld_eur, $ppgld_clp,
-                        // ---
                         $s['solicitado_por'] ?? null, $s['fecha_solicitado'] ?? null, $s['completado_por'] ?? null, $s['fecha_completado'] ?? null, $s['revisado_por'] ?? null, $s['fecha_revisado'] ?? null, $s['validez'] ?? null,
                     ]);
 
-                    // --- Insertar Costos (si existen en el JSON) ---
+                    // --- Insertar Costos ---
                     $costos = $s['costos'] ?? [];
                     foreach ($costos as $c) {
                         $stmtC = $pdo->prepare("
@@ -282,7 +322,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         ]);
                     }
 
-                    // --- Insertar Gastos Locales (si existen en el JSON) ---
+                    // --- Insertar Gastos Locales ---
                     $gastos_locales = $s['gastos_locales'] ?? [];
                     foreach ($gastos_locales as $g) {
                         $stmtG = $pdo->prepare("
@@ -301,7 +341,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                     }
                 }
             }
-        } // Fin del if servicios_json
+        }
 
         $pdo->commit();
 
