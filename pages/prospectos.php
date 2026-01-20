@@ -1,3 +1,55 @@
+<?php
+// Cargar prospecto si se pasa ?seleccionar=ID
+$prospecto_data = null;
+$servicios_data = [];
+
+if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
+    $id_ppl = (int)$_GET['seleccionar'];
+    
+    try {
+        // Cargar prospecto
+        $stmt = $pdo->prepare("
+            SELECT * FROM prospectos WHERE id_ppl = ?
+        ");
+        $stmt->execute([$id_ppl]);
+        $prospecto_data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($prospecto_data) {
+            // Cargar servicios
+            $stmt_serv = $pdo->prepare("
+                SELECT * FROM servicios WHERE id_ppl = ? ORDER BY id_srvc
+            ");
+            $stmt_serv->execute([$id_ppl]);
+            $servicios_raw = $stmt_serv->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($servicios_raw as $servicio) {
+                // Cargar costos del servicio
+                $stmt_costos = $pdo->prepare("
+                    SELECT * FROM costos_servicios WHERE id_servicio = ?
+                ");
+                $stmt_costos->execute([$servicio['id_srvc']]);
+                $costos = $stmt_costos->fetchAll(PDO::FETCH_ASSOC);
+
+                // Cargar gastos del servicio
+                $stmt_gastos = $pdo->prepare("
+                    SELECT * FROM gastos_locales_detalle WHERE id_servicio = ?
+                ");
+                $stmt_gastos->execute([$servicio['id_srvc']]);
+                $gastos = $stmt_gastos->fetchAll(PDO::FETCH_ASSOC);
+
+                // Agregar a servicios_data
+                $servicios_data[] = array_merge($servicio, [
+                    'costos' => $costos,
+                    'gastos_locales' => $gastos
+                ]);
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Error al cargar prospecto: " . $e->getMessage());
+    }
+}
+?>
+
 <!-- Mini consola de depuración -->
 <div id="debug-trace" style="margin: 1rem; padding: 0.5rem; background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
 
@@ -33,8 +85,15 @@
     <input type="hidden" name="razon_social" />
     <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
-    <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
+    <input type="text" id="concatenado" readonly>
+    <!-- Selects -->
     <input type="hidden" id="operacion" value="<?= htmlspecialchars($prospecto['operacion'] ?? '') ?>">
+    <select id="tipo_oper" name="tipo_oper">...</select>
+    <select id="estado" name="estado">...</select>
+    <!-- Fechas -->
+    <input type="date" id="fecha_alta" name="fecha_alta">
+    <input type="date" id="fecha_estado" name="fecha_estado">
+    <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
     <input type="hidden" id="prospecto_razon_social" value="<?= htmlspecialchars($prospecto['razon_social'] ?? '') ?>">
     <input type="hidden" id="prospecto_direccion" value="<?= htmlspecialchars($prospecto['direccion'] ?? '') ?>">
     <input type="hidden" id="prospecto_rut_empresa" value="<?= htmlspecialchars($prospecto['rut_empresa'] ?? '') ?>">
@@ -515,6 +574,12 @@
     </div>
 
     <script>
+    // Datos del prospecto cargado (si existe)
+    const PROSPECTO_CARGADO = <?= json_encode($prospecto_data ?? null, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+    const SERVICIOS_CARGADOS = <?= json_encode($servicios_data ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+    </script>
+
+    <script>
         console.log('✅ Script de prospectos iniciado');
         // ===================================================================
         // === 1. VARIABLES GLOBALES ===
@@ -569,6 +634,75 @@
         // ===================================================================
         // === FUNCIONES DE CLIENTE Y PROSPECTO ===
         // ===================================================================
+        // Cargar prospecto si existe
+        function cargarProspectoDesdeURL() {
+            if (PROSPECTO_CARGADO) {
+                // Llenar campos del prospecto
+                document.getElementById('id_ppl').value = PROSPECTO_CARGADO.id_ppl || '';
+                document.getElementById('id_prospect').value = PROSPECTO_CARGADO.id_prospect || '';
+                document.getElementById('razon_social').value = PROSPECTO_CARGADO.razon_social || '';
+                document.getElementById('notas_comerciales').value = PROSPECTO_CARGADO.notas_comerciales || '';
+                document.getElementById('notas_operaciones').value = PROSPECTO_CARGADO.notas_operaciones || '';
+                document.getElementById('concatenado').value = PROSPECTO_CARGADO.concatenado || '';
+                
+                // Llenar selects
+                setSelectValue('operacion', PROSPECTO_CARGADO.operacion || '');
+                setSelectValue('tipo_oper', PROSPECTO_CARGADO.tipo_oper || '');
+                setSelectValue('estado', PROSPECTO_CARGADO.estado || '');
+                
+                // Fecha
+                if (PROSPECTO_CARGADO.fecha_alta) {
+                    document.getElementById('fecha_alta').value = PROSPECTO_CARGADO.fecha_alta;
+                }
+                if (PROSPECTO_CARGADO.fecha_estado) {
+                    document.getElementById('fecha_estado').value = PROSPECTO_CARGADO.fecha_estado;
+                }
+
+                // Cargar servicios
+                servicios = SERVICIOS_CARGADOS.map(s => ({
+                    ...s,
+                    id_srvc: s.id_srvc,
+                    costo: parseFloat(s.costo) || 0,
+                    venta: parseFloat(s.venta) || 0,
+                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0,
+                    costos: (s.costos || []).map(c => ({
+                        ...c,
+                        qty: parseFloat(c.qty) || 0,
+                        costo: parseFloat(c.costo) || 0,
+                        tarifa: parseFloat(c.tarifa) || 0
+                    })),
+                    gastos_locales: (s.gastos_locales || []).map(g => ({
+                        ...g,
+                        monto: parseFloat(g.monto) || 0,
+                        iva: parseFloat(g.iva) || 0
+                    }))
+                }));
+
+                // Actualizar tabla de servicios
+                actualizarTabla();
+                
+                // Mostrar botón de agregar servicio
+                const btnAgregar = document.getElementById('btn-agregar-servicio');
+                if (btnAgregar) btnAgregar.style.display = 'block';
+
+                exito('Prospecto cargado correctamente');
+            }
+        }
+
+        // Función auxiliar para selects
+        function setSelectValue(selectId, value) {
+            const select = document.getElementById(selectId);
+            if (select) {
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === value) {
+                        select.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
         function cargarClientesEnSelect() {
             fetch('/api/get_todos_clientes.php')
                 .then(r => r.json())

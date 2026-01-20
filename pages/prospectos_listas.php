@@ -129,10 +129,11 @@ if (php_sapi_name() !== 'cli') {
                         <td><?= number_format((float)$p['gdv'], 0, ',', '.') ?></td>
                         <td style="text-align: center; padding: 0.4rem;">
                             <!-- ✏️ Editar -->
-                            <button type="button"
+                            <!-- En prospectos_listas.php -->
+                            <button type="button" 
                                     onclick="window.location.href='/?page=prospectos&seleccionar=<?= $p['id_ppl'] ?>'"
                                     title="Editar"
-                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-right: 0.5rem; padding: 0;">
+                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
                                 ✏️
                             </button>
                             <!-- 🗑️ Eliminar -->
