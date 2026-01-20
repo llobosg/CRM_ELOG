@@ -104,12 +104,11 @@ if (php_sapi_name() !== 'cli') {
                         <th style="width: 10%;">Fecha</th>        <!-- +10% -->
                         <th style="width: 13%;">Concatenado</th>
                         <th>Servicio</th>
-                        <th>Tráfico</th>
-                        <th style="width: 6%;">Costo</th>
-                        <th style="width: 6%;">Venta</th>
-                        <th style="width: 6%;">GDC</th>
-                        <th style="width: 6%;">GDV</th>
-                        <th style="width: 6%;">Acción</th>
+                        <th style="width: 8%;">Costo</th>
+                        <th style="width: 8%;">Venta</th>
+                        <th style="width: 8%;">GDC</th>
+                        <th style="width: 8%;">GDV</th>
+                        <th style="width: 8%;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,7 +123,6 @@ if (php_sapi_name() !== 'cli') {
                         <td><?= htmlspecialchars($p['fecha'] ? date('d-m-Y', strtotime($p['fecha'])) : '–') ?></td>
                         <td><?= htmlspecialchars($p['concatenado'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['servicio'] ?? '–') ?></td>
-                        <td><?= htmlspecialchars($p['trafico'] ?? '–') ?></td>
                         <td><?= number_format((float)$p['total_costo'], 0, ',', '.') ?></td>
                         <td><?= number_format((float)$p['total_venta'], 0, ',', '.') ?></td>
                         <td><?= number_format((float)$p['gdc'], 0, ',', '.') ?></td>
