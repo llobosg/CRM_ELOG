@@ -2410,14 +2410,7 @@
             cargarOperacionesYTipos();
             cargarClientesEnSelect();
 
-            // === 3. Manejo de mensajes de éxito/error ===
-            const msg = params.get('exito');
-            if (msg) {
-                exito(decodeURIComponent(msg));
-                history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
-            }
-
-            // === 4. Eventos ===
+            // === 3. Eventos ===
             ['operacion', 'tipo_oper'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', calcularConcatenado);
