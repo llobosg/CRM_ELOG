@@ -101,9 +101,9 @@ if (php_sapi_name() !== 'cli') {
                 <thead>
                     <tr>
                         <th style="width: 30%;">Cliente</th>      <!-- +10% -->
-                        <th style="width: 7%;">Fecha</th>        <!-- +10% -->
+                        <th style="width: 9%;">Fecha</th>        <!-- +10% -->
                         <th style="width: 11%;">Concatenado</th>
-                        <th style="width: 18%;">Servicio</th>
+                        <th style="width: 16%;">Servicio</th>
                         <th style="width: 7%;">Costo</th>
                         <th style="width: 7%;">Venta</th>
                         <th style="width: 7%;">GDC</th>
