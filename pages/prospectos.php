@@ -625,60 +625,59 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
         // ===================================================================
         // === FUNCIONES DE CLIENTE Y PROSPECTO ===
         // ===================================================================
+
         // Cargar prospecto si existe
+        // Función para cargar el prospecto
         function cargarProspectoDesdeURL() {
-            if (PROSPECTO_CARGADO) {
-                // Llenar campos del prospecto
-                document.getElementById('id_ppl').value = PROSPECTO_CARGADO.id_ppl || '';
-                document.getElementById('id_prospect').value = PROSPECTO_CARGADO.id_prospect || '';
-                document.getElementById('razon_social').value = PROSPECTO_CARGADO.razon_social || '';
-                document.getElementById('notas_comerciales').value = PROSPECTO_CARGADO.notas_comerciales || '';
-                document.getElementById('notas_operaciones').value = PROSPECTO_CARGADO.notas_operaciones || '';
-                document.getElementById('concatenado').value = PROSPECTO_CARGADO.concatenado || '';
-                
-                // Llenar selects
-                setSelectValue('operacion', PROSPECTO_CARGADO.operacion || '');
-                setSelectValue('tipo_oper', PROSPECTO_CARGADO.tipo_oper || '');
-                setSelectValue('estado', PROSPECTO_CARGADO.estado || '');
-                
-                // Fecha
-                if (PROSPECTO_CARGADO.fecha_alta) {
-                    document.getElementById('fecha_alta').value = PROSPECTO_CARGADO.fecha_alta;
-                }
-                if (PROSPECTO_CARGADO.fecha_estado) {
-                    document.getElementById('fecha_estado').value = PROSPECTO_CARGADO.fecha_estado;
-                }
+            if (!PROSPECTO_CARGADO) return;
 
-                // Cargar servicios
-                servicios = SERVICIOS_CARGADOS.map(s => ({
-                    ...s,
-                    id_srvc: s.id_srvc,
-                    costo: parseFloat(s.costo) || 0,
-                    venta: parseFloat(s.venta) || 0,
-                    costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                    ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0,
-                    costos: (s.costos || []).map(c => ({
-                        ...c,
-                        qty: parseFloat(c.qty) || 0,
-                        costo: parseFloat(c.costo) || 0,
-                        tarifa: parseFloat(c.tarifa) || 0
-                    })),
-                    gastos_locales: (s.gastos_locales || []).map(g => ({
-                        ...g,
-                        monto: parseFloat(g.monto) || 0,
-                        iva: parseFloat(g.iva) || 0
-                    }))
-                }));
+            // Llenar campos ocultos
+            document.getElementById('id_ppl').value = PROSPECTO_CARGADO.id_ppl || '';
+            document.getElementById('id_prospect').value = PROSPECTO_CARGADO.id_prospect || '';
+            document.getElementById('razon_social').value = PROSPECTO_CARGADO.razon_social || '';
+            document.getElementById('notas_comerciales').value = PROSPECTO_CARGADO.notas_comerciales || '';
+            document.getElementById('notas_operaciones').value = PROSPECTO_CARGADO.notas_operaciones || '';
+            document.getElementById('concatenado').value = PROSPECTO_CARGADO.concatenado || '';
 
-                // Actualizar tabla de servicios
-                actualizarTabla();
-                
-                // Mostrar botón de agregar servicio
-                const btnAgregar = document.getElementById('btn-agregar-servicio');
-                if (btnAgregar) btnAgregar.style.display = 'block';
+            // Llenar selects
+            setSelectValue('operacion', PROSPECTO_CARGADO.operacion || '');
+            setSelectValue('tipo_oper', PROSPECTO_CARGADO.tipo_oper || '');
+            setSelectValue('estado', PROSPECTO_CARGADO.estado || '');
 
-                exito('Prospecto cargado correctamente');
+            // Fechas
+            if (PROSPECTO_CARGADO.fecha_alta) {
+                document.getElementById('fecha_alta').value = PROSPECTO_CARGADO.fecha_alta;
             }
+            if (PROSPECTO_CARGADO.fecha_estado) {
+                document.getElementById('fecha_estado').value = PROSPECTO_CARGADO.fecha_estado;
+            }
+
+            // Cargar servicios
+            window.servicios = SERVICIOS_CARGADOS.map(s => ({
+                ...s,
+                costo: parseFloat(s.costo) || 0,
+                venta: parseFloat(s.venta) || 0,
+                costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0,
+                costos: (s.costos || []).map(c => ({
+                    ...c,
+                    qty: parseFloat(c.qty) || 0,
+                    costo: parseFloat(c.costo) || 0,
+                    tarifa: parseFloat(c.tarifa) || 0
+                })),
+                gastos_locales: (s.gastos_locales || []).map(g => ({
+                    ...g,
+                    monto: parseFloat(g.monto) || 0,
+                    iva: parseFloat(g.iva) || 0
+                }))
+            }));
+
+            // Actualizar tabla y mostrar botón
+            actualizarTabla();
+            const btnAgregar = document.getElementById('btn-agregar-servicio');
+            if (btnAgregar) btnAgregar.style.display = 'block';
+
+            console.log('✅ Prospecto cargado:', PROSPECTO_CARGADO);
         }
 
         // Función auxiliar para selects
@@ -2532,6 +2531,7 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
             cargarPaises();
             cargarOperacionesYTipos();
             cargarClientesEnSelect();
+            cargarProspectoDesdeURL();
 
             const params = new URLSearchParams(window.location.search);
             const msg = params.get('exito');
