@@ -597,7 +597,8 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
         let tieneServiciosIniciales = false;
         let estadoProspecto = 'Pendiente';
         let datosRouteOrder = null; // ← Variable global
-        window.editarServicio = editarServicio;
+
+        //window.editarServicio = editarServicio;
         // Datos del prospecto cargado (si existe)
         const PROSPECTO_CARGADO = <?= json_encode($prospecto_data ?? null, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
         const SERVICIOS_CARGADOS = <?= json_encode($servicios_data ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
