@@ -100,7 +100,7 @@ if (php_sapi_name() !== 'cli') {
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width: 18%;">Cliente</th>      <!-- +10% -->
+                        <th style="width: 28%;">Cliente</th>      <!-- +10% -->
                         <th style="width: 10%;">Fecha</th>        <!-- +10% -->
                         <th>Operación</th>
                         <th>Tipo Oper</th>
