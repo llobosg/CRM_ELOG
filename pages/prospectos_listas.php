@@ -101,7 +101,7 @@ if (php_sapi_name() !== 'cli') {
             <table class="data-table" style="min-width: 1700px; width: 100%;">
                 <thead>
                     <tr>
-                        <th style="width: 35%;">Cliente</th>
+                        <th style="width: 27%;">Cliente</th>
                         <th style="width: 10%;">Fecha</th>
                         <th style="width: 13%;">Concatenado</th>
                         <th>Servicio</th>
