@@ -85,7 +85,6 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
     <input type="hidden" name="razon_social" />
     <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
-    <input type="text" id="concatenado" readonly>
     <!-- Selects -->
     <input type="hidden" id="operacion" value="<?= htmlspecialchars($prospecto['operacion'] ?? '') ?>">
     <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
@@ -569,12 +568,6 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
     </div>
 
     <script>
-    // Datos del prospecto cargado (si existe)
-    const PROSPECTO_CARGADO = <?= json_encode($prospecto_data ?? null, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-    const SERVICIOS_CARGADOS = <?= json_encode($servicios_data ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-    </script>
-
-    <script>
         console.log('✅ Script de prospectos iniciado');
         // ===================================================================
         // === 1. VARIABLES GLOBALES ===
@@ -587,6 +580,9 @@ if (isset($_GET['seleccionar']) && is_numeric($_GET['seleccionar'])) {
         let estadoProspecto = 'Pendiente';
         let datosRouteOrder = null; // ← Variable global
         window.editarServicio = editarServicio;
+        // Datos del prospecto cargado (si existe)
+        const PROSPECTO_CARGADO = <?= json_encode($prospecto_data ?? null, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        const SERVICIOS_CARGADOS = <?= json_encode($servicios_data ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
         // ===================================================================
         // === 2. FUNCIONES AUXILIARES ===
