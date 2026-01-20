@@ -1,5 +1,5 @@
 <?php
-$registros = $pdo->query("SELECT id_ctco, nom_contacto, fono_contacto, email, cargo, tipo FROM contactos ORDER BY nom_contacto")->fetchAll();
+$registros = $pdo->query("SELECT nom_contacto, fono_contacto, email, cargo, tipo FROM contactos ORDER BY nom_contacto")->fetchAll();
 ?>
 
 <h2 class="section-title"><i class="fas fa-address-book"></i> Contactos</h2>
@@ -53,26 +53,34 @@ $registros = $pdo->query("SELECT id_ctco, nom_contacto, fono_contacto, email, ca
             </thead>
             <tbody>
                 <?php foreach ($registros as $r): ?>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 0.6rem; font-weight: bold;"><?= htmlspecialchars($r['nom_contacto']) ?></td>
-                    <td style="padding: 0.6rem;"><?= htmlspecialchars($r['fono_contacto']) ?></td>
-                    <td style="padding: 0.6rem;"><?= htmlspecialchars($r['email']) ?></td>
-                    <td style="padding: 0.6rem;"><?= htmlspecialchars($r['cargo']) ?></td>
-                    <td style="padding: 0.6rem; text-align: center;">
-                        <a href="#" 
-                           onclick="editarcontactos(<?= $r['id_ctco'] ?>, '<?= addslashes($r['nom_contacto']) ?>', '<?= addslashes($r['fono_contacto']) ?>', '<?= addslashes($r['email']) ?>', '<?= addslashes($r['cargo']) ?>', '<?= addslashes($r['tipo']) ?>')"
-                           class="btn-edit" 
-                           style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none; margin-right: 0.5rem;">
-                            ✏️
-                        </a>
-                        <a href="index.php?page=contactos&delete=<?= $r['id_ctco'] ?>" 
-                           class="btn-delete" 
-                           style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none;"
-                           onclick="return confirm('¿Eliminar este contacto?')">
-                            🗑️
-                        </a>
-                    </td>
-                </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.6rem; font-weight: bold;"><?= htmlspecialchars($r['nom_contacto']) ?></td>
+                        <td style="padding: 0.6rem;"><?= htmlspecialchars($r['fono_contacto']) ?></td>
+                        <td style="padding: 0.6rem;"><?= htmlspecialchars($r['email']) ?></td>
+                        <td style="padding: 0.6rem;"><?= htmlspecialchars($r['rol']) ?></td> <!-- Nota: usas 'cargo' en HTML pero la tabla tiene 'rol' -->
+                        <td style="padding: 0.6rem; text-align: center;">
+                            <!-- ✏️ Editar: pasar rut_cliente + nom_contacto -->
+                            <a href="#" 
+                            onclick="editarcontactos(
+                                '<?= addslashes($r['rut_cliente']) ?>',
+                                '<?= addslashes($r['nom_contacto']) ?>',
+                                '<?= addslashes($r['fono_contacto']) ?>',
+                                '<?= addslashes($r['email']) ?>',
+                                '<?= addslashes($r['rol']) ?>'
+                            )"
+                            class="btn-edit" 
+                            style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none; margin-right: 0.5rem;">
+                                ✏️
+                            </a>
+                            <!-- 🗑️ Eliminar: usar ambos campos en la URL -->
+                            <a href="index.php?page=contactos&delete_rut=<?= urlencode($r['rut_cliente']) ?>&delete_nombre=<?= urlencode($r['nom_contacto']) ?>" 
+                            class="btn-delete" 
+                            style="padding: 0.3rem 0.6rem; font-size: 0.85rem; text-decoration: none;"
+                            onclick="return confirm('¿Eliminar este contacto?')">
+                                🗑️
+                            </a>
+                        </td>
+                    </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
