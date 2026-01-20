@@ -84,24 +84,25 @@ if (php_sapi_name() !== 'cli') {
     </script>
 </head>
 <body>
-<div class="container">
+<div class="container" style="max-width: 1400px; width: 95%; margin: 0 auto; padding: 0 1rem;">
+
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
         <h2 style="font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
             <i class="fas fa-file-alt"></i> Lista de Prospectos
         </h2>
-        <!-- ✅ Redirección correcta al sistema de rutas -->
         <a href="/?page=prospectos" class="btn-primary" style="text-decoration: none; padding: 0.4rem 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
             <i class="fas fa-plus"></i> Crear Prospecto
         </a>
     </div>
 
-    <div class="card">
+    <!-- ✅ Card sin restricción de ancho -->
+    <div class="card" style="overflow-x: auto; padding: 1rem;">
         <div class="table-container">
-            <table class="data-table">
+            <table class="data-table" style="min-width: 1300px; width: 100%;">
                 <thead>
                     <tr>
-                        <th style="width: 45%;">Cliente</th>      <!-- +10% -->
-                        <th style="width: 10%;">Fecha</th>        <!-- +10% -->
+                        <th style="width: 45%;">Cliente</th>
+                        <th style="width: 10%;">Fecha</th>
                         <th>Operación</th>
                         <th style="width: 10%;">Tipo Oper</th>
                         <th style="width: 13%;">Concatenado</th>
