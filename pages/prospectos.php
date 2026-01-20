@@ -2407,13 +2407,6 @@
             cargarOperacionesYTipos();
             cargarClientesEnSelect();
 
-            const params = new URLSearchParams(window.location.search);
-            const msg = params.get('exito');
-            if (msg) {
-                exito(decodeURIComponent(msg));
-                history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
-            }
-
             ['operacion', 'tipo_oper'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', calcularConcatenado);
