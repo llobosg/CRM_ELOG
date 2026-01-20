@@ -100,17 +100,17 @@ if (php_sapi_name() !== 'cli') {
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width: 35%;">Cliente</th>      <!-- +10% -->
+                        <th style="width: 45%;">Cliente</th>      <!-- +10% -->
                         <th style="width: 10%;">Fecha</th>        <!-- +10% -->
                         <th>Operación</th>
-                        <th>Tipo Oper</th>
+                        <th style="width: 10%;">Tipo Oper</th>
                         <th style="width: 13%;">Concatenado</th>
                         <th>Servicio</th>
                         <th>Tráfico</th>
-                        <th>Costo</th>
-                        <th>Venta</th>
-                        <th>GDC</th>
-                        <th>GDV</th>
+                        <th style="width: 8%;">Costo</th>
+                        <th style="width: 8%;">Venta</th>
+                        <th style="width: 8%;">GDC</th>
+                        <th style="width: 8%;">GDV</th>
                         <th style="width: 8%;">Acción</th>
                     </tr>
                 </thead>
