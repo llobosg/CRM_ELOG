@@ -566,8 +566,42 @@
         function advertencia(msg) { mostrarNotificacion(msg, 'advertencia'); }
 
         // ===================================================================
-        // === FUNCIONES DE CLIENTE Y PROSPECTO ===
-        // ===================================================================
+        // === FUNCIONES GLOBALES PARA CONTACTOS ===
+        function cargarContactoPrimario(rut_empresa) {
+            if (!rut_empresa) {
+                limpiarCamposContacto();
+                return;
+            }
+
+            fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut_empresa)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
+                    const contactoEl = document.getElementById('contacto');
+                    const emailEl = document.getElementById('email');
+                    
+                    if (contactoPrimario && contactoEl && emailEl) {
+                        contactoEl.value = contactoPrimario.nom_contacto || '';
+                        emailEl.value = contactoPrimario.email || '';
+                    } else {
+                        limpiarCamposContacto();
+                    }
+                })
+                .catch(err => {
+                    console.error('Error al cargar contacto primario:', err);
+                    limpiarCamposContacto();
+                });
+        }
+
+        function limpiarCamposContacto() {
+            const contactoEl = document.getElementById('contacto');
+            const emailEl = document.getElementById('email');
+            if (contactoEl) contactoEl.value = '';
+            if (emailEl) emailEl.value = '';
+        }
         function cargarClientesEnSelect() {
             fetch('/api/get_todos_clientes.php')
                 .then(r => r.json())
