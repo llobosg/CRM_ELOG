@@ -303,7 +303,7 @@ try {
         ";
         $stmt = $pdo->prepare($sql);
         $params = [
-            $id_srvc, $data['id_ppl'] ?? $id_ppl, $id_ppl,
+            $id_srvc, $id_ppl, $id_ppl,
             $data['servicio'] ?? '', $data['nombre_corto'] ?? '', $data['tipo'] ?? '', $data['trafico'] ?? '', $data['sub_trafico'] ?? '',
             $data['base_calculo'] ?? '', $data['moneda'] ?? 'CLP', (float)($data['tarifa'] ?? 0), (int)($data['iva'] ?? 19), $data['estado'] ?? 'Activo',
             (float)($data['costo'] ?? 0), (float)($data['venta'] ?? 0), (float)($data['costogastoslocalesdestino'] ?? 0), (float)($data['ventasgastoslocalesdestino'] ?? 0), '0',
