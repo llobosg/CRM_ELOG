@@ -1453,6 +1453,7 @@
 
         // --- FUNCIÓN CORREGIDA: abrirModalServicio ---
         function abrirModalServicio(index = null) {
+            const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
             if (!idPpl || idPpl === '0' || !concatenado) {
                 error('Guarde el prospecto primero antes de agregar servicios.');
