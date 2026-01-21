@@ -1393,6 +1393,7 @@
 
                     // === Asignaciones clave ===
                     const idPplInput = document.getElementById('id_ppl');
+                    const idPpl = document.getElementById('id_ppl')?.value;
                     const concatenadoInput = document.getElementById('concatenado');
                     if (idPplInput) idPplInput.value = p.id_ppl || '';
                     if (concatenadoInput) concatenadoInput.value = p.concatenado || '';
@@ -1452,7 +1453,6 @@
 
         // --- FUNCIÓN CORREGIDA: abrirModalServicio ---
         function abrirModalServicio(index = null) {
-            const idPpl = document.getElementById('id_ppl')?.value;
             const concatenado = document.getElementById('concatenado')?.value;
             if (!idPpl || idPpl === '0' || !concatenado) {
                 error('Guarde el prospecto primero antes de agregar servicios.');
