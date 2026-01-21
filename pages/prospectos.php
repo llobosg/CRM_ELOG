@@ -214,6 +214,7 @@
             <input type="hidden" id="concatenado_serv" name="concatenado_serv" />
             <input type="hidden" id="id_srvc_edit" name="id_srvc_edit" value="">
             <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.8rem; margin-top: 1.2rem; align-items: center;">
+                
                 <!-- Fila 1 -->
                 <label>Servicio</label>
                 <input type="text" id="serv_servicio" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
@@ -252,17 +253,42 @@
                 
                 <!-- Fila 4 -->
                 <label>Mercancía</label>
-                <input type="text" id="serv_mercancia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <input type="text" id="serv_mercancia" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Incoterm</label>
+                <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Validez</label>
+                <input type="date" id="serv_validez" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+
+                <!-- Fila 5 -->
                 <label>Bultos</label>
                 <input type="number" id="serv_bultos" min="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Dimensiones</label>
+                <input type="text" id="serv_dimensiones" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" placeholder="Ej: 120x80x90 cm" />
                 <label>Peso (kg)</label>
                 <input type="number" id="serv_peso" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Volumen (m³)</label>
                 <input type="number" id="serv_volumen" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 
-                <!-- Fila 5 -->
-                <label>Dimensiones</label>
-                <input type="text" id="serv_dimensiones" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" placeholder="Ej: 120x80x90 cm" />
+                <!-- Fila 6 -->
+                <label>AOL</label>
+                <input type="text" id="serv_aol" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
+                <label>AOD</label>
+                <input type="text" id="serv_aod" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
+                <label>Proveedor Nac</label>
+                <!-- ✅ CORRECCIÓN AQUÍ: Forzar ancho al 100% del contenedor -->
+                <select id="serv_proveedor_nac" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; width: 100%; box-sizing: border-box;">
+                    <option value="">Seleccionar</option>
+                </select>
+
+                <!-- Fila 7 -->
+                 <label>Agente</label>
+                <select id="serv_agente" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; width: 100%;">
+                    <option value="">Seleccionar</option>
+                </select>
+                <label>Transportador</label>
+                <input type="text" id="serv_transportador" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+
+                <!-- Fila 8 -->
                 <label>Moneda</label>
                 <select id="serv_moneda" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="USD">USD</option>
@@ -270,32 +296,10 @@
                     <option value="CLP">CLP</option>
                 </select>
                 <label>Tipo Cambio</label>
-                <input type="number" id="serv_tipo_cambio" step="0.01" min="0" value="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-                <label>Proveedor Nac</label>
-                <!-- ✅ CORRECCIÓN AQUÍ: Forzar ancho al 100% del contenedor -->
-                <select id="serv_proveedor_nac" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; width: 100%; box-sizing: border-box;">
-                    <option value="">Seleccionar</option>
-                </select>
-
-                <!-- Fila 6 -->
-                <label>AOL</label>
-                <input type="text" id="serv_aol" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
-                <label>AOD</label>
-                <input type="text" id="serv_aod" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
-                <label>Agente</label>
-                <select id="serv_agente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; width: 100%;">
-                    <option value="">Seleccionar</option>
-                </select>
-                <label>Transportador</label>
-                <input type="text" id="serv_transportador" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-                
-                <!-- Fila 7 -->
-                <label>Incoterm</label>
-                <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <input type="number" id="serv_tipo_cambio" step="0.01" min="0" value="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />                
                 <label>Ref. Cliente</label>
-                <input type="text" id="serv_ref_cliente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-                <label>Validez</label>
-                <input type="date" id="serv_validez" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <input type="text" id="serv_ref_cliente" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                
             </div>
             <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
                 <div>
