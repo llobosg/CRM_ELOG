@@ -2444,15 +2444,7 @@
 
                     const idPpl = idPplInput.value.trim();
                     const idPplStr = idPplInput.value.trim();
-                    const concatenado = concatenadoInput.value.trim();
-
-                    // ✅ Validar que id_ppl sea un número entero
-                    const idPplNum = parseInt(idPplStr, 10);
-                    if (isNaN(idPplNum) || idPplNum <= 0) {
-                        error('ID de prospecto inválido. Debe ser un número.');
-                        console.error('❌ id_ppl no es número:', idPplStr);
-                        return;
-                    }
+                    const concatenado = concatenadoInput.value.trim();          
 
                     if (!concatenado) {
                         error('Código de prospecto no disponible');
@@ -2463,6 +2455,11 @@
                     const idPplNum = parseInt(idPpl, 10);
                     const idValido = !isNaN(idPplNum) && idPplNum > 0;
                     const concatValido = concatenado.length > 0;
+                    if (isNaN(idPplNum) || idPplNum <= 0) {
+                        error('ID de prospecto inválido. Debe ser un número.');
+                        console.error('❌ id_ppl no es número:', idPplStr);
+                        return;
+                    }
 
                     console.log('🔍 [Agregar Servicio] Valores actuales:', { idPpl, concatenado, idValido, concatValido });
 
