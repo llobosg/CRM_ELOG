@@ -2402,12 +2402,20 @@
         // === 7. INICIALIZACIÓN ===
         // ===================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            // === 2. Cargar siempre los mantenedores (operaciones, tipos, etc.) ===
+            // === 1. Cargar siempre los mantenedores (operaciones, tipos, etc.) ===
             cargarPaises();
             cargarOperacionesYTipos();
             cargarClientesEnSelect();
 
-            // === 3. Eventos ===
+            // === 2. Manejar mensajes de éxito/error ===
+            const params = new URLSearchParams(window.location.search);
+            const msg = params.get('exito');
+            if (msg) {
+                exito(decodeURIComponent(msg));
+                history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
+            }
+
+            // === 3. Eventos de campos ===
             ['operacion', 'tipo_oper'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', calcularConcatenado);
@@ -2555,16 +2563,32 @@
                 }
             });
 
-            // === Cargar prospecto desde la URL (si viene con ?id_ppl=...) ===
+            // === 6. CARGAR PROSPECTO DESDE URL (al final del DOMContentLoaded) ===
             const urlParams = new URLSearchParams(window.location.search);
             const idFromUrl = urlParams.get('id_ppl');
+            const buscarConcatenado = urlParams.get('buscar_concatenado');
+
             if (idFromUrl && !isNaN(idFromUrl)) {
+                // Cargar por ID
+                setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
+            } else if (buscarConcatenado) {
+                // Cargar por concatenado
                 setTimeout(() => {
-                    console.log('🔄 Cargando prospecto desde URL:', idFromUrl);
-                    seleccionarProspecto(parseInt(idFromUrl));
+                    document.getElementById('busqueda-inteligente').value = buscarConcatenado;
+                    fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(buscarConcatenado)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.length > 0) {
+                                seleccionarProspecto(data[0].id_ppl);
+                            } else {
+                                error('Prospecto no encontrado con ese código');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error al buscar por concatenado:', err);
+                            error('No se pudo cargar el prospecto');
+                        });
                 }, 300);
-                // Limpiar la URL para evitar recargas innecesarias
-                history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
             }
 
             // === Cargar prospecto por concatenado (desde lista) ===
