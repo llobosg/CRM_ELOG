@@ -222,9 +222,10 @@
                     <option value="">Seleccionar</option>
                 </select>
                 <label>Commodity</label>
-                <select id="serv_commodity" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <select id="serv_commodity" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="">Seleccionar</option>
                 </select>
+                
                 <!-- Fila 2 -->
                 <label>Origen</label>
                 <select id="serv_origen" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
@@ -238,15 +239,18 @@
                 </select>
                 <label>País Destino</label>
                 <input type="text" id="serv_pais_destino" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
+                
+                <!-- Fila 3 -->
                 <label>Tránsito</label>
                 <input type="text" id="serv_transito" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Frecuencia</label>
                 <input type="text" id="serv_frecuencia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-                <!-- Fila 3 -->
                 <label>Lugar Carga</label>
                 <input type="text" id="serv_lugar_carga" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Sector</label>
                 <input type="text" id="serv_sector" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                
+                <!-- Fila 4 -->
                 <label>Mercancía</label>
                 <input type="text" id="serv_mercancia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Bultos</label>
@@ -255,9 +259,10 @@
                 <input type="number" id="serv_peso" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Volumen (m³)</label>
                 <input type="number" id="serv_volumen" step="0.01" min="0" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                
+                <!-- Fila 5 -->
                 <label>Dimensiones</label>
                 <input type="text" id="serv_dimensiones" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" placeholder="Ej: 120x80x90 cm" />
-                <!-- Fila 4 -->
                 <label>Moneda</label>
                 <select id="serv_moneda" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="USD">USD</option>
@@ -270,6 +275,8 @@
                 <select id="serv_proveedor_nac" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="">Seleccionar</option>
                 </select>
+
+                <!-- Fila 5 -->
                 <label>AOL</label>
                 <input type="text" id="serv_aol" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
                 <label>AOD</label>
@@ -280,6 +287,7 @@
                 </select>
                 <label>Transportador</label>
                 <input type="text" id="serv_transportador" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                
                 <!-- Fila 5 -->
                 <label>Incoterm</label>
                 <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
