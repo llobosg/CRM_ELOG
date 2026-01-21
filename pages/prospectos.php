@@ -1459,6 +1459,12 @@
                 return;
             }
 
+            // ✅ Usar los parámetros directamente, no del DOM
+            if (!idPplNum || !concatenado) {
+                error('Datos de prospecto incompletos');
+                return;
+            }
+
             // Limpiar modal
             const modalInputs = document.querySelectorAll('#modal-servicio input, #modal-servicio select, #modal-servicio textarea');
             modalInputs.forEach(el => {
@@ -1467,9 +1473,11 @@
                 else if (el.tagName === 'SELECT') el.selectedIndex = 0;
             });
 
-            document.getElementById('id_prospect_serv').value = idPpl;
+            // ✅ Asignar valores correctos
+            document.getElementById('id_prospect_serv').value = idPplNum; // ← ¡Número!
             document.getElementById('concatenado_serv').value = concatenado;
             document.getElementById('serv_titulo_concatenado').textContent = concatenado;
+
             costosServicio = [];
             gastosLocales = [];
 
@@ -1670,7 +1678,7 @@
             const idPpl = document.getElementById('id_prospect_serv')?.value;
             const concatenado = document.getElementById('concatenado_serv')?.value;
 
-            if (!idPpl || idPpl === '0' || !concatenado) {
+            if (!idPpl || isNaN(parseInt(idPpl)) || !concatenado) {
                 error('Prospecto no válido');
                 return;
             }
@@ -1679,7 +1687,7 @@
             const data = {
                 modo: servicioEnEdicion !== null ? 'editar' : 'crear',
                 id_srvc: servicioEnEdicion !== null ? servicios[servicioEnEdicion].id_srvc : null,
-                id_prospect: document.getElementById('id_prospect_serv').value,
+                id_prospect: parseInt(idPpl), // ← ¡Convertir a entero!
                 servicio: document.getElementById('serv_servicio').value.trim(),
                 trafico: document.getElementById('serv_medio_transporte').value,
                 commodity: document.getElementById('serv_commodity').value,
@@ -2435,7 +2443,21 @@
                     }
 
                     const idPpl = idPplInput.value.trim();
+                    const idPplStr = idPplInput.value.trim();
                     const concatenado = concatenadoInput.value.trim();
+
+                    // ✅ Validar que id_ppl sea un número entero
+                    const idPplNum = parseInt(idPplStr, 10);
+                    if (isNaN(idPplNum) || idPplNum <= 0) {
+                        error('ID de prospecto inválido. Debe ser un número.');
+                        console.error('❌ id_ppl no es número:', idPplStr);
+                        return;
+                    }
+
+                    if (!concatenado) {
+                        error('Código de prospecto no disponible');
+                        return;
+                    }
 
                     // Validar que id_ppl sea un número entero > 0
                     const idPplNum = parseInt(idPpl, 10);
