@@ -568,7 +568,10 @@
         // ===================================================================
         // === FUNCIONES GLOBALES PARA CONTACTOS ===
         function cargarContactoPrimario(rut_empresa) {
+            console.log('🔍 Buscando contacto primario para RUT:', rut_empresa);
+            
             if (!rut_empresa) {
+                console.log('⚠️ RUT vacío, limpiando campos');
                 limpiarCamposContacto();
                 return;
             }
@@ -579,19 +582,28 @@
                     return response.json();
                 })
                 .then(data => {
+                    console.log('📥 Contactos recibidos:', data);
+                    
                     const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
+                    console.log('🎯 Contacto primario encontrado:', contactoPrimario);
+                    
                     const contactoEl = document.getElementById('contacto');
                     const emailEl = document.getElementById('email');
                     
+                    console.log('📍 Elemento #contacto:', contactoEl);
+                    console.log('📍 Elemento #email:', emailEl);
+                    
                     if (contactoPrimario && contactoEl && emailEl) {
+                        console.log('✅ Llenando campos con:', contactoPrimario.nom_contacto, contactoPrimario.email);
                         contactoEl.value = contactoPrimario.nom_contacto || '';
                         emailEl.value = contactoPrimario.email || '';
                     } else {
+                        console.log('❌ No se encontró contacto primario o los elementos no existen');
                         limpiarCamposContacto();
                     }
                 })
                 .catch(err => {
-                    console.error('Error al cargar contacto primario:', err);
+                    console.error('❌ Error al cargar contactos:', err);
                     limpiarCamposContacto();
                 });
         }
