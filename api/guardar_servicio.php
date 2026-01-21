@@ -299,30 +299,70 @@ try {
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?
-                )
+            )
         ";
         $stmt = $pdo->prepare($sql);
-        $params = [
-            $id_srvc, $id_ppl, $id_ppl,
-            $data['servicio'] ?? '', $data['nombre_corto'] ?? '', $data['tipo'] ?? '', $data['trafico'] ?? '', $data['sub_trafico'] ?? '',
-            $data['base_calculo'] ?? '', $data['moneda'] ?? 'CLP', (float)($data['tarifa'] ?? 0), (int)($data['iva'] ?? 19), $data['estado'] ?? 'Activo',
-            (float)($data['costo'] ?? 0), (float)($data['venta'] ?? 0), (float)($data['costogastoslocalesdestino'] ?? 0), (float)($data['ventasgastoslocalesdestino'] ?? 0), '0',
-            $data['commodity'] ?? '', $data['origen'] ?? '', $data['pais_origen'] ?? '', $data['destino'] ?? '', $data['pais_destino'] ?? '', $data['transito'] ?? '', $data['frecuencia'] ?? '',
-            $data['lugar_carga'] ?? '', $data['sector'] ?? '', $data['mercancia'] ?? '', (int)($data['bultos'] ?? 0), (float)($data['peso'] ?? 0), (string)($data['volumen'] ?? '0.00'), (string)($data['dimensiones'] ?? ''),
-            $data['agente'] ?? '', $data['aod'] ?? '', $data['aol'] ?? '', $data['transportador'] ?? '', $data['incoterm'] ?? '', $data['ref_cliente'] ?? '', $data['proveedor_nac'] ?? '',
-            (float)($data['tipo_cambio'] ?? 1), $data['ciudad'] ?? '', $data['pais'] ?? '', $data['direc_serv'] ?? '',
-            $data['estado_costos'] ?? 'pendiente', $data['nota_srvc'] ?? '',
-            // Valores calculados para nuevos campos (¡sin validez aquí!)
-            $cgld_usd, $cgld_eur, $cgld_clp,
-            $vgld_usd, $vgld_eur, $vgld_clp,
-            $pgld_usd, $pgld_eur, $pgld_clp,
-            $ppgld_usd, $ppgld_eur, $ppgld_clp,
-            // ---
-            $data['solicitado_por'] ?? null, $data['fecha_solicitado'] ?? null,
-            $data['completado_por'] ?? null, $data['fecha_completado'] ?? null,
-            $data['revisado_por'] ?? null, $data['fecha_revisado'] ?? null,
-            $data['validez'] ?? null // ✅ ¡AHORA SÍ ES EL ÚLTIMO!
-        ];
+            $params = [
+                $id_ppl,           // ← id_ppl (int)
+                $id_srvc,          // ← id_srvc (string)
+                $id_ppl,           // ← id_prospect (int)
+                // ... resto de los campos en el mismo orden
+                $data['servicio'] ?? '',
+                $data['nombre_corto'] ?? '',
+                $data['tipo'] ?? '',
+                $data['trafico'] ?? '',
+                $data['sub_trafico'] ?? '',
+                $data['base_calculo'] ?? '',
+                $data['moneda'] ?? 'USD',
+                (float)($data['tarifa'] ?? 0),
+                (float)($data['iva'] ?? 19),
+                $data['estado'] ?? 'Activo',
+                (float)($data['costo'] ?? 0),
+                (float)($data['venta'] ?? 0),
+                (float)($data['costogastoslocalesdestino'] ?? 0),
+                (float)($data['ventasgastoslocalesdestino'] ?? 0),
+                '0',
+                $data['commodity'] ?? '',
+                $data['origen'] ?? '',
+                $data['pais_origen'] ?? '',
+                $data['destino'] ?? '',
+                $data['pais_destino'] ?? '',
+                $data['transito'] ?? '',
+                $data['frecuencia'] ?? '',
+                $data['lugar_carga'] ?? '',
+                $data['sector'] ?? '',
+                $data['mercancia'] ?? '',
+                (int)($data['bultos'] ?? 0),
+                (float)($data['peso'] ?? 0),
+                (string)($data['volumen'] ?? '0.00'),
+                (string)($data['dimensiones'] ?? ''),
+                $data['agente'] ?? '',
+                $data['aol'] ?? '',
+                $data['aod'] ?? '',
+                $data['transportador'] ?? '',
+                $data['incoterm'] ?? '',
+                $data['ref_cliente'] ?? '',
+                $data['proveedor_nac'] ?? '',
+                (float)($data['tipo_cambio'] ?? 1),
+                $data['ciudad'] ?? '',
+                $data['pais'] ?? '',
+                $data['direc_serv'] ?? '',
+                $data['estado_costos'] ?? 'pendiente',
+                $data['nota_srvc'] ?? '',
+                // Gastos locales
+                $cgld_usd, $cgld_eur, $cgld_clp,
+                $vgld_usd, $vgld_eur, $vgld_clp,
+                $pgld_usd, $pgld_eur, $pgld_clp,
+                $ppgld_usd, $ppgld_eur, $ppgld_clp,
+                // Fechas y usuarios
+                $data['solicitado_por'] ?? null,
+                $data['fecha_solicitado'] ?? null,
+                $data['completado_por'] ?? null,
+                $data['fecha_completado'] ?? null,
+                $data['revisado_por'] ?? null,
+                $data['fecha_revisado'] ?? null,
+                $data['validez'] ?? null
+            ];
 
         error_log("[GUARDAR_SERVICIO] Parámetros para INSERT: " . print_r($params, true));
         $stmt->execute($params);
