@@ -273,7 +273,7 @@ try {
         // === INSERT EN servicios ===
         $sql = "
             INSERT INTO servicios (
-                id_srvc, id_ppl, id_prospect,
+                id_ppl, id_srvc, id_prospect,
                 servicio, nombre_corto, tipo, trafico, sub_trafico,
                 base_calculo, moneda, tarifa, iva, estado,
                 costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
@@ -311,14 +311,17 @@ try {
             $data['lugar_carga'] ?? '', $data['sector'] ?? '', $data['mercancia'] ?? '', (int)($data['bultos'] ?? 0), (float)($data['peso'] ?? 0), (string)($data['volumen'] ?? '0.00'), (string)($data['dimensiones'] ?? ''),
             $data['agente'] ?? '', $data['aod'] ?? '', $data['aol'] ?? '', $data['transportador'] ?? '', $data['incoterm'] ?? '', $data['ref_cliente'] ?? '', $data['proveedor_nac'] ?? '',
             (float)($data['tipo_cambio'] ?? 1), $data['ciudad'] ?? '', $data['pais'] ?? '', $data['direc_serv'] ?? '',
-            $data['estado_costos'] ?? 'pendiente', $data['nota_srvc'] ?? '', $data['validez'] ?? null,
-            // Valores calculados para nuevos campos
+            $data['estado_costos'] ?? 'pendiente', $data['nota_srvc'] ?? '',
+            // Valores calculados para nuevos campos (¡sin validez aquí!)
             $cgld_usd, $cgld_eur, $cgld_clp,
             $vgld_usd, $vgld_eur, $vgld_clp,
             $pgld_usd, $pgld_eur, $pgld_clp,
             $ppgld_usd, $ppgld_eur, $ppgld_clp,
             // ---
-            $data['solicitado_por'] ?? null, $data['fecha_solicitado'] ?? null, $data['completado_por'] ?? null, $data['fecha_completado'] ?? null, $data['revisado_por'] ?? null, $data['fecha_revisado'] ?? null
+            $data['solicitado_por'] ?? null, $data['fecha_solicitado'] ?? null,
+            $data['completado_por'] ?? null, $data['fecha_completado'] ?? null,
+            $data['revisado_por'] ?? null, $data['fecha_revisado'] ?? null,
+            $data['validez'] ?? null // ✅ ¡AHORA SÍ ES EL ÚLTIMO!
         ];
 
         error_log("[GUARDAR_SERVICIO] Parámetros para INSERT: " . print_r($params, true));
