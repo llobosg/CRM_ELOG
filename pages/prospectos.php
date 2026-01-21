@@ -222,7 +222,7 @@
                     <option value="">Seleccionar</option>
                 </select>
                 <label>Commodity</label>
-                <select id="serv_commodity" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <select id="serv_commodity" style="grid-column: span 2; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; width: 100%;">
                     <option value="">Seleccionar</option>
                 </select>
                 
@@ -272,23 +272,24 @@
                 <label>Tipo Cambio</label>
                 <input type="number" id="serv_tipo_cambio" step="0.01" min="0" value="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Proveedor Nac</label>
-                <select id="serv_proveedor_nac" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <!-- ✅ CORRECCIÓN AQUÍ: Forzar ancho al 100% del contenedor -->
+                <select id="serv_proveedor_nac" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; width: 100%; box-sizing: border-box;">
                     <option value="">Seleccionar</option>
                 </select>
 
-                <!-- Fila 5 -->
+                <!-- Fila 6 -->
                 <label>AOL</label>
                 <input type="text" id="serv_aol" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
                 <label>AOD</label>
                 <input type="text" id="serv_aod" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" maxlength="4" />
                 <label>Agente</label>
-                <select id="serv_agente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
+                <select id="serv_agente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; width: 100%;">
                     <option value="">Seleccionar</option>
                 </select>
                 <label>Transportador</label>
                 <input type="text" id="serv_transportador" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 
-                <!-- Fila 5 -->
+                <!-- Fila 7 -->
                 <label>Incoterm</label>
                 <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Ref. Cliente</label>
@@ -314,7 +315,6 @@
             </div>
         </div>
     </div>
-
 
     <!-- Nuevo Submodal Notas del Servicio -->
     <div id="submodal-notas-servicio" class="modal" style="display:none;">
