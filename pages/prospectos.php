@@ -568,45 +568,36 @@
         // ===================================================================
         // === FUNCIONES GLOBALES PARA CONTACTOS ===
         function cargarContactoPrimario(rut_empresa) {
-            console.log('🔍 Buscando contacto primario para RUT:', rut_empresa);
-            
-            if (!rut_empresa) {
-                console.log('⚠️ RUT vacío, limpiando campos');
-                limpiarCamposContacto();
-                return;
-            }
-
-            fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut_empresa)}`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('📥 Contactos recibidos:', data);
-                    
-                    const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
-                    console.log('🎯 Contacto primario encontrado:', contactoPrimario);
-                    
-                    const contactoEl = document.getElementById('contacto');
-                    const emailEl = document.getElementById('email');
-                    
-                    console.log('📍 Elemento #contacto:', contactoEl);
-                    console.log('📍 Elemento #email:', emailEl);
-                    
-                    if (contactoPrimario && contactoEl && emailEl) {
-                        console.log('✅ Llenando campos con:', contactoPrimario.nom_contacto, contactoPrimario.email);
-                        contactoEl.value = contactoPrimario.nom_contacto || '';
-                        emailEl.value = contactoPrimario.email || '';
-                    } else {
-                        console.log('❌ No se encontró contacto primario o los elementos no existen');
-                        limpiarCamposContacto();
-                    }
-                })
-                .catch(err => {
-                    console.error('❌ Error al cargar contactos:', err);
-                    limpiarCamposContacto();
-                });
+        if (!rut_empresa) {
+            limpiarCamposContacto();
+            return;
         }
+
+        // ✅ Usar la API EXISTENTE: get_contactos.php
+        fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut_empresa)}`)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                // ✅ Buscar el contacto con primario = "S"
+                const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
+                
+                const contactoEl = document.getElementById('contacto');
+                const emailEl = document.getElementById('email');
+                
+                if (contactoPrimario && contactoEl && emailEl) {
+                    contactoEl.value = contactoPrimario.nom_contacto || '';
+                    emailEl.value = contactoPrimario.email || '';
+                } else {
+                    limpiarCamposContacto();
+                }
+            })
+            .catch(err => {
+                console.error('Error al cargar contacto primario:', err);
+                limpiarCamposContacto();
+            });
+    }
 
         function limpiarCamposContacto() {
             const contactoEl = document.getElementById('contacto');
@@ -2427,9 +2418,6 @@
         // === 7. INICIALIZACIÓN ===
         // ===================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            // === 1. Cargar datos si vienen desde edición ===
-            //cargarProspectoDesdeURL();
-
             // === 2. Cargar siempre los mantenedores (operaciones, tipos, etc.) ===
             cargarPaises();
             cargarOperacionesYTipos();
