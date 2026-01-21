@@ -2573,42 +2573,6 @@
             }
         });
 
-        // --- Funciones para manejo de Contactos ---
-
-        // ✅✅✅ CARGAR CONTACTO PRIMARIO Y ACTUALIZAR CAMPOS ✅✅✅
-        if (p.rut_empresa) {
-            fetch(`/api/get_contactos.php?rut=${encodeURIComponent(p.rut_empresa)}`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    // Buscar contacto primario
-                    const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
-                    
-                    // Asegurar que los elementos existan antes de asignar
-                    setTimeout(() => {
-                        const contactoEl = document.getElementById('contacto');
-                        const emailEl = document.getElementById('email');
-                        
-                        if (contactoPrimario && contactoEl && emailEl) {
-                            contactoEl.value = contactoPrimario.nom_contacto || '';
-                            emailEl.value = contactoPrimario.email || '';
-                        } else {
-                            if (contactoEl) contactoEl.value = '';
-                            if (emailEl) emailEl.value = '';
-                        }
-                    }, 100); // Pequeño delay para asegurar que el DOM esté listo
-                })
-                .catch(err => {
-                    console.error('Error al cargar contacto primario:', err);
-                    const contactoEl = document.getElementById('contacto');
-                    const emailEl = document.getElementById('email');
-                    if (contactoEl) contactoEl.value = '';
-                    if (emailEl) emailEl.value = '';
-                });
-        }
-
         // Función para limpiar los campos de contacto
         function limpiarCamposContacto() {
             document.getElementById('contacto').value = '';
