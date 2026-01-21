@@ -2592,7 +2592,6 @@
             }
 
             // === Cargar prospecto por concatenado (desde lista) ===
-            const params = new URLSearchParams(window.location.search);
             const buscarConcatenado = params.get('buscar_concatenado');
             if (buscarConcatenado) {
                 // Simular búsqueda inteligente
