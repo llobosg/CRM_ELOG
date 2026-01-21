@@ -2619,32 +2619,37 @@
 
         // --- Funciones para manejo de Contactos ---
 
-        // Función para cargar contacto primario basado en rut_empresa
-        function cargarContactoPrimario(rut_empresa) {
-            if (!rut_empresa) {
-                limpiarCamposContacto();
-                return;
-            }
-
-            fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut_empresa)}`)
+        // ✅✅✅ CARGAR CONTACTO PRIMARIO Y ACTUALIZAR CAMPOS ✅✅✅
+        if (p.rut_empresa) {
+            fetch(`/api/get_contactos.php?rut=${encodeURIComponent(p.rut_empresa)}`)
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     return response.json();
                 })
                 .then(data => {
-                    // Buscar el contacto con primario = "S"
+                    // Buscar contacto primario
                     const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
                     
-                    if (contactoPrimario) {
-                        document.getElementById('contacto').value = contactoPrimario.nom_contacto || '';
-                        document.getElementById('email').value = contactoPrimario.email || '';
-                    } else {
-                        limpiarCamposContacto();
-                    }
+                    // Asegurar que los elementos existan antes de asignar
+                    setTimeout(() => {
+                        const contactoEl = document.getElementById('contacto');
+                        const emailEl = document.getElementById('email');
+                        
+                        if (contactoPrimario && contactoEl && emailEl) {
+                            contactoEl.value = contactoPrimario.nom_contacto || '';
+                            emailEl.value = contactoPrimario.email || '';
+                        } else {
+                            if (contactoEl) contactoEl.value = '';
+                            if (emailEl) emailEl.value = '';
+                        }
+                    }, 100); // Pequeño delay para asegurar que el DOM esté listo
                 })
                 .catch(err => {
                     console.error('Error al cargar contacto primario:', err);
-                    limpiarCamposContacto();
+                    const contactoEl = document.getElementById('contacto');
+                    const emailEl = document.getElementById('email');
+                    if (contactoEl) contactoEl.value = '';
+                    if (emailEl) emailEl.value = '';
                 });
         }
 
