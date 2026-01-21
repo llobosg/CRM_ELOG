@@ -335,10 +335,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                         // === Campo de fecha al final ===
                         'validez' => $s['validez'] ?? null
                     ];
+                    // Validar fecha
+                    $validez = $s['validez'] ?? null;
+                    if ($validez === '' || $validez === '0000-00-00') {
+                        $validez = null;
+                    }
+                    // Verificar si es una fecha válida
+                    if ($validez && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $validez)) {
+                        $validez = null;
+                    }
+
+                    // Agregar al array
+                    $servicio_data['validez'] = $validez;
 
                     // === Construir consulta dinámica ===
                     $columns = implode(', ', array_keys($servicio_data));
                     $placeholders = ':' . implode(', :', array_keys($servicio_data));
+
+                    // Depuración: ver los valores que se envían
+                    error_log("DEBUG servicio_data: " . json_encode($servicio_data));
 
                     $stmt = $pdo->prepare("INSERT INTO servicios ($columns) VALUES ($placeholders)");
                     $stmt->execute($servicio_data);
