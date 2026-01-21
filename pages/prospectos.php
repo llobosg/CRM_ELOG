@@ -565,51 +565,6 @@
         function error(msg) { mostrarNotificacion(msg, 'error'); }
         function advertencia(msg) { mostrarNotificacion(msg, 'advertencia'); }
 
-        // ===================================================================
-        // === FUNCIONES GLOBALES PARA CONTACTOS ===
-        function cargarContactoPrimario(rut_empresa) {
-            console.log('🔍 Buscando contacto primario para RUT:', rut_empresa);
-
-            if (!rut_empresa) {
-                console.log('⚠️ RUT vacío, limpiando campos');
-                limpiarCamposContacto();
-                return;
-            }
-
-            // ✅ Usar la API EXISTENTE: get_contactos.php
-            fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut_empresa)}`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    // ✅ Buscar el contacto con primario = "S"
-                    console.log('📥 Contactos recibidos:', data);
-
-                    const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
-                    console.log('🎯 Contacto primario encontrado:', contactoPrimario);
-                    
-                    const contactoEl = document.getElementById('contacto');
-                    const emailEl = document.getElementById('email');
-                    console.log('📍 Elemento #contacto:', contactoEl);
-                    console.log('📍 Elemento #email:', emailEl);
-                    
-                    if (contactoPrimario && contactoEl && emailEl) {
-                        console.log('✅ Llenando campos con:', contactoPrimario.nom_contacto, contactoPrimario.email);
-
-                        contactoEl.value = contactoPrimario.nom_contacto || '';
-                        emailEl.value = contactoPrimario.email || '';
-                    } else {
-                        console.log('❌ No se encontró contacto primario o los elementos no existen');
-                        limpiarCamposContacto();
-                    }
-                })
-                .catch(err => {
-                    console.error('Error al cargar contacto primario:', err);
-                    limpiarCamposContacto();
-                });
-        }
-
         function limpiarCamposContacto() {
             const contactoEl = document.getElementById('contacto');
             const emailEl = document.getElementById('email');
@@ -1402,31 +1357,24 @@
                     }));
                     actualizarTabla();
 
-                    // ✅✅✅ CARGAR CONTACTO PRIMARIO ✅✅✅
+                    // ✅ CARGAR CONTACTO PRIMARIO DIRECTAMENTE
                     if (p.rut_empresa) {
                         fetch(`/api/get_contactos.php?rut=${encodeURIComponent(p.rut_empresa)}`)
-                            .then(response => {
-                                // ✅ Verificar si la respuesta es JSON
-                                const contentType = response.headers.get('content-type');
-                                if (!contentType || !contentType.includes('application/json')) {
-                                    throw new Error('La API devolvió HTML, no JSON');
-                                }
-                                return response.json();
-                            })
-                            .then(contactosData => {
-                                console.log('📥 Contactos recibidos:', contactosData);
-                                const contactoPrimario = (contactosData.contactos || []).find(c => c.primario === 'S');
+                            .then(response => response.json())
+                            .then(data => {
+                                const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
                                 const contactoEl = document.getElementById('contacto');
                                 const emailEl = document.getElementById('email');
                                 if (contactoPrimario && contactoEl && emailEl) {
-                                    console.log('✅ Llenando contacto primario:', contactoPrimario.nom_contacto);
                                     contactoEl.value = contactoPrimario.nom_contacto || '';
                                     emailEl.value = contactoPrimario.email || '';
+                                } else {
+                                    if (contactoEl) contactoEl.value = '';
+                                    if (emailEl) emailEl.value = '';
                                 }
                             })
                             .catch(err => {
-                                console.error('❌ Error al cargar contactos:', err);
-                                // Opcional: limpiar campos
+                                console.error('Error al cargar contactos:', err);
                                 const contactoEl = document.getElementById('contacto');
                                 const emailEl = document.getElementById('email');
                                 if (contactoEl) contactoEl.value = '';
