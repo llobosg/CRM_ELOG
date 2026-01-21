@@ -252,13 +252,13 @@
                 
                 <!-- Fila 4 -->
                 <label>Mercancía</label>
-                <input type="text" id="serv_mercancia" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <input type="text" id="serv_mercancia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Incoterm</label>
                 <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Validez</label>
                 <input type="date" id="serv_validez" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Ref. Cliente</label>
-                <input type="text" id="serv_ref_cliente" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <input type="text" id="serv_ref_cliente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
 
                 <!-- Fila 5 -->
                 <label>Bultos</label>
