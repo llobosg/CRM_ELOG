@@ -266,51 +266,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
                     $ppgld_clp = $vgld_clp > 0 ? (($vgld_clp - $cgld_clp) / $vgld_clp * 100) : 0;
 
                     // --- INSERT EN servicios ---
-                    $stmt_serv = $pdo->prepare("
-                        INSERT INTO servicios (
-                            id_srvc, id_ppl, id_prospect,
-                            servicio, nombre_corto, tipo, trafico, sub_trafico,
-                            base_calculo, moneda, tarifa, iva, estado,
-                            costo, venta, costogastoslocalesdestino, ventasgastoslocalesdestino, desconsolidac,
-                            commodity, origen, pais_origen, destino, pais_destino, transito, frecuencia,
-                            lugar_carga, sector, mercancia, bultos, peso, volumen, dimensiones,
-                            agente, aol, aod, transportador, incoterm, ref_cliente, proveedor_nac,
-                            tipo_cambio, ciudad, pais, direc_serv,
-                            estado_costos, nota_srvc,
-                            cgld_usd, cgld_eur, cgld_clp,
-                            vgld_usd, vgld_eur, vgld_clp,
-                            pgld_usd, pgld_eur, pgld_clp,
-                            ppgld_usd, ppgld_eur, ppgld_clp,
-                            solicitado_por, fecha_solicitado,
-                            completado_por, fecha_completado,
-                            revisado_por, fecha_revisado, validez
-                        ) VALUES (
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?
-                        )
-                    ");
-                    $stmt_serv->execute([
-                        $id_srvc, $id_ppl, $id_ppl,
-                        $s['servicio'] ?? '', $s['nombre_corto'] ?? '', $s['tipo'] ?? '', $s['trafico'] ?? '', $s['sub_trafico'] ?? '',
-                        $s['base_calculo'] ?? '', $s['moneda'] ?? 'CLP', (float)($s['tarifa'] ?? 0), (int)($s['iva'] ?? 19), $s['estado'] ?? 'Activo',
-                        (float)($s['costo'] ?? 0), (float)($s['venta'] ?? 0), (float)($s['costogastoslocalesdestino'] ?? 0), (float)($s['ventasgastoslocalesdestino'] ?? 0), '0',
-                        $s['commodity'] ?? '', $s['origen'] ?? '', $s['pais_origen'] ?? '', $s['destino'] ?? '', $s['pais_destino'] ?? '', $s['transito'] ?? '', $s['frecuencia'] ?? '',
-                        $s['lugar_carga'] ?? '', $s['sector'] ?? '', $s['mercancia'] ?? '', (int)($s['bultos'] ?? 0), (float)($s['peso'] ?? 0), (string)($s['volumen'] ?? '0.00'), (string)($s['dimensiones'] ?? ''),
-                        $s['agente'] ?? '', $s['aol'] ?? '', $s['aod'] ?? '', $s['transportador'] ?? '', $s['incoterm'] ?? '', $s['ref_cliente'] ?? '', $s['proveedor_nac'] ?? '',
-                        (float)($s['tipo_cambio'] ?? 1), $s['ciudad'] ?? '', $s['pais'] ?? '', $s['direc_serv'] ?? '',
-                        $s['estado_costos'] ?? 'pendiente', $s['nota_srvc'] ?? '',
-                        $cgld_usd, $cgld_eur, $cgld_clp,
-                        $vgld_usd, $vgld_eur, $vgld_clp,
-                        $pgld_usd, $pgld_eur, $pgld_clp,
-                        $ppgld_usd, $ppgld_eur, $ppgld_clp,
-                        $s['solicitado_por'] ?? null, $s['fecha_solicitado'] ?? null, $s['completado_por'] ?? null, $s['fecha_completado'] ?? null, $s['revisado_por'] ?? null, $s['fecha_revisado'] ?? null, $s['validez'] ?? null,
-                    ]);
+                    // === Preparar datos del servicio ===
+                    $servicio_data = [
+                        'id_ppl' => $id_ppl,
+                        'id_srvc' => $id_srvc,
+                        'id_prospect' => $id_ppl,
+                        'servicio' => $s['servicio'] ?? '',
+                        'nombre_corto' => $s['nombre_corto'] ?? '',
+                        'tipo' => $s['tipo'] ?? '',
+                        'trafico' => $s['trafico'] ?? '',
+                        'sub_trafico' => $s['sub_trafico'] ?? '',
+                        'base_calculo' => $s['base_calculo'] ?? '',
+                        'moneda' => $s['moneda'] ?? 'USD',
+                        'tarifa' => (float)($s['tarifa'] ?? 0),
+                        'iva' => (float)($s['iva'] ?? 19),
+                        'estado' => $s['estado'] ?? 'Activo',
+                        'costo' => (float)($s['costo'] ?? 0),
+                        'venta' => (float)($s['venta'] ?? 0),
+                        'costogastoslocalesdestino' => (float)($s['costogastoslocalesdestino'] ?? 0),
+                        'ventasgastoslocalesdestino' => (float)($s['ventasgastoslocalesdestino'] ?? 0),
+                        'ciudad' => $s['ciudad'] ?? '',
+                        'pais' => $s['pais'] ?? '',
+                        'direc_serv' => $s['direc_serv'] ?? '',
+                        'tipo_cambio' => (float)($s['tipo_cambio'] ?? 1),
+                        'commodity' => $s['commodity'] ?? '',
+                        'origen' => $s['origen'] ?? '',
+                        'pais_origen' => $s['pais_origen'] ?? '',
+                        'destino' => $s['destino'] ?? '',
+                        'pais_destino' => $s['pais_destino'] ?? '',
+                        'transito' => $s['transito'] ?? '',
+                        'frecuencia' => $s['frecuencia'] ?? '',
+                        'lugar_carga' => $s['lugar_carga'] ?? '',
+                        'sector' => $s['sector'] ?? '',
+                        'mercancia' => $s['mercancia'] ?? '',
+                        'bultos' => (int)($s['bultos'] ?? 0),
+                        'peso' => (float)($s['peso'] ?? 0),
+                        'volumen' => $s['volumen'] ?? '0.00',
+                        'dimensiones' => $s['dimensiones'] ?? '',
+                        'agente' => $s['agente'] ?? '',
+                        'aol' => $s['aol'] ?? '',
+                        'aod' => $s['aod'] ?? '',
+                        'transportador' => $s['transportador'] ?? '',
+                        'incoterm' => $s['incoterm'] ?? '',
+                        'ref_cliente' => $s['ref_cliente'] ?? '',
+                        'proveedor_nac' => $s['proveedor_nac'] ?? '',
+                        'desconsolidac' => '0',
+                        'estado_costos' => $s['estado_costos'] ?? 'pendiente',
+                        'solicitado_por' => $s['solicitado_por'] ?? null,
+                        'completado_por' => $s['completado_por'] ?? null,
+                        'fecha_solicitado' => $s['fecha_solicitado'] ?? null,
+                        'fecha_completado' => $s['fecha_completado'] ?? null,
+                        'revisado_por' => $s['revisado_por'] ?? null,
+                        'fecha_revisado' => $s['fecha_revisado'] ?? null,
+                        'nota_srvc' => $s['nota_srvc'] ?? '',
+                        // === Campos nuevos de gastos locales ===
+                        'cgld_usd' => (float)($s['cgld_usd'] ?? 0),
+                        'cgld_eur' => (float)($s['cgld_eur'] ?? 0),
+                        'cgld_clp' => (float)($s['cgld_clp'] ?? 0),
+                        'vgld_usd' => (float)($s['vgld_usd'] ?? 0),
+                        'vgld_eur' => (float)($s['vgld_eur'] ?? 0),
+                        'vgld_clp' => (float)($s['vgld_clp'] ?? 0),
+                        'pgld_usd' => (float)($s['pgld_usd'] ?? 0),
+                        'pgld_eur' => (float)($s['pgld_eur'] ?? 0),
+                        'pgld_clp' => (float)($s['pgld_clp'] ?? 0),
+                        'ppgld_usd' => (float)($s['ppgld_usd'] ?? 0),
+                        'ppgld_eur' => (float)($s['ppgld_eur'] ?? 0),
+                        'ppgld_clp' => (float)($s['ppgld_clp'] ?? 0),
+                        // === Campo de fecha al final ===
+                        'validez' => $s['validez'] ?? null
+                    ];
+
+                    // === Construir consulta dinámica ===
+                    $columns = implode(', ', array_keys($servicio_data));
+                    $placeholders = ':' . implode(', :', array_keys($servicio_data));
+
+                    $stmt = $pdo->prepare("INSERT INTO servicios ($columns) VALUES ($placeholders)");
+                    $stmt->execute($servicio_data);
 
                     // --- Insertar Costos ---
                     $costos = $s['costos'] ?? [];
