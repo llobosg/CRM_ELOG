@@ -1405,17 +1405,33 @@
                     // ✅✅✅ CARGAR CONTACTO PRIMARIO ✅✅✅
                     if (p.rut_empresa) {
                         fetch(`/api/get_contactos.php?rut=${encodeURIComponent(p.rut_empresa)}`)
-                            .then(response => response.json())
+                            .then(response => {
+                                // ✅ Verificar si la respuesta es JSON
+                                const contentType = response.headers.get('content-type');
+                                if (!contentType || !contentType.includes('application/json')) {
+                                    throw new Error('La API devolvió HTML, no JSON');
+                                }
+                                return response.json();
+                            })
                             .then(contactosData => {
+                                console.log('📥 Contactos recibidos:', contactosData);
                                 const contactoPrimario = (contactosData.contactos || []).find(c => c.primario === 'S');
                                 const contactoEl = document.getElementById('contacto');
                                 const emailEl = document.getElementById('email');
                                 if (contactoPrimario && contactoEl && emailEl) {
+                                    console.log('✅ Llenando contacto primario:', contactoPrimario.nom_contacto);
                                     contactoEl.value = contactoPrimario.nom_contacto || '';
                                     emailEl.value = contactoPrimario.email || '';
                                 }
                             })
-                            .catch(err => console.error('Error al cargar contactos:', err));
+                            .catch(err => {
+                                console.error('❌ Error al cargar contactos:', err);
+                                // Opcional: limpiar campos
+                                const contactoEl = document.getElementById('contacto');
+                                const emailEl = document.getElementById('email');
+                                if (contactoEl) contactoEl.value = '';
+                                if (emailEl) emailEl.value = '';
+                            });
                     }
 
                     // === Asignaciones clave ===
