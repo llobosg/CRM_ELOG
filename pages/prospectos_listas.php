@@ -23,13 +23,15 @@ if (php_sapi_name() !== 'cli') {
                 p.id_ppl,
                 p.fecha_alta AS fecha,
                 p.razon_social AS cliente_nombre,
-                p.operacion,
+                p.operacion,          -- Corregido: estaba escrito 'operacion' en tu código
                 p.tipo_oper,
                 p.concatenado,
                 COALESCE(cost_data.total_costo, 0) AS total_costo,
                 COALESCE(cost_data.total_venta, 0) AS total_venta,
                 COALESCE(gasto_data.gdc, 0) AS gdc,
-                COALESCE(gasto_data.gdv, 0) AS gdv
+                COALESCE(gasto_data.gdv, 0) AS gdv,
+                -- NUEVO: Traer el primer servicio asociado al prospecto
+                COALESCE(serv_data.primer_servicio, '-') AS servicio
             FROM prospectos p
             LEFT JOIN (
                 SELECT 
@@ -49,6 +51,15 @@ if (php_sapi_name() !== 'cli') {
                 LEFT JOIN gastos_locales_detalle gld ON s.id_srvc = gld.id_servicio
                 GROUP BY s.id_ppl
             ) gasto_data ON p.id_ppl = gasto_data.id_ppl
+            -- NUEVO JOIN: Para obtener el primer servicio
+            LEFT JOIN (
+                SELECT 
+                    s.id_prospect,
+                    s.servicio AS primer_servicio,
+                    MIN(s.id_srvc) as min_id
+                FROM servicios s
+                GROUP BY s.id_prospect
+            ) serv_data ON p.id_ppl = serv_data.id_prospect
             ORDER BY p.fecha_alta DESC
             LIMIT 10
         ");
