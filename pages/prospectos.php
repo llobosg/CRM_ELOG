@@ -1365,16 +1365,29 @@
                     setNota('notas_operaciones', p.notas_operaciones);
 
                     // === Servicios ===
-                    servicios = (data.servicios || []).map(s => ({
-                        ...s,
-                        costo: parseFloat(s.costo) || 0,
-                        venta: parseFloat(s.venta) || 0,
-                        costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                        ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
-                    }));
-                    console.log('📄 [DEBUG] Servicio crudo:', s); // ← LOG 1: datos originales
-                    console.log('⚙️ [DEBUG] Servicio procesado:', processed); // ← LOG 2: después de parseFloat
-                    return processed;
+                    console.log('📥 [DEBUG] Servicios recibidos de la API:', data.servicios);
+
+                    // Procesar servicios con protección contra errores
+                    servicios = [];
+                    if (Array.isArray(data.servicios)) {
+                        servicios = data.servicios.map(servicio => {
+                            // Asegurar que los campos numéricos sean números
+                            return {
+                                ...servicio,
+                                costo: (servicio.costo && !isNaN(parseFloat(servicio.costo))) ? parseFloat(servicio.costo) : 0,
+                                venta: (servicio.venta && !isNaN(parseFloat(servicio.venta))) ? parseFloat(servicio.venta) : 0,
+                                costogastoslocalesdestino: (servicio.costogastoslocalesdestino && !isNaN(parseFloat(servicio.costogastoslocalesdestino))) ? parseFloat(servicio.costogastoslocalesdestino) : 0,
+                                ventasgastoslocalesdestino: (servicio.ventasgastoslocalesdestino && !isNaN(parseFloat(servicio.ventasgastoslocalesdestino))) ? parseFloat(servicio.ventasgastoslocalesdestino) : 0,
+                                bultos: parseInt(servicio.bultos) || 0,
+                                peso: parseFloat(servicio.peso) || 0,
+                                volumen: parseFloat(servicio.volumen) || 0
+                            };
+                        });
+                    } else {
+                        console.warn('⚠️ [DEBUG] data.servicios no es un array:', data.servicios);
+                    }
+
+                    console.log('✅ [DEBUG] Servicios procesados:', servicios);
                     actualizarTabla();
 
                     // ✅ CARGAR CONTACTO PRIMARIO DIRECTAMENTE
