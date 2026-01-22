@@ -1,8 +1,8 @@
 <?php
 // api/pdf_servicio.php
-// Versión corregida para evitar warnings y permitir generación de PDF
+// Generación de PDF de cotización con layout ajustado
 
-// --- Evitar cualquier salida previa ---
+// Evitar cualquier salida previa
 ob_start();
 
 // Incluir autoload de Composer
@@ -17,7 +17,7 @@ function sanitizeText($text) {
     return htmlspecialchars_decode($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401);
 }
 
-// --- Obtener id_srvc de GET o POST ---
+// Obtener id_srvc desde GET o POST
 $id_srvc = null;
 if (!empty($_GET['id_srvc'])) {
     $id_srvc = $_GET['id_srvc'];
@@ -34,6 +34,7 @@ if (!$id_srvc) {
 try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // Cargar datos del servicio y prospecto
     $stmt_serv = $pdo->prepare("
         SELECT s.*, p.razon_social, p.direccion, p.notas_comerciales, p.notas_operaciones, p.concatenado, p.rut_empresa
         FROM servicios s
@@ -49,6 +50,7 @@ try {
         exit;
     }
 
+    // Cargar costos y gastos
     $stmt_costos = $pdo->prepare("SELECT * FROM costos_servicios WHERE id_servicio = ?");
     $stmt_costos->execute([$id_srvc]);
     $costos = $stmt_costos->fetchAll(PDO::FETCH_ASSOC);
@@ -57,14 +59,12 @@ try {
     $stmt_gastos->execute([$id_srvc]);
     $gastos_locales = $stmt_gastos->fetchAll(PDO::FETCH_ASSOC);
 
+    // Datos del prospecto
     $razonSocialProspecto = $servicio['razon_social'] ?? '';
     $direccionProspecto = $servicio['direccion'] ?? '';
-    $notasComerciales = $servicio['notas_comerciales'] ?? '';
-    $notasOperaciones = $servicio['notas_operaciones'] ?? '';
-    $concatenadoServicio = $servicio['concatenado'] ?? 'N/A';
     $rutClienteParaContacto = $servicio['rut_empresa'] ?? null;
 
-    // --- Cargar Contacto Primario ---
+    // Cargar contacto primario
     $contacto_nombre = '';
     $contacto_email = '';
     if ($rutClienteParaContacto) {
@@ -89,7 +89,7 @@ try {
     exit;
 }
 
-// --- Preparar datos ---
+// Preparar datos
 $servicio_datos = [
     'servicio' => sanitizeText($servicio['servicio'] ?? ''),
     'trafico' => sanitizeText($servicio['trafico'] ?? ''),
@@ -109,7 +109,7 @@ $servicio_datos = [
     'commodity' => sanitizeText($servicio['commodity'] ?? ''),
     'origen' => sanitizeText($servicio['origen'] ?? ''),
     'destino' => sanitizeText($servicio['destino'] ?? ''),
-    'concatenado' => $concatenadoServicio,
+    'concatenado' => $servicio['concatenado'] ?? 'N/A',
     'nota_srvc' => sanitizeText($servicio['nota_srvc'] ?? ''),
     'transportador' => sanitizeText($servicio['transportador'] ?? ''),
     'validez' => sanitizeText($servicio['validez'] ?? ''),
@@ -125,6 +125,12 @@ $servicio_datos = [
     'pais' => sanitizeText($servicio['pais'] ?? ''),
     'direc_serv' => sanitizeText($servicio['direc_serv'] ?? ''),
     'estado_costos' => sanitizeText($servicio['estado_costos'] ?? ''),
+    'solicitado_por' => (int)($servicio['solicitado_por'] ?? 0),
+    'fecha_solicitado' => $servicio['fecha_solicitado'] ?? null,
+    'completado_por' => (int)($servicio['completado_por'] ?? 0),
+    'fecha_completado' => $servicio['fecha_completado'] ?? null,
+    'revisado_por' => (int)($servicio['revisado_por'] ?? 0),
+    'fecha_revisado' => $servicio['fecha_revisado'] ?? null,
 ];
 
 $costos_datos = array_map(function($c) {
@@ -182,8 +188,10 @@ $pdf->setPrintFooter(true);
 
 $pdf->AddPage();
 
+// Ruta al logo
 $logoPath = __DIR__ . '/../assets/logoelog2.png';
 
+// Calcular texto de tipo de transporte
 $tipoTrafico = strtolower($servicio_datos['trafico']);
 $tipoTransporteTexto = 'TRANSPORTE';
 if (strpos($tipoTrafico, 'mar') !== false) {
@@ -196,8 +204,10 @@ if (strpos($tipoTrafico, 'mar') !== false) {
 
 $html = '';
 
+// Tabla principal de 4 columnas
 $html .= '<table cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
 
+// Fila 1: Logo y Número de Cotización
 $html .= '<tr>';
 $html .= '<td style="width: 25%; vertical-align: top; border: none;">';
 if (file_exists($logoPath)) {
@@ -212,11 +222,19 @@ $html .= '<td style="width: 25%; border: none;"><strong>NÚMERO DE COTIZACIÓN:<
 $html .= '<td style="width: 25%; border: none;">' . $servicio_datos['concatenado'] . '</td>';
 $html .= '</tr>';
 
+// Fila 2: Fecha
 $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>FECHA:</strong></td><td style="border: none;">' . date('d-m-Y') . '</td></tr>';
+
+// Fila 3: Fecha vigencia cotización
 $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>VALIDEZ COTIZACIÓN:</strong></td><td style="border: none;"><strong>' . $servicio_datos['validez'] . '</strong></td></tr>';
+
+// Fila 4: Tráfico
 $html .= '<tr><td style="border: none;" colspan="2"></td><td style="border: none;"><strong>TRÁFICO:</strong></td><td style="border: none;"><strong>' . $servicio_datos['trafico'] . '</strong></td></tr>';
+
+// Fila 5: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
+// Fila 6: Atención, Empresa y Mensaje
 $html .= '<tr><td style="border: none;" colspan="4">';
 $html .= '<div style="font-size: 10pt; line-height: 1.4; margin-bottom: 1mm;">';
 $html .= '<strong>Atención:</strong> ' . sanitizeText($contacto_nombre) . '<br>';
@@ -225,11 +243,14 @@ $html .= '<br>Informamos a ustedes la cotización solicitada según los datos a 
 $html .= '</div>';
 $html .= '</td></tr>';
 
+// Fila 7: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
+// Fila 8: Tabla de Datos del Servicio
 $html .= '<tr><td style="border: none; vertical-align: top;" colspan="4">';
 $html .= '<table style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
 
+// Fila interna 1: Incoterm y Ref. Cliente
 $html .= '<tr>';
 $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><strong>INCOTERM:</strong></td>';
 $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['incoterm'] . '</td>';
@@ -237,12 +258,14 @@ $html .= '<td style="width: 25%; padding-right: 2mm; white-space: nowrap;"><stro
 $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['ref_cliente'] . '</td>';
 $html .= '</tr>';
 
+// Fila interna 2: Commodity
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 $html .= '<tr>';
 $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>COMMODITY:</strong></td>';
 $html .= '<td style="width: 50%; text-align: left;">' . $servicio_datos['commodity'] . '</td>';
 $html .= '</tr>';
 
+// Fila interna 3: Unidades FCL y Cantidad/Bultos
 $html .= '<tr>';
 $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>UNIDADES FCL:</strong></td>';
 $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['bultos'] . '</td>';
@@ -250,6 +273,7 @@ $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>CANTIDAD/BULTOS:</
 $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['bultos'] . '</td>';
 $html .= '</tr>';
 
+// Fila interna 4: Volumen y Peso Bruto
 $html .= '<tr>';
 $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>VOLUMEN:</strong></td>';
 $html .= '<td style="width: 25%; text-align: left;">' . number_format($servicio_datos['volumen'], 2) . '</td>';
@@ -257,6 +281,7 @@ $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>PESO BRUTO:</stron
 $html .= '<td style="width: 25%; text-align: left;">' . number_format($servicio_datos['peso'], 2) . '</td>';
 $html .= '</tr>';
 
+// Fila interna 5: POL y POD
 $html .= '<tr>';
 $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>POL:</strong></td>';
 $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['origen'] . '</td>';
@@ -264,18 +289,9 @@ $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>POD:</strong></td>
 $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['destino'] . '</td>';
 $html .= '</tr>';
 
-$tipoTraficoCalc = strtolower($servicio_datos['trafico']);
-$textoTransporte = 'TRANSPORTE';
-if (strpos($tipoTraficoCalc, 'mar') !== false) {
-    $textoTransporte = 'NAVIERA';
-} elseif (strpos($tipoTraficoCalc, 'aer') !== false) {
-    $textoTransporte = 'AEROLÍNEA';
-} elseif (strpos($tipoTraficoCalc, 'ter') !== false || strpos($tipoTraficoCalc, 'land') !== false) {
-    $textoTransporte = 'TRANSPORTE';
-}
-
+// Fila interna 6: Transportador y Agente
 $html .= '<tr>';
-$html .= '<td style="width: 25%; padding-right: 2mm;"><strong>' . $textoTransporte . ':</strong></td>';
+$html .= '<td style="width: 25%; padding-right: 2mm;"><strong>' . $tipoTransporteTexto . ':</strong></td>';
 $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['transportador'] . '</td>';
 $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>AGENTE:</strong></td>';
 $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['agente'] . '</td>';
@@ -284,8 +300,10 @@ $html .= '</tr>';
 $html .= '</table>';
 $html .= '</td></tr>';
 
+// Fila 9: Espacio
 $html .= '<tr><td style="border: none; height: 3mm;" colspan="4"></td></tr>';
 
+// Fila 10: Notas del Servicio
 $html .= '<tr>';
 $html .= '<td style="border: none;" colspan="4">';
 $html .= '<div style="margin-bottom: 2px;"><strong>NOTAS SERVICIO</strong></div>';
@@ -297,96 +315,110 @@ $html .= '</tr>';
 
 $html .= '</table>';
 
+// Separador visual
 $html .= '<div style="height:6mm;"></div>';
 $html .= '<div style="background-color: #e9ecef; height: 1px;"></div>';
 
+// Sección: GASTOS-VENTAS INTERNACIONALES (antes PROFIT SHARE)
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
-$html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">PROFIT SHARE</h3>';
+$html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS-VENTAS INTERNACIONALES</h3>';
 $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
-$html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">CONCEPTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">QTY</th><th style="border: 1px solid #ddd; text-align: right;">COSTO</th><th style="border: 1px solid #ddd; text-align: right;">VENTA</th><th style="border: 1px solid #ddd; text-align: right;">TOTAL</th><th style="border: 1px solid #ddd; text-align: center;">APLICA</th></tr></thead>';
+$html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">CONCEPTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">QTY</th><th style="border: 1px solid #ddd; text-align: right;">COSTO</th><th style="border: 1px solid #ddd; text-align: right;">VENTA</th><th style="border: 1px solid #ddd; text-align: center;">APLICA</th></tr></thead>';
 $html .= '<tbody>';
-$html .= '<tr>';
-$html .= '<td style="border: 1px solid #ddd;">' . $servicio_datos['servicio'] . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $servicio_datos['moneda'] . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: center;">1</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($servicio_datos['venta'], 2) . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($servicio_datos['costo'], 2) . '</td>';
-$html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $servicio_datos['trafico'] . '</td>';
-$html .= '</tr>';
-$total_costos = $servicio_datos['costo'];
-$total_venta = $servicio_datos['venta'];
-$total_total_costo = $servicio_datos['costo'];
+
+$total_costos = 0;
+$total_venta = 0;
 
 foreach ($costos_datos as $c) {
+    $qty = $c['qty'] ?? 0;
+    $costo = $c['costo'] ?? 0;
+    $tarifa = $c['tarifa'] ?? 0;
+    $total_costos += $costo * $qty;
+    $total_venta += $tarifa * $qty;
     $html .= '<tr>';
     $html .= '<td style="border: 1px solid #ddd;">' . $c['concepto'] . '</td>';
     $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['moneda'] . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . number_format($c['qty'], 2) . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($c['costo'], 2) . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($c['tarifa'], 2) . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($c['total_costo'], 2) . '</td>';
+    $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . number_format($qty, 2) . '</td>';
+    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($costo, 2) . '</td>';
+    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($tarifa, 2) . '</td>';
     $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['aplica'] . '</td>';
     $html .= '</tr>';
-    $total_costos += $c['costo'];
-    $total_total_costo += $c['total_costo'];
-    $total_venta += $c['tarifa'];
 }
+
 $html .= '</tbody>';
 $html .= '<tfoot>';
-$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTALES:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_costos, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_total_costo, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
-$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta - $total_costos, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
-$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="5">TOTAL PROFIT %:</td><td style="border: 1px solid #ddd; text-align: right;">' . ($total_venta > 0 ? number_format((($total_venta - $total_costos) / $total_venta) * 100, 2) : 0) . '%</td><td style="border: 1px solid #ddd;"></td></tr>';
+$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTALES:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_costos, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
+// FILAS ELIMINADAS SEGÚN REQUERIMIENTO
+/*
+<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTAL PROFIT:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta - $total_costos, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>
+<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTAL PROFIT %:</td><td style="border: 1px solid #ddd; text-align: right;">' . ($total_venta > 0 ? number_format((($total_venta - $total_costos) / $total_venta) * 100, 2) : 0) . '%</td><td style="border: 1px solid #ddd;"></td></tr>
+*/
 $html .= '</tfoot>';
 $html .= '</table>';
 $html .= '</div>';
 
+// Gastos Locales en Destino (Ventas y Costo)
 if (!empty($gastos_datos)) {
+    // Ventas
     $html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
-    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS VENTAS LOCALES</h3>';
+    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS LOCALES EN DESTINO (VENTAS)</h3>';
     $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
-    $html .= '<thead><tr style="background-color: #f2f2f2;">
-        <th style="border: 1px solid #ddd; text-align: center; width: 12%;">TIPO</th>
-        <th style="border: 1px solid #ddd; text-align: center; width: 24%;">GASTOS</th>
-        <th style="border: 1px solid #ddd; text-align: center; width: 12%;">MONEDA</th>
-        <th style="border: 1px solid #ddd; text-align: right; width: 15%;">MONTO</th>
-        <th style="border: 1px solid #ddd; text-align: center; width: 12%;">AFECTO</th>
-        <th style="border: 1px solid #ddd; text-align: right; width: 10%;">IVA%</th>
-        <th style="border: 1px solid #ddd; text-align: right; width: 15%;">TOTAL</th>
-    </tr></thead>';
+    $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">GASTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">AFECTO</th><th style="border: 1px solid #ddd; text-align: right;">MONTO</th></tr></thead>';
     $html .= '<tbody>';
     foreach ($gastos_datos as $g) {
-        $monto = $g['monto'];
-        $iva = $g['iva'];
-        $afecto = $g['afecto'];
-        $esAfecto = ($afecto === 'SI' || $afecto === true);
-        $subtotal = $esAfecto ? $monto * (1 + $iva / 100) : $monto;
-        $html .= '<tr>';
-        $html .= '<td style="border: 1px solid #ddd; width: 12%;">' . $g['tipo'] . '</td>';
-        $html .= '<td style="border: 1px solid #ddd; width: 24%;">' . $g['gasto'] . '</td>';
-        $html .= '<td style="border: 1px solid #ddd; text-align: center; width: 12%;">' . $g['moneda'] . '</td>';
-        $html .= '<td style="border: 1px solid #ddd; text-align: right; width: 15%;">' . number_format($g['monto'], 2) . '</td>';
-        $html .= '<td style="border: 1px solid #ddd; text-align: center; width: 12%;">' . $g['afecto'] . '</td>';
-        $html .= '<td style="border: 1px solid #ddd; text-align: right; width: 10%;">' . number_format($g['iva'], 2) . '%</td>';
-        $html .= '<td style="border: 1px solid #ddd; text-align: right; width: 15%;">' . number_format($subtotal, 2) . '</td>';
-        $html .= '</tr>';
+        if (strtoupper($g['tipo']) === 'VENTAS') {
+            $monto = $g['monto'] ?? 0;
+            $html .= '<tr>';
+            $html .= '<td style="border: 1px solid #ddd;">' . $g['gasto'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $g['moneda'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $g['afecto'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($monto, 2) . '</td>';
+            $html .= '</tr>';
+        }
     }
-    $html .= '</tbody>';
-    $html .= '</table>';
-    $html .= '</div>';
+    $html .= '</tbody></table></div>';
+
+    // Costo
+    $html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
+    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS LOCALES EN DESTINO (COSTO)</h3>';
+    $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
+    $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">GASTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">AFECTO</th><th style="border: 1px solid #ddd; text-align: right;">MONTO</th></tr></thead>';
+    $html .= '<tbody>';
+    foreach ($gastos_datos as $g) {
+        if (strtoupper($g['tipo']) === 'COSTO') {
+            $monto = $g['monto'] ?? 0;
+            $html .= '<tr>';
+            $html .= '<td style="border: 1px solid #ddd;">' . $g['gasto'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $g['moneda'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $g['afecto'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($monto, 2) . '</td>';
+            $html .= '</tr>';
+        }
+    }
+    $html .= '</tbody></table></div>';
 }
 
+// Condiciones Comerciales
+$html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
+$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">CONDICIONES COMERCIALES</h3>';
+// Aquí podrías cargar el estado de crédito si lo necesitas en el futuro
+$html .= '<div><strong>CREDITO:</strong> &nbsp;&nbsp;&nbsp;&nbsp;<strong>CONTADO:</strong> ✓</div>'; // Ejemplo estático
+$html .= '</div>';
+
+// SECCIONES ELIMINADAS SEGÚN REQUERIMIENTO
+/*
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
 $html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS COMERCIALES</h3>';
-$html .= nl2br(sanitizeText($notasComerciales));
+$html .= sanitizeText($notasComerciales);
 $html .= '</div>';
 
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
 $html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>';
-$html .= nl2br(sanitizeText($notasOperaciones));
+$html .= sanitizeText($notasOperaciones);
 $html .= '</div>';
+*/
 
-// --- Cargar condiciones de tráfico ---
+// Cargar y agregar condiciones de tráfico si existen
 $condicionTraficoLimpia = '';
 $tipoTraficoDelServicio = $servicio_datos['trafico'];
 
@@ -409,15 +441,10 @@ if ($tipoTraficoDelServicio) {
             $condicionTraficoLimpia = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $condicionTraficoLimpia);
             $condicionTraficoLimpia = trim($condicionTraficoLimpia);
             $condicionTraficoLimpia = preg_replace('/\s*•\s*/', "\n• ", $condicionTraficoLimpia);
-        } else {
-            $condicionTraficoLimpia = '(No hay condiciones definidas para este tipo de tráfico)';
         }
     } catch (PDOException $e) {
         error_log("[PDF_SERVICIO] Error al buscar condición de tráfico '$tipoTraficoDelServicio' para PDF: " . $e->getMessage());
-        $condicionTraficoLimpia = '(Error al cargar condiciones)';
     }
-} else {
-    $condicionTraficoLimpia = '(Tipo de tráfico no definido)';
 }
 
 if ($condicionTraficoLimpia) {
@@ -435,8 +462,11 @@ if ($condicionTraficoLimpia) {
     $html .= '</div>';
 }
 
+// Salida del PDF
 $pdf->writeHTML($html, true, false, true, false, '');
 
+// Configurar encabezados para descarga
 $pdf->Output('Cotizacion_' . $servicio_datos['concatenado'] . '.pdf', 'I');
+
 exit;
 ?>
