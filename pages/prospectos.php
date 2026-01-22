@@ -669,10 +669,12 @@
             tbody.innerHTML = '';
             let tc = 0, tv = 0, tgc = 0, tgv = 0;
             servicios.forEach((s, index) => {
+                console.log(`📊 [FILA ${index}] Servicio antes de render:`, s);
                 // Asegurar que los campos existan (pueden venir como strings o undefined)
                 // ✅ Corrección robusta para evitar NaN
                 const c = (s.costo && !isNaN(parseFloat(s.costo))) ? parseFloat(s.costo) : 0;
                 const v = (s.venta && !isNaN(parseFloat(s.venta))) ? parseFloat(s.venta) : 0;
+                console.log(`💰 [FILA ${index}] Costo=${c}, Venta=${v}`);
                 const gc = (s.costogastoslocalesdestino && !isNaN(parseFloat(s.costogastoslocalesdestino))) ? parseFloat(s.costogastoslocalesdestino) : 0;
                 const gv = (s.ventasgastoslocalesdestino && !isNaN(parseFloat(s.ventasgastoslocalesdestino))) ? parseFloat(s.ventasgastoslocalesdestino) : 0;
 
@@ -1286,6 +1288,9 @@
                     }
                     const p = data.prospecto;
 
+                    console.log('🔍 [DEBUG] Datos del prospecto:', p);
+                    console.log('🔍 [DEBUG] Servicios recibidos:', data.servicios);
+
                     // === Actualizar campos ocultos ===
                     document.getElementById('prospecto_notas_comerciales').value = p.notas_comerciales || '';
                     document.getElementById('prospecto_notas_operaciones').value = p.notas_operaciones || '';
@@ -1361,12 +1366,15 @@
 
                     // === Servicios ===
                     servicios = (data.servicios || []).map(s => ({
+                        console.log('📄 [DEBUG] Servicio crudo:', s); // ← LOG 1: datos originales
                         ...s,
                         costo: parseFloat(s.costo) || 0,
                         venta: parseFloat(s.venta) || 0,
                         costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
                         ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
                     }));
+                    console.log('⚙️ [DEBUG] Servicio procesado:', processed); // ← LOG 2: después de parseFloat
+                    return processed;
                     actualizarTabla();
 
                     // ✅ CARGAR CONTACTO PRIMARIO DIRECTAMENTE
