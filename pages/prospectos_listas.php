@@ -23,7 +23,7 @@ if (php_sapi_name() !== 'cli') {
                 p.id_ppl,
                 p.fecha_alta AS fecha,
                 p.razon_social AS cliente_nombre,
-                p.operacion,          -- Corregido: estaba escrito 'operacion' en tu código
+                p.operacion,
                 p.tipo_oper,
                 p.concatenado,
                 COALESCE(cost_data.total_costo, 0) AS total_costo,
@@ -55,7 +55,7 @@ if (php_sapi_name() !== 'cli') {
             LEFT JOIN (
                 SELECT 
                     s.id_prospect,
-                    s.servicio AS primer_servicio,
+                    MIN(s.servicio) as primer_servicio,  -- ✅ Corrección clave
                     MIN(s.id_srvc) as min_id
                 FROM servicios s
                 GROUP BY s.id_prospect
