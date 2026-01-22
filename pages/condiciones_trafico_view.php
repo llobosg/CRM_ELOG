@@ -23,7 +23,7 @@ $registros = $pdo->query("SELECT id, trafico, condicion FROM condiciones_trafico
                     <option value="Aéreo">Aéreo</option>
                     <option value="Marítimo FCL">Marítimo FCL</option>
                     <option value="Marítimo LCL">Marítimo LCL</option>
-                    <option value="Terrestre">Terrestre</option>
+                    <option value="Terrestre">Terrestre Nac.</option>
                     <!-- Puedes agregar más tipos si es necesario -->
                 </select>
             </div>
