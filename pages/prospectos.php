@@ -669,10 +669,13 @@
             tbody.innerHTML = '';
             let tc = 0, tv = 0, tgc = 0, tgv = 0;
             servicios.forEach((s, index) => {
-                const c = parseFloat(s.costo) || 0;
-                const v = parseFloat(s.venta) || 0;
-                const gc = parseFloat(s.costogastoslocalesdestino) || 0;
-                const gv = parseFloat(s.ventasgastoslocalesdestino) || 0;
+                // Asegurar que los campos existan (pueden venir como strings o undefined)
+                // ✅ Corrección robusta para evitar NaN
+                const c = (s.costo && !isNaN(parseFloat(s.costo))) ? parseFloat(s.costo) : 0;
+                const v = (s.venta && !isNaN(parseFloat(s.venta))) ? parseFloat(s.venta) : 0;
+                const gc = (s.costogastoslocalesdestino && !isNaN(parseFloat(s.costogastoslocalesdestino))) ? parseFloat(s.costogastoslocalesdestino) : 0;
+                const gv = (s.ventasgastoslocalesdestino && !isNaN(parseFloat(s.ventasgastoslocalesdestino))) ? parseFloat(s.ventasgastoslocalesdestino) : 0;
+
                 tc += c; tv += v; tgc += gc; tgv += gv;
 
                 // ✅ Solo permitir notificar si el servicio ya fue guardado
@@ -701,10 +704,10 @@
                     <td>${s.bultos || ''}</td>
                     <td>${s.peso || ''}</td>
                     <td>${s.volumen || ''}</td>
-                    <td>${c.toFixed(2)}</td>
-                    <td>${v.toFixed(2)}</td>
-                    <td>${gc.toFixed(2)}</td>
-                    <td>${gv.toFixed(2)}</td>
+                    <td style="text-align: right;">${c.toFixed(2)}</td>
+                    <td style="text-align: right;">${v.toFixed(2)}</td>
+                    <td style="text-align: right;">${gc.toFixed(2)}</td>
+                    <td style="text-align: right;">${gv.toFixed(2)}</td>
                     <td>
                         ${iconoCostos}
                         <button type="button" class="btn-edit-servicio" data-index="${index}">✏️</button>
@@ -881,7 +884,7 @@
                 });
             });
 
-        } // Fin de actualizarTabla()
+        }
 
         // --- Función para generar el PDF (v3 - Solicita PDF desde el servidor) ---
         function generarPDFCotizacion(servicioIndex) {
