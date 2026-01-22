@@ -109,8 +109,6 @@
         <h3><i class="fas fa-truck"></i> Servicios Asociados</h3>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
             <div style="display: flex; gap: 0.8rem;">
-                <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
-                <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
                 <button type="button" class="btn-comment" id="btn-adjuntos"  title="Ver Adjuntos del Prospecto"><i class="fas fa-paperclip"></i> Adjuntos</button>
             </div>
             <div style="display: flex; gap: 0.8rem;">
@@ -382,6 +380,8 @@
                     </tfoot>
                 </table>
             </div>
+            <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
+            <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
             <div style="text-align: right; margin-top: 1.5rem;">
                 <button type="button" onclick="cerrarSubmodalCostos()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
                     <i class="fas fa-arrow-left"></i> Volver
