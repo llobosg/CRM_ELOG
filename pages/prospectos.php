@@ -1366,13 +1366,13 @@
 
                     // === Servicios ===
                     servicios = (data.servicios || []).map(s => ({
-                        console.log('📄 [DEBUG] Servicio crudo:', s); // ← LOG 1: datos originales
                         ...s,
                         costo: parseFloat(s.costo) || 0,
                         venta: parseFloat(s.venta) || 0,
                         costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
                         ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
                     }));
+                    console.log('📄 [DEBUG] Servicio crudo:', s); // ← LOG 1: datos originales
                     console.log('⚙️ [DEBUG] Servicio procesado:', processed); // ← LOG 2: después de parseFloat
                     return processed;
                     actualizarTabla();
