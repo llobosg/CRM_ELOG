@@ -399,11 +399,11 @@ if (!empty($gastos_datos)) {
 }
 
 // Condiciones Comerciales
-$html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
-$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">CONDICIONES COMERCIALES</h3>';
+//$html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
+//$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">CONDICIONES COMERCIALES</h3>';
 // Aquí podrías cargar el estado de crédito si lo necesitas en el futuro
-$html .= '<div><strong>CREDITO:</strong> &nbsp;&nbsp;&nbsp;&nbsp;<strong>CONTADO:</strong> ✓</div>'; // Ejemplo estático
-$html .= '</div>';
+//$html .= '<div><strong>CREDITO:</strong> &nbsp;&nbsp;&nbsp;&nbsp;<strong>CONTADO:</strong> ✓</div>'; // Ejemplo estático
+// $html .= '</div>';
 
 // SECCIONES ELIMINADAS SEGÚN REQUERIMIENTO
 /*
