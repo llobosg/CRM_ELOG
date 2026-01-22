@@ -179,27 +179,27 @@
 
     <!-- ========== MODALES ========== -->
     <!-- Modal Comercial -->
-    <div id="modal-comercial" class="modal" style="display:none;">
-        <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
+    <div id="modal-comercial" class="modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 12000;">
+        <div class="modal-content" style="max-width: 650px; margin: 2rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
             <h3><i class="fas fa-comments"></i> Notas Comerciales</h3>
-            <span class="close" onclick="cerrarModalComercial()">&times;</span>
-            <textarea id="notas_comerciales_input" rows="6" placeholder="..."></textarea>
-            <div class="modal-footer">
-                <button type="button" onclick="cerrarModalComercial()">Cerrar</button>
-                <button type="button" onclick="guardarNotasComerciales()">Guardar</button>
+            <span class="close" onclick="cerrarModalComercial()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+            <textarea id="notas_comerciales_input" rows="6" placeholder="..." style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px; margin: 1rem 0;"></textarea>
+            <div class="modal-footer" style="text-align: right; margin-top: 1rem;">
+                <button type="button" onclick="cerrarModalComercial()" style="background: #6c757d; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; margin-right: 0.5rem;">Cerrar</button>
+                <button type="button" onclick="guardarNotasComerciales()" style="background: #007bff; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px;">Guardar</button>
             </div>
         </div>
     </div>
 
     <!-- Modal Operaciones -->
-    <div id="modal-operaciones" class="modal" style="display:none;">
-        <div class="modal-content" style="max-width: 650px; margin: 2rem auto;">
+    <div id="modal-operaciones" class="modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 12000;">
+        <div class="modal-content" style="max-width: 650px; margin: 2rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
             <h3><i class="fas fa-clipboard-list"></i> Notas Operaciones</h3>
-            <span class="close" onclick="cerrarModalOperaciones()">&times;</span>
-            <textarea id="notas_operaciones_input" rows="6" placeholder="..."></textarea>
-            <div class="modal-footer">
-                <button type="button" onclick="cerrarModalOperaciones()">Cerrar</button>
-                <button type="button" onclick="guardarNotasOperaciones()">Guardar</button>
+            <span class="close" onclick="cerrarModalOperaciones()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+            <textarea id="notas_operaciones_input" rows="6" placeholder="..." style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px; margin: 1rem 0;"></textarea>
+            <div class="modal-footer" style="text-align: right; margin-top: 1rem;">
+                <button type="button" onclick="cerrarModalOperaciones()" style="background: #6c757d; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; margin-right: 0.5rem;">Cerrar</button>
+                <button type="button" onclick="guardarNotasOperaciones()" style="background: #007bff; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px;">Guardar</button>
             </div>
         </div>
     </div>
@@ -380,8 +380,8 @@
                     </tfoot>
                 </table>
             </div>
-            <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Comerciales</button>
-            <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Operaciones</button>
+            <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Notas Comerciales</button>
+            <button type="button" class="btn-comment" onclick="abrirModalOperaciones()"><i class="fas fa-clipboard-list"></i> Notas Operaciones</button>
             <div style="text-align: right; margin-top: 1.5rem;">
                 <button type="button" onclick="cerrarSubmodalCostos()" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.95rem;">
                     <i class="fas fa-arrow-left"></i> Volver
