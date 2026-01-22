@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../auth_check.php';
+require_once __DIR__ . '/includes/auth_check.php';
 // ✅ Nada más relacionado con roles
 ?>
 <!-- Mini consola de depuración -->
