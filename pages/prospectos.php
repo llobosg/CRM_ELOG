@@ -535,6 +535,7 @@
         let estadoProspecto = 'Pendiente';
         let datosRouteOrder = null; // ← Variable global
         window.editarServicio = editarServicio;
+        const USER_ROLE = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
 
         // ===================================================================
         // === 2. FUNCIONES AUXILIARES ===

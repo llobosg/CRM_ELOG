@@ -404,7 +404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             : 'Prospecto creado correctamente';
 
         $redirect_url = $_SERVER['PHP_SELF'] . "?page=prospectos&exito=" . urlencode($mensaje_exito) . "&id_ppl=" . $id_ppl;
-        header("Location: " . $redirect_url);
+        header("Location: ?page=prospectos&id_ppl=" . $id_ppl);
         exit;
 
     } catch (Exception $e) {
