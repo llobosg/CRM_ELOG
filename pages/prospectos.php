@@ -701,7 +701,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         } else if (s.estado_costos === 'revisado') {
                             iconoCostos = '<i class="fas fa-check-double" style="color: #006600;" title="Aprobado por Pricing"></i>';
                         }
-                        }
                 }
                 console.log('🔍 [DEBUG] Estado costos:', s.estado_costos);
                 const tr = document.createElement('tr');
