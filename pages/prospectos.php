@@ -1716,11 +1716,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
             // ✅ Incluir costos y gastos en el objeto de datos
             // Calcular antes del objeto
-            const tieneCostosReales = costosServicio.some(c => 
-                (parseFloat(c.costo) || 0) > 0 && 
-                (parseFloat(c.tarifa) || 0) > 0 && 
-                (parseFloat(c.qty) || 0) > 0
-            );
+            const tieneCostosReales = costosServicio.some(c => {
+                const costo = parseFloat(c.costo) || 0;
+                const tarifa = parseFloat(c.tarifa) || 0;
+                const qty = parseFloat(c.qty) || 0;
+                return costo > 0 && tarifa > 0 && qty > 0;
+            });
             // Recalcular costo y venta desde los costos individuales
             const totalCosto = costosServicio.reduce((sum, c) => sum + ((parseFloat(c.qty) || 0) * (parseFloat(c.costo) || 0)), 0);
             const totalVenta = costosServicio.reduce((sum, c) => sum + ((parseFloat(c.qty) || 0) * (parseFloat(c.tarifa) || 0)), 0);
@@ -1826,6 +1827,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 } else {
                     error('Error: ' + (res.message || 'Intente nuevamente'));
                 }
+                console.log('🔍 [DEBUG] CostosServicio:', costosServicio);
+                console.log('🔍 [DEBUG] TieneCostosReales:', tieneCostosReales);
             })
             .catch(err => {
                 console.error('Error al guardar servicio:', err);
