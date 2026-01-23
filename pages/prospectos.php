@@ -1721,6 +1721,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 (parseFloat(c.tarifa) || 0) > 0 && 
                 (parseFloat(c.qty) || 0) > 0
             );
+            // Recalcular costo y venta desde los costos individuales
+            const totalCosto = costosServicio.reduce((sum, c) => sum + ((parseFloat(c.qty) || 0) * (parseFloat(c.costo) || 0)), 0);
+            const totalVenta = costosServicio.reduce((sum, c) => sum + ((parseFloat(c.qty) || 0) * (parseFloat(c.tarifa) || 0)), 0);
 
             const data = {
                 modo: servicioEnEdicion !== null ? 'editar' : 'crear',
@@ -1752,8 +1755,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 transportador: document.getElementById('serv_transportador').value,
                 incoterm: document.getElementById('serv_incoterm').value,
                 ref_cliente: document.getElementById('serv_ref_cliente').value,
-                costo: costosServicio.reduce((sum, c) => sum + (c.total_costo || 0), 0),
-                venta: costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0),
+
+                costo: totalCosto,
+                venta: totalVenta,
+
                 costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
                 ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
                 // ✅ ¡ESTAS SON LAS LÍNEAS CLAVE!
