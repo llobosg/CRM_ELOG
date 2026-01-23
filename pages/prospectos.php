@@ -1715,12 +1715,20 @@ require_once __DIR__ . '/../includes/auth_check.php';
             }
 
             // ✅ Incluir costos y gastos en el objeto de datos
-            // Calcular antes del objeto
+            function parseNumber(value) {
+                if (typeof value === 'number') return value;
+                if (typeof value === 'string') {
+                    const cleaned = value.trim().replace(/,/g, '');
+                    return cleaned ? parseFloat(cleaned) : 0;
+                }
+                return 0;
+            }
+
             const tieneCostosReales = costosServicio.some(c => {
-                const costo = parseFloat(c.costo) || 0;
-                const tarifa = parseFloat(c.tarifa) || 0;
-                const qty = parseFloat(c.qty) || 0;
-                return costo > 0 && tarifa > 0 && qty > 0;
+                const qty = parseNumber(c.qty);
+                const costo = parseNumber(c.costo);
+                console.log('🔍 [DEBUG] Qty:', qty, 'Costo:', costo, 'Válido:', (qty > 0 && costo > 0));
+                return qty > 0 && costo > 0;
             });
             // Recalcular costo y venta desde los costos individuales
             const totalCosto = costosServicio.reduce((sum, c) => sum + ((parseFloat(c.qty) || 0) * (parseFloat(c.costo) || 0)), 0);
@@ -1829,6 +1837,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 }
                 console.log('🔍 [DEBUG] CostosServicio:', costosServicio);
                 console.log('🔍 [DEBUG] TieneCostosReales:', tieneCostosReales);
+                console.log('🔍 [DEBUG] Costo crudo:', c.costo, 'Qty crudo:', c.qty);
+                console.log('🔍 [DEBUG] Parseado:', parseFloat(c.costo), parseFloat(c.qty));
             })
             .catch(err => {
                 console.error('Error al guardar servicio:', err);
