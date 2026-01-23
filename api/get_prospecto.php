@@ -51,7 +51,6 @@ try {
 
     error_log("DEBUG SERVICIOS CON COSTOS: " . json_encode($servicios));
 
-
     // === Cargar servicios ===
     $stmt = $pdo->prepare("
         SELECT * FROM servicios 
