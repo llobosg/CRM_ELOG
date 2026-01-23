@@ -6,11 +6,15 @@
         <li><a href="?page=ficha_cliente" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500;">Ficha Cliente</a></li>
         <li><a href="?page=prospectos_listas" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500;">Prospectos</a></li>
 
-        <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin_finanzas'): ?>
+        <?php if ($_SESSION['rol'] === 'admin' || $_SESSION['rol'] === 'admin_finanzas'): ?>
         <li><a href="?page=facturacion" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500;">Facturación</a></li>
         <?php endif; ?>
         
-        <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin'): ?>
+        <?php if ($_SESSION['rol'] === 'admin' || $_SESSION['rol'] === 'admin_finanzas'): ?>
+        <li><a href="?page=ficha_cliente" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500;">Ficha Clientes</a></li>
+        <?php endif; ?>
+
+        <?php if ($_SESSION['rol'] === 'admin' || $_SESSION['rol'] === 'comercial' || $_SESSION['rol'] === 'pricing'): ?>
         <li style="position: relative;">
             <a href="#" id="menu-tablas" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500; cursor: pointer;">
                 Tablas <i class="fas fa-caret-down" style="margin-left: 0.4rem;"></i>
