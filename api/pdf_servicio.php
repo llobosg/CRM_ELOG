@@ -340,7 +340,7 @@ foreach ($costos_datos as $c) {
 
 $html .= '</tbody>';
 $html .= '<tfoot>';
-$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTALES:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_costos, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
+$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="2">TOTALES:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_costos, 2) . '</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
 // FILAS ELIMINADAS SEGÚN REQUERIMIENTO
 /*
 <tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTAL PROFIT:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta - $total_costos, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>
