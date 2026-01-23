@@ -1685,25 +1685,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const totalVenta = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
             const rutCliente = document.getElementById('rut_empresa')?.value.trim();
 
-            // Validar crédito si aplica
-            if (rutCliente && totalVenta > 0) {
-                fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.error) {
-                            error(data.error);
-                            return;
-                        }
-                        if (totalVenta > data.saldo_credito) {
-                            error(`Sobregiro: El servicio excede el crédito disponible (${data.saldo_credito}).`);
-                            return;
-                        }
-                        enviarServicioABD();
-                    })
-                    .catch(() => error('Error al verificar crédito'));
-            } else {
-                enviarServicioABD();
-            }
+            enviarServicioABD();
         }
 
         function enviarServicioABD() {
@@ -2498,6 +2480,28 @@ require_once __DIR__ . '/../includes/auth_check.php';
             window.location.href = '/?page=prospectos_listas';
         }
 
+        function validarCreditoAntesDeCerrar(rutCliente, totalVenta, callback) {
+            if (!rutCliente || totalVenta <= 0) {
+                callback(); // Sin validación necesaria
+                return;
+            }
+
+            fetch(`/api/get_saldo_credito.php?rut=${encodeURIComponent(rutCliente)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        error(data.error);
+                        return;
+                    }
+                    if (totalVenta > data.saldo_credito) {
+                        error(`Sobregiro: El servicio excede el crédito disponible (${data.saldo_credito}).`);
+                        return;
+                    }
+                    callback(); // Validación exitosa
+                })
+                .catch(() => error('Error al verificar crédito'));
+        }
+        
         // ===================================================================
         // === 7. INICIALIZACIÓN ===
         // ===================================================================
@@ -2595,6 +2599,18 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     if (estado === 'Enviado' || estado === 'CerradoOK') {
                         const tieneServiciosSinCostos = servicios.some(s => !s.costos || s.costos.length === 0);
                         if (tieneServiciosSinCostos) return error('No se puede enviar el prospecto: todos los servicios deben tener costos asociados.');
+                    }
+                    
+                    // ✅ Validación Estado=CerradoOK y crédito
+                    if (estado === 'CerradoOK') {
+                        // Calcular totalVenta del prospecto
+                        const totalVenta = servicios.reduce((sum, s) => sum + (parseFloat(s.venta) || 0), 0);
+                        const rutCliente = document.getElementById('rut_empresa')?.value;
+
+                        validarCreditoAntesDeCerrar(rutCliente, totalVenta, () => {
+                            // Aquí va la lógica para cambiar el estado a "CerradoOK"
+                            cambiarEstadoProspecto('CerradoOK');
+                        });
                     }
 
                     const form = document.getElementById('form-prospecto');
