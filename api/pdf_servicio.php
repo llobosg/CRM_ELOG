@@ -289,13 +289,7 @@ $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>POD:</strong></td>
 $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['destino'] . '</td>';
 $html .= '</tr>';
 
-// Fila interna 6: Transportador y Agente
-$html .= '<tr>';
-$html .= '<td style="width: 25%; padding-right: 2mm;"><strong>' . $tipoTransporteTexto . ':</strong></td>';
-$html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['transportador'] . '</td>';
-$html .= '<td style="width: 25%; padding-right: 2mm;"><strong>AGENTE:</strong></td>';
-$html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['agente'] . '</td>';
-$html .= '</tr>';
+
 
 $html .= '</table>';
 $html .= '</td></tr>';
