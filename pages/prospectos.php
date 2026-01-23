@@ -74,7 +74,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <label>Dirección</label>
             <input type="text" name="direccion" id="direccion" readonly style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Estado</label>
-            <select name="estado" id="estado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            <select name="estado" id="estado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; box-sizing: border-box;">
                 <option value="Pendiente">Pendiente</option>
                 <option value="Enviado">Enviado</option>
                 <option value="Devuelto_pendiente">Devuelto_pendiente</option>
