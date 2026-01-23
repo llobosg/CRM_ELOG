@@ -317,7 +317,7 @@ $html .= '<div style="background-color: #e9ecef; height: 1px;"></div>';
 $html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
 $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS-VENTAS INTERNACIONALES</h3>';
 $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
-$html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">CONCEPTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">QTY</th><th style="border: 1px solid #ddd; text-align: right;">COSTO</th><th style="border: 1px solid #ddd; text-align: right;">VENTA</th><th style="border: 1px solid #ddd; text-align: center;">APLICA</th></tr></thead>';
+$html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">CONCEPTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">QTY</th><th style="border: 1px solid #ddd; text-align: right;">VENTA</th><th style="border: 1px solid #ddd; text-align: center;">APLICA</th></tr></thead>';
 $html .= '<tbody>';
 
 $total_costos = 0;
@@ -333,7 +333,6 @@ foreach ($costos_datos as $c) {
     $html .= '<td style="border: 1px solid #ddd;">' . $c['concepto'] . '</td>';
     $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['moneda'] . '</td>';
     $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . number_format($qty, 2) . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($costo, 2) . '</td>';
     $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($tarifa, 2) . '</td>';
     $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['aplica'] . '</td>';
     $html .= '</tr>';
@@ -370,30 +369,8 @@ if (!empty($gastos_datos)) {
             $html .= '</tr>';
         }
     }
-    $html .= '</tbody></table></div>';
-
-    
+    $html .= '</tbody></table></div>'; 
 }
-
-// Condiciones Comerciales
-//$html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
-//$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">CONDICIONES COMERCIALES</h3>';
-// Aquí podrías cargar el estado de crédito si lo necesitas en el futuro
-//$html .= '<div><strong>CREDITO:</strong> &nbsp;&nbsp;&nbsp;&nbsp;<strong>CONTADO:</strong> ✓</div>'; // Ejemplo estático
-// $html .= '</div>';
-
-// SECCIONES ELIMINADAS SEGÚN REQUERIMIENTO
-/*
-$html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
-$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS COMERCIALES</h3>';
-$html .= sanitizeText($notasComerciales);
-$html .= '</div>';
-
-$html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
-$html .= '<h3 style="font-size: 10pt; text-decoration: underline;">NOTAS A OPERACIONES</h3>';
-$html .= sanitizeText($notasOperaciones);
-$html .= '</div>';
-*/
 
 // Cargar y agregar condiciones de tráfico si existen
 $condicionTraficoLimpia = '';
