@@ -16,12 +16,13 @@
             $stmt_nombre = $pdo->prepare("SELECT nombre FROM usuarios WHERE nombre = ?");
             $stmt_nombre->execute([$nombre_usuario]); // ✅ Usar $nombre_usuario aquí
             $fila_nombre = $stmt_nombre->fetch(PDO::FETCH_ASSOC);
+
             if ($fila_nombre && !empty($fila_nombre['nombre'])) {
                 $nombre_usuario = sanitizeText($fila_nombre['nombre']); // ✅ Actualizar $nombre_usuario con el nombre real
             } else {
                 // Si no se encuentra un nombre en la base de datos, dejar el valor de $_SESSION['user'] como fallback o dejar un mensaje
                 // $nombre_usuario = sanitizeText($_SESSION['user'] ?? 'Usuario Sin Nombre'); // Opcional: usar correo como fallback
-                error_log("[DASHBOARD] Advertencia: No se encontr— nombre para el usuario ID: $id_usuario. Usando fallback.");
+                error_log("[DASHBOARD] Advertencia: No se encontró nombre para el usuario ID: $id_usuario. Usando fallback.");
             }
         } catch (PDOException $e) {
             // Manejar error de base de datos al obtener nombre
@@ -31,7 +32,7 @@
     } else {
         // Si no hay $id_usuario en la sesi¢n, no se puede buscar en la base de datos
         // Dejar el valor de $nombre_usuario como est‡ (posiblemente $_SESSION['user'] o 'Usuario')
-        error_log("[DASHBOARD] Advertencia: No hay user_id en la sesi¢n, no se puede cargar el nombre real del usuario.");
+        error_log("[DASHBOARD] Advertencia: No hay user_id en la sesión, no se puede cargar el nombre real del usuario.");
     }
     // --- Fin Obtener nombre ---
 
