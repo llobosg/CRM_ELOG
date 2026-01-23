@@ -1,6 +1,6 @@
 <?php
 $rol = $_SESSION['rol'] ?? '';
-if ($rol !== 'admin' && $rol !== 'comercial' && $rol !== 'pricing') {
+if ($rol !== 'admin' && $rol !== 'comercial' && $rol !== 'pricing' && $rol !== 'Operaciones' && $rol !== 'admin_finanzas') {
     http_response_code(403);
     exit('Acceso denegado.');
 }

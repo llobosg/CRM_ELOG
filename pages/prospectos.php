@@ -45,6 +45,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <input type="hidden" id="prospecto_notas_comerciales" value="<?php echo htmlspecialchars($prospecto['notas_comerciales'] ?? ''); ?>">
     <input type="hidden" id="prospecto_notas_operaciones" value="<?php echo htmlspecialchars($prospecto['notas_operaciones'] ?? ''); ?>">
     <input type="hidden" id="serv_sector" value="" />
+    <input type="hidden" id="serv_transito" value="" />
+    <input type="hidden" id="serv_mercancia" value="" />
 
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem; position: relative;">
@@ -230,13 +232,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <label>Medio Transporte</label>
                 <select id="serv_medio_transporte" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;">
                     <option value="">Seleccionar</option>
-                </select>
-                <label>Tránsito</label>
-                <input type="text" id="serv_transito" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                </select>                
                 <label>Frecuencia</label>
                 <input type="text" id="serv_frecuencia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-                <label>Lugar Carga</label>
-                <input type="text" id="serv_lugar_carga" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                <label>Dirección carga</label>
+                <input type="text" id="serv_lugar_carga" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
 
                 <!-- Fila 3 -->
                 <label>Origen</label>
@@ -253,15 +253,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <input type="text" id="serv_pais_destino" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
                 
                 <!-- Fila 4 -->
-                <label>Mercancía</label>
-                <input type="text" id="serv_mercancia" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
+                 <label>Validez</label>
+                <input type="date" id="serv_validez" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Incoterm</label>
                 <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-                <label>Validez</label>
-                <input type="date" id="serv_validez" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Ref. Cliente</label>
                 <input type="text" id="serv_ref_cliente" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
-
+                <div></div>
+                <div></div>
                 <!-- Fila 5 -->
                 <label>Bultos</label>
                 <input type="number" id="serv_bultos" min="1" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
@@ -296,7 +295,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <select id="serv_agente" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; width: 100%;">
                     <option value="">Seleccionar</option>
                 </select>
-                <label>Transportador</label>
+
+                <!-- Fila 8 -->
+                <label>Observaciones</label>
                 <input type="text" id="serv_transportador" style="grid-column: span 3; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
             </div>
 
@@ -305,8 +306,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     <button type="button" class="btn-comment" id="btn-cubicador" onclick="abrirSubmodalCubicador()">
                         <i class="fas fa-calculator"></i> Cubicador
                     </button>
-                    <button type="button" class="btn-comment" id="btn-costos-servicio-dentro"><i class="fas fa-calculator"></i> Costos - Ventas</button>
-                    <button type="button" class="btn-comment" id="btn-gastos-locales-dentro"><i class="fas fa-file-invoice-dollar"></i> Gastos Locales</button>
+                    <button type="button" class="btn-comment" id="btn-costos-servicio-dentro"><i class="fas fa-calculator"></i> Gastos-Ventas Internac.</button>
+                    <button type="button" class="btn-comment" id="btn-gastos-locales-dentro"><i class="fas fa-file-invoice-dollar"></i> Costos Locales</button>
                     <button type="button" class="btn-comment" id="btn-notas-servicio-dentro" onclick="abrirSubmodalNotasServicio()"><i class="fas fa-sticky-note"></i> Notas del Servicio</button>
                     <!-- NUEVO: Botón para Route Order -->
                     <button type="button" class="btn-comment" id="btn-route-order" onclick="abrirSubmodalRouteOrder()"><i class="fas fa-route"></i> Router Order</button>
