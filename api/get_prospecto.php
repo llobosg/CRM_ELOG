@@ -49,17 +49,6 @@ try {
         'servicios' => $servicios
     ]);
 
-    error_log("DEBUG SERVICIOS CON COSTOS: " . json_encode($servicios));
-
-    // === Cargar servicios ===
-    $stmt = $pdo->prepare("
-        SELECT * FROM servicios 
-        WHERE id_prospect = ?
-        ORDER BY id_srvc
-    ");
-    $stmt->execute([$id]);
-    $servicios = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
     // === Cargar costos y gastos por servicio ===
     $serviciosConDetalles = [];
     foreach ($servicios as $s) {
