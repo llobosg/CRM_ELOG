@@ -1715,6 +1715,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             }
 
             // ✅ Incluir costos y gastos en el objeto de datos
+            // === Función auxiliar para parsear números de forma segura ===
             function parseNumber(value) {
                 if (typeof value === 'number') return value;
                 if (typeof value === 'string') {
@@ -1724,15 +1725,18 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 return 0;
             }
 
+            // === Verificar si hay costos reales (qty > 0 y costo > 0) ===
             const tieneCostosReales = costosServicio.some(c => {
                 const qty = parseNumber(c.qty);
                 const costo = parseNumber(c.costo);
-                console.log('🔍 [DEBUG] Qty:', qty, 'Costo:', costo, 'Válido:', (qty > 0 && costo > 0));
+                // Log interno (opcional, para depuración)
+                // console.log('🔍 [DEBUG] Costo item - Qty:', qty, 'Costo:', costo, 'Válido:', (qty > 0 && costo > 0));
                 return qty > 0 && costo > 0;
             });
-            // Recalcular costo y venta desde los costos individuales
-            const totalCosto = costosServicio.reduce((sum, c) => sum + ((parseFloat(c.qty) || 0) * (parseFloat(c.costo) || 0)), 0);
-            const totalVenta = costosServicio.reduce((sum, c) => sum + ((parseFloat(c.qty) || 0) * (parseFloat(c.tarifa) || 0)), 0);
+
+            // === Recalcular costo y venta totales desde los costos individuales ===
+            const totalCosto = costosServicio.reduce((sum, c) => sum + (parseNumber(c.qty) * parseNumber(c.costo)), 0);
+            const totalVenta = costosServicio.reduce((sum, c) => sum + (parseNumber(c.qty) * parseNumber(c.tarifa)), 0);
 
             const data = {
                 modo: servicioEnEdicion !== null ? 'editar' : 'crear',
