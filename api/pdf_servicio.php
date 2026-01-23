@@ -291,10 +291,10 @@ $html .= '</tr>';
 
 // Fila interna 6: Transportador y Agente
 $html .= '<tr>';
-// $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>' . $tipoTransporteTexto . ':</strong></td>';
-// $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['transportador'] . '</td>';
-// $html .= '<td style="width: 25%; padding-right: 2mm;"><strong>AGENTE:</strong></td>';
-// $html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['agente'] . '</td>';
+$html .= '<td style="width: 25%; padding-right: 2mm;"><strong>' . $tipoTransporteTexto . ':</strong></td>';
+$html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['transportador'] . '</td>';
+$html .= '<td style="width: 25%; padding-right: 2mm;"><strong>AGENTE:</strong></td>';
+$html .= '<td style="width: 25%; text-align: left;">' . $servicio_datos['agente'] . '</td>';
 $html .= '</tr>';
 
 $html .= '</table>';
@@ -379,23 +379,23 @@ if (!empty($gastos_datos)) {
     $html .= '</tbody></table></div>';
 
     // Costo
-    // $html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
-    // $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS LOCALES EN DESTINO (COSTO)</h3>';
-    // $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
-    // $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">GASTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">AFECTO</th><th style="border: 1px solid #ddd; text-align: right;">MONTO</th></tr></thead>';
-    // $html .= '<tbody>';
-    // foreach ($gastos_datos as $g) {
-    //     if (strtoupper($g['tipo']) === 'COSTO') {
-    //         $monto = $g['monto'] ?? 0;
-    //         $html .= '<tr>';
-    //         $html .= '<td style="border: 1px solid #ddd;">' . $g['gasto'] . '</td>';
-    //         $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $g['moneda'] . '</td>';
-    //         $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $g['afecto'] . '</td>';
-    //         $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($monto, 2) . '</td>';
-    //         $html .= '</tr>';
-    //     }
-    // }
-    // $html .= '</tbody></table></div>';
+    $html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
+    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS LOCALES EN DESTINO (COSTO)</h3>';
+    $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
+    $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">GASTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">AFECTO</th><th style="border: 1px solid #ddd; text-align: right;">MONTO</th></tr></thead>';
+    $html .= '<tbody>';
+    foreach ($gastos_datos as $g) {
+        if (strtoupper($g['tipo']) === 'COSTO') {
+            $monto = $g['monto'] ?? 0;
+            $html .= '<tr>';
+            $html .= '<td style="border: 1px solid #ddd;">' . $g['gasto'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $g['moneda'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $g['afecto'] . '</td>';
+            $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($monto, 2) . '</td>';
+            $html .= '</tr>';
+        }
+    }
+    $html .= '</tbody></table></div>';
 }
 
 // Condiciones Comerciales
