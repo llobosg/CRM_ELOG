@@ -3,7 +3,6 @@
 <nav style="background: #3a4f63; padding: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
     <ul style="list-style: none; margin: 0; padding: 0; display: flex; align-items: center;">
         <li><a href="?page=dashboard" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500;">Dashboard</a></li>
-        <li><a href="?page=ficha_cliente" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500;">Ficha Cliente</a></li>
         <li><a href="?page=prospectos_listas" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500;">Prospectos</a></li>
 
         <?php if ($_SESSION['rol'] === 'admin' || $_SESSION['rol'] === 'admin_finanzas'): ?>
