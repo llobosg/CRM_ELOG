@@ -699,7 +699,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         } else if (s.estado_costos === 'completado') {
                             iconoCostos = '<i class="fas fa-check-circle" style="color: #009966; cursor: pointer;" title="Costos listos para informar al Comercial"></i>';
                         } else if (s.estado_costos === 'revisado') {
-                            iconoCostos = '<i class="fas fa-check-double" style="color: #006600;" title="Aprobado por el Comercial"></i>';
+                            iconoCostos = '<i class="fas fa-check-double" style="color: #006600;" title="Aprobado por Pricing"></i>';
+                        }
                         }
                 }
                 console.log('🔍 [DEBUG] Estado costos:', s.estado_costos);
