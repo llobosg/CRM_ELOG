@@ -43,6 +43,15 @@ try {
     $stmt->execute([$id]);
     $servicios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    echo json_encode([
+        'success' => true,
+        'prospecto' => $prospecto,
+        'servicios' => $servicios
+    ]);
+
+    error_log("DEBUG SERVICIOS CON COSTOS: " . json_encode($servicios));
+
+
     // === Cargar servicios ===
     $stmt = $pdo->prepare("
         SELECT * FROM servicios 
