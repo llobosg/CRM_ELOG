@@ -14,7 +14,7 @@
         <li><a href="?page=ficha_cliente" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500;">Ficha Clientes</a></li>
         <?php endif; ?>
 
-        <?php if ($_SESSION['rol'] === 'admin' || $_SESSION['rol'] === 'comercial' || $_SESSION['rol'] === 'pricing'): ?>
+        <?php if ($_SESSION['rol'] === 'admin' || $_SESSION['rol'] === 'pricing'): ?>
         <li style="position: relative;">
             <a href="#" id="menu-tablas" style="color: white; text-decoration: none; padding: 1rem 1.2rem; display: block; font-weight: 500; cursor: pointer;">
                 Tablas <i class="fas fa-caret-down" style="margin-left: 0.4rem;"></i>
