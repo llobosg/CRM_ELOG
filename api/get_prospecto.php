@@ -25,7 +25,58 @@ try {
     // === Cargar servicios con costo y venta calculados desde costos_servicios ===
     $stmt = $pdo->prepare("
         SELECT 
-            s.*,
+            s.id_ppl,
+            s.id_srvc,
+            s.id_prospect,
+            s.servicio,
+            s.nombre_corto,
+            s.tipo,
+            s.trafico,
+            s.sub_trafico,
+            s.base_calculo,
+            s.moneda,
+            s.tarifa,
+            s.iva,
+            s.estado,
+            s.costo AS costo_servicio,
+            s.venta AS venta_servicio,
+            s.costogastoslocalesdestino,
+            s.ventasgastoslocalesdestino,
+            s.desconsolidac,
+            s.commodity,
+            s.origen,
+            s.pais_origen,
+            s.destino,
+            s.pais_destino,
+            s.transito,
+            s.frecuencia,
+            s.lugar_carga,
+            s.sector,
+            s.mercancia,
+            s.bultos,
+            s.peso,
+            s.volumen,
+            s.dimensiones,
+            s.agente,
+            s.aol,
+            s.aod,
+            s.transportador,
+            s.incoterm,
+            s.ref_cliente,
+            s.proveedor_nac,
+            s.tipo_cambio,
+            s.ciudad,
+            s.pais,
+            s.direc_serv,
+            s.estado_costos,  -- ✅ Campo explícito
+            s.nota_srvc,
+            s.solicitado_por,
+            s.fecha_solicitado,
+            s.completado_por,
+            s.fecha_completado,
+            s.revisado_por,
+            s.fecha_revisado,
+            s.validez,
             COALESCE(cs_data.total_costo, 0) AS costo,
             COALESCE(cs_data.total_venta, 0) AS venta
         FROM servicios s
@@ -42,6 +93,7 @@ try {
     ");
     $stmt->execute([$id]);
     $servicios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("DEBUG ESTADO COSTOS: " . json_encode(array_column($servicios, 'estado_costos')));
 
     // === Cargar costos y gastos por servicio ===
     $serviciosConDetalles = [];
