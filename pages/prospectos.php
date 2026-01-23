@@ -1774,6 +1774,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                 costogastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Costo').reduce((sum, g) => sum + (g.monto || 0), 0),
                 ventasgastoslocalesdestino: gastosLocales.filter(g => g.tipo === 'Ventas').reduce((sum, g) => sum + (g.monto || 0), 0),
+
                 // ✅ ¡ESTAS SON LAS LÍNEAS CLAVE!
                 costos: [...costosServicio],
                 gastos_locales: [...gastosLocales],
@@ -1841,8 +1842,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 }
                 console.log('🔍 [DEBUG] CostosServicio:', costosServicio);
                 console.log('🔍 [DEBUG] TieneCostosReales:', tieneCostosReales);
-                console.log('🔍 [DEBUG] Costo crudo:', c.costo, 'Qty crudo:', c.qty);
-                console.log('🔍 [DEBUG] Parseado:', parseFloat(c.costo), parseFloat(c.qty));
             })
             .catch(err => {
                 console.error('Error al guardar servicio:', err);
