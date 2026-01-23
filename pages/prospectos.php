@@ -1848,15 +1848,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     }
                 });
 
-            // ✅ Determinar permisos por rol
+            // ? Determinar permisos por rol
             const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
+
+            // ? Solo Pricing y Admin pueden editar qty, costo y tarifa
             const esPricingOAdmin = (rolUsuario === 'pricing' || rolUsuario === 'admin');
 
-            // ✅ Deshabilitar campos de costo (solo edición para Pricing/Admin)
-            const camposCosto = ['costo_concepto', 'costo_qty', 'costo_costo', 'costo_aplica'];
-            camposCosto.forEach(id => {
+            // ? Comercial, Finanzas y Admin pueden elegir concepto y aplica
+            const puedeEditarConceptoAplica = (rolUsuario === 'comercial' || rolUsuario === 'finanzas' || rolUsuario === 'admin');
+
+            // ? Deshabilitar solo qty, costo y tarifa para no-Pricing
+            ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = !esPricingOAdmin;
+            });
+
+            // ? Habilitar concepto y aplica para Comercial, Finanzas y Admin
+            ['costo_concepto', 'costo_aplica'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = !puedeEditarConceptoAplica;
             });
 
             // ✅ El campo "tarifa" siempre editable
