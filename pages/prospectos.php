@@ -702,7 +702,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             iconoCostos = '<i class="fas fa-check-double" style="color: #006600;" title="Aprobado por el Comercial"></i>';
                         }
                 }
-
+                console.log('🔍 [DEBUG] Estado costos:', s.estado_costos);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${s.servicio || ''}</td>
