@@ -1752,7 +1752,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 // ✅ ¡ESTAS SON LAS LÍNEAS CLAVE!
                 costos: [...costosServicio],
                 gastos_locales: [...gastosLocales],
-                estado_costos: costosServicio.length > 0 ? 'completado' : 'pendiente',
+                // Solo marcar como "completado" si hay costos con valores reales
+                const tieneCostosReales = costosServicio.some(c => 
+                    (parseFloat(c.costo) || 0) > 0 && 
+                    (parseFloat(c.tarifa) || 0) > 0 && 
+                    (parseFloat(c.qty) || 0) > 0
+                );
+                estado_costos: tieneCostosReales ? 'completado' : 'pendiente',
                 nota_srvc: servicios[servicioEnEdicion]?.nota_srvc || '', // Tomar la nota del servicio en edición o vacío si es nuevo
                 validez: document.getElementById('serv_validez').value
             };
