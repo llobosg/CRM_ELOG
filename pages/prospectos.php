@@ -1788,12 +1788,34 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         direccion: prospectoDireccion,
                         contacto_nombre: prospectoContacto
                     };
-                    if (servicioEnEdicion !== null) {
-                        servicios[servicioEnEdicion] = servicioGuardado;
+
+                    // ✅ Recargar todos los servicios desde la API
+                    const idPpl = document.getElementById('id_ppl')?.value;
+                    if (idPpl && idPpl !== '0') {
+                        fetch(`/api/get_prospecto.php?id=${idPpl}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.success && data.servicios) {
+                                    servicios = data.servicios.map(s => ({
+                                        ...s,
+                                        costo: parseFloat(s.costo) || 0,
+                                        venta: parseFloat(s.venta) || 0,
+                                        costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                                        ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0
+                                    }));
+                                    actualizarTabla();
+                                }
+                            })
+                            .catch(err => error('Error al recargar servicios'));
                     } else {
-                        servicios.push(servicioGuardado);
+                        // Fallback si no hay id_ppl
+                        if (servicioEnEdicion !== null) {
+                            servicios[servicioEnEdicion] = servicioGuardado;
+                        } else {
+                            servicios.push(servicioGuardado);
+                        }
+                        actualizarTabla();
                     }
-                    actualizarTabla();
                     cerrarModalServicio();
                     exito('Servicio guardado en la base de datos');
                 } else {
