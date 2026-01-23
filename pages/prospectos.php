@@ -2501,7 +2501,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 })
                 .catch(() => error('Error al verificar crédito'));
         }
-        
+
         // ===================================================================
         // === 7. INICIALIZACIÓN ===
         // ===================================================================
@@ -2609,7 +2609,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                         validarCreditoAntesDeCerrar(rutCliente, totalVenta, () => {
                             // Aquí va la lógica para cambiar el estado a "CerradoOK"
-                            cambiarEstadoProspecto('CerradoOK');
+                            //cambiarEstadoProspecto('CerradoOK');
                         });
                     }
 
