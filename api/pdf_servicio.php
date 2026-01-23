@@ -361,7 +361,7 @@ $html .= '</div>';
 if (!empty($gastos_datos)) {
     // Ventas
     $html .= '<div style="margin-top: 4mm; font-size: 9pt;">';
-    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS LOCALES EN DESTINO (VENTAS)</h3>';
+    $html .= '<h3 style="font-size: 10pt; margin-bottom: 2mm;">GASTOS LOCALES EN DESTINO</h3>';
     $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 9pt;">';
     $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">GASTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">AFECTO</th><th style="border: 1px solid #ddd; text-align: right;">MONTO</th></tr></thead>';
     $html .= '<tbody>';
