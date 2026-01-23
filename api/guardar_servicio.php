@@ -7,10 +7,6 @@ ob_start();
 // Establecer encabezado de JSON de antemano (aunque se puede sobrescribir si hay error fatal)
 header('Content-Type: application/json');
 
-// Opcional: Subir el nivel de error_reporting para ver más detalles en los logs
-// error_reporting(E_ALL);
-// ini_set('display_errors', 0); // Asegúrate que display_errors esté en 0 en producción para no enviar HTML
-
 try {
     // Incluir config y verificar PDO inmediatamente
     require_once __DIR__ . '/../config.php';
@@ -166,8 +162,8 @@ try {
             $data['estado'] ?? 'Activo',
             (float)($data['costo'] ?? 0),
             (float)($data['venta'] ?? 0),
-            (float)($data['costogastoslocalesdestino'] ?? 0), // Se asigna a cgld_clp si es CLP en el cálculo
-            (float)($data['ventasgastoslocalesdestino'] ?? 0), // Se asigna a vgld_clp si es CLP en el cálculo
+            (float)($data['costogastoslocalesdestino'] ?? 0),
+            (float)($data['ventasgastoslocalesdestino'] ?? 0),
             '0',
             $data['commodity'] ?? '',
             $data['origen'] ?? '',
@@ -208,8 +204,8 @@ try {
             $data['fecha_completado'] ?? null,
             $data['revisado_por'] ?? null,
             $data['fecha_revisado'] ?? null,
-            $id_srvc,
-            $data['validez'] ?? null
+            $data['validez'] ?? null,
+            $id_srvc
         ];
 
         error_log("[GUARDAR_SERVICIO] Parámetros para UPDATE: " . print_r($params, true));
@@ -260,6 +256,23 @@ try {
             ]);
         }
 
+        // === 🔥 ACTUALIZACIÓN CLAVE: Forzar estado_costos basado en costos reales (EDICIÓN) ===
+        $tieneCostosReales = false;
+        foreach ($costos as $c) {
+            $qty = (float)($c['qty'] ?? 0);
+            $costo = (float)($c['costo'] ?? 0);
+            if ($qty > 0 && $costo > 0) {
+                $tieneCostosReales = true;
+                break;
+            }
+        }
+        $estado_costos_final = $tieneCostosReales ? 'completado' : 'pendiente';
+
+        $stmtUpdateEstado = $pdo->prepare("UPDATE servicios SET estado_costos = ? WHERE id_srvc = ?");
+        $stmtUpdateEstado->execute([$estado_costos_final, $id_srvc]);
+        error_log("[GUARDAR_SERVICIO] Estado costos actualizado a: {$estado_costos_final} para servicio: {$id_srvc}");
+        // === 🔚 FIN ACTUALIZACIÓN CLAVE ===
+
         $mensaje = 'Servicio actualizado correctamente';
     } else {
         error_log("[GUARDAR_SERVICIO] Modo creación.");
@@ -302,67 +315,67 @@ try {
             )
         ";
         $stmt = $pdo->prepare($sql);
-            $params = [
-                $id_ppl,           // ← id_ppl (int)
-                $id_srvc,          // ← id_srvc (string)
-                $id_ppl,           // ← id_prospect (int)
-                // ... resto de los campos en el mismo orden
-                $data['servicio'] ?? '',
-                $data['nombre_corto'] ?? '',
-                $data['tipo'] ?? '',
-                $data['trafico'] ?? '',
-                $data['sub_trafico'] ?? '',
-                $data['base_calculo'] ?? '',
-                $data['moneda'] ?? 'USD',
-                (float)($data['tarifa'] ?? 0),
-                (float)($data['iva'] ?? 19),
-                $data['estado'] ?? 'Activo',
-                (float)($data['costo'] ?? 0),
-                (float)($data['venta'] ?? 0),
-                (float)($data['costogastoslocalesdestino'] ?? 0),
-                (float)($data['ventasgastoslocalesdestino'] ?? 0),
-                '0',
-                $data['commodity'] ?? '',
-                $data['origen'] ?? '',
-                $data['pais_origen'] ?? '',
-                $data['destino'] ?? '',
-                $data['pais_destino'] ?? '',
-                $data['transito'] ?? '',
-                $data['frecuencia'] ?? '',
-                $data['lugar_carga'] ?? '',
-                $data['sector'] ?? '',
-                $data['mercancia'] ?? '',
-                (int)($data['bultos'] ?? 0),
-                (float)($data['peso'] ?? 0),
-                (string)($data['volumen'] ?? '0.00'),
-                (string)($data['dimensiones'] ?? ''),
-                $data['agente'] ?? '',
-                $data['aol'] ?? '',
-                $data['aod'] ?? '',
-                $data['transportador'] ?? '',
-                $data['incoterm'] ?? '',
-                $data['ref_cliente'] ?? '',
-                $data['proveedor_nac'] ?? '',
-                (float)($data['tipo_cambio'] ?? 1),
-                $data['ciudad'] ?? '',
-                $data['pais'] ?? '',
-                $data['direc_serv'] ?? '',
-                $data['estado_costos'] ?? 'pendiente',
-                $data['nota_srvc'] ?? '',
-                // Gastos locales
-                $cgld_usd, $cgld_eur, $cgld_clp,
-                $vgld_usd, $vgld_eur, $vgld_clp,
-                $pgld_usd, $pgld_eur, $pgld_clp,
-                $ppgld_usd, $ppgld_eur, $ppgld_clp,
-                // Fechas y usuarios
-                $data['solicitado_por'] ?? null,
-                $data['fecha_solicitado'] ?? null,
-                $data['completado_por'] ?? null,
-                $data['fecha_completado'] ?? null,
-                $data['revisado_por'] ?? null,
-                $data['fecha_revisado'] ?? null,
-                $data['validez'] ?? null
-            ];
+        $params = [
+            $id_ppl,           // ← id_ppl (int)
+            $id_srvc,          // ← id_srvc (string)
+            $id_ppl,           // ← id_prospect (int)
+            // ... resto de los campos en el mismo orden
+            $data['servicio'] ?? '',
+            $data['nombre_corto'] ?? '',
+            $data['tipo'] ?? '',
+            $data['trafico'] ?? '',
+            $data['sub_trafico'] ?? '',
+            $data['base_calculo'] ?? '',
+            $data['moneda'] ?? 'USD',
+            (float)($data['tarifa'] ?? 0),
+            (float)($data['iva'] ?? 19),
+            $data['estado'] ?? 'Activo',
+            (float)($data['costo'] ?? 0),
+            (float)($data['venta'] ?? 0),
+            (float)($data['costogastoslocalesdestino'] ?? 0),
+            (float)($data['ventasgastoslocalesdestino'] ?? 0),
+            '0',
+            $data['commodity'] ?? '',
+            $data['origen'] ?? '',
+            $data['pais_origen'] ?? '',
+            $data['destino'] ?? '',
+            $data['pais_destino'] ?? '',
+            $data['transito'] ?? '',
+            $data['frecuencia'] ?? '',
+            $data['lugar_carga'] ?? '',
+            $data['sector'] ?? '',
+            $data['mercancia'] ?? '',
+            (int)($data['bultos'] ?? 0),
+            (float)($data['peso'] ?? 0),
+            (string)($data['volumen'] ?? '0.00'),
+            (string)($data['dimensiones'] ?? ''),
+            $data['agente'] ?? '',
+            $data['aol'] ?? '',
+            $data['aod'] ?? '',
+            $data['transportador'] ?? '',
+            $data['incoterm'] ?? '',
+            $data['ref_cliente'] ?? '',
+            $data['proveedor_nac'] ?? '',
+            (float)($data['tipo_cambio'] ?? 1),
+            $data['ciudad'] ?? '',
+            $data['pais'] ?? '',
+            $data['direc_serv'] ?? '',
+            $data['estado_costos'] ?? 'pendiente',
+            $data['nota_srvc'] ?? '',
+            // Gastos locales
+            $cgld_usd, $cgld_eur, $cgld_clp,
+            $vgld_usd, $vgld_eur, $vgld_clp,
+            $pgld_usd, $pgld_eur, $pgld_clp,
+            $ppgld_usd, $ppgld_eur, $ppgld_clp,
+            // Fechas y usuarios
+            $data['solicitado_por'] ?? null,
+            $data['fecha_solicitado'] ?? null,
+            $data['completado_por'] ?? null,
+            $data['fecha_completado'] ?? null,
+            $data['revisado_por'] ?? null,
+            $data['fecha_revisado'] ?? null,
+            $data['validez'] ?? null
+        ];
 
         error_log("[GUARDAR_SERVICIO] Parámetros para INSERT: " . print_r($params, true));
         $stmt->execute($params);
@@ -390,7 +403,7 @@ try {
 
         // === INSERTAR GASTOS ===
         $gastos = $data['gastos_locales'] ?? [];
-        error_log("[GUARDAR_SERVICIO] Insertando " . count($gastos) . " gastos para nuevo servicio: $id_srvc");
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($gastos) . " gastos para id_srvc: $id_srvc");
         foreach ($gastos as $g) {
             error_log("[GUARDAR_SERVICIO] Gasto: " . json_encode($g));
             $stmtG = $pdo->prepare("
@@ -408,6 +421,23 @@ try {
             ]);
         }
 
+        // === 🔥 ACTUALIZACIÓN CLAVE: Forzar estado_costos basado en costos reales (CREACIÓN) ===
+        $tieneCostosReales = false;
+        foreach ($costos as $c) {
+            $qty = (float)($c['qty'] ?? 0);
+            $costo = (float)($c['costo'] ?? 0);
+            if ($qty > 0 && $costo > 0) {
+                $tieneCostosReales = true;
+                break;
+            }
+        }
+        $estado_costos_final = $tieneCostosReales ? 'completado' : 'pendiente';
+
+        $stmtUpdateEstado = $pdo->prepare("UPDATE servicios SET estado_costos = ? WHERE id_srvc = ?");
+        $stmtUpdateEstado->execute([$estado_costos_final, $id_srvc]);
+        error_log("[GUARDAR_SERVICIO] Estado costos actualizado a: {$estado_costos_final} para servicio: {$id_srvc}");
+        // === 🔚 FIN ACTUALIZACIÓN CLAVE ===
+
         $mensaje = 'Servicio creado correctamente';
     }
 
@@ -415,7 +445,9 @@ try {
     error_log("[GUARDAR_SERVICIO] Transacción confirmada. Mensaje: {$mensaje}");
 
     // Limpiar cualquier salida previa antes de enviar JSON
-    ob_clean();
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
 
     echo json_encode([
         'success' => true,
@@ -426,7 +458,7 @@ try {
 } catch (Exception $e) {
     // Limpiar buffer en caso de error para asegurar solo JSON
     if (ob_get_level()) {
-        ob_clean();
+        ob_end_clean();
     }
     $pdo->rollback();
     error_log("[GUARDAR_SERVICIO] ERROR: " . $e->getMessage());
@@ -437,5 +469,4 @@ try {
 
 // Terminar la ejecución limpiamente
 exit;
-
 ?>
