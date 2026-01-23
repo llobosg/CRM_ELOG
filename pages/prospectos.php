@@ -253,7 +253,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <input type="text" id="serv_pais_destino" readonly style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; background: #f9f9f9;" />
                 
                 <!-- Fila 4 -->
-                 <label>Validez</label>
+                <label>Validez</label>
                 <input type="date" id="serv_validez" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
                 <label>Incoterm</label>
                 <input type="text" id="serv_incoterm" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;" />
