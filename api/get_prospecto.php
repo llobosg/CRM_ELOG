@@ -43,12 +43,6 @@ try {
     $stmt->execute([$id]);
     $servicios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    echo json_encode([
-        'success' => true,
-        'prospecto' => $prospecto,
-        'servicios' => $servicios
-    ]);
-
     // === Cargar costos y gastos por servicio ===
     $serviciosConDetalles = [];
     foreach ($servicios as $s) {
