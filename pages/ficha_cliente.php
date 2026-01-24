@@ -64,7 +64,7 @@
                 <label>Fecha Creación</label>
                 <input type="date" id="cliente_fecha_creacion" name="cliente_fecha_creacion" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;" value="<?= date('Y-m-d') ?>" />
                 <label>Comercial Asignado</label>
-                <select name="id_comercial" id="cliente_nombre_comercial">
+                <select name="id_comercial" id="cliente_nombre_comercial" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;" >
                     <!-- opciones -->
                 </select>
                 <label>Tipo Vida</label>
