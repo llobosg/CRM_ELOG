@@ -19,7 +19,7 @@ try {
     }
 
     // Obtener email de admin_finanzas
-    $stmt = $pdo->prepare("SELECT email FROM usuarios WHERE rol = 'admin_finanzas' AND activo = 1");
+    $stmt = $pdo->prepare("SELECT email FROM usuarios WHERE rol = 'admin_finanzas'");
     $stmt->execute();
     $admins = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
