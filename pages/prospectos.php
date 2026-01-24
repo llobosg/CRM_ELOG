@@ -2638,8 +2638,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     }
 
                     const rut = document.getElementById('rut_empresa')?.value.trim();
-                    const razonSelect = document.getElementById('razon_social_select');
-                    const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
                     const operacion = document.getElementById('operacion')?.value;
                     const tipoOper = document.getElementById('tipo_oper')?.value;
                     const concatenado = document.getElementById('concatenado')?.value;
