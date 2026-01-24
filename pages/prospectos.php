@@ -2783,15 +2783,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         error('No se pudo cargar el prospecto');
                     });
             }
-            
+
             // === Cargar estado guardado desde URL (después de actualizar estado) ===
-            const urlParams = new URLSearchParams(window.location.search);
             const estadoGuardado = urlParams.get('estado_guardado');
             if (estadoGuardado) {
                 document.getElementById('estado')?.value = estadoGuardado;
                 // Opcional: mostrar notificación
                 exito('Prospecto actualizado a estado: ' + estadoGuardado);
-            }           
+            }
         });
 
         // Función para limpiar los campos de contacto
