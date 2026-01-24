@@ -22,23 +22,23 @@ try {
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.2rem;">
             <div class="form-group">
                 <label>Nombre de Contacto *</label>
-                <input type="text" name="nom_contacto" id="nom_contacto" required style="width: 100%;" />
+                <input type="text" name="nom_contacto" id="nom_contacto" style="width: 100%; padding: 0.5rem;" />
             </div>
             <div class="form-group">
                 <label>Teléfono</label>
-                <input type="text" name="fono_contacto" id="fono_contacto" style="width: 100%;" />
+                <input type="text" name="fono_contacto" id="fono_contacto" style="width: 100%; padding: 0.5rem;" />
             </div>
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" name="email" id="email" style="width: 100%;" />
+                <input type="email" name="email" id="email" style="width: 100%; padding: 0.5rem;" />
             </div>
             <div class="form-group">
                 <label>Cargo</label>
-                <input type="text" name="cargo" id="cargo" style="width: 100%;" />
+                <input type="text" name="cargo" id="cargo" style="width: 100%; padding: 0.5rem;" />
             </div>
             <div class="form-group">
                 <label>Tipo</label>
-                <input type="text" name="tipo" id="tipo" style="width: 100%;" />
+                <input type="text" name="tipo" id="tipo" style="width: 100%; padding: 0.5rem;" />
             </div>
         </div>
         <button type="submit" id="btn-guardar-contactos" name="save" class="btn-primary">Guardar</button>

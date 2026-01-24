@@ -34,7 +34,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 <form method="POST" id="form-prospecto" action="">
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
-    <input type="hidden" name="razon_social" />
+    <input type="hidden" name="razon_social" id="razon_social_hidden" />
     <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
     <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
@@ -2628,6 +2628,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 btnGrabarTodo.addEventListener('click', function(e) {
                     e.preventDefault();
                     console.log('🔍 [GRABAR TODO] Iniciando validación...');
+
+                    // ✅ Obtener y establecer razón social en campo oculto
+                    const razonSelect = document.getElementById('razon_social_select');
+                    const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
+                    const razonHidden = document.getElementById('razon_social_hidden');
+                    if (razonHidden && razon) {
+                        razonHidden.value = razon;
+                    }
 
                     const rut = document.getElementById('rut_empresa')?.value.trim();
                     const razonSelect = document.getElementById('razon_social_select');
