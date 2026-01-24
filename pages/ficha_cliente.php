@@ -618,6 +618,25 @@
         cargarPaises();
         cargarComerciales();
 
+        // Cargar lista de comerciales en el select
+        fetch('/api/get_comercial.php')
+            .then(r => r.json())
+            .then(data => {
+                const select = document.getElementById('cliente_nombre_comercial');
+                if (!select) return;
+                select.innerHTML = '<option value="">Seleccionar comercial</option>';
+                (data.comerciales || []).forEach(comercial => {
+                    const option = document.createElement('option');
+                    option.value = comercial.id_comercial;     // ✅ ID como valor
+                    option.textContent = comercial.nombre;    // ✅ Nombre como texto
+                    select.appendChild(option);
+                });
+            })
+            .catch(err => {
+                console.error('Error al cargar comerciales:', err);
+                error('No se pudieron cargar los comerciales asignados');
+            });
+
         // 2. Referencias a elementos de notificación
         const toast = document.getElementById('toast');
         const msgElement = document.getElementById('toast-message');
