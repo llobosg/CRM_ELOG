@@ -5,7 +5,7 @@
 require_once __DIR__ . '/../config.php';
 
 // Validar rol (opcional, pero recomendado)
-if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin_finanzas') {
+if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin_finanzas' || $_SESSION['rol'] !== 'admin' ) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
     exit;
