@@ -1685,6 +1685,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const totalVenta = costosServicio.reduce((sum, c) => sum + (c.total_tarifa || 0), 0);
             const rutCliente = document.getElementById('rut_empresa')?.value.trim();
 
+            // Guardar servicio sin validación de crédito
             enviarServicioABD();
         }
 
@@ -2595,22 +2596,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
                     if (!validarRut(rutLimpio)) return error('RUT inválido');
 
-                    // ✅ Validación condicional
+                    // ✅ Validación condicional: servicios deben tener costos
                     if (estado === 'Enviado' || estado === 'CerradoOK') {
                         const tieneServiciosSinCostos = servicios.some(s => !s.costos || s.costos.length === 0);
                         if (tieneServiciosSinCostos) return error('No se puede enviar el prospecto: todos los servicios deben tener costos asociados.');
-                    }
-                    
-                    // ✅ Validación Estado=CerradoOK y crédito
-                    if (estado === 'CerradoOK') {
-                        // Calcular totalVenta del prospecto
-                        const totalVenta = servicios.reduce((sum, s) => sum + (parseFloat(s.venta) || 0), 0);
-                        const rutCliente = document.getElementById('rut_empresa')?.value;
-
-                        validarCreditoAntesDeCerrar(rutCliente, totalVenta, () => {
-                            // Aquí va la lógica para cambiar el estado a "CerradoOK"
-                            //cambiarEstadoProspecto('CerradoOK');
-                        });
                     }
 
                     const form = document.getElementById('form-prospecto');
@@ -2647,11 +2636,28 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         console.log('📤 [GRABAR TODO] Enviando JSON a backend:', inp.value);
                     }
 
-                    if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs.')) {
-                        console.log('✅ [GRABAR TODO] Formulario enviado');
-                        form.submit();
+                    // ✅ Validación Estado=CerradoOK y crédito
+                    if (estado === 'CerradoOK') {
+                        const totalVenta = servicios.reduce((sum, s) => sum + (parseFloat(s.venta) || 0), 0);
+                        const rutCliente = document.getElementById('rut_empresa')?.value;
+
+                        validarCreditoAntesDeCerrar(rutCliente, totalVenta, () => {
+                            // ✅ Solo si la validación pasa, se envía el formulario
+                            if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs.')) {
+                                console.log('✅ [GRABAR TODO] Formulario enviado');
+                                form.submit();
+                            } else {
+                                error('Envío cancelado');
+                            }
+                        });
                     } else {
-                        error('Envío cancelado');
+                        // ✅ Para otros estados, enviar directamente
+                        if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs.')) {
+                            console.log('✅ [GRABAR TODO] Formulario enviado');
+                            form.submit();
+                        } else {
+                            error('Envío cancelado');
+                        }
                     }
                 });
             }
