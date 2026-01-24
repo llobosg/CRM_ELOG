@@ -126,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         sanitizarTexto($c['rol'] ?? ''),
                         sanitizarTexto($c['primario'] ?? 'N')
                     ]);
+                    error_log("CLIENTE UPDATE - RUT: {$rut_limpio}, ID_COMERCIAL: {$id_comercial}, NOMBRE: {$nombre_comercial}");
                 }
             }
 
@@ -153,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     sanitizarTexto($c['primario'] ?? 'N')
                 ]);
             }
-
+            error_log("CLIENTE GUARDADO - RUT: {$rut_limpio}, ID_COMERCIAL: {$id_comercial}, NOMBRE: {$nombre_comercial}");
             $mensaje = 'Cliente creado correctamente';
         }
 
