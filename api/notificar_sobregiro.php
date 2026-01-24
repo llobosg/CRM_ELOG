@@ -18,6 +18,7 @@ try {
     FROM prospectos p
     LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
     WHERE p.id_ppl = ?");
+    
     $stmt->execute([$data['prospecto_id']]);
     $prospecto = $stmt->fetch(PDO::FETCH_ASSOC);
     

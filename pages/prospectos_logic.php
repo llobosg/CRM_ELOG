@@ -403,8 +403,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
             ? 'Prospecto actualizado correctamente'
             : 'Prospecto creado correctamente';
 
-        $redirect_url = $_SERVER['PHP_SELF'] . "?page=prospectos&exito=" . urlencode($mensaje_exito) . "&id_ppl=" . $id_ppl;
-        header("Location: ?page=prospectos&id_ppl=" . $id_ppl);
+        // ✅ Obtener el estado actual para la redirección
+        $estado_actual = $_POST['estado'] ?? 'Pendiente';
+
+        // ✅ Redirigir con id_ppl Y estado_guardado
+        header("Location: ?page=prospectos&id_ppl=" . urlencode($id_ppl) . "&estado_guardado=" . urlencode($estado_actual));
         exit;
 
     } catch (Exception $e) {
