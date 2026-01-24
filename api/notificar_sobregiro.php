@@ -42,37 +42,21 @@ try {
     ";
 
     // Enviar correo a todos los admin_finanzas
-    foreach ($admins as $email) {
-        $mail = [
-            'to' => $email,
-            'subject' => $subject,
-            'body' => $body
-        ];
-        
-        // Aquí va tu lógica de envío de correo
-        // Ejemplo si usas PHPMailer:
-        /*
-        require_once __DIR__ . '/../vendor/autoload.php';
-        $mailer = new PHPMailer\PHPMailer\PHPMailer();
-        $mailer->isSMTP();
-        $mailer->Host = $_ENV['SMTP_HOST'];
-        $mailer->Port = $_ENV['SMTP_PORT'];
-        $mailer->SMTPAuth = true;
-        $mailer->Username = $_ENV['SMTP_USER'];
-        $mailer->Password = $_ENV['SMTP_PASS'];
-        $mailer->setFrom($_ENV['MAIL_FROM'], 'CRM ELOG');
-        $mailer->addAddress($email);
-        $mailer->isHTML(true);
-        $mailer->Subject = $subject;
-        $mailer->Body = $body;
-        $mailer->send();
-        */
-        
-        // Para Railway, puedes usar mail() o una API externa
-        // mail($email, $subject, strip_tags($body), "From: noreply@crmelog.com\r\nContent-Type: text/html; charset=UTF-8");
-        
-        error_log("[NOTIFICAR_SOBREGIRO] Correo enviado a: $email");
+foreach ($admins as $email) {
+    if (empty($email)) continue; // Saltar emails vacíos
+    
+    $headers = "From: noreply@crmelog.com\r\n";
+    $headers .= "Reply-To: noreply@crmelog.com\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    
+    $mailSuccess = mail($email, $subject, $body, $headers);
+    
+    if ($mailSuccess) {
+        error_log("[NOTIFICAR_SOBREGIRO] ✅ Correo enviado exitosamente a: $email");
+    } else {
+        error_log("[NOTIFICAR_SOBREGIRO] ❌ Error al enviar correo a: $email");
     }
+}
 
     echo json_encode(['success' => true, 'message' => 'Notificación de sobregiro enviada a finanzas']);
 
