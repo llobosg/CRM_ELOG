@@ -1,7 +1,9 @@
 <?php
-// Validar que la sesión tenga los datos mínimos
-if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
-    header('Location: /login.php'); // ← Barra al inicio = ruta absoluta
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['rol'])) {
+    header('Location: /login.php');
     exit;
 }
 ?>

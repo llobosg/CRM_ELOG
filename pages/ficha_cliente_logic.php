@@ -1,7 +1,6 @@
 <?php
 // pages/ficha_cliente_logic.php
-// Solo accesible por admin_finanzas (debe validarse en el frontend o en auth_check)
-
+require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../config.php';
 
 // Validar rol (acceso permitido solo para admin_finanzas y admin)
