@@ -119,7 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modo'])) {
         $concatenado = $prefijo . $fecha_actual . '-' . $correlativo;
 
         // === Preparar datos del prospecto ===
-        $id_comercial = !empty($_POST['id_comercial']) ? (int)$_POST['id_comercial'] : null;
+        // ✅ Usar el user_id de la sesión como id_comercial
+        $id_comercial = $_SESSION['user_id'] ?? null;
         $data = [
             'id_prospect' => $id_prospect,
             'razon_social' => $_POST['razon_social'] ?? '',

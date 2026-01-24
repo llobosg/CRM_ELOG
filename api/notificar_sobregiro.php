@@ -11,14 +11,16 @@ try {
     }
 
     // Obtener datos del prospecto
-    $stmt = $pdo->prepare("SELECT 
-        p.concatenado, 
-        p.razon_social,
-        u.nombre as comercial_nombre
-    FROM prospectos p
-    LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
-    WHERE p.id_ppl = ?");
-    
+    $stmt = $pdo->prepare("
+        SELECT 
+            p.concatenado, 
+            p.razon_social,
+            u.nombre as comercial_nombre
+        FROM prospectos p
+        LEFT JOIN usuarios u ON p.id_comercial = u.id_usr
+        WHERE p.id_ppl = ?
+    ");
+
     $stmt->execute([$data['prospecto_id']]);
     $prospecto = $stmt->fetch(PDO::FETCH_ASSOC);
     
