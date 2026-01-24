@@ -30,7 +30,7 @@ if (empty($usuario_input) || empty($password_input)) {
 
 try {
     $stmt = $pdo->prepare("
-        SELECT id_usr, email, nombre, rol, password 
+        SELECT id_usr, email, nombre, rol, password, genero 
         FROM usuarios 
         WHERE email = ? OR nombre = ?
         LIMIT 1
@@ -42,6 +42,8 @@ try {
         $_SESSION['user'] = $usuario['nombre'] ?: 'Usuario';
         $_SESSION['user_id'] = (int)$usuario['id_usr'];
         $_SESSION['rol'] = $usuario['rol'];
+        $_SESSION['nombre'] = $usuario['nombre'];
+        $_SESSION['genero'] = $usuario['genero'] ?? 'masculino';
 
         session_write_close();
         header('Location: /');

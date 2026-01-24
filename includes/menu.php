@@ -1,3 +1,31 @@
+<?php
+// Obtener datos del usuario desde la sesión
+$nombre_usuario = $_SESSION['nombre'] ?? 'Usuario';
+$rol_usuario = $_SESSION['rol'] ?? 'comercial';
+$genero_usuario = $_SESSION['genero'] ?? 'masculino'; // Asegúrate de tener este campo en tu tabla usuarios
+
+// Definir ícono por género
+if ($genero_usuario === 'femenino') {
+    $avatar_icon = '👩';
+} elseif (in_array($rol_usuario, ['admin_finanzas', 'pricing', 'operaciones'])) {
+    $avatar_icon = '👑'; // Jefatura
+} else {
+    $avatar_icon = '👤'; // Hombre o genérico
+}
+
+// Definir etiqueta amigable por rol
+$etiquetas_rol = [
+    'admin_finanzas' => 'Jefatura Finanzas',
+    'pricing' => 'Jefatura Pricing',
+    'operaciones' => 'Jefatura Operaciones',
+    'comercial' => 'Comercial',
+    'admin' => 'Administrador',
+];
+$rol_amigable = $etiquetas_rol[$rol_usuario] ?? ucfirst($rol_usuario);
+
+// Clase CSS por rol
+$clase_rol = 'role-' . $rol_usuario;
+?>
 <!-- includes/menu.php -->
 <!-- Menú principal -->
 <nav style="background: #3a4f63; padding: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -65,6 +93,15 @@ document.addEventListener('click', function(e) {
 <!-- Espacio para que el contenido no quede debajo del menú fijo -->
 <div style="height: 70px;"></div>
 
+<!-- Badge de usuario -->
+<div class="user-badge <?php echo $clase_rol; ?>">
+    <div class="user-avatar"><?php echo $avatar_icon; ?></div>
+    <div>
+        <div><?php echo htmlspecialchars($nombre_usuario); ?></div>
+        <div style="font-size: 12px; opacity: 0.9; font-weight: 400;"><?php echo $rol_amigable; ?></div>
+    </div>
+</div>
+
 <!-- Estilos para el menú -->
 <style>
 .nav-link {
@@ -105,4 +142,43 @@ document.addEventListener('click', function(e) {
     background: linear-gradient(90deg, #007bff, #00c6ff);
     border-radius: 2px 2px 0 0;
 }
+
+/* Estilo para nombre usuario, rol y género */
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.user-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.2);
+    font-size: 14px;
+}
+
+/* Colores por rol */
+.role-admin_finanzas { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+.role-pricing { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+.role-operaciones { background: linear-gradient(135deg, #45b7d1, #96c93d); }
+.role-comercial { background: linear-gradient(135deg, #ff9ff3, #f368e0); }
+.role-admin { background: linear-gradient(135deg, #feca57, #ff9ff3); }
 </style>
