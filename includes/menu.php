@@ -70,11 +70,11 @@ $clase_rol = 'role-' . $rol_usuario;
             </div>
         </li>
         <!-- Badge de usuario -->
-        <div class="user-badge <?php echo $clase_rol; ?>">
-            <div class="user-avatar"><?php echo $avatar_icon; ?></div>
+        <div class="user-badge" style="text-align: right; <?php echo $clase_rol; ?>">
+            <div class="user-avatar" style="text-align: right;"><?php echo $avatar_icon; ?></div>
             <div>
-                <div><?php echo htmlspecialchars($nombre_usuario); ?></div>
-                <div style="font-size: 12px; opacity: 0.9; font-weight: 400;"><?php echo $rol_amigable; ?></div>
+                <div style="text-align: right;"><?php echo htmlspecialchars($nombre_usuario); ?></div>
+                <div style="text-align: right; font-size: 12px; opacity: 0.9; font-weight: 400;"><?php echo $rol_amigable; ?></div>
             </div>
         </div>
         <?php endif; ?>
