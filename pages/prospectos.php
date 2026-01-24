@@ -47,6 +47,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
     <input type="hidden" id="serv_sector" value="" />
     <input type="hidden" id="serv_transito" value="" />
     <input type="hidden" id="serv_mercancia" value="" />
+    <input type="hidden" name="id_comercial" id="id_comercial" />
 
     <!-- ========== DATOS DEL PROSPECTO ========== -->
     <div class="card" style="margin-bottom: 2rem; position: relative;">
@@ -606,30 +607,38 @@ require_once __DIR__ . '/../includes/auth_check.php';
         document.getElementById('razon_social_select')?.addEventListener('change', function() {
             const rut = this.value;
             if (!rut) {
-                ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre'].forEach(id => {
+                ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre', 'id_comercial'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.value = '';
                 });
                 return;
             }
             fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.existe) {
-                        const c = data.cliente;
-                        document.getElementById('rut_empresa').value = c.rut || '';
-                        document.getElementById('pais').value = c.pais || '';
-                        document.getElementById('direccion').value = c.direccion || '';
-                        document.getElementById('nombre').value = c.nombre_comercial || '';
-                        document.querySelector('input[name="razon_social"]').value = c.razon_social || '';
-                        fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
-                            .then(r2 => r2.json())
-                            .then(data2 => {
-                                const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
-                                document.getElementById('fono_empresa').value = primario?.fono || '';
-                            });
-                    }
-                });
+        .then(r => r.json())
+            .then(data => {
+                if (data.existe) {
+                    const c = data.cliente;
+                    // Campos visibles
+                    document.getElementById('rut_empresa').value = c.rut || '';
+                    document.getElementById('pais').value = c.pais || '';
+                    document.getElementById('direccion').value = c.direccion || '';
+                    document.getElementById('nombre').value = c.nombre_comercial || ''; // ✅ Nombre comercial
+                    
+                    // Campos ocultos para guardar
+                    document.querySelector('input[name="razon_social"]').value = c.razon_social || '';
+                    document.querySelector('input[name="id_comercial"]').value = c.id_comercial || ''; // ✅ ID comercial
+                    
+                    // Cargar contactos
+                    fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
+                        .then(r2 => r2.json())
+                        .then(data2 => {
+                            const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
+                            document.getElementById('fono_empresa').value = primario?.fono || '';
+                            document.getElementById('contacto').value = primario?.nom_contacto || '';
+                            document.getElementById('email').value = primario?.email || '';
+                        });
+                }
+            });
         });
 
         function validarRut(rut) {
