@@ -21,6 +21,7 @@ try {
             ciudad,
             giro,
             fecha_creacion,
+            id_comercial,
             nombre_comercial,
             tipo_vida,
             fecha_vida,
