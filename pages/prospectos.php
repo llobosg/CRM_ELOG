@@ -3725,8 +3725,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                                                     <!-- CONDICIONES COMERCIALES (izquierda) -->
                                                     <h4 style="margin-top: 2rem; margin-bottom: 1rem;">CONDICIONES COMERCIALES</h4>
                                                     <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem;">
-                                                        <strong>CREDITO:${simboloCredito}</strong>
-                                                        <strong>CONTADO:${simboloContado}</strong>
+                                                        <div><strong>CREDITO:</strong>${simboloCredito}</div>
+                                                        <div><strong>CONTADO:</strong>${simboloContado}</div>
                                                     </div>
 
                                                     <!-- TRANSPORTE NACIONAL (izquierda) -->
