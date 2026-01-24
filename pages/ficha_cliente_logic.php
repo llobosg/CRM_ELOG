@@ -44,9 +44,20 @@ try {
     // Guardar $rutLimpio en la BD
 
     $pdo->beginTransaction();
-    
-    // Obtener id_comercial desde el select (viene como string)
-    $id_comercial = !empty($_POST['nombre_comercial']) ? (int)$_POST['nombre_comercial'] : null;
+
+    // === Procesar datos del formulario ===
+    $input = $_POST;
+
+    // Obtener ID del comercial desde el select (el name debe ser "id_comercial")
+    $id_comercial = !empty($input['id_comercial']) ? (int)$input['id_comercial'] : null;
+
+    // Obtener nombre del comercial desde la tabla comerciales (para guardar consistencia)
+    $nombre_comercial = '';
+    if ($id_comercial) {
+        $stmt_nombre = $pdo->prepare("SELECT nombre FROM comerciales WHERE id_comercial = ?");
+        $stmt_nombre->execute([$id_comercial]);
+        $nombre_comercial = $stmt_nombre->fetchColumn() ?: '';
+    }
 
     // === Preparar datos del cliente ===
     $data_cliente = [
@@ -59,8 +70,8 @@ try {
         'ciudad' => $input['ciudad'] ?? '',
         'giro' => $input['giro'] ?? '',
         'fecha_creacion' => $input['fecha_creacion'] ?? null,
-        'nombre_comercial' => $input['nombre_comercial_texto'] ?? '', // ← Opcional: solo para display
-        'id_comercial' => $id_comercial, // ← ¡Clave!
+        'id_comercial' => $id_comercial,          // ✅ Guardar ID
+        'nombre_comercial' => $nombre_comercial,  // ✅ Guardar nombre real
         'tipo_vida' => $input['tipo_vida'] ?? 'lead',
         'fecha_vida' => $input['fecha_vida'] ?? null,
         'rubro' => $input['rubro'] ?? '',
