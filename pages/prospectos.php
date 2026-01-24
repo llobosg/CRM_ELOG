@@ -2483,6 +2483,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         function validarCreditoAntesDeCerrar(rutCliente, totalVenta, callback) {
             console.log('✅ Validando crédito para RUT:', rutCliente, 'con venta total de:', totalVenta);
+            
             if (!rutCliente || totalVenta <= 0) {
                 callback(); // Sin validación necesaria
                 console.log('✅ Sale por no hay RUT o venta total <= 0');
@@ -2496,14 +2497,49 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         error(data.error);
                         return;
                     }
+                    
                     if (totalVenta > data.saldo_credito) {
-                        error(`Sobregiro: El servicio excede el crédito disponible (${data.saldo_credito}).`);
-                        console.log('✅ Sale por sobregiro de crédito');
-                        return;
+                        // ✅ Enviar notificación a finanzas y continuar
+                        const prospectoId = document.getElementById('id_ppl')?.value;
+                        
+                        fetch('/api/notificar_sobregiro.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                rut_cliente: rutCliente,
+                                total_venta: totalVenta,
+                                saldo_credito: data.saldo_credito,
+                                prospecto_id: prospectoId
+                            })
+                        })
+                        .then(r => r.json())
+                        .then(notifData => {
+                            if (notifData.success) {
+                                // ✅ Mostrar aviso amarillo (no error)
+                                alert(`⚠️ Atención: El servicio excede el crédito disponible (${data.saldo_credito}). 
+        Se ha notificado a Finanzas para su revisión.`);
+                                console.log('✅ Notificación enviada a finanzas, continuando con el proceso');
+                            } else {
+                                console.warn('⚠️ No se pudo notificar a finanzas, pero continuando...');
+                            }
+                            // ✅ Continuar con el proceso normal
+                            callback();
+                        })
+                        .catch(err => {
+                            console.error('Error al notificar sobregiro:', err);
+                            // ✅ Aún así continuar (no es crítico)
+                            alert(`⚠️ Atención: El servicio excede el crédito disponible (${data.saldo_credito}). 
+        No se pudo notificar a Finanzas, pero el proceso continuará.`);
+                            callback();
+                        });
+                    } else {
+                        // ✅ Crédito suficiente
+                        callback();
                     }
-                    callback(); // Validación exitosa
                 })
-                .catch(() => error('Error al verificar crédito'));
+                .catch(() => {
+                    error('Error al verificar crédito');
+                });
         }
 
         // ===================================================================
