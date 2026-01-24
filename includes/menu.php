@@ -69,6 +69,14 @@ $clase_rol = 'role-' . $rol_usuario;
                 ?>
             </div>
         </li>
+        <!-- Badge de usuario -->
+        <div class="user-badge <?php echo $clase_rol; ?>">
+            <div class="user-avatar"><?php echo $avatar_icon; ?></div>
+            <div>
+                <div><?php echo htmlspecialchars($nombre_usuario); ?></div>
+                <div style="font-size: 12px; opacity: 0.9; font-weight: 400;"><?php echo $rol_amigable; ?></div>
+            </div>
+        </div>
         <?php endif; ?>
     </ul>
 </nav>
@@ -92,15 +100,6 @@ document.addEventListener('click', function(e) {
 
 <!-- Espacio para que el contenido no quede debajo del menú fijo -->
 <div style="height: 70px;"></div>
-
-<!-- Badge de usuario -->
-<div class="user-badge <?php echo $clase_rol; ?>">
-    <div class="user-avatar"><?php echo $avatar_icon; ?></div>
-    <div>
-        <div><?php echo htmlspecialchars($nombre_usuario); ?></div>
-        <div style="font-size: 12px; opacity: 0.9; font-weight: 400;"><?php echo $rol_amigable; ?></div>
-    </div>
-</div>
 
 <!-- Estilos para el menú -->
 <style>
