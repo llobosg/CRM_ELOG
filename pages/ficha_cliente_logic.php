@@ -1,6 +1,16 @@
 <?php
 // pages/ficha_cliente_logic.php
 
+// Capturar cualquier salida previa
+ob_start();
+
+// Establecer encabezado JSON desde el inicio
+header('Content-Type: application/json; charset=utf-8');
+
+// Desactivar errores visibles (solo logs)
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/../config.php';
     require_once __DIR__ . '/../includes/auth_check.php';
@@ -51,26 +61,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nombre_comercial = $stmt_nombre->fetchColumn() ?: '';
         }
 
+        // === Sanitizar campos de texto (eliminar tabs y espacios extraños) ===
+        function sanitizarTexto($texto) {
+            return trim(preg_replace('/[\t\n\r\x0B\x0C]/', ' ', $texto));
+        }
+
         // === Preparar datos del cliente ===
         $data_cliente = [
             'rut' => $rut_limpio,
-            'razon_social' => $input['razon_social'] ?? '',
-            'nacional_extranjero' => $input['nacional_extranjero'] ?? 'Nacional',
-            'pais' => $input['pais'] ?? '',
-            'direccion' => $input['direccion'] ?? '',
-            'comuna' => $input['comuna'] ?? '',
-            'ciudad' => $input['ciudad'] ?? '',
-            'giro' => $input['giro'] ?? '',
+            'razon_social' => sanitizarTexto($input['razon_social'] ?? ''),
+            'nacional_extranjero' => sanitizarTexto($input['nacional_extranjero'] ?? 'Nacional'),
+            'pais' => sanitizarTexto($input['pais'] ?? ''),
+            'direccion' => sanitizarTexto($input['direccion'] ?? ''),
+            'comuna' => sanitizarTexto($input['comuna'] ?? ''),
+            'ciudad' => sanitizarTexto($input['ciudad'] ?? ''),
+            'giro' => sanitizarTexto($input['giro'] ?? ''),
             'fecha_creacion' => !empty($input['fecha_creacion']) ? $input['fecha_creacion'] : null,
             'id_comercial' => $id_comercial,
             'nombre_comercial' => $nombre_comercial,
-            'tipo_vida' => $input['tipo_vida'] ?? 'lead',
+            'tipo_vida' => sanitizarTexto($input['tipo_vida'] ?? 'lead'),
             'fecha_vida' => !empty($input['fecha_vida']) ? $input['fecha_vida'] : null,
-            'rubro' => $input['rubro'] ?? '',
+            'rubro' => sanitizarTexto($input['rubro'] ?? ''),
             'potencial_usd' => isset($input['potencial_usd']) ? (float)$input['potencial_usd'] : 0.00,
             'fecha_alta_credito' => !empty($input['fecha_alta_credito']) ? $input['fecha_alta_credito'] : null,
-            'plazo_dias' => $input['plazo_dias'] ?? '30',
-            'estado_credito' => $input['estado_credito'] ?? 'vigente',
+            'plazo_dias' => sanitizarTexto($input['plazo_dias'] ?? '30'),
+            'estado_credito' => sanitizarTexto($input['estado_credito'] ?? 'vigente'),
             'monto_credito' => isset($input['monto_credito']) ? (float)$input['monto_credito'] : 0.00,
         ];
 
@@ -92,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare($sql)->execute($values);
 
             // === Actualizar contactos ===
-            $contactos = $input['contactos'] ?? [];
+            $contactos = json_decode($input['contactos'] ?? '[]', true);
             if (!empty($contactos)) {
                 // Eliminar contactos existentes
                 $pdo->prepare("DELETE FROM contactos WHERE rut_cliente = ?")->execute([$rut_limpio]);
@@ -105,11 +120,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ");
                     $stmt_c->execute([
                         $rut_limpio,
-                        $c['nom_contacto'] ?? '',
-                        $c['fono_contacto'] ?? '',
-                        $c['email'] ?? '',
-                        $c['rol'] ?? '',
-                        $c['primario'] ?? 'N'
+                        sanitizarTexto($c['nom_contacto'] ?? ''),
+                        sanitizarTexto($c['fono_contacto'] ?? ''),
+                        sanitizarTexto($c['email'] ?? ''),
+                        sanitizarTexto($c['rol'] ?? ''),
+                        sanitizarTexto($c['primario'] ?? 'N')
                     ]);
                 }
             }
@@ -123,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare($sql)->execute(array_values($data_cliente));
 
             // === Insertar contactos ===
-            $contactos = $input['contactos'] ?? [];
+            $contactos = json_decode($input['contactos'] ?? '[]', true);
             foreach ($contactos as $c) {
                 $stmt_c = $pdo->prepare("
                     INSERT INTO contactos (rut_cliente, nom_contacto, fono_contacto, email, rol, primario)
@@ -131,11 +146,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ");
                 $stmt_c->execute([
                     $rut_limpio,
-                    $c['nom_contacto'] ?? '',
-                    $c['fono_contacto'] ?? '',
-                    $c['email'] ?? '',
-                    $c['rol'] ?? '',
-                    $c['primario'] ?? 'N'
+                    sanitizarTexto($c['nom_contacto'] ?? ''),
+                    sanitizarTexto($c['fono_contacto'] ?? ''),
+                    sanitizarTexto($c['email'] ?? ''),
+                    sanitizarTexto($c['rol'] ?? ''),
+                    sanitizarTexto($c['primario'] ?? 'N')
                 ]);
             }
 
@@ -144,18 +159,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $pdo->commit();
 
-        // === Redirigir con mensaje de éxito ===
-        header("Location: ?page=ficha_cliente&exito=" . urlencode($mensaje) . "&rut=" . urlencode($rut_limpio));
+        // === Limpiar cualquier salida previa antes de enviar JSON ===
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        echo json_encode(['success' => true, 'message' => $mensaje]);
         exit;
 
     } catch (Exception $e) {
         $pdo->rollback();
         error_log("ERROR FICHA CLIENTE: " . $e->getMessage());
-        $redirect_url = "?page=ficha_cliente&error=" . urlencode("Error al guardar cliente: " . $e->getMessage());
-        if (!empty($rut_limpio)) {
-            $redirect_url .= "&rut=" . urlencode($rut_limpio);
+        
+        // === Limpiar cualquier salida previa ===
+        if (ob_get_level()) {
+            ob_end_clean();
         }
-        header("Location: " . $redirect_url);
+        
+        echo json_encode(['success' => false, 'message' => "Error al guardar cliente: " . $e->getMessage()]);
         exit;
     }
 }
