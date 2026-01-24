@@ -2482,8 +2482,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
 
         function validarCreditoAntesDeCerrar(rutCliente, totalVenta, callback) {
+            console.log('✅ Validando crédito para RUT:', rutCliente, 'con venta total de:', totalVenta);
             if (!rutCliente || totalVenta <= 0) {
                 callback(); // Sin validación necesaria
+                console.log('✅ Sale por no hay RUT o venta total <= 0');
                 return;
             }
 
@@ -2496,6 +2498,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     }
                     if (totalVenta > data.saldo_credito) {
                         error(`Sobregiro: El servicio excede el crédito disponible (${data.saldo_credito}).`);
+                        console.log('✅ Sale por sobregiro de crédito');
                         return;
                     }
                     callback(); // Validación exitosa
