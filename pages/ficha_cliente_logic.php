@@ -43,6 +43,26 @@ try {
     }
     // Guardar $rutLimpio en la BD
 
+    // Manejar tanto id_comercial como nombre_comercial (compatibilidad)
+    $id_comercial = null;
+
+    // Caso 1: viene como id_comercial (correcto)
+    if (!empty($_POST['id_comercial'])) {
+        $id_comercial = (int)$_POST['id_comercial'];
+    }
+    // Caso 2: viene como nombre_comercial (incorrecto, pero manejable)
+    elseif (!empty($_POST['nombre_comercial']) && is_numeric($_POST['nombre_comercial'])) {
+        $id_comercial = (int)$_POST['nombre_comercial'];
+    }
+
+    // Obtener nombre real del comercial
+    $nombre_comercial = '';
+    if ($id_comercial) {
+        $stmt_nombre = $pdo->prepare("SELECT nombre FROM comerciales WHERE id_comercial = ?");
+        $stmt_nombre->execute([$id_comercial]);
+        $nombre_comercial = $stmt_nombre->fetchColumn() ?: '';
+    }
+
     $pdo->beginTransaction();
 
     // === Procesar datos del formulario ===
