@@ -145,7 +145,7 @@ document.addEventListener('click', function(e) {
 /* Estilo para nombre usuario, rol y género */
 .user-badge {
     position: absolute;
-    top: 15px; /* Ajusta según la altura de tu header */
+    top: 0px; /* Ajusta según la altura de tu header */
     right: 20px; /* Espacio desde el borde derecho */
     display: flex;
     align-items: center;
