@@ -308,23 +308,23 @@
 
         // Cargar comercial asignado
         const comercialSel = document.getElementById('cliente_nombre_comercial');
-        if (comercialSel && cliente.nombre_comercial) {
-            console.log('👥 Comercial asignado:', cliente.nombre_comercial);
+        if (comercialSel && cliente.id_comercial) {
+            console.log('👥 Comercial asignado ID:', cliente.id_comercial, 'Nombre:', cliente.nombre_comercial);
             let optionFound = false;
             for (let opt of comercialSel.options) {
-                if (opt.value === cliente.nombre_comercial) {
+                if (opt.value == cliente.id_comercial) { // ← Comparar por ID, no por nombre
                     opt.selected = true;
                     optionFound = true;
                     break;
                 }
             }
-            if (!optionFound) {
+            if (!optionFound && cliente.nombre_comercial) {
                 const opt = document.createElement('option');
-                opt.value = cliente.nombre_comercial;
-                opt.textContent = cliente.nombre_comercial;
+                opt.value = cliente.id_comercial;          // ← Guardar ID como valor
+                opt.textContent = cliente.nombre_comercial; // ← Mostrar nombre
                 comercialSel.appendChild(opt);
-                comercialSel.value = cliente.nombre_comercial;
-                console.log('➕ Comercial añadido como opción personalizada');
+                comercialSel.value = cliente.id_comercial;
+                console.log('➕ Comercial añadido como opción personalizada con ID:', cliente.id_comercial);
             }
         }
 

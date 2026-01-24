@@ -44,6 +44,9 @@ try {
     // Guardar $rutLimpio en la BD
 
     $pdo->beginTransaction();
+    
+    // Obtener id_comercial desde el select (viene como string)
+    $id_comercial = !empty($_POST['nombre_comercial']) ? (int)$_POST['nombre_comercial'] : null;
 
     // === Preparar datos del cliente ===
     $data_cliente = [
@@ -56,7 +59,8 @@ try {
         'ciudad' => $input['ciudad'] ?? '',
         'giro' => $input['giro'] ?? '',
         'fecha_creacion' => $input['fecha_creacion'] ?? null,
-        'nombre_comercial' => $input['nombre_comercial'] ?? '', // ← Solo el nombre
+        'nombre_comercial' => $input['nombre_comercial_texto'] ?? '', // ← Opcional: solo para display
+        'id_comercial' => $id_comercial, // ← ¡Clave!
         'tipo_vida' => $input['tipo_vida'] ?? 'lead',
         'fecha_vida' => $input['fecha_vida'] ?? null,
         'rubro' => $input['rubro'] ?? '',

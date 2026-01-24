@@ -15,8 +15,9 @@ try {
         SELECT 
             p.concatenado, 
             p.razon_social,
-            p.nombre as comercial_nombre
+            c.nombre as comercial_nombre  -- ← JOIN con tabla comerciales
         FROM prospectos p
+        LEFT JOIN comerciales c ON p.id_comercial = c.id_comercial
         WHERE p.id_ppl = ?
     ");
     $stmt->execute([$data['prospecto_id']]);
