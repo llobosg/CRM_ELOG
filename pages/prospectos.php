@@ -1893,28 +1893,46 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
             // ? Determinar permisos por rol
             const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
-            // ? Pricing y Admin pueden editar qty, costo, tarifa, concepto y aplica
-            const esPricingOAdmin = (rolUsuario === 'pricing' || rolUsuario === 'admin');
+
+            // ? Pricing y Admin pueden editar qty, costo
+            const puedeEditarQtyCosto = (rolUsuario === 'pricing' || rolUsuario === 'admin');
+
+            // ? Comercial, Pricing y Admin pueden editar tarifa y total_tarifa
+            const puedeEditarTarifa = (rolUsuario === 'comercial' || rolUsuario === 'pricing' || rolUsuario === 'admin');
+
             // ? Comercial, Finanzas, Pricing y Admin pueden elegir concepto y aplica
             const puedeEditarConceptoAplica = (rolUsuario === 'comercial' || rolUsuario === 'finanzas' || rolUsuario === 'pricing' || rolUsuario === 'admin');
 
-            // ? Deshabilitar solo qty, costo y tarifa para no-Pricing/Admin
-            ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.disabled = !esPricingOAdmin;
-            });
+            // ? Control de edición por campo
+            const campoQty = document.getElementById('costo_qty');
+            const campoCosto = document.getElementById('costo_costo');
+            const campoTarifa = document.getElementById('costo_tarifa');
 
-            // ? Habilitar concepto y aplica para Comercial, Finanzas, Pricing y Admin
+            if (campoQty) campoQty.disabled = !puedeEditarQtyCosto;
+            if (campoCosto) campoCosto.disabled = !puedeEditarQtyCosto;
+            if (campoTarifa) campoTarifa.disabled = !puedeEditarTarifa;
+
+            // ? Habilitar concepto y aplica según permisos
             ['costo_concepto', 'costo_aplica'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = !puedeEditarConceptoAplica;
             });
 
-            // ? Asegurar que "tarifa" sea editable para Pricing y Admin
-            const campoTarifa = document.getElementById('costo_tarifa');
-            if (campoTarifa) {
-                campoTarifa.disabled = !esPricingOAdmin;
-            }
+            // ? Actualizar total_tarifa cuando cambia tarifa o qty
+            ['costo_qty', 'costo_tarifa'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && puedeEditarTarifa) {
+                    // Asegurar que el listener solo se agregue si está habilitado
+                    const handler = () => {
+                        const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+                        const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
+                        document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
+                    };
+                    // Eliminar listeners anteriores para evitar duplicados
+                    el.removeEventListener('input', handler);
+                    el.addEventListener('input', handler);
+                }
+            });
 
             // ✅ Actualizar tabla y mostrar modal
             actualizarTablaCostos();
