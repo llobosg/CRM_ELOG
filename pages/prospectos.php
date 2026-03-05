@@ -339,7 +339,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
     <!-- Submodal: Costos/Ventas/Gastos -->
     <div id="submodal-costos" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
-        <div class="modal-content" style="max-width: 1600px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        <div class="modal-content" style="max-width: 1300px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
             <h3><i class="fas fa-calculator"></i> Costos, Ventas y Gastos</h3>
             <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
             
