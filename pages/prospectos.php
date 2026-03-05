@@ -367,15 +367,18 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Moneda</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Qty</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
+                            <!-- ✅ Columna Total Costo RESTAURADA -->
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Total Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th>
+                            <!-- ✅ Columna Tarifa RESTAURADA -->
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th> 
+                            <!-- ✅ Columna Total Tarifa RESTAURADA -->
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Total Tarifa</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Aplica</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="costos-body"></tbody>
-                    
+                    <!-- ❌ ELIMINADO: <tfoot> con totales -->
                 </table>
             </div>
             <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Notas Comerciales</button>
@@ -2136,14 +2139,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
             if (!tbody) return;
             tbody.innerHTML = '';
             
-            let tc = 0, tt = 0;
             costosServicio.forEach((c, i) => {
                 const qty = parseFloat(c.qty) || 0;
                 const costo = parseFloat(c.costo) || 0;
                 const tarifa = parseFloat(c.tarifa) || 0;
-                const tcosto = qty * costo;
-                const ttarifa = qty * tarifa;
-                tc += tcosto; tt += ttarifa;
+                const total_costo = qty * costo;
+                const total_tarifa = qty * tarifa;
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -2151,7 +2152,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <td>${c.moneda}</td>
                 <td style="text-align: right;">${qty.toFixed(2)}</td>
                 <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #fff9db;">${total_costo.toFixed(2)}</td>
                 <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #e6f7ff;">${total_tarifa.toFixed(2)}</td>
                 <td>${c.aplica}</td>
                 <td>
                     <button type="button" onclick="editarCosto(${i})">✏️</button>
@@ -2160,13 +2163,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 `;
                 tbody.appendChild(tr);
             });
-            
-            // ✅ Solo actualizar totales si los elementos existen
-            const totalCostoEl = document.getElementById('total-costo-costos');
-            const totalTarifaEl = document.getElementById('total-tarifa-costos');
-            
-            if (totalCostoEl) totalCostoEl.textContent = tc.toFixed(2);
-            if (totalTarifaEl) totalTarifaEl.textContent = tt.toFixed(2);
         }
 
         function editarCosto(i) {
