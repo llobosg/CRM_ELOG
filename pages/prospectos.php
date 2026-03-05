@@ -382,15 +382,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <table id="tabla-costos" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
                     <thead>
                         <tr style="background: #f1f3f5;">
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 20ch;">Concepto</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 14ch;">Concepto</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 8ch;">Moneda</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 8ch;">Qty</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 12ch;">Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 15ch;">Total Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 12ch;">Tarifa</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 15ch;">Total Tarifa</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 20ch;">Aplica</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 12ch;">Acción</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">Qty</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 8ch;">Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 12ch;">Total Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 8ch;">Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 12ch;">Total Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 14ch;">Aplica</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 10ch;">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="costos-body"></tbody>
