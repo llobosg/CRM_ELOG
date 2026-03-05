@@ -2136,6 +2136,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const tbody = document.getElementById('costos-body');
             if (!tbody) return;
             tbody.innerHTML = '';
+            
             let tc = 0, tt = 0;
             costosServicio.forEach((c, i) => {
                 const qty = parseFloat(c.qty) || 0;
@@ -2144,25 +2145,29 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const tcosto = qty * costo;
                 const ttarifa = qty * tarifa;
                 tc += tcosto; tt += ttarifa;
+                
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${c.concepto}</td>
-                    <td>${c.moneda}</td>
-                    <td style="text-align: right;">${qty.toFixed(2)}</td>
-                    <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
-                    <td style="text-align: right; background-color: #fff9db;">${tcosto.toFixed(2)}</td>
-                    <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
-                    <td style="text-align: right; background-color: #e6f7ff;">${ttarifa.toFixed(2)}</td>
-                    <td>${c.aplica}</td>
-                    <td>
-                        <button type="button" onclick="editarCosto(${i})">✏️</button>
-                        <button type="button" onclick="eliminarCosto(${i})">🗑️</button>
-                    </td>
+                <td>${c.concepto}</td>
+                <td>${c.moneda}</td>
+                <td style="text-align: right;">${qty.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
+                <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
+                <td>${c.aplica}</td>
+                <td>
+                    <button type="button" onclick="editarCosto(${i})">✏️</button>
+                    <button type="button" onclick="eliminarCosto(${i})">🗑️</button>
+                </td>
                 `;
                 tbody.appendChild(tr);
             });
-            document.getElementById('total-costo-costos').textContent = tc.toFixed(2);
-            document.getElementById('total-tarifa-costos').textContent = tt.toFixed(2);
+            
+            // ✅ Solo actualizar totales si los elementos existen
+            const totalCostoEl = document.getElementById('total-costo-costos');
+            const totalTarifaEl = document.getElementById('total-tarifa-costos');
+            
+            if (totalCostoEl) totalCostoEl.textContent = tc.toFixed(2);
+            if (totalTarifaEl) totalTarifaEl.textContent = tt.toFixed(2);
         }
 
         function editarCosto(i) {
