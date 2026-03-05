@@ -358,7 +358,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             </div>
 
             <!-- Formulario de entrada -->
-            <div style="display: grid; grid-template-columns: 30ch 8ch 8ch 8ch 16ch 16ch 16ch 16ch 30ch 16ch; gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+            <div style="display: grid; grid-template-columns: 30ch 8ch 8ch 10ch 13ch 13ch 13ch 13ch 30ch 16ch; gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
                 <select id="costo_concepto" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
                     <option value="">Seleccionar concepto</option>
                 </select>
@@ -385,10 +385,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: auto; min-width: 30ch;">Concepto</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 8ch;">Moneda</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 8ch;">Qty</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 16ch;">Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 16ch;">Total Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 16ch;">Tarifa</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 16ch;">Total Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 13ch;">Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 13ch;">Total Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 13ch;">Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 13ch;">Total Tarifa</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: auto; min-width: 30ch;">Aplica</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 16ch;">Acción</th>
                         </tr>
