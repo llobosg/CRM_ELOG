@@ -374,27 +374,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Acción</th>
                         </tr>
                     </thead>
-                    <!-- ocultar TOTAL COSO y TOTAL TARIFA en el pie de tabla por ahora, hasta definir bien la lógica de cálculo y actualización dinámica  -->
                     <tbody id="costos-body"></tbody>
-                    <div class="table-container" style="margin-top: 1.2rem; overflow-x: auto;">
-                    <table id="tabla-costos" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
-                        <thead>
-                            <tr style="background: #f1f3f5;">
-                                <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Concepto</th>
-                                <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Moneda</th>
-                                <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Qty</th>
-                                <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
-                                <!-- ❌ Eliminadas: Total Costo -->
-                                <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th>
-                                <!-- ❌ Eliminadas: Total Tarifa -->
-                                <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Aplica</th>
-                                <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="costos-body"></tbody>
-                        <!-- ❌ Eliminado completamente el <tfoot> con los totales -->
-                    </table>
-                </div>
+
+                    <!-- acá iba seccion de totales, pero se decidió eliminar para simplificar la vista -->
+                     
                 </table>
             </div>
             <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Notas Comerciales</button>
