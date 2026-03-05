@@ -1893,28 +1893,28 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
             // ? Determinar permisos por rol
             const rolUsuario = '<?php echo $_SESSION["rol"] ?? "comercial"; ?>';
-
-            // ? Solo Pricing y Admin pueden editar qty, costo y tarifa
+            // ? Pricing y Admin pueden editar qty, costo, tarifa, concepto y aplica
             const esPricingOAdmin = (rolUsuario === 'pricing' || rolUsuario === 'admin');
+            // ? Comercial, Finanzas, Pricing y Admin pueden elegir concepto y aplica
+            const puedeEditarConceptoAplica = (rolUsuario === 'comercial' || rolUsuario === 'finanzas' || rolUsuario === 'pricing' || rolUsuario === 'admin');
 
-            // ? Comercial, Finanzas y Admin pueden elegir concepto y aplica
-            const puedeEditarConceptoAplica = (rolUsuario === 'comercial' || rolUsuario === 'finanzas' || rolUsuario === 'admin');
-
-            // ? Deshabilitar solo qty, costo y tarifa para no-Pricing
+            // ? Deshabilitar solo qty, costo y tarifa para no-Pricing/Admin
             ['costo_qty', 'costo_costo', 'costo_tarifa'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = !esPricingOAdmin;
             });
 
-            // ? Habilitar concepto y aplica para Comercial, Finanzas y Admin
+            // ? Habilitar concepto y aplica para Comercial, Finanzas, Pricing y Admin
             ['costo_concepto', 'costo_aplica'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = !puedeEditarConceptoAplica;
             });
 
-            // ✅ El campo "tarifa" siempre editable
+            // ? Asegurar que "tarifa" sea editable para Pricing y Admin
             const campoTarifa = document.getElementById('costo_tarifa');
-            if (campoTarifa) campoTarifa.disabled = false;
+            if (campoTarifa) {
+                campoTarifa.disabled = !esPricingOAdmin;
+            }
 
             // ✅ Actualizar tabla y mostrar modal
             actualizarTablaCostos();
