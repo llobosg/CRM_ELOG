@@ -358,21 +358,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
             </div>
 
             <!-- Formulario de entrada -->
-            <div style="display: grid; grid-template-columns: repeat(11, 1fr); gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
-                <select id="costo_concepto" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+            <div style="display: grid; grid-template-columns: auto 4ch 4ch 4ch 8ch 12ch 8ch 12ch auto 8ch; gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+                <select id="costo_concepto" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
                     <option value="">Seleccionar concepto</option>
                 </select>
-                <input type="text" id="costo_moneda" readonly style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center;" />
-                <input type="number" id="costo_qty" step="0.01" min="0" placeholder="Qty" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
-                <input type="number" id="costo_porcentaje_concepto" step="0.01" min="0" max="100" value="100" placeholder="% Concepto" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
-                <input type="number" id="costo_costo" step="0.01" min="0" placeholder="Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #787676ff; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right;" />
-                <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #787676ff; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right;" />
-                <input type="number" id="costo_tarifa" step="0.01" min="0" placeholder="Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right;" />
-                <input type="text" id="costo_total_tarifa" readonly placeholder="Total Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right;" />
-                <select id="costo_aplica" style="grid-column: span 2; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
+                <input type="text" id="costo_moneda" readonly style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center;" />
+                <input type="number" id="costo_qty" step="0.01" min="0" placeholder="Qty" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
+                <input type="number" id="costo_porcentaje_concepto" step="0.01" min="0" max="100" value="100" placeholder="% Concepto" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right;" />
+                <input type="number" id="costo_costo" step="0.01" min="0" placeholder="Costo" style="padding: 0.6rem; border: 1px solid #787676ff; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right;" />
+                <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="padding: 0.6rem; border: 1px solid #787676ff; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right;" />
+                <input type="number" id="costo_tarifa" step="0.01" min="0" placeholder="Tarifa" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right;" />
+                <input type="text" id="costo_total_tarifa" readonly placeholder="Total Tarifa" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right;" />
+                <select id="costo_aplica" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; width: 100%;">
                     <option value="">Seleccionar aplica</option>
                 </select>
-                <button type="button" onclick="guardarCosto()" style="grid-column: span 1; background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
+                <button type="button" onclick="guardarCosto()" style="background: #009966; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
                     <i class="fas fa-plus"></i> Agregar
                 </button>
             </div>
@@ -382,15 +382,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <table id="tabla-costos" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
                     <thead>
                         <tr style="background: #f1f3f5;">
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Concepto</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Moneda</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Qty</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem;">Total Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Tarifa</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem;">Total Tarifa</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Aplica</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Acción</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: auto; min-width: 12ch;">Concepto</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 4ch;">Moneda</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 4ch;">Qty</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 4ch;">% Concepto</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 8ch;">Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 12ch;">Total Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 8ch;">Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 12ch;">Total Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: auto; min-width: 10ch;">Aplica</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 8ch;">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="costos-body"></tbody>
