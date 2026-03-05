@@ -374,7 +374,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem;">Acción</th>
                         </tr>
                     </thead>
-                    <!-- ocultar TOTAL COSO y TOTAL TARIFA en el pie de tabla por ahora, hasta definir bien la lógica de cálculo y actualización dinámica
+                    <!-- ocultar TOTAL COSO y TOTAL TARIFA en el pie de tabla por ahora, hasta definir bien la lógica de cálculo y actualización dinámica  -->
                     <tbody id="costos-body"></tbody>
                     <tfoot>
                         <tr style="font-weight: normal; background: #f9fafcff;">
@@ -384,8 +384,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             <td id="total-tarifa-costos" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd; background-color: #e6f7ff;">0.00</td>
                             <td></td>
                         </tr>
-                    </tfoot>
-                     -->
+                    </tfoot> 
                 </table>
             </div>
             <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Notas Comerciales</button>
