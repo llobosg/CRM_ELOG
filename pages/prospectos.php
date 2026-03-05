@@ -348,6 +348,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 </select>    
                 <input type="text" id="costo_moneda" readonly style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: #e9ecef; text-align: center; width: 80px;" />
                 <input type="number" id="costo_qty" step="0.01" min="0" placeholder="Qty" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right; width: 80px;" />
+                <input type="number" id="costo_porcentaje_concepto" step="0.01" min="0" max="100" value="100" placeholder="% Concepto" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; text-align: right; width: 80px;" />
                 <input type="number" id="costo_costo" step="0.01" min="0" placeholder="Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #787676ff; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
                 <input type="text" id="costo_total_costo" readonly placeholder="Total Costo" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #787676ff; border-radius: 6px; font-size: 0.95rem; background-color: #fff9db; text-align: right; width: 80px;" />
                 <input type="number" id="costo_tarifa" step="0.01" min="0" placeholder="Tarifa" style="grid-column: span 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background-color: #e6f7ff; text-align: right; width: 80px;" />
@@ -2110,19 +2111,42 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const concepto = document.getElementById('costo_concepto').value;
             const aplica = document.getElementById('costo_aplica').value;
             const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+            const porcentaje_concepto = parseFloat(document.getElementById('costo_porcentaje_concepto').value) || 100;
             const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
             const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
             const moneda = document.getElementById('costo_moneda').value || 'CLP';
+            
             if (!concepto || !aplica) return error('Concepto y Aplica son obligatorios');
-            const nuevo = { concepto, moneda, qty, costo, total_costo: qty * costo, tarifa, total_tarifa: qty * tarifa, aplica };
+            
+            // ✅ Cálculo del total_costo con porcentaje
+            let total_costo = 0;
+            if (porcentaje_concepto > 0) {
+                total_costo = (costo / (porcentaje_concepto / 100)) * qty;
+            }
+            
+            const nuevo = { 
+                concepto, 
+                moneda, 
+                qty, 
+                porcentaje_concepto, // ✅ Incluir en el objeto
+                costo, 
+                total_costo, 
+                tarifa, 
+                total_tarifa: qty * tarifa, 
+                aplica 
+            };
+            
             if (window.indiceCostoEdicion !== undefined) {
                 costosServicio[window.indiceCostoEdicion] = nuevo;
                 delete window.indiceCostoEdicion;
             } else {
                 costosServicio.push(nuevo);
             }
+            
             actualizarTablaCostos();
-            ['costo_concepto', 'costo_qty', 'costo_costo', 'costo_tarifa', 'costo_aplica'].forEach(id => {
+            
+            // Limpiar campos
+            ['costo_concepto', 'costo_qty', 'costo_porcentaje_concepto', 'costo_costo', 'costo_tarifa', 'costo_aplica'].forEach(id => {
                 if (id.includes('concepto') || id.includes('aplica')) {
                     document.getElementById(id).selectedIndex = 0;
                 } else {
@@ -2139,18 +2163,28 @@ require_once __DIR__ . '/../includes/auth_check.php';
             if (!tbody) return;
             tbody.innerHTML = '';
             
+            let tc = 0, tt = 0;
             costosServicio.forEach((c, i) => {
                 const qty = parseFloat(c.qty) || 0;
+                const porcentaje_concepto = parseFloat(c.porcentaje_concepto) || 100;
                 const costo = parseFloat(c.costo) || 0;
                 const tarifa = parseFloat(c.tarifa) || 0;
-                const total_costo = qty * costo;
+                
+                // ✅ Recalcular total_costo si es necesario
+                let total_costo = c.total_costo;
+                if (porcentaje_concepto > 0) {
+                    total_costo = (costo / (porcentaje_concepto / 100)) * qty;
+                }
+                
                 const total_tarifa = qty * tarifa;
+                tc += total_costo; tt += total_tarifa;
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                 <td>${c.concepto}</td>
                 <td>${c.moneda}</td>
                 <td style="text-align: right;">${qty.toFixed(2)}</td>
+                <td style="text-align: right;">${porcentaje_concepto.toFixed(2)}%</td> <!-- ✅ Mostrar % -->
                 <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
                 <td style="text-align: right; background-color: #fff9db;">${total_costo.toFixed(2)}</td>
                 <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
@@ -2163,18 +2197,36 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 `;
                 tbody.appendChild(tr);
             });
+            
+            document.getElementById('total-costo-costos').textContent = tc.toFixed(2);
+            document.getElementById('total-tarifa-costos').textContent = tt.toFixed(2);
         }
 
         function editarCosto(i) {
             const c = costosServicio[i];
             if (!c) return;
+            
             document.getElementById('costo_concepto').value = c.concepto || '';
             document.getElementById('costo_qty').value = c.qty || '';
+            document.getElementById('costo_porcentaje_concepto').value = c.porcentaje_concepto || 100; // ✅
             document.getElementById('costo_costo').value = c.costo || '';
             document.getElementById('costo_tarifa').value = c.tarifa || '';
             document.getElementById('costo_aplica').value = c.aplica || '';
-            document.getElementById('costo_total_costo').value = (parseFloat(c.qty || 0) * parseFloat(c.costo || 0)).toFixed(2);
-            document.getElementById('costo_total_tarifa').value = (parseFloat(c.qty || 0) * parseFloat(c.tarifa || 0)).toFixed(2);
+            
+            // Recalcular totales
+            const qty = parseFloat(c.qty) || 0;
+            const porcentaje = parseFloat(c.porcentaje_concepto) || 100;
+            const costo = parseFloat(c.costo) || 0;
+            const tarifa = parseFloat(c.tarifa) || 0;
+            
+            let total_costo = 0;
+            if (porcentaje > 0) {
+                total_costo = (costo / (porcentaje / 100)) * qty;
+            }
+            
+            document.getElementById('costo_total_costo').value = total_costo.toFixed(2);
+            document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
+            
             window.indiceCostoEdicion = i;
         }
 

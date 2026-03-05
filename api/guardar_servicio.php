@@ -216,20 +216,20 @@ try {
         $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio = ?")->execute([$id_srvc]);
         $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio = ?")->execute([$id_srvc]);
 
-        // === INSERTAR COSTOS ===
-        $costos = $data['costos'] ?? [];
-        error_log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para id_srvc: $id_srvc");
+        // --- Insertar Costos ---
+        $costos = $s['costos'] ?? [];
         foreach ($costos as $c) {
-            error_log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
             $stmtC = $pdo->prepare("
-                INSERT INTO costos_servicios (id_servicio, concepto, moneda, qty, costo, tarifa, aplica)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO costos_servicios (
+                    id_servicio, concepto, moneda, qty, porcentaje_concepto, costo, tarifa, aplica
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmtC->execute([
                 $id_srvc,
                 $c['concepto'] ?? '',
                 $c['moneda'] ?? 'CLP',
                 (float)($c['qty'] ?? 0),
+                (float)($c['porcentaje_concepto'] ?? 100), // ✅ Nuevo campo
                 (float)($c['costo'] ?? 0),
                 (float)($c['tarifa'] ?? 0),
                 $c['aplica'] ?? ''
