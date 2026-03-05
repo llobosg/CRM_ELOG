@@ -320,35 +320,23 @@ $html .= '<table border="0" cellpadding="2" cellspacing="0" style="width: 100%; 
 $html .= '<thead><tr style="background-color: #f2f2f2;"><th style="border: 1px solid #ddd; text-align: left;">CONCEPTO</th><th style="border: 1px solid #ddd; text-align: center;">MONEDA</th><th style="border: 1px solid #ddd; text-align: center;">QTY</th><th style="border: 1px solid #ddd; text-align: right;">VENTA</th><th style="border: 1px solid #ddd; text-align: center;">APLICA</th></tr></thead>';
 $html .= '<tbody>';
 
-$total_costos = 0;
-$total_venta = 0;
-$total_venta_todo = 0;
-
 foreach ($costos_datos as $c) {
     $qty = $c['qty'] ?? 0;
-    $costo = $c['costo'] ?? 0;
     $tarifa = $c['tarifa'] ?? 0;
-    $total_costos += $costo * $qty;
-    $total_venta += $tarifa * $qty;
-    $total_venta_todo += $total_venta_todo + $total_venta;
+    $total_tarifa = $qty * $tarifa; // ✅ Total Tarifa individual
+    
     $html .= '<tr>';
     $html .= '<td style="border: 1px solid #ddd;">' . $c['concepto'] . '</td>';
     $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['moneda'] . '</td>';
     $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . number_format($qty, 2) . '</td>';
-    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta, 2) . '</td>';
+    $html .= '<td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_tarifa, 2) . '</td>'; // ✅ Mostrar total individual
     $html .= '<td style="border: 1px solid #ddd; text-align: center;">' . $c['aplica'] . '</td>';
     $html .= '</tr>';
 }
 
 $html .= '</tbody>';
-$html .= '<tfoot>';
-$html .= '<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTAL:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta_todo, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>';
-// FILAS ELIMINADAS SEGÚN REQUERIMIENTO
-/*
-<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTAL PROFIT:</td><td style="border: 1px solid #ddd; text-align: right;">' . number_format($total_venta - $total_costos, 2) . '</td><td style="border: 1px solid #ddd;"></td></tr>
-<tr style="font-weight: bold;"><td style="border: 1px solid #ddd; text-align: right;" colspan="3">TOTAL PROFIT %:</td><td style="border: 1px solid #ddd; text-align: right;">' . ($total_venta > 0 ? number_format((($total_venta - $total_costos) / $total_venta) * 100, 2) : 0) . '%</td><td style="border: 1px solid #ddd;"></td></tr>
-*/
-$html .= '</tfoot>';
+// ✅ ELIMINAR EL TOTAL FINAL (multimoneda sin sentido)
+// <tfoot>...</tfoot>
 $html .= '</table>';
 $html .= '</div>';
 
