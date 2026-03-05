@@ -382,14 +382,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <table id="tabla-costos" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
                     <thead>
                         <tr style="background: #f1f3f5;">
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: min-width: 20ch;">Concepto</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 20ch;">Concepto</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 8ch;">Moneda</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 8ch;">Qty</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 12ch;">Costo</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 15ch;">Total Costo</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 12ch;">Tarifa</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 15ch;">Total Tarifa</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: min-width: 20ch;">Aplica</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 20ch;">Aplica</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 12ch;">Acción</th>
                         </tr>
                     </thead>
@@ -1933,14 +1933,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
             });
 
             // ? Actualizar total_tarifa cuando cambia tarifa o qty
-            ['costo_qty', 'costo_tarifa'].forEach(id => {
+            ['costo_qty', 'costo_tarifa', 'costo_porcentaje_concepto'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el && puedeEditarTarifa) {
                     // Asegurar que el listener solo se agregue si está habilitado
                     const handler = () => {
                         const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
                         const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-                        document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
+                        const porcentaje_concepto = parseFloat(document.getElementById('costo_porcentaje_concepto').value) || 0;
+                        document.getElementById('costo_total_tarifa').value = (tarifa / (porcentaje_concepto / 100) * qty).toFixed(2);
                     };
                     // Eliminar listeners anteriores para evitar duplicados
                     el.removeEventListener('input', handler);
