@@ -375,15 +375,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         </tr>
                     </thead>
                     <tbody id="costos-body"></tbody>
-                    <tfoot>
-                        <tr style="font-weight: normal; background: #f9fafcff;">
-                            <td colspan="4" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">TOTAL COSTO:</td>
-                            <td id="total-costo-costos" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd; background-color: #fff9db;">0.00</td>
-                            <td style="padding: 0.6rem; text-align: right; border: 1px solid #ddd;">TOTAL TARIFA:</td>
-                            <td id="total-tarifa-costos" style="padding: 0.6rem; text-align: right; border: 1px solid #ddd; background-color: #e6f7ff;">0.00</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
+                    
                 </table>
             </div>
             <button type="button" class="btn-comment" onclick="abrirModalComercial()"><i class="fas fa-comments"></i> Notas Comerciales</button>
