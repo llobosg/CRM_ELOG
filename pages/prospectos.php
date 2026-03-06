@@ -344,7 +344,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
             
             <!-- Labels descriptivos -->
-            <div style="display: grid; grid-template-columns: 26ch 8ch 6ch 9ch 8ch 12ch 12ch 12ch 30ch 16ch; gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px; font-weight: bold;">
+            <div style="display: grid; grid-template-columns: 26ch 8ch 6ch 9ch 8ch 12ch 12ch 12ch 30ch; gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px; font-weight: bold;">
                 <div>Concepto</div>
                 <div>Moneda</div>
                 <div>Qty</div>
@@ -385,6 +385,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 10ch;">Concepto</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">Moneda</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">Qty</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">%</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 5ch; color: #000000;">Costo</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 8ch; color: #000000;">Total Costo</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 5ch; color: #000000;">Tarifa</th>
