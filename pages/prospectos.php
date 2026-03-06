@@ -385,10 +385,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 10ch;">Concepto</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">Moneda</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">Qty</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 5ch;">Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 8ch;">Total Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 5ch;">Tarifa</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 8ch;">Total Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 5ch; color: #000000;">Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 8ch; color: #000000;">Total Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 5ch; color: #000000;">Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 8ch; color: #000000;">Total Tarifa</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">Aplica</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 8ch;">Acción</th>
                         </tr>
