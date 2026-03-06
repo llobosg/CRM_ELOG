@@ -344,7 +344,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
             
             <!-- Labels descriptivos -->
-            <div style="display: grid; grid-template-columns: 24ch 8ch 8ch 9ch 8ch 12ch 12ch 12ch 30ch 16ch; gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px; font-weight: bold;">
+            <div style="display: grid; grid-template-columns: 26ch 8ch 6ch 9ch 8ch 12ch 12ch 12ch 30ch 16ch; gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px; font-weight: bold;">
                 <div>Concepto</div>
                 <div>Moneda</div>
                 <div>Qty</div>
@@ -1933,18 +1933,30 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 if (el) el.disabled = !puedeEditarConceptoAplica;
             });
 
-            // ? Actualizar total_tarifa cuando cambia tarifa o qty
-            ['costo_qty', 'costo_tarifa', 'costo_porcentaje_concepto'].forEach(id => {
+            // ? Actualizar total_costo y total_tarifa cuando cambian qty, tarifa o porcentaje_concepto
+            ['costo_qty', 'costo_costo', 'costo_tarifa', 'costo_porcentaje_concepto'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el && puedeEditarTarifa) {
-                    // Asegurar que el listener solo se agregue si está habilitado
+                if (el) {
                     const handler = () => {
                         const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
+                        const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
                         const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-                        const porcentaje_concepto = parseFloat(document.getElementById('costo_porcentaje_concepto').value) || 0;
-                        document.getElementById('costo_total_tarifa').value = (tarifa / (porcentaje_concepto / 100) * qty).toFixed(2);
+                        const porcentaje = parseFloat(document.getElementById('costo_porcentaje_concepto').value) || 100;
+
+                        // ✅ Total Costo: aplica el porcentaje
+                        let totalCosto = 0;
+                        if (porcentaje > 0) {
+                            totalCosto = (costo / (porcentaje / 100)) * qty;
+                        }
+
+                        // ✅ Total Tarifa: NO aplica porcentaje (solo qty × tarifa)
+                        const totalTarifa = tarifa * qty;
+
+                        document.getElementById('costo_total_costo').value = totalCosto.toFixed(2);
+                        document.getElementById('costo_total_tarifa').value = totalTarifa.toFixed(2);
                     };
-                    // Eliminar listeners anteriores para evitar duplicados
+
+                    // Evitar listeners duplicados
                     el.removeEventListener('input', handler);
                     el.addEventListener('input', handler);
                 }
