@@ -348,7 +348,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <div>Concepto</div>
                 <div>Moneda</div>
                 <div>Qty</div>
-                <div>% Concepto</div>
+                <div>%</div>
                 <div>Costo</div>
                 <div>Total Costo</div>
                 <div>Tarifa</div>
@@ -382,16 +382,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <table id="tabla-costos" style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
                     <thead>
                         <tr style="background: #f1f3f5;">
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 10ch;">Concepto</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">Moneda</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">Qty</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">%</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 5ch; color: #000000;">Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 8ch; color: #000000;">Total Costo</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 5ch; color: #000000;">Tarifa</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 8ch; color: #000000;">Total Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 12ch;">Concepto</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 4ch;">Moneda</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 4ch;">Qty</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 4ch;">%</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 4ch; color: #000000;">Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #fff9db; font-size: 0.92rem; width: 6ch; color: #000000;">Total Costo</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 4ch; color: #000000;">Tarifa</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; background-color: #e6f7ff; font-size: 0.92rem; width: 6ch; color: #000000;">Total Tarifa</th>
                             <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 6ch;">Aplica</th>
-                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 8ch;">Acción</th>
+                            <th style="padding: 0.6rem; text-align: center; border: 1px solid #ddd; font-size: 0.92rem; width: 4ch;">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="costos-body"></tbody>
@@ -2148,21 +2148,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
             
             if (!concepto || !aplica) return error('Concepto y Aplica son obligatorios');
             
-            // ✅ Cálculo del total_costo con porcentaje
-            let total_costo = 0;
-            if (porcentaje_concepto > 0) {
-                total_costo = (costo / (porcentaje_concepto / 100)) * qty;
-            }
+            // ✅ Cálculo CORRECTO del total_costo: (costo * %) * qty
+            let total_costo = (costo * (porcentaje_concepto / 100)) * qty;
+            
+            // ✅ Cálculo CORRECTO del total_tarifa: tarifa * qty
+            let total_tarifa = tarifa * qty;
             
             const nuevo = { 
                 concepto, 
                 moneda, 
                 qty, 
-                porcentaje_concepto, // ✅ Incluir en el objeto
+                porcentaje_concepto,
                 costo, 
                 total_costo, 
                 tarifa, 
-                total_tarifa: qty * tarifa, 
+                total_tarifa, 
                 aplica 
             };
             
