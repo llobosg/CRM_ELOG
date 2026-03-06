@@ -321,6 +321,22 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
     </div>
 
+    <!-- Nuevo Submodal Notas del Servicio -->
+    <div id="submodal-notas-servicio" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 650px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <h3><i class="fas fa-sticky-note"></i> Notas del Servicio</h3>
+            <span class="close" onclick="cerrarSubmodalNotasServicio()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
+            <div style="margin: 1.2rem 0;">
+                <label for="nota_servicio_textarea">Comentarios:</label>
+                <textarea id="nota_servicio_textarea" rows="6" placeholder="Ingrese notas o comentarios para este servicio..."></textarea>
+            </div>
+            <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: flex-end; align-items: center;">
+                <button type="button" onclick="cerrarSubmodalNotasServicio()">Cerrar</button>
+                <button type="button" onclick="guardarNotasServicio()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Submodal: Costos/Ventas/Gastos -->
     <div id="submodal-costos" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
         <div class="modal-content" style="max-width: 1300px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
@@ -393,24 +409,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             </div>
         </div>
     </div>
-
-    <!-- Nuevo Submodal Notas del Servicio -->
-    <div id="submodal-notas-servicio" class="modal" style="display:none;">
-        <div class="modal-content" style="max-width: 650px; width: 95%; margin: 1.5rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-            <h3><i class="fas fa-sticky-note"></i> Notas del Servicio</h3>
-            <span class="close" onclick="cerrarSubmodalNotasServicio()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
-            <div style="margin: 1.2rem 0;">
-                <label for="nota_servicio_textarea">Comentarios:</label>
-                <textarea id="nota_servicio_textarea" rows="6" placeholder="Ingrese notas o comentarios para este servicio..."></textarea>
-            </div>
-            <div class="modal-footer" style="text-align: right; margin-top: 1.5rem; gap: 0.8rem; display: flex; justify-content: flex-end; align-items: center;">
-                <button type="button" onclick="cerrarSubmodalNotasServicio()">Cerrar</button>
-                <button type="button" onclick="guardarNotasServicio()">Guardar</button>
-            </div>
-        </div>
-    </div>
-
-    
 
     <!-- Submodal: Gastos Locales -->
     <div id="submodal-gastos-locales" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
