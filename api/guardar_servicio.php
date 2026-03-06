@@ -216,9 +216,9 @@ try {
         $pdo->prepare("DELETE FROM costos_servicios WHERE id_servicio = ?")->execute([$id_srvc]);
         $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio = ?")->execute([$id_srvc]);
 
-        // --- Insertar Costos ---
-        $costos = $data['costos'] ?? []; // ✅ Usar $data, no $s
-        error_log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para id_srvc: $id_srvc");
+        // === INSERTAR COSTOS ===
+        $costos = $data['costos'] ?? [];
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para nuevo servicio: $id_srvc");
         foreach ($costos as $c) {
             error_log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
             $stmtC = $pdo->prepare("
@@ -234,9 +234,9 @@ try {
                 (float)($c['qty'] ?? 0),
                 (float)($c['porcentaje_concepto'] ?? 100),
                 (float)($c['costo'] ?? 0),
-                (float)($c['total_costo'] ?? 0), // ✅ Incluir total_costo
+                (float)($c['total_costo'] ?? 0),
                 (float)($c['tarifa'] ?? 0),
-                (float)($c['total_tarifa'] ?? 0), // ✅ Incluir total_tarifa
+                (float)($c['total_tarifa'] ?? 0),
                 $c['aplica'] ?? ''
             ]);
         }
