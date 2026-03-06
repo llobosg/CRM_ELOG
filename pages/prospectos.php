@@ -344,7 +344,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <span class="close" onclick="cerrarSubmodalCostos()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
             
             <!-- Labels descriptivos -->
-            <div style="display: grid; grid-template-columns: 22ch 8ch 8ch 9ch 12ch 12ch 12ch 12ch 30ch 16ch; gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px; font-weight: bold;">
+            <div style="display: grid; grid-template-columns: 24ch 8ch 8ch 9ch 8ch 12ch 12ch 12ch 30ch 16ch; gap: 0.5rem; margin: 0.5rem 0; align-items: center; background: #f8f9fa; padding: 1rem; border-radius: 6px; font-weight: bold;">
                 <div>Concepto</div>
                 <div>Moneda</div>
                 <div>Qty</div>
