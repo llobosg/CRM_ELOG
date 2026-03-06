@@ -223,17 +223,20 @@ try {
             error_log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
             $stmtC = $pdo->prepare("
                 INSERT INTO costos_servicios (
-                    id_servicio, concepto, moneda, qty, porcentaje_concepto, costo, tarifa, aplica
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    id_servicio, concepto, moneda, qty, porcentaje_concepto, 
+                    costo, total_costo, tarifa, total_tarifa, aplica
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmtC->execute([
                 $id_srvc,
                 $c['concepto'] ?? '',
                 $c['moneda'] ?? 'CLP',
                 (float)($c['qty'] ?? 0),
-                (float)($c['porcentaje_concepto'] ?? 100), // ✅ Nuevo campo
+                (float)($c['porcentaje_concepto'] ?? 100),
                 (float)($c['costo'] ?? 0),
+                (float)($c['total_costo'] ?? 0), // ✅ Incluir total_costo
                 (float)($c['tarifa'] ?? 0),
+                (float)($c['total_tarifa'] ?? 0), // ✅ Incluir total_tarifa
                 $c['aplica'] ?? ''
             ]);
         }
