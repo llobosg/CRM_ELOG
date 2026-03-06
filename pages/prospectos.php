@@ -2139,11 +2139,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
         function guardarCosto() {
             const concepto = document.getElementById('costo_concepto').value;
             const aplica = document.getElementById('costo_aplica').value;
+            const moneda = document.getElementById('costo_moneda').value || 'CLP';
             const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
             const porcentaje_concepto = parseFloat(document.getElementById('costo_porcentaje_concepto').value) || 100;
             const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
             const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-            const moneda = document.getElementById('costo_moneda').value || 'CLP';
             
             if (!concepto || !aplica) return error('Concepto y Aplica son obligatorios');
             
