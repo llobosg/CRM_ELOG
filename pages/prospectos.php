@@ -2197,8 +2197,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 const qty = parseFloat(c.qty) || 0;
                 const costo = parseFloat(c.costo) || 0;
                 const tarifa = parseFloat(c.tarifa) || 0;
-                const total_costo = qty * costo;
-                const total_tarifa = qty * tarifa;
+                const porcentaje_concepto = parseFloat(c.porcentaje_concepto) || 100; // ✅
+                
+                // ✅ Cálculo correcto con porcentaje
+                const total_costo = (costo * (porcentaje_concepto / 100)) * qty;
+                const total_tarifa = tarifa * qty;
+                
                 tc += total_costo;
                 tt += total_tarifa;
                 
@@ -2207,6 +2211,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <td>${c.concepto}</td>
                 <td>${c.moneda}</td>
                 <td style="text-align: right;">${qty.toFixed(2)}</td>
+                <td style="text-align: right;">${porcentaje_concepto.toFixed(2)}%</td> <!-- ✅ Mostrar % -->
                 <td style="text-align: right; background-color: #fff9db;">${costo.toFixed(2)}</td>
                 <td style="text-align: right; background-color: #fff9db;">${total_costo.toFixed(2)}</td>
                 <td style="text-align: right; background-color: #e6f7ff;">${tarifa.toFixed(2)}</td>
@@ -2234,24 +2239,23 @@ require_once __DIR__ . '/../includes/auth_check.php';
             
             document.getElementById('costo_concepto').value = c.concepto || '';
             document.getElementById('costo_qty').value = c.qty || '';
-            document.getElementById('costo_porcentaje_concepto').value = c.porcentaje_concepto || 100; // ✅
+            document.getElementById('costo_porcentaje_concepto').value = c.porcentaje_concepto || 100;
             document.getElementById('costo_costo').value = c.costo || '';
             document.getElementById('costo_tarifa').value = c.tarifa || '';
             document.getElementById('costo_aplica').value = c.aplica || '';
             
-            // Recalcular totales
+            // Recalcular totales con fórmula CORRECTA
             const qty = parseFloat(c.qty) || 0;
             const porcentaje = parseFloat(c.porcentaje_concepto) || 100;
             const costo = parseFloat(c.costo) || 0;
             const tarifa = parseFloat(c.tarifa) || 0;
             
-            let total_costo = 0;
-            if (porcentaje > 0) {
-                total_costo = (costo / (porcentaje / 100)) * qty;
-            }
+            // ✅ Fórmula correcta
+            const total_costo = (costo * (porcentaje / 100)) * qty;
+            const total_tarifa = qty * tarifa;
             
             document.getElementById('costo_total_costo').value = total_costo.toFixed(2);
-            document.getElementById('costo_total_tarifa').value = (qty * tarifa).toFixed(2);
+            document.getElementById('costo_total_tarifa').value = total_tarifa.toFixed(2);
             
             window.indiceCostoEdicion = i;
         }
