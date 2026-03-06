@@ -217,8 +217,10 @@ try {
         $pdo->prepare("DELETE FROM gastos_locales_detalle WHERE id_servicio = ?")->execute([$id_srvc]);
 
         // --- Insertar Costos ---
-        $costos = $s['costos'] ?? [];
+        $costos = $data['costos'] ?? []; // ✅ Usar $data, no $s
+        error_log("[GUARDAR_SERVICIO] Insertando " . count($costos) . " costos para id_srvc: $id_srvc");
         foreach ($costos as $c) {
+            error_log("[GUARDAR_SERVICIO] Costo: " . json_encode($c));
             $stmtC = $pdo->prepare("
                 INSERT INTO costos_servicios (
                     id_servicio, concepto, moneda, qty, porcentaje_concepto, costo, tarifa, aplica
