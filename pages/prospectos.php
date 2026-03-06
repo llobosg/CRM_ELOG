@@ -591,16 +591,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             }, 5000);
         }
 
-        function exito(msg) { mostrarNotificacion(msg, 'exito'); }
-        function error(msg) { mostrarNotificacion(msg, 'error'); }
-        function advertencia(msg) { mostrarNotificacion(msg, 'advertencia'); }
-
-        function limpiarCamposContacto() {
-            const contactoEl = document.getElementById('contacto');
-            const emailEl = document.getElementById('email');
-            if (contactoEl) contactoEl.value = '';
-            if (emailEl) emailEl.value = '';
-        }
         function cargarClientesEnSelect() {
             fetch('/api/get_todos_clientes.php')
                 .then(r => r.json())
@@ -616,6 +606,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     });
                 })
                 .catch(err => error('No se pudieron cargar los clientes'));
+        }
+
+        function exito(msg) { mostrarNotificacion(msg, 'exito'); }
+        function error(msg) { mostrarNotificacion(msg, 'error'); }
+        function advertencia(msg) { mostrarNotificacion(msg, 'advertencia'); }
+
+        function limpiarCamposContacto() {
+            const contactoEl = document.getElementById('contacto');
+            const emailEl = document.getElementById('email');
+            if (contactoEl) contactoEl.value = '';
+            if (emailEl) emailEl.value = '';
         }
 
         document.getElementById('razon_social_select')?.addEventListener('change', function() {
