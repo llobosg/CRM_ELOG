@@ -1933,7 +1933,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 if (el) el.disabled = !puedeEditarConceptoAplica;
             });
 
-            // ? Actualizar total_costo y total_tarifa cuando cambian qty, tarifa o porcentaje_concepto
+            // ? Actualizar total_costo y total_tarifa cuando cambian qty, costo, tarifa o porcentaje_concepto
             ['costo_qty', 'costo_costo', 'costo_tarifa', 'costo_porcentaje_concepto'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
@@ -1941,15 +1941,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         const qty = parseFloat(document.getElementById('costo_qty').value) || 0;
                         const costo = parseFloat(document.getElementById('costo_costo').value) || 0;
                         const tarifa = parseFloat(document.getElementById('costo_tarifa').value) || 0;
-                        const porcentaje = parseFloat(document.getElementById('costo_porcentaje_concepto').value) || 100;
+                        const porcentaje = parseFloat(document.getElementById('costo_porcentaje_concepto').value) || 0;
 
-                        // ✅ Total Costo: aplica el porcentaje
-                        let totalCosto = 0;
-                        if (porcentaje > 0) {
-                            totalCosto = (costo / (porcentaje / 100)) * qty;
-                        }
+                        // ✅ Total Costo = (costo * %) * qty
+                        const totalCosto = (costo * (porcentaje / 100)) * qty;
 
-                        // ✅ Total Tarifa: NO aplica porcentaje (solo qty × tarifa)
+                        // ✅ Total Tarifa = tarifa * qty (sin porcentaje)
                         const totalTarifa = tarifa * qty;
 
                         document.getElementById('costo_total_costo').value = totalCosto.toFixed(2);
