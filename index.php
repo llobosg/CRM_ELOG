@@ -16,6 +16,71 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// --- NUEVO: Cartel de Mantenimiento ---
+define('MANTENCION_ACTIVADA', true); // Activa el cartel
+
+if (MANTENCION_ACTIVADA) {
+    http_response_code(503); // Código HTTP 503: Service Unavailable
+    header('Retry-After: 3600'); // Indica al navegador que reintente en 1 hora (opcional)
+
+    // HTML para el cartel de mantenimiento
+    echo '
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sitio en Mantención - CRM ELOG</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                background-color: #f0f0f0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+            .maintenance-card {
+                background-color: white;
+                padding: 3rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                text-align: center;
+                max-width: 500px;
+                width: 90%;
+            }
+            .maintenance-icon {
+                font-size: 4rem;
+                color: #ff9800; /* Color ámbar para mantenimiento */
+                margin-bottom: 1rem;
+            }
+            h1 {
+                color: #333;
+                margin-bottom: 1rem;
+            }
+            p {
+                color: #666;
+                font-size: 1.1rem;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="maintenance-card">
+            <div class="maintenance-icon">
+                <i class="fas fa-tools"></i> <!-- Icono de herramientas -->
+            </div>
+            <h1>Sitio en Mantención</h1>
+            <p>Estamos realizando tareas de mantenimiento programado.</p>
+            <p>Disculpe las molestias. El sitio estará disponible pronto.</p>
+        </div>
+    </body>
+    </html>';
+    exit; // Detener la ejecución del resto del script
+}
+// --- FIN NUEVO ---
+
 // Validación global de sesión
 if (empty($_SESSION['user_id']) || empty($_SESSION['user'])) {
     $currentFile = basename($_SERVER['SCRIPT_NAME']);
