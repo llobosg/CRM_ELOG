@@ -17,7 +17,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // --- NUEVO: Cartel de Mantenimiento ---
-define('MANTENCION_ACTIVADA', true); // Activa el cartel
+define('MANTENCION_ACTIVADA', false); // Activa el cartel
 
 if (MANTENCION_ACTIVADA) {
     http_response_code(503); // Código HTTP 503: Service Unavailable
