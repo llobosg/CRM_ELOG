@@ -2,7 +2,7 @@
 // config.php - Compatible con XAMPP local y Railway.app
 
 // En config.php o al inicio de index.php
-define('MANTENCION_ACTIVADA', true); // Cambia a false para desactivar el cartel
+define('MANTENCION_ACTIVADA', false); // Cambia a false para desactivar el cartel
 
 // Mostrar errores solo en entorno local
 if (!getenv('APP_ENV') || getenv('APP_ENV') !== 'QA') {
