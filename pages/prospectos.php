@@ -34,7 +34,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
 <form method="POST" id="form-prospecto" action="">
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
-    <input type="hidden" name="razon_social" id="razon_social_hidden" />
     <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
     <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
@@ -63,15 +62,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <select name="razon_social_select" id="razon_social_select" required style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
                 <option value="">Seleccionar cliente</option>
             </select>
+            <input type="text" name="razon_social" id="razon_social_hidden" />
             <label>RUT Empresa *</label>
-            <input type="text" name="rut_empresa" id="rut_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="rut_empresa" id="rut_empresa" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Fecha</label>
             <input type="date" name="fecha_alta" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" value="<?= date('Y-m-d') ?>" />
         </div>
         <!-- Fila 2 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>País</label>
-            <input type="text" name="pais" id="pais" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="pais" id="pais" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Dirección</label>
             <input type="text" name="direccion" id="direccion" readonly style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Estado</label>
@@ -101,7 +101,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 4 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Comercial Asignado</label>
-            <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <input type="text" name="nombre" id="nombre" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
             <label>Contacto Primario Clte.</label>
             <input type="text" name="contacto" id="contacto" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
             <label>Email</label>
