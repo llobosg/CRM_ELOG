@@ -2734,26 +2734,26 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     e.preventDefault();
                     console.log('🔍 [GRABAR TODO] Iniciando validación...');
 
-                    // ✅ Obtener y establecer razón social en campo oculto
-                    const razonSelect = document.getElementById('razon_social_select');
-                    const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
-                    const razonHidden = document.getElementById('razon_social_hidden');
-                    const razonSocial = document.getElementById('razon_social_manual').value.trim();
-                    if (razonHidden && razonSocial) {
-                        razonHidden.value = razonSocial;
-                    }
-
-                    //if (razonHidden && razon) {
-                    //    razonHidden.value = razon;
-                    //}
-
                     const rut = document.getElementById('rut_empresa')?.value.trim();
+                    const razonSocial = document.getElementById('razon_social_manual')?.value.trim(); // ✅ Input manual
                     const operacion = document.getElementById('operacion')?.value;
                     const tipoOper = document.getElementById('tipo_oper')?.value;
                     const concatenado = document.getElementById('concatenado')?.value;
                     const estado = document.getElementById('estado')?.value || 'Pendiente';
 
-                    if (!rut || !razon) return error('RUT y Razón Social son obligatorios');
+                    // ✅ Validación con razonSocial (no con razon del select)
+                    if (!rut || !razonSocial) return error('RUT y Razón Social son obligatorios');
+                    if (!operacion || !tipoOper) return error('Operación y Tipo Operación son obligatorios');
+                    if (!concatenado) return error('El campo Concatenado no puede estar vacío');
+
+                    // Establecer razón social en campo oculto
+                    const razonHidden = document.getElementById('razon_social_hidden');
+                    if (razonHidden) {
+                        razonHidden.value = razonSocial;
+                    }
+
+                    const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
+                    if (!validarRut(rutLimpio)) return error('RUT inválido');
                     if (!operacion || !tipoOper) return error('Operación y Tipo Operación son obligatorios');
                     if (!concatenado) return error('El campo Concatenado no puede estar vacío');
 
