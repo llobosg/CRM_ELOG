@@ -2757,9 +2757,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     if (!operacion || !tipoOper) return error('Operación y Tipo Operación son obligatorios');
                     if (!concatenado) return error('El campo Concatenado no puede estar vacío');
 
-                    const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
-                    if (!validarRut(rutLimpio)) return error('RUT inválido');
-
                     // ✅ Validación condicional: servicios deben tener costos
                     if (estado === 'Enviado' || estado === 'CerradoOK') {
                         const tieneServiciosSinCostos = servicios.some(s => !s.costos || s.costos.length === 0);
