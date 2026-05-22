@@ -2721,11 +2721,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     console.log('🔍 [GRABAR TODO] Iniciando validación...');
 
                     // ✅ Obtener y establecer razón social en campo oculto
-                    const razonSelect = document.getElementById('razon_social_select');
+                    //const razonSelect = document.getElementById('razon_social_select');
                     const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
                     const razonHidden = document.getElementById('razon_social_hidden');
-                    if (razonHidden && razon) {
-                        razonHidden.value = razon;
+                    if (razonHidden) {
+                        razon = razonHidden.value.trim() || razon; // Priorizar valor oculto si existe
                     }
 
                     const rut = document.getElementById('rut_empresa')?.value.trim();
