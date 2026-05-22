@@ -59,9 +59,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 1 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Razón Social *</label>
-            <select name="razon_social_select" id="razon_social_select" required style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
-                <option value="">Seleccionar cliente</option>
-            </select>
             <input type="text" name="razon_social" id="razon_social_hidden" />
             <label>RUT Empresa *</label>
             <input type="text" name="rut_empresa" id="rut_empresa" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
