@@ -112,7 +112,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 4 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Comercial Asignado</label>
-            <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <input type="text" name="nombre" id="nombre" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
             <label>Contacto Primario Clte.</label>
             <input type="text" name="contacto" id="contacto" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Email</label>
