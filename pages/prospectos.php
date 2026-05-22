@@ -2735,11 +2735,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     console.log('🔍 [GRABAR TODO] Iniciando validación...');
 
                     const rut = document.getElementById('rut_empresa')?.value.trim();
-                    const razonSocial = document.getElementById('razon_social_manual')?.value.trim(); // ✅ Input manual
                     const operacion = document.getElementById('operacion')?.value;
                     const tipoOper = document.getElementById('tipo_oper')?.value;
                     const concatenado = document.getElementById('concatenado')?.value;
                     const estado = document.getElementById('estado')?.value || 'Pendiente';
+                    // ✅ Obtener razón social del input manual (prioridad) o del select (retrocompatibilidad)
+                    const razonSocialManual = document.getElementById('razon_social_manual')?.value.trim();
+                    const razonSelect = document.getElementById('razon_social_select');
+                    const razonSocialSelect = razonSelect?.selectedOptions[0]?.textContent.trim();
+                    const razonSocial = razonSocialManual || razonSocialSelect;
 
                     // ✅ Validación con razonSocial (no con razon del select)
                     if (!rut || !razonSocial) return error('RUT y Razón Social son obligatorios');
