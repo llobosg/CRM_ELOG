@@ -34,7 +34,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
 <form method="POST" id="form-prospecto" action="">
     <input type="hidden" name="id_ppl" id="id_ppl" />
     <input type="hidden" name="id_prospect" id="id_prospect" />
-    <input type="hidden" name="razon_social" id="razon_social_hidden" />
     <input type="hidden" name="notas_comerciales" id="notas_comerciales" />
     <input type="hidden" name="notas_operaciones" id="notas_operaciones" />
     <input type="hidden" name="total_venta_prospecto" id="total_venta_prospecto" value="0.00" />
@@ -57,23 +56,33 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 &times;
             </button>
         </h3>
+        
         <!-- Fila 1 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Razón Social *</label>
-            <select name="razon_social_select" id="razon_social_select" required style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
-                <option value="">Seleccionar cliente</option>
-            </select>
+            <input type="text" name="razon_social_manual" id="razon_social_manual" 
+                   placeholder="Ingrese razón social o seleccione cliente"
+                   style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            
             <label>RUT Empresa *</label>
-            <input type="text" name="rut_empresa" id="rut_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="rut_empresa" id="rut_empresa" 
+                   placeholder="Ej: 12.345.678-9"
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            
             <label>Fecha</label>
             <input type="date" name="fecha_alta" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" value="<?= date('Y-m-d') ?>" />
         </div>
+
         <!-- Fila 2 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>País</label>
-            <input type="text" name="pais" id="pais" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="pais" id="pais" 
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            
             <label>Dirección</label>
-            <input type="text" name="direccion" id="direccion" readonly style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="direccion" id="direccion" 
+                   style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            
             <label>Estado</label>
             <select name="estado" id="estado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; box-sizing: border-box;">
                 <option value="Pendiente">Pendiente</option>
@@ -83,6 +92,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <option value="Rechazado">Rechazado</option>
             </select>
         </div>
+
         <!-- Fila 3: Operación y Tipo Operación -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Operación *</label>
@@ -98,16 +108,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <label>Booking</label>
             <input type="text" name="booking" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
+
         <!-- Fila 4 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Comercial Asignado</label>
             <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
             <label>Contacto Primario Clte.</label>
-            <input type="text" name="contacto" id="contacto" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <input type="text" name="contacto" id="contacto" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Email</label>
-            <input type="text" name="email" id="email" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <input type="email" name="email" id="email" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Teléfono</label>
-            <input type="tel" name="fono_empresa" id="fono_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="tel" name="fono_empresa" id="fono_empresa" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
     </div>
 
@@ -2727,9 +2738,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     const razonSelect = document.getElementById('razon_social_select');
                     const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
                     const razonHidden = document.getElementById('razon_social_hidden');
-                    if (razonHidden && razon) {
-                        razonHidden.value = razon;
+                    const razonSocial = document.getElementById('razon_social_manual').value.trim();
+                    if (razonHidden && razonSocial) {
+                        razonHidden.value = razonSocial;
                     }
+
+                    //if (razonHidden && razon) {
+                    //    razonHidden.value = razon;
+                    //}
 
                     const rut = document.getElementById('rut_empresa')?.value.trim();
                     const operacion = document.getElementById('operacion')?.value;
