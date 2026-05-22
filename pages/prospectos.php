@@ -59,7 +59,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 1 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Razón Social *</label>
-            <input type="text" name="razon_social" id="razon_social_hidden" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="razon_social" id="razon_social_hidden" style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>RUT Empresa *</label>
             <input type="text" name="rut_empresa" id="rut_empresa" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Fecha</label>
@@ -104,7 +104,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <label>Email</label>
             <input type="text" name="email" id="email" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
             <label>Teléfono</label>
-            <input type="tel" name="fono_empresa" id="fono_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="tel" name="fono_empresa" id="fono_empresa" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
     </div>
 
