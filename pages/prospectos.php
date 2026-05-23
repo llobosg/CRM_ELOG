@@ -60,10 +60,18 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 1 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Razón Social *</label>
-            <input type="text" id="razon_social_input"
-                placeholder="Escribe cliente nuevo o busca..."
-                style="grid-column: span 3; width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:6px;">
-            <select id="razon_social_select" style="grid-column: span 3;">
+
+            <select id="razon_social_select"
+                    style="grid-column: span 3;">
+                <option value="">Seleccionar cliente</option>
+            </select>
+
+            <!-- NUEVO: input editable -->
+            <input type="text"
+                id="razon_social_input"
+                name="razon_social"
+                placeholder="O escribe nueva razón social"
+                style="grid-column: span 3;" />
             <label>RUT Empresa *</label>
             <input type="text" name="rut_empresa" id="rut_empresa" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Fecha</label>
@@ -4134,25 +4142,76 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         });
 
-        document.getElementById('razon_social_input')?.addEventListener('input', function () {
+        document.addEventListener('DOMContentLoaded', () => {
 
-            const texto = this.value.trim();
+            const select = document.getElementById('razon_social_select');
+            const input = document.getElementById('razon_social_input');
 
-            // 🔥 romper vínculo con cliente existente
-            document.getElementById('razon_social_hidden').value = texto;
+            if (!select || !input) return;
 
-            // limpiar select (para evitar confusión)
-            const sel = document.getElementById('razon_social_select');
-            if (sel) sel.value = '';
+            // === CAMBIO DESDE SELECT ===
+            select.addEventListener('change', async function() {
+                const rut = this.value;
 
-            // limpiar datos auto-cargados
-            ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre', 'id_comercial']
-            .forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
+                if (!rut) {
+                    activarModoManual();
+                    return;
+                }
+
+                const res = await fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`);
+                const data = await res.json();
+
+                if (data.existe) {
+                    const c = data.cliente;
+
+                    input.value = c.razon_social || '';
+                    input.readOnly = true;
+
+                    document.getElementById('rut_empresa').value = c.rut || '';
+                    document.getElementById('pais').value = c.pais || '';
+                    document.getElementById('direccion').value = c.direccion || '';
+                    document.getElementById('nombre').value = c.nombre_comercial || '';
+                    document.getElementById('id_comercial').value = c.id_comercial || '';
+
+                    await cargarContactoPrimario(rut);
+
+                } else {
+                    activarModoManual();
+                }
+            });
+
+            // === SI EL USUARIO ESCRIBE → MODO NUEVO CLIENTE ===
+            input.addEventListener('input', () => {
+                select.value = '';
+                activarModoManual();
             });
 
         });
+
+        function cargarContactoPrimario(rut) {
+            return fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
+                .then(r => r.json())
+                .then(data => {
+                    const primario = (data.contactos || []).find(ct => ct.primario === 'S');
+
+                    document.getElementById('fono_empresa').value = primario?.fono || '';
+                    document.getElementById('contacto').value = primario?.nom_contacto || '';
+                    document.getElementById('email').value = primario?.email || '';
+                });
+        }
+        function activarModoManual() {
+
+            document.getElementById('rut_empresa').readOnly = false;
+            document.getElementById('pais').readOnly = false;
+            document.getElementById('direccion').readOnly = false;
+            document.getElementById('fono_empresa').readOnly = false;
+            document.getElementById('contacto').readOnly = false;
+            document.getElementById('email').readOnly = false;
+
+            document.getElementById('rut_empresa').style.background = '#fff';
+            document.getElementById('direccion').style.background = '#fff';
+
+        }
 
         // Exponer funciones globales
         window.guardarServicio = guardarServicio;
