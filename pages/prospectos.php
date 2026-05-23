@@ -2656,251 +2656,230 @@ require_once __DIR__ . '/../includes/auth_check.php';
         }
 
         // ===================================================================
-        // === 7. INICIALIZACIÓN ===
+        // === 7. INICIALIZACIÓN PRO (LIMPIO Y ESTABLE)
         // ===================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            // === 1. Cargar siempre los mantenedores (operaciones, tipos, etc.) ===
+
+            console.log('✅ Prospectos inicializado PRO');
+
+            // ===============================
+            // 1. CARGAS INICIALES
+            // ===============================
             cargarPaises();
             cargarOperacionesYTipos();
             cargarClientesEnSelect();
 
-            // === 2. Manejar mensajes de éxito/error ===
+            // ===============================
+            // 2. MENSAJES URL
+            // ===============================
             const params = new URLSearchParams(window.location.search);
             const msg = params.get('exito');
+
             if (msg) {
                 exito(decodeURIComponent(msg));
                 history.replaceState({}, document.title, window.location.pathname + '?page=prospectos');
             }
 
-            // === 3. Eventos de campos ===
+            // ===============================
+            // 3. EVENTOS CAMPOS
+            // ===============================
             ['operacion', 'tipo_oper'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', calcularConcatenado);
             });
 
-            // === BOTÓN: Agregar Servicio ===
+            // ===============================
+            // 4. BOTÓN AGREGAR SERVICIO
+            // ===============================
             const btnAgregarServicio = document.getElementById('btn-agregar-servicio');
-                if (btnAgregarServicio) {
-                    btnAgregarServicio.addEventListener('click', function() {
-                        const idPplInput = document.getElementById('id_ppl');
-                        const concatenadoInput = document.getElementById('concatenado');
 
-                        if (!idPplInput || !concatenadoInput) {
-                            console.error('❌ [Agregar Servicio] Campos ocultos no encontrados en el DOM');
-                            error('Error interno: campos del formulario no disponibles');
-                            return;
-                        }
+            if (btnAgregarServicio) {
+                btnAgregarServicio.addEventListener('click', () => {
 
-                        const idPpl = idPplInput.value.trim();
-                        const idPplStr = idPplInput.value.trim();
-                        const concatenado = concatenadoInput.value.trim();          
+                    const idPpl = document.getElementById('id_ppl')?.value.trim();
+                    const concatenado = document.getElementById('concatenado')?.value.trim();
 
-                        if (!concatenado) {
-                            error('Código de prospecto no disponible');
-                            return;
-                        }
+                    const idNum = parseInt(idPpl, 10);
 
-                        // Validar que id_ppl sea un número entero > 0
-                        const idPplNum = parseInt(idPpl, 10);
-                        const idValido = !isNaN(idPplNum) && idPplNum > 0;
-                        const concatValido = concatenado.length > 0;
-                        if (isNaN(idPplNum) || idPplNum <= 0) {
-                            error('ID de prospecto inválido. Debe ser un número.');
-                            console.error('❌ id_ppl no es número:', idPplStr);
-                            return;
-                        }
-
-                        console.log('🔍 [Agregar Servicio] Valores actuales:', { idPpl, concatenado, idValido, concatValido });
-
-                        if (!idValido || !concatValido) {
-                            error('Debe seleccionar un prospecto válido antes de agregar servicios.');
-                            return;
-                        }
-
-                        abrirModalServicio();
-                    });
-                }
-
-                const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
-                if (btnGuardarModal) {
-                    btnGuardarModal.addEventListener('click', guardarServicio);
-                }
-
-            // === BOTÓN: Grabar Todo ===
-            async function guardarProspecto() {
-
-                const payload = {
-                    cliente: {
-                        id_cliente: document.getElementById('id_cliente')?.value || null,
-                        nombre: document.getElementById('cliente_nombre')?.value.trim(),
-                        email: document.getElementById('cliente_email')?.value.trim(),
-                        telefono: document.getElementById('cliente_telefono')?.value.trim()
-                    },
-                    prospecto: {
-                        titulo: document.getElementById('prospecto_titulo')?.value.trim(),
-                        origen: document.getElementById('prospecto_origen')?.value,
-                        estado: document.getElementById('prospecto_estado')?.value,
-                        monto: document.getElementById('prospecto_monto')?.value
+                    if (!idNum || idNum <= 0) {
+                        error('Debe guardar el prospecto antes de agregar servicios');
+                        return;
                     }
-                };
+
+                    if (!concatenado) {
+                        error('Código de prospecto no disponible');
+                        return;
+                    }
+
+                    abrirModalServicio();
+                });
+            }
+
+            // ===============================
+            // 5. BOTÓN GUARDAR SERVICIO MODAL
+            // ===============================
+            document.getElementById('btn-guardar-servicio-modal')
+                ?.addEventListener('click', guardarServicio);
+
+            // ===============================
+            // 6. BOTÓN GRABAR TODO (CLAVE)
+            // ===============================
+            const btnSave = document.getElementById('btn-save-all');
+
+            if (btnSave) {
+
+                btnSave.addEventListener('click', guardarProspecto);
+
+            } else {
+                console.warn('⚠️ btn-save-all no encontrado');
+            }
+
+            // ===============================
+            // 7. COSTOS / GASTOS
+            // ===============================
+            document.getElementById('btn-costos-servicio-dentro')
+                ?.addEventListener('click', abrirSubmodalCostos);
+
+            document.getElementById('btn-gastos-locales-dentro')
+                ?.addEventListener('click', abrirSubmodalGastosLocales);
+
+            // ===============================
+            // 8. BUSCADOR INTELIGENTE
+            // ===============================
+            const inputBusqueda = document.getElementById('busqueda-inteligente');
+
+            if (inputBusqueda) {
+                inputBusqueda.addEventListener('input', async function() {
+
+                    const term = this.value.trim();
+                    const div = document.getElementById('resultados-busqueda');
+
+                    if (!div) return;
+
+                    div.style.display = 'none';
+
+                    if (!term) return;
+
+                    try {
+                        const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
+                        const data = await res.json();
+
+                        div.innerHTML = '';
+
+                        if (data.length > 0) {
+                            data.forEach(p => {
+                                const d = document.createElement('div');
+
+                                d.style.padding = '0.8rem';
+                                d.style.cursor = 'pointer';
+
+                                d.innerHTML = `
+                                    <strong>${p.razon_social}</strong><br>
+                                    <small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>
+                                `;
+
+                                d.addEventListener('click', () => {
+                                    seleccionarProspecto(p.id_ppl);
+                                    div.style.display = 'none';
+                                    inputBusqueda.value = '';
+                                });
+
+                                div.appendChild(d);
+                            });
+
+                            div.style.display = 'block';
+                        }
+
+                    } catch (e) {
+                        error('Error en búsqueda de prospectos');
+                    }
+                });
+            }
+
+            // ===============================
+            // 9. SYNC RAZÓN SOCIAL (CRÍTICO)
+            // ===============================
+            document.getElementById('razon_social_input')
+                ?.addEventListener('input', function() {
+                    document.getElementById('razon_social_hidden').value = this.value;
+                });
+
+        });
+
+
+        // ===================================================================
+        // === GUARDAR PROSPECTO PRO (ÚNICO Y CORRECTO)
+        // ===================================================================
+        async function guardarProspecto(e) {
+
+            e.preventDefault();
+
+            try {
+
+                console.log('💾 Guardando prospecto...');
+
+                const form = document.getElementById('form-prospecto');
+
+                if (!form) throw new Error('Formulario no encontrado');
+
+                const formData = new FormData(form);
 
                 // =========================
                 // NORMALIZAR RAZÓN SOCIAL
                 // =========================
                 const inputManual = document.getElementById('razon_social_input')?.value || '';
                 const select = document.getElementById('razon_social_select');
+
                 const selectedText = select?.options[select.selectedIndex]?.text || '';
 
-                // prioridad: input manual > select
-                const razonFinal = inputManual.trim() || (select.value ? selectedText : '');
-
-                // setear al formData
-                formData.set('razon_social', razonFinal);
+                const razonFinal = inputManual.trim() || (select?.value ? selectedText : '');
 
                 if (!razonFinal) {
                     advertencia('Debes ingresar la razón social');
                     return;
                 }
 
-                try {
-                    const res = await fetch('../api/guardar_prospecto.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                formData.set('razon_social', razonFinal);
 
-                    const data = await res.json();
+                // =========================
+                // DETECTAR NUEVO CLIENTE
+                // =========================
+                const esNuevoCliente = !select?.value;
+                formData.append('es_nuevo_cliente', esNuevoCliente ? '1' : '0');
 
-                    if (data.success) {
-                        alert("✅ Prospecto guardado correctamente");
-                        cerrarModal(); // tu función actual
-                    } else {
-                        alert("⚠️ " + data.message);
-                    }
+                console.log('Cliente nuevo:', esNuevoCliente);
 
-                } catch (err) {
-                    console.error(err);
-                    alert("❌ Error de conexión");
-                }
-            }
+                // =========================
+                // REQUEST
+                // =========================
+                const res = await fetch('/api/guardar_prospecto_full.php', {
+                    method: 'POST',
+                    body: formData
+                });
 
-            const btnCostos = document.getElementById('btn-costos-servicio-dentro');
-            const btnGastos = document.getElementById('btn-gastos-locales-dentro');
-            if (btnCostos) btnCostos.addEventListener('click', abrirSubmodalCostos);
-            if (btnGastos) btnGastos.addEventListener('click', abrirSubmodalGastosLocales);
+                if (!res.ok) throw new Error('Error HTTP ' + res.status);
 
-            document.getElementById('busqueda-inteligente')?.addEventListener('input', async function() {
-                const term = this.value.trim();
-                const div = document.getElementById('resultados-busqueda');
-                div.style.display = 'none';
-                if (!term) return;
-                try {
-                    const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
-                    const data = await res.json();
-                    div.innerHTML = '';
-                    if (data.length > 0) {
-                        data.forEach(p => {
-                            const d = document.createElement('div');
-                            d.style.padding = '0.8rem';
-                            d.style.cursor = 'pointer';
-                            d.innerHTML = `<strong>${p.razon_social}</strong><br><small>ID: ${p.concatenado} | RUT: ${p.rut_empresa}</small>`;
-                            d.onclick = () => {
-                                seleccionarProspecto(p.id_ppl);
-                                div.style.display = 'none';
-                                this.value = '';
-                            };
-                            div.appendChild(d);
-                        });
-                        div.style.display = 'block';
-                    }  
-                } catch (e) {
-                    error('Error en búsqueda de prospectos');
-                }
-            });
+                const data = await res.json();
 
-            // === 6. CARGAR PROSPECTO DESDE URL (al final del DOMContentLoaded) ===
-            const urlParams = new URLSearchParams(window.location.search);
-            const idFromUrl = urlParams.get('id_ppl');
-            const buscarConcatenado = urlParams.get('buscar_concatenado');
+                console.log('Respuesta:', data);
 
-            if (idFromUrl && !isNaN(idFromUrl)) {
-                // Cargar por ID
-                setTimeout(() => seleccionarProspecto(parseInt(idFromUrl)), 300);
-            } else if (buscarConcatenado) {
-                // Cargar por concatenado
-                setTimeout(() => {
-                    document.getElementById('busqueda-inteligente').value = buscarConcatenado;
-                    fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(buscarConcatenado)}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.length > 0) {
-                                seleccionarProspecto(data[0].id_ppl);
-                            } else {
-                                error('Prospecto no encontrado con ese código');
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Error al buscar por concatenado:', err);
-                            error('No se pudo cargar el prospecto');
-                        });
-                }, 300);
-            }
+                if (data.ok) {
 
-            // === Cargar prospecto por concatenado (desde lista) ===
-            if (buscarConcatenado) {
-                // Simular búsqueda inteligente
-                document.getElementById('busqueda-inteligente').value = buscarConcatenado;
-                // Disparar búsqueda manual
-                fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(buscarConcatenado)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.length > 0) {
-                            const prospecto = data[0]; // Tomar el primero
-                            seleccionarProspecto(prospecto.id_ppl);
-                        } else {
-                            error('Prospecto no encontrado con ese código');
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Error al buscar por concatenado:', err);
-                        error('No se pudo cargar el prospecto');
-                    });
-            }
+                    exito('✅ Prospecto guardado');
 
-            // === Cargar estado guardado desde URL (después de actualizar estado) ===
-            const estadoGuardado = urlParams.get('estado_guardado');
-            if (estadoGuardado) {
-                const estadoSelect = document.getElementById('estado');
-                if (estadoSelect) {
-                    estadoSelect.value = estadoGuardado;
-                }
-                // Opcional: mostrar notificación
-                exito('Prospecto actualizado a estado: ' + estadoGuardado);
-            }
+                    form.reset();
 
-            document.addEventListener('DOMContentLoaded', () => {
-                const btn = document.getElementById('btn-save-all');
-
-                if (!btn) {
-                    console.warn('⚠️ btn-save-all no encontrado');
-                    return;
+                } else {
+                    throw new Error(data.error || 'Error al guardar');
                 }
 
-                btn.addEventListener('click', guardarProspecto);
-            });
+            } catch (err) {
 
-            document.addEventListener('click', function(e) {
+                console.error('❌ Error:', err);
 
-                const btn = e.target.closest('#btn-save-all');
-
-                if (!btn) return;
-
-                console.log('🟢 Click detectado en Grabar Todo');
-
-                guardarProspecto();
-
-            });
-        });
+                error(err.message);
+            }
+        }
 
         // Función para limpiar los campos de contacto
         function limpiarCamposContacto() {
