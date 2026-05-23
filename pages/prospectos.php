@@ -65,13 +65,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     style="grid-column: span 3;">
                 <option value="">Seleccionar cliente</option>
             </select>
-
-            <!-- NUEVO: input editable -->
-            <input type="text"
-                id="razon_social_input"
-                name="razon_social"
-                placeholder="O escribe nueva razón social"
-                style="grid-column: span 3;" />
+            <input type="text" name="razon_social" id="razon_social_input" placeholder="O escribe nueva razón social" style="grid-column: span 3;" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>RUT Empresa *</label>
             <input type="text" name="rut_empresa" id="rut_empresa" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Fecha</label>
