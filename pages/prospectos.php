@@ -131,7 +131,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <button type="button" class="btn-add" id="btn-agregar-servicio" style="display: none;">
                     <i class="fas fa-plus"></i> Agregar Servicio
                 </button>
-                <button type="button" class="btn-primary" id="btn-save-all">Grabar Todo</button>
+                <button type="button" class="btn-primary" id="btn-save-all">
+                    💾 Grabar Todo
+                </button>
             </div>
         </div>
         <div class="table-container">
