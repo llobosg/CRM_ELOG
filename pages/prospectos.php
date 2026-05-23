@@ -2882,65 +2882,19 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                 btn.addEventListener('click', guardarProspecto);
             });
+
+            document.addEventListener('click', function(e) {
+
+                const btn = e.target.closest('#btn-save-all');
+
+                if (!btn) return;
+
+                console.log('🟢 Click detectado en Grabar Todo');
+
+                guardarProspecto();
+
+            });
         });
-
-        async function guardarProspecto() {
-            try {
-                console.log('💾 Guardando prospecto...');
-
-                const form = document.getElementById('form-prospecto');
-                if (!form) {
-                    alert('Formulario no encontrado');
-                    return;
-                }
-
-                const formData = new FormData(form);
-
-                // =========================
-                // VALIDACIÓN BÁSICA
-                // =========================
-                const razon = formData.get('razon_social') || '';
-                const rut = formData.get('rut_empresa') || '';
-
-                if (!razon.trim()) {
-                    advertencia('Debes ingresar la razón social');
-                    return;
-                }
-
-                // =========================
-                // DETECTAR NUEVO CLIENTE
-                // =========================
-                const esNuevoCliente = !document.getElementById('razon_social_select').value;
-
-                if (esNuevoCliente) {
-                    console.log('🆕 Cliente nuevo detectado');
-                }
-
-                // =========================
-                // REQUEST AL BACKEND
-                // =========================
-                const res = await fetch('/api/guardar_prospecto_full.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await res.json();
-
-                if (data.ok) {
-                    exito('✅ Prospecto guardado correctamente');
-
-                    // Reset opcional
-                    form.reset();
-
-                } else {
-                    throw new Error(data.error || 'Error al guardar');
-                }
-
-            } catch (err) {
-                console.error('❌ Error guardando:', err);
-                error(err.message);
-            }
-        }
 
         // Función para limpiar los campos de contacto
         function limpiarCamposContacto() {
