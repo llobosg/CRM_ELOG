@@ -94,30 +94,58 @@ try {
     // 3. CREAR PROSPECTO
     // =========================
     $stmt = $pdo->prepare("
-        INSERT INTO prospectos (
-            id_cliente,
-            razon_social,
-            rut_empresa,
-            direccion,
-            pais,
-            estado,
-            fecha_alta,
-            id_comercial,
-            fecha_creacion
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    ");
+    INSERT INTO prospectos (
+        razon_social,
+        rut_empresa,
+        fono_empresa,
+        pais,
+        direccion,
+        operacion,
+        tipo_oper,
+        fecha_alta,
+        estado,
+        concatenado,
+        booking,
+        notas_comerciales,
+        notas_operaciones,
+        id_comercial,
+        nombre
+    ) VALUES (
+        :razon_social,
+        :rut_empresa,
+        :fono_empresa,
+        :pais,
+        :direccion,
+        :operacion,
+        :tipo_oper,
+        :fecha_alta,
+        :estado,
+        :concatenado,
+        :booking,
+        :notas_comerciales,
+        :notas_operaciones,
+        :id_comercial,
+        :nombre
+    )
+");
 
-    $stmt->execute([
-        $id_cliente,
-        $razon_social,
-        $rut,
-        $direccion,
-        $pais,
-        $estado,
-        $fecha,
-        $id_comercial
-    ]);
+$stmt->execute([
+    ':razon_social' => $_POST['razon_social'] ?? null,
+    ':rut_empresa' => $_POST['rut_empresa'] ?? null,
+    ':fono_empresa' => $_POST['fono_empresa'] ?? null,
+    ':pais' => $_POST['pais'] ?? null,
+    ':direccion' => $_POST['direccion'] ?? null,
+    ':operacion' => $_POST['operacion'] ?? null,
+    ':tipo_oper' => $_POST['tipo_oper'] ?? null,
+    ':fecha_alta' => $_POST['fecha_alta'] ?? date('Y-m-d'),
+    ':estado' => $_POST['estado'] ?? 'Pendiente',
+    ':concatenado' => $_POST['concatenado'] ?? null,
+    ':booking' => $_POST['booking'] ?? null,
+    ':notas_comerciales' => $_POST['notas_comerciales'] ?? null,
+    ':notas_operaciones' => $_POST['notas_operaciones'] ?? null,
+    ':id_comercial' => $_POST['id_comercial'] ?? null,
+    ':nombre' => $_POST['nombre'] ?? null
+]);
 
     $id_prospecto = $pdo->lastInsertId();
 
