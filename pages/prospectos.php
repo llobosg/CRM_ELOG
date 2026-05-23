@@ -2670,145 +2670,97 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
             // === BOTÓN: Agregar Servicio ===
             const btnAgregarServicio = document.getElementById('btn-agregar-servicio');
-            if (btnAgregarServicio) {
-                btnAgregarServicio.addEventListener('click', function() {
-                    const idPplInput = document.getElementById('id_ppl');
-                    const concatenadoInput = document.getElementById('concatenado');
+                if (btnAgregarServicio) {
+                    btnAgregarServicio.addEventListener('click', function() {
+                        const idPplInput = document.getElementById('id_ppl');
+                        const concatenadoInput = document.getElementById('concatenado');
 
-                    if (!idPplInput || !concatenadoInput) {
-                        console.error('❌ [Agregar Servicio] Campos ocultos no encontrados en el DOM');
-                        error('Error interno: campos del formulario no disponibles');
-                        return;
-                    }
-
-                    const idPpl = idPplInput.value.trim();
-                    const idPplStr = idPplInput.value.trim();
-                    const concatenado = concatenadoInput.value.trim();          
-
-                    if (!concatenado) {
-                        error('Código de prospecto no disponible');
-                        return;
-                    }
-
-                    // Validar que id_ppl sea un número entero > 0
-                    const idPplNum = parseInt(idPpl, 10);
-                    const idValido = !isNaN(idPplNum) && idPplNum > 0;
-                    const concatValido = concatenado.length > 0;
-                    if (isNaN(idPplNum) || idPplNum <= 0) {
-                        error('ID de prospecto inválido. Debe ser un número.');
-                        console.error('❌ id_ppl no es número:', idPplStr);
-                        return;
-                    }
-
-                    console.log('🔍 [Agregar Servicio] Valores actuales:', { idPpl, concatenado, idValido, concatValido });
-
-                    if (!idValido || !concatValido) {
-                        error('Debe seleccionar un prospecto válido antes de agregar servicios.');
-                        return;
-                    }
-
-                    abrirModalServicio();
-                });
-            }
-
-            const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
-            if (btnGuardarModal) {
-                btnGuardarModal.addEventListener('click', guardarServicio);
-            }
-
-            // === BOTÓN: Grabar Todo ===
-            const btnGrabarTodo = document.getElementById('btn-save-all');
-            if (btnGrabarTodo) {
-                btnGrabarTodo.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('🔍 [GRABAR TODO] Iniciando validación...');
-
-                    // ✅ Obtener y establecer razón social en campo oculto
-                    const razonSelect = document.getElementById('razon_social_select');
-                    const razon = razonSelect?.selectedOptions[0]?.textContent.trim();
-                    const razonHidden = document.getElementById('razon_social_hidden');
-                    if (razonHidden && razon) {
-                        razonHidden.value = razon;
-                    }
-
-                    const rut = document.getElementById('rut_empresa')?.value.trim();
-                    const operacion = document.getElementById('operacion')?.value;
-                    const tipoOper = document.getElementById('tipo_oper')?.value;
-                    const concatenado = document.getElementById('concatenado')?.value;
-                    const estado = document.getElementById('estado')?.value || 'Pendiente';
-
-                    if (!rut || !razon) return error('RUT y Razón Social son obligatorios');
-                    if (!operacion || !tipoOper) return error('Operación y Tipo Operación son obligatorios');
-                    if (!concatenado) return error('El campo Concatenado no puede estar vacío');
-
-                    const rutLimpio = rut.replace(/\./g, '').replace('-', '').toUpperCase();
-                    if (!validarRut(rutLimpio)) return error('RUT inválido');
-
-                    // ✅ Validación condicional: servicios deben tener costos
-                    if (estado === 'Enviado' || estado === 'CerradoOK') {
-                        const tieneServiciosSinCostos = servicios.some(s => !s.costos || s.costos.length === 0);
-                        if (tieneServiciosSinCostos) return error('No se puede enviar el prospecto: todos los servicios deben tener costos asociados.');
-                    }
-
-                    const form = document.getElementById('form-prospecto');
-                    const modo = servicios.length > 0 ? 'servicios' : 'prospecto';
-
-                    // ✅ Asegurar que cada servicio incluya costos y gastos
-                    const serviciosConDatos = servicios.map(s => ({
-                        ...s,
-                        costos: s.costos || [],
-                        gastos_locales: s.gastos_locales || [],
-                        nota_srvc: s.nota_srvc || ''
-                    }));
-
-                    console.log('📦 [GRABAR TODO] Servicios con costos/gastos:', serviciosConDatos);
-
-                    let inp = form.querySelector('input[name="modo"]');
-                    if (!inp) {
-                        inp = document.createElement('input');
-                        inp.type = 'hidden';
-                        inp.name = 'modo';
-                        form.appendChild(inp);
-                    }
-                    inp.value = modo;
-
-                    if (modo === 'servicios') {
-                        inp = form.querySelector('input[name="servicios_json"]');
-                        if (!inp) {
-                            inp = document.createElement('input');
-                            inp.type = 'hidden';
-                            inp.name = 'servicios_json';
-                            form.appendChild(inp);
+                        if (!idPplInput || !concatenadoInput) {
+                            console.error('❌ [Agregar Servicio] Campos ocultos no encontrados en el DOM');
+                            error('Error interno: campos del formulario no disponibles');
+                            return;
                         }
-                        inp.value = JSON.stringify(serviciosConDatos);
-                        console.log('📤 [GRABAR TODO] Enviando JSON a backend:', inp.value);
-                    }
 
-                    // ✅ Validación Estado=CerradoOK y crédito
-                    if (estado === 'CerradoOK') {
-                        const totalVenta = servicios.reduce((sum, s) => sum + (parseFloat(s.venta) || 0), 0);
-                        const rutCliente = document.getElementById('rut_empresa')?.value;
+                        const idPpl = idPplInput.value.trim();
+                        const idPplStr = idPplInput.value.trim();
+                        const concatenado = concatenadoInput.value.trim();          
 
-                        validarCreditoAntesDeCerrar(rutCliente, totalVenta, () => {
-                            // ✅ Solo si la validación pasa, se envía el formulario
-                            if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs.')) {
-                                console.log('✅ [GRABAR TODO] Formulario enviado');
-                                form.submit();
-                            } else {
-                                error('Envío cancelado');
-                            }
-                        });
-                    } else {
-                        // ✅ Para otros estados, enviar directamente
-                        if (confirm('¿Enviar el formulario?\nVerifique la consola (F12) y copie los logs.')) {
-                            console.log('✅ [GRABAR TODO] Formulario enviado');
-                            form.submit();
-                        } else {
-                            error('Envío cancelado');
+                        if (!concatenado) {
+                            error('Código de prospecto no disponible');
+                            return;
                         }
-                    }
-                });
+
+                        // Validar que id_ppl sea un número entero > 0
+                        const idPplNum = parseInt(idPpl, 10);
+                        const idValido = !isNaN(idPplNum) && idPplNum > 0;
+                        const concatValido = concatenado.length > 0;
+                        if (isNaN(idPplNum) || idPplNum <= 0) {
+                            error('ID de prospecto inválido. Debe ser un número.');
+                            console.error('❌ id_ppl no es número:', idPplStr);
+                            return;
+                        }
+
+                        console.log('🔍 [Agregar Servicio] Valores actuales:', { idPpl, concatenado, idValido, concatValido });
+
+                        if (!idValido || !concatValido) {
+                            error('Debe seleccionar un prospecto válido antes de agregar servicios.');
+                            return;
+                        }
+
+                        abrirModalServicio();
+                    });
+                }
+
+                const btnGuardarModal = document.getElementById('btn-guardar-servicio-modal');
+                if (btnGuardarModal) {
+                    btnGuardarModal.addEventListener('click', guardarServicio);
+                }
+
+                // === BOTÓN: Grabar Todo ===
+                async function guardarProspecto() {
+
+        const payload = {
+            cliente: {
+                id_cliente: document.getElementById('id_cliente')?.value || null,
+                nombre: document.getElementById('cliente_nombre')?.value.trim(),
+                email: document.getElementById('cliente_email')?.value.trim(),
+                telefono: document.getElementById('cliente_telefono')?.value.trim()
+            },
+            prospecto: {
+                titulo: document.getElementById('prospecto_titulo')?.value.trim(),
+                origen: document.getElementById('prospecto_origen')?.value,
+                estado: document.getElementById('prospecto_estado')?.value,
+                monto: document.getElementById('prospecto_monto')?.value
             }
+        };
+
+        // 🧠 VALIDACIÓN BÁSICA
+        if (!payload.cliente.nombre) {
+            alert("El nombre del cliente es obligatorio");
+            return;
+        }
+
+        try {
+            const res = await fetch('../api/guardar_prospecto.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert("✅ Prospecto guardado correctamente");
+                cerrarModal(); // tu función actual
+            } else {
+                alert("⚠️ " + data.message);
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert("❌ Error de conexión");
+        }
+    }
 
             const btnCostos = document.getElementById('btn-costos-servicio-dentro');
             const btnGastos = document.getElementById('btn-gastos-locales-dentro');
@@ -4151,6 +4103,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 // if (datosRouteOrder) renderizarRouteOrder(datosRouteOrder);
             });
         }
+        document.getElementById('cliente_nombre').addEventListener('input', async (e) => {
+
+            const q = e.target.value;
+
+            if (q.length < 3) return;
+
+            const res = await fetch(`../api/buscar_clientes.php?q=${q}`);
+            const data = await res.json();
+
+            // mostrar dropdown tipo CRM
+        });
 
         // Exponer funciones globales
         window.guardarServicio = guardarServicio;
