@@ -2744,9 +2744,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     }
                 };
 
-                // 🧠 VALIDACIÓN BÁSICA
-                if (!payload.cliente.nombre) {
-                    alert("El nombre del cliente es obligatorio");
+                // =========================
+                // NORMALIZAR RAZÓN SOCIAL
+                // =========================
+                const inputManual = document.getElementById('razon_social_input')?.value || '';
+                const select = document.getElementById('razon_social_select');
+                const selectedText = select?.options[select.selectedIndex]?.text || '';
+
+                // prioridad: input manual > select
+                const razonFinal = inputManual.trim() || (select.value ? selectedText : '');
+
+                // setear al formData
+                formData.set('razon_social', razonFinal);
+
+                if (!razonFinal) {
+                    advertencia('Debes ingresar la razón social');
                     return;
                 }
 
