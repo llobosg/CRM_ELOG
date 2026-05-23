@@ -2730,51 +2730,51 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     btnGuardarModal.addEventListener('click', guardarServicio);
                 }
 
-                // === BOTÓN: Grabar Todo ===
-                async function guardarProspecto() {
+        // === BOTÓN: Grabar Todo ===
+        async function guardarProspecto() {
 
-        const payload = {
-            cliente: {
-                id_cliente: document.getElementById('id_cliente')?.value || null,
-                nombre: document.getElementById('cliente_nombre')?.value.trim(),
-                email: document.getElementById('cliente_email')?.value.trim(),
-                telefono: document.getElementById('cliente_telefono')?.value.trim()
-            },
-            prospecto: {
-                titulo: document.getElementById('prospecto_titulo')?.value.trim(),
-                origen: document.getElementById('prospecto_origen')?.value,
-                estado: document.getElementById('prospecto_estado')?.value,
-                monto: document.getElementById('prospecto_monto')?.value
-            }
-        };
+            const payload = {
+                cliente: {
+                    id_cliente: document.getElementById('id_cliente')?.value || null,
+                    nombre: document.getElementById('cliente_nombre')?.value.trim(),
+                    email: document.getElementById('cliente_email')?.value.trim(),
+                    telefono: document.getElementById('cliente_telefono')?.value.trim()
+                },
+                prospecto: {
+                    titulo: document.getElementById('prospecto_titulo')?.value.trim(),
+                    origen: document.getElementById('prospecto_origen')?.value,
+                    estado: document.getElementById('prospecto_estado')?.value,
+                    monto: document.getElementById('prospecto_monto')?.value
+                }
+            };
 
-        // 🧠 VALIDACIÓN BÁSICA
-        if (!payload.cliente.nombre) {
-            alert("El nombre del cliente es obligatorio");
-            return;
-        }
-
-        try {
-            const res = await fetch('../api/guardar_prospecto.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await res.json();
-
-            if (data.success) {
-                alert("✅ Prospecto guardado correctamente");
-                cerrarModal(); // tu función actual
-            } else {
-                alert("⚠️ " + data.message);
+            // 🧠 VALIDACIÓN BÁSICA
+            if (!payload.cliente.nombre) {
+                alert("El nombre del cliente es obligatorio");
+                return;
             }
 
-        } catch (err) {
-            console.error(err);
-            alert("❌ Error de conexión");
+            try {
+                const res = await fetch('../api/guardar_prospecto.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    alert("✅ Prospecto guardado correctamente");
+                    cerrarModal(); // tu función actual
+                } else {
+                    alert("⚠️ " + data.message);
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("❌ Error de conexión");
+            }
         }
-    }
 
             const btnCostos = document.getElementById('btn-costos-servicio-dentro');
             const btnGastos = document.getElementById('btn-gastos-locales-dentro');
@@ -4213,6 +4213,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         }
 
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('btn-save-all');
+
+            if (!btn) {
+                console.warn('⚠️ btn-save-all no encontrado');
+                return;
+            }
+
+            btn.addEventListener('click', guardarProspecto);
+        });
         // Exponer funciones globales
         window.guardarServicio = guardarServicio;
         window.abrirModalServicio = abrirModalServicio;
