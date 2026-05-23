@@ -60,20 +60,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 1 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Razón Social *</label>
-            <select name="razon_social_select" id="razon_social_select" required style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
-                <option value="">Seleccionar cliente</option>
-            </select>
+            <input type="text" id="razon_social_input"
+                placeholder="Escribe cliente nuevo o busca..."
+                style="grid-column: span 3; width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:6px;">
+            <select id="razon_social_select" style="grid-column: span 3;">
             <label>RUT Empresa *</label>
-            <input type="text" name="rut_empresa" id="rut_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="rut_empresa" id="rut_empresa" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Fecha</label>
             <input type="date" name="fecha_alta" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" value="<?= date('Y-m-d') ?>" />
         </div>
         <!-- Fila 2 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>País</label>
-            <input type="text" name="pais" id="pais" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="pais" id="pais" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Dirección</label>
-            <input type="text" name="direccion" id="direccion" readonly style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="direccion" id="direccion" style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Estado</label>
             <select name="estado" id="estado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; box-sizing: border-box;">
                 <option value="Pendiente">Pendiente</option>
@@ -101,13 +102,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 4 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Comercial Asignado</label>
-            <input type="text" name="nombre" id="nombre" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <input type="text" name="nombre" id="nombre" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
             <label>Contacto Primario Clte.</label>
             <input type="text" name="contacto" id="contacto" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
             <label>Email</label>
             <input type="text" name="email" id="email" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
             <label>Teléfono</label>
-            <input type="tel" name="fono_empresa" id="fono_empresa" readonly style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="tel" name="fono_empresa" id="fono_empresa" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
     </div>
 
@@ -597,6 +598,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 .then(r => r.json())
                 .then(data => {
                     const sel = document.getElementById('razon_social_select');
+                    // 🔥 sincronizar input visible con selección
+                    document.getElementById('razon_social_input').value = c.razon_social || '';
+
+                    // 🔥 marcar que es cliente existente
+                    document.getElementById('razon_social_hidden').value = c.razon_social || '';
                     if (!sel) return;
                     sel.innerHTML = '<option value="">Seleccionar cliente</option>';
                     (data.clientes || []).forEach(c => {
@@ -4113,6 +4119,39 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const data = await res.json();
 
             // mostrar dropdown tipo CRM
+        });
+
+        document.getElementById('razon_social').addEventListener('input', function () {
+
+            // 🔥 Rompe vínculo con cliente existente
+            document.getElementById('razon_social_hidden').value = '';
+
+            // Limpia datos auto cargados
+            document.getElementById('rut_empresa').value = '';
+            document.getElementById('pais').value = '';
+            document.getElementById('direccion').value = '';
+            document.getElementById('fono_empresa').value = '';
+
+        });
+
+        document.getElementById('razon_social_input')?.addEventListener('input', function () {
+
+            const texto = this.value.trim();
+
+            // 🔥 romper vínculo con cliente existente
+            document.getElementById('razon_social_hidden').value = texto;
+
+            // limpiar select (para evitar confusión)
+            const sel = document.getElementById('razon_social_select');
+            if (sel) sel.value = '';
+
+            // limpiar datos auto-cargados
+            ['rut_empresa', 'fono_empresa', 'pais', 'direccion', 'nombre', 'id_comercial']
+            .forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
         });
 
         // Exponer funciones globales
