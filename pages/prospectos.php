@@ -2730,51 +2730,51 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     btnGuardarModal.addEventListener('click', guardarServicio);
                 }
 
-        // === BOTÓN: Grabar Todo ===
-        async function guardarProspecto() {
+            // === BOTÓN: Grabar Todo ===
+            async function guardarProspecto() {
 
-            const payload = {
-                cliente: {
-                    id_cliente: document.getElementById('id_cliente')?.value || null,
-                    nombre: document.getElementById('cliente_nombre')?.value.trim(),
-                    email: document.getElementById('cliente_email')?.value.trim(),
-                    telefono: document.getElementById('cliente_telefono')?.value.trim()
-                },
-                prospecto: {
-                    titulo: document.getElementById('prospecto_titulo')?.value.trim(),
-                    origen: document.getElementById('prospecto_origen')?.value,
-                    estado: document.getElementById('prospecto_estado')?.value,
-                    monto: document.getElementById('prospecto_monto')?.value
-                }
-            };
+                const payload = {
+                    cliente: {
+                        id_cliente: document.getElementById('id_cliente')?.value || null,
+                        nombre: document.getElementById('cliente_nombre')?.value.trim(),
+                        email: document.getElementById('cliente_email')?.value.trim(),
+                        telefono: document.getElementById('cliente_telefono')?.value.trim()
+                    },
+                    prospecto: {
+                        titulo: document.getElementById('prospecto_titulo')?.value.trim(),
+                        origen: document.getElementById('prospecto_origen')?.value,
+                        estado: document.getElementById('prospecto_estado')?.value,
+                        monto: document.getElementById('prospecto_monto')?.value
+                    }
+                };
 
-            // 🧠 VALIDACIÓN BÁSICA
-            if (!payload.cliente.nombre) {
-                alert("El nombre del cliente es obligatorio");
-                return;
-            }
-
-            try {
-                const res = await fetch('../api/guardar_prospecto.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    alert("✅ Prospecto guardado correctamente");
-                    cerrarModal(); // tu función actual
-                } else {
-                    alert("⚠️ " + data.message);
+                // 🧠 VALIDACIÓN BÁSICA
+                if (!payload.cliente.nombre) {
+                    alert("El nombre del cliente es obligatorio");
+                    return;
                 }
 
-            } catch (err) {
-                console.error(err);
-                alert("❌ Error de conexión");
+                try {
+                    const res = await fetch('../api/guardar_prospecto.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        alert("✅ Prospecto guardado correctamente");
+                        cerrarModal(); // tu función actual
+                    } else {
+                        alert("⚠️ " + data.message);
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    alert("❌ Error de conexión");
+                }
             }
-        }
 
             const btnCostos = document.getElementById('btn-costos-servicio-dentro');
             const btnGastos = document.getElementById('btn-gastos-locales-dentro');
@@ -2869,7 +2869,76 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 // Opcional: mostrar notificación
                 exito('Prospecto actualizado a estado: ' + estadoGuardado);
             }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const btn = document.getElementById('btn-save-all');
+
+                if (!btn) {
+                    console.warn('⚠️ btn-save-all no encontrado');
+                    return;
+                }
+
+                btn.addEventListener('click', guardarProspecto);
+            });
         });
+
+        async function guardarProspecto() {
+            try {
+                console.log('💾 Guardando prospecto...');
+
+                const form = document.getElementById('form-prospecto');
+                if (!form) {
+                    alert('Formulario no encontrado');
+                    return;
+                }
+
+                const formData = new FormData(form);
+
+                // =========================
+                // VALIDACIÓN BÁSICA
+                // =========================
+                const razon = formData.get('razon_social') || '';
+                const rut = formData.get('rut_empresa') || '';
+
+                if (!razon.trim()) {
+                    advertencia('Debes ingresar la razón social');
+                    return;
+                }
+
+                // =========================
+                // DETECTAR NUEVO CLIENTE
+                // =========================
+                const esNuevoCliente = !document.getElementById('razon_social_select').value;
+
+                if (esNuevoCliente) {
+                    console.log('🆕 Cliente nuevo detectado');
+                }
+
+                // =========================
+                // REQUEST AL BACKEND
+                // =========================
+                const res = await fetch('/api/guardar_prospecto_full.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (data.ok) {
+                    exito('✅ Prospecto guardado correctamente');
+
+                    // Reset opcional
+                    form.reset();
+
+                } else {
+                    throw new Error(data.error || 'Error al guardar');
+                }
+
+            } catch (err) {
+                console.error('❌ Error guardando:', err);
+                error(err.message);
+            }
+        }
 
         // Función para limpiar los campos de contacto
         function limpiarCamposContacto() {
@@ -4212,17 +4281,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('direccion').style.background = '#fff';
 
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('btn-save-all');
-
-            if (!btn) {
-                console.warn('⚠️ btn-save-all no encontrado');
-                return;
-            }
-
-            btn.addEventListener('click', guardarProspecto);
-        });
         // Exponer funciones globales
         window.guardarServicio = guardarServicio;
         window.abrirModalServicio = abrirModalServicio;
