@@ -2683,7 +2683,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                     try {
                         const res = await fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`);
-                        const data = await res.json();
+                        const text = await res.text();
+
+                        let data;
+
+                        try {
+                            data = JSON.parse(text);
+                        } catch (e) {
+                            console.error('❌ RESPUESTA NO JSON:', text);
+                            throw new Error('El servidor devolvió HTML en vez de JSON');
+                        }
 
                         if (!data.existe) return;
 
@@ -2801,7 +2810,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                     try {
                         const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(term)}`);
-                        const data = await res.json();
+                        const text = await res.text();
+
+                        let data;
+
+                        try {
+                            data = JSON.parse(text);
+                        } catch (e) {
+                            console.error('❌ RESPUESTA NO JSON:', text);
+                            throw new Error('El servidor devolvió HTML en vez de JSON');
+                        }
 
                         div.innerHTML = '';
 
@@ -2901,7 +2919,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                 if (!res.ok) throw new Error('Error HTTP ' + res.status);
 
-                const data = await res.json();
+                const text = await res.text();
+
+                let data;
+
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error('❌ RESPUESTA NO JSON:', text);
+                    throw new Error('El servidor devolvió HTML en vez de JSON');
+                }
 
                 console.log('Respuesta:', data);
 
@@ -4191,7 +4218,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
             if (q.length < 3) return;
 
             const res = await fetch(`../api/buscar_clientes.php?q=${q}`);
-            const data = await res.json();
+            const text = await res.text();
+
+            let data;
+
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('❌ RESPUESTA NO JSON:', text);
+                throw new Error('El servidor devolvió HTML en vez de JSON');
+            }
 
             // mostrar dropdown tipo CRM
         });
@@ -4226,7 +4262,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 }
 
                 const res = await fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`);
-                const data = await res.json();
+                const text = await res.text();
+
+                let data;
+
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error('❌ RESPUESTA NO JSON:', text);
+                    throw new Error('El servidor devolvió HTML en vez de JSON');
+                }
 
                 if (data.existe) {
                     const c = data.cliente;

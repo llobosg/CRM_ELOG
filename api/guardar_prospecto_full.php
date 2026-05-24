@@ -1,6 +1,11 @@
 <?php
+ob_start(); // 🔥 captura cualquier salida basura
 header('Content-Type: application/json');
+
 require_once '../config.php';
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
 try {
 
@@ -169,20 +174,29 @@ try {
 
     $pdo->commit();
 
+    ob_end_clean();
+
     echo json_encode([
         'ok' => true,
         'id_prospecto' => $id_prospecto,
         'id_cliente' => $id_cliente
     ]);
 
-} catch (Exception $e) {
+    exit;
+
+} catch (Throwable $e) {
 
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
 
+    // 🔥 limpiar cualquier salida previa (HTML, warnings, etc)
+    ob_clean();
+
     echo json_encode([
         'ok' => false,
         'error' => $e->getMessage()
     ]);
+
+    exit;
 }
