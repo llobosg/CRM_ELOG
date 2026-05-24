@@ -2912,20 +2912,20 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 // =========================
                 // REQUEST
                 // =========================
-               const data = await fetchJSON('api/guardar_prospecto_full.php', {
+               const res = await fetch('api/guardar_prospecto_full.php', {
                     method: 'POST',
                     body: formData
                 });
 
                 const text = await res.text();
 
-                let data;
+                let data; // ✅ declarar UNA sola vez
 
                 try {
                     data = JSON.parse(text);
                 } catch (e) {
-                    console.error('❌ RESPUESTA HTML DEL SERVER:', text);
-                    throw new Error('El backend devolvió HTML (revisar PHP)');
+                    console.error('❌ RESPUESTA HTML:', text);
+                    throw new Error('El backend devolvió HTML');
                 }
 
                 console.log('Respuesta:', data);
