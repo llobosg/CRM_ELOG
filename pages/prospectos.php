@@ -2864,13 +2864,56 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const select = document.getElementById('razon_social_select');
             const input = document.getElementById('razon_social_input');
 
-            if (!select || !input) return;
+            if (select && input) {
+
+                input.addEventListener('input', () => {
+                    select.value = '';
+                    activarModoManual();
+                });
+
+            }
 
             // === SI EL USUARIO ESCRIBE → MODO NUEVO CLIENTE ===
             input.addEventListener('input', () => {
                 select.value = '';
                 activarModoManual();
             });
+
+            // ===============================
+            // 10. CARGA DESDE URL (CRÍTICO)
+            // ===============================
+            const urlParams = new URLSearchParams(window.location.search);
+
+            const idFromUrl = urlParams.get('id_ppl');
+            const buscarConcatenado = urlParams.get('buscar_concatenado');
+
+            if (idFromUrl && !isNaN(idFromUrl)) {
+
+                setTimeout(() => {
+                    seleccionarProspecto(parseInt(idFromUrl));
+                }, 300);
+
+            } else if (buscarConcatenado) {
+
+                setTimeout(async () => {
+
+                    try {
+                        const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(buscarConcatenado)}`);
+                        const data = await res.json();
+
+                        if (data.length > 0) {
+                            seleccionarProspecto(data[0].id_ppl);
+                        } else {
+                            advertencia('Prospecto no encontrado');
+                        }
+
+                    } catch (e) {
+                        console.error(e);
+                        error('Error cargando prospecto');
+                    }
+
+                }, 300);
+            }
 
         });
 
@@ -4258,26 +4301,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 // if (datosRouteOrder) renderizarRouteOrder(datosRouteOrder);
             });
         }
-        document.getElementById('cliente_nombre').addEventListener('input', async (e) => {
-
-            const q = e.target.value;
-
-            if (q.length < 3) return;
-
-            const res = await fetch(`../api/buscar_clientes.php?q=${q}`);
-            const text = await res.text();
-
-            let data;
-
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                console.error('❌ RESPUESTA NO JSON:', text);
-                throw new Error('El servidor devolvió HTML en vez de JSON');
-            }
-
-            // mostrar dropdown tipo CRM
-        });
 
         document.getElementById('razon_social').addEventListener('input', function () {
 
