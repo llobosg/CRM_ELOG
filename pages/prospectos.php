@@ -2896,8 +2896,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     return;
                 }
 
-                const duplicado = await detectarDuplicado(razonFinal);
-                if (duplicado) return;
+                // const duplicado = await detectarDuplicado(razonFinal);
+                // if (duplicado) return;
 
                 formData.set('razon_social', razonFinal);
 
