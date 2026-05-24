@@ -77,6 +77,15 @@ if (php_sapi_name() !== 'cli') {
         $prospectos = [];
     }
 }
+$comerciales = [];
+
+foreach ($prospectos as $p) {
+    if (!empty($p['comercial'])) {
+        $comerciales[$p['comercial']] = true;
+    }
+}
+
+$comerciales = array_keys($comerciales);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -107,6 +116,18 @@ if (php_sapi_name() !== 'cli') {
         </a>
     </div>
 
+    <div class="filtro-comercial-container">
+        <span class="filtro-label">Filtrar por comercial:</span>
+
+        <button class="pill active" data-comercial="all">Todos</button>
+
+        <?php foreach ($comerciales as $c): ?>
+            <button class="pill" data-comercial="<?= htmlspecialchars($c) ?>">
+                <?= htmlspecialchars($c) ?>
+            </button>
+        <?php endforeach; ?>
+    </div>
+
     <div class="card">
         <div class="table-container">
             <table class="data-table">
@@ -132,7 +153,7 @@ if (php_sapi_name() !== 'cli') {
                 <?php else: ?>
                     <?php foreach ($prospectos as $p): ?>
                     <tr>
-                        <td><?= htmlspecialchars($p['comercial'] ?? '–') ?></td>
+                        <tr data-comercial="<?= htmlspecialchars($p['comercial'] ?? '') ?>">
                         <td><?= htmlspecialchars($p['cliente_nombre'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['fecha'] ? date('d-m-Y', strtotime($p['fecha'])) : '–') ?></td>
                         <td><?= htmlspecialchars($p['concatenado'] ?? '–') ?></td>
@@ -168,3 +189,30 @@ if (php_sapi_name() !== 'cli') {
 </div>
 </body>
 </html>
+<script>
+document.querySelectorAll('.pill').forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+        // activar estilo
+        document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filtro = btn.dataset.comercial;
+
+        document.querySelectorAll('tbody tr').forEach(row => {
+
+            const comercial = row.dataset.comercial;
+
+            if (filtro === 'all' || comercial === filtro) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+
+        });
+
+    });
+
+});
+</script>
