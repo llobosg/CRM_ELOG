@@ -14,10 +14,12 @@ try {
     $fono         = trim($_POST['fono_empresa'] ?? '');
     $contacto     = trim($_POST['contacto'] ?? '');
     $email        = trim($_POST['email'] ?? '');
-    $id_comercial = $_POST['id_comercial'] ?? null;
+    $id_comercial = isset($_POST['id_comercial']) && $_POST['id_comercial'] !== '' ? (int) $_POST['id_comercial'] : null;
 
     $estado       = $_POST['estado'] ?? 'Pendiente';
     $fecha        = $_POST['fecha_alta'] ?? date('Y-m-d');
+
+    error_log("ID_COMERCIAL INPUTs: " . var_export($id_comercial, true));
 
     if (!$razon_social) {
         throw new Exception('Razón social es obligatoria');
@@ -158,9 +160,10 @@ try {
         ':booking' => $_POST['booking'] ?? null,
         ':notas_comerciales' => $_POST['notas_comerciales'] ?? null,
         ':notas_operaciones' => $_POST['notas_operaciones'] ?? null,
-        ':id_comercial' => $_POST['id_comercial'] ?? null,
+        ':id_comercial' => $id_comercial,
         ':nombre' => $_POST['nombre'] ?? null
     ]);
+    error_log("ID_COMERCIAL PROSPECTO: " . var_export($id_comercial, true));
 
     $id_prospecto = $pdo->lastInsertId();
 
