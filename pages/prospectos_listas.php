@@ -152,7 +152,7 @@ $comerciales = array_keys($comerciales);
                     </tr>
                 <?php else: ?>
                     <?php foreach ($prospectos as $p): ?>
-                    <tr>
+                    <tr data-comercial="<?= htmlspecialchars($p['comercial'] ?? '') ?>">
                         <td><?= htmlspecialchars($p['comercial'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['cliente_nombre'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['fecha'] ? date('d-m-Y', strtotime($p['fecha'])) : '–') ?></td>
