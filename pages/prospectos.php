@@ -3001,7 +3001,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     // =========================
                     // LIMPIAR SOLO CAMPOS NO CRÍTICOS
                     // =========================
-                    limpiarCamposProspectoParcial();
+                    limpiarCamposProspecto();
                 }
 
             } catch (err) {
