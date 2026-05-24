@@ -2861,6 +2861,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     document.getElementById('razon_social_hidden').value = this.value;
                 });
 
+            const select = document.getElementById('razon_social_select');
+            const input = document.getElementById('razon_social_input');
+
+            if (!select || !input) return;
+
+            // === SI EL USUARIO ESCRIBE → MODO NUEVO CLIENTE ===
+            input.addEventListener('input', () => {
+                select.value = '';
+                activarModoManual();
+            });
+
         });
 
 
@@ -2934,25 +2945,58 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                     exito('✅ Prospecto guardado correctamente');
 
-                    // 🔥 recargar cliente en UI
+                    // =========================
+                    // SETEAR ID DEL PROSPECTO
+                    // =========================
+                    const idPplInput = document.getElementById('id_ppl');
+                    if (idPplInput) {
+                        idPplInput.value = data.id_ppl;
+                    }
+
+                    // =========================
+                    // MANTENER DATOS CLAVE
+                    // =========================
+                    const operacion = document.getElementById('operacion')?.value;
+                    const tipoOper = document.getElementById('tipo_oper')?.value;
+
+                    // =========================
+                    // RECARGAR CLIENTE EN SELECT
+                    // =========================
                     if (data.id_cliente) {
-
-                        await cargarClientesEnSelect();
-
                         const rut = formData.get('rut_empresa');
+                        const select = document.getElementById('razon_social_select');
 
-                        if (rut) {
-                            const select = document.getElementById('razon_social_select');
-
-                            if (select) {
-                                select.value = rut;
-                                select.dispatchEvent(new Event('change'));
-                            }
+                        if (select && rut) {
+                            select.value = rut;
+                            select.dispatchEvent(new Event('change'));
                         }
                     }
 
-                    // 🔥 SOLO limpiar datos del prospecto
-                    limpiarCamposProspecto();
+                    // =========================
+                    // RESTAURAR CAMPOS
+                    // =========================
+                    if (operacion) document.getElementById('operacion').value = operacion;
+                    if (tipoOper) document.getElementById('tipo_oper').value = tipoOper;
+
+                    // =========================
+                    // RECALCULAR CONCATENADO
+                    // =========================
+                    if (typeof calcularConcatenado === 'function') {
+                        calcularConcatenado();
+                    }
+
+                    // =========================
+                    // MOSTRAR BOTÓN SERVICIO
+                    // =========================
+                    const btnAgregar = document.getElementById('btn-agregar-servicio');
+                    if (btnAgregar && data.id_ppl > 0) {
+                        btnAgregar.style.display = 'inline-flex';
+                    }
+
+                    // =========================
+                    // LIMPIAR SOLO CAMPOS NO CRÍTICOS
+                    // =========================
+                    limpiarCamposProspectoParcial();
                 }
 
             } catch (err) {
@@ -4243,61 +4287,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-
-            const select = document.getElementById('razon_social_select');
-            const input = document.getElementById('razon_social_input');
-
-            if (!select || !input) return;
-
-            // === CAMBIO DESDE SELECT ===
-            select.addEventListener('change', async function() {
-                const rut = this.value;
-
-                if (!rut) {
-                    activarModoManual();
-                    return;
-                }
-
-                const res = await fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`);
-                const text = await res.text();
-
-                let data;
-
-                try {
-                    data = JSON.parse(text);
-                } catch (e) {
-                    console.error('❌ RESPUESTA NO JSON:', text);
-                    throw new Error('El servidor devolvió HTML en vez de JSON');
-                }
-
-                if (data.existe) {
-                    const c = data.cliente;
-
-                    input.value = c.razon_social || '';
-                    input.readOnly = true;
-
-                    document.getElementById('rut_empresa').value = c.rut || '';
-                    document.getElementById('pais').value = c.pais || '';
-                    document.getElementById('direccion').value = c.direccion || '';
-                    document.getElementById('nombre').value = c.nombre_comercial || '';
-                    document.getElementById('id_comercial').value = c.id_comercial || '';
-
-                    await cargarContactoPrimario(rut);
-
-                } else {
-                    activarModoManual();
-                }
-            });
-
-            // === SI EL USUARIO ESCRIBE → MODO NUEVO CLIENTE ===
-            input.addEventListener('input', () => {
-                select.value = '';
-                activarModoManual();
-            });
-
-        });
-
         function cargarContactoPrimario(rut) {
             return fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`)
                 .then(r => r.json())
@@ -4382,9 +4371,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             console.log('🧹 Limpiando formulario (modo seguro)');
 
             const campos = [
-                'operacion',
-                'tipo_oper',
-                'concatenado',
                 'booking',
                 'notas_comerciales',
                 'notas_operaciones'
@@ -4398,15 +4384,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     console.warn(`⚠️ Campo no encontrado: ${id}`);
                 }
             });
-
-            // 👇 IMPORTANTE: NO tocar datos del cliente
-            // NO limpiar:
-            // razon_social_input
-            // razon_social_select
-            // rut_empresa
-            // direccion
-            // etc
-
         }
 
         async function fetchJSON(url, options = {}) {

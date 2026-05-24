@@ -179,7 +179,9 @@ try {
     echo json_encode([
         'ok' => true,
         'id_prospecto' => $id_prospecto,
-        'id_cliente' => $id_cliente
+        'id_cliente' => $id_cliente,
+        'id_ppl' => $id_prospecto,
+        'concatenado' => $_POST['concatenado'] ?? null
     ]);
 
     exit;
