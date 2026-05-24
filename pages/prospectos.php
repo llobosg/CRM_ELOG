@@ -2912,12 +2912,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 // =========================
                 // REQUEST
                 // =========================
-                const res = await fetch('/api/guardar_prospecto_full.php', {
+               const data = await fetchJSON('api/guardar_prospecto_full.php', {
                     method: 'POST',
                     body: formData
                 });
-
-                if (!res.ok) throw new Error('Error HTTP ' + res.status);
 
                 const text = await res.text();
 
@@ -2926,8 +2924,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 try {
                     data = JSON.parse(text);
                 } catch (e) {
-                    console.error('❌ RESPUESTA NO JSON:', text);
-                    throw new Error('El servidor devolvió HTML en vez de JSON');
+                    console.error('❌ RESPUESTA HTML DEL SERVER:', text);
+                    throw new Error('El backend devolvió HTML (revisar PHP)');
                 }
 
                 console.log('Respuesta:', data);
@@ -4386,6 +4384,19 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('concatenado').value = '';
             document.getElementById('booking').value = '';
 
+        }
+
+        async function fetchJSON(url, options = {}) {
+            const res = await fetch(url, options);
+            const text = await res.text();
+
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('❌ ERROR FETCH:', url);
+                console.error('❌ RESPUESTA:', text);
+                throw new Error('Respuesta inválida del servidor');
+            }
         }
         // Exponer funciones globales
         window.guardarServicio = guardarServicio;
