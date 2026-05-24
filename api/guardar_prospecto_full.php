@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require_once '../config.php'; // tu conexión PDO: $pdo
+require_once '../config.php';
 
 try {
 
@@ -19,46 +19,50 @@ try {
     $estado       = $_POST['estado'] ?? 'Pendiente';
     $fecha        = $_POST['fecha_alta'] ?? date('Y-m-d');
 
-    // =========================
-    // VALIDACIONES
-    // =========================
     if (!$razon_social) {
         throw new Exception('Razón social es obligatoria');
     }
 
-    // =========================
-    // INICIAR TRANSACCIÓN
-    // =========================
     $pdo->beginTransaction();
 
     // =========================
-    // 1. BUSCAR CLIENTE
+    // 1. CLIENTE
     // =========================
     $stmt = $pdo->prepare("SELECT * FROM clientes WHERE rut = ?");
     $stmt->execute([$rut]);
     $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($cliente) {
+
         $id_cliente = $cliente['id_cliente'];
 
-        // =========================
-        // MERGE (actualizar si cambió info)
-        // =========================
+        // UPDATE SIN telefono ❌
         $stmt = $pdo->prepare("
             UPDATE clientes 
-            SET razon_social = ?, direccion = ?, pais = ?, telefono = ?
+            SET razon_social = ?, direccion = ?, pais = ?
             WHERE id_cliente = ?
         ");
-        $stmt->execute([$razon_social, $direccion, $pais, $fono, $id_cliente]);
+
+        $stmt->execute([
+            $razon_social,
+            $direccion,
+            $pais,
+            $id_cliente
+        ]);
 
     } else {
 
-        // =========================
-        // CREAR NUEVO CLIENTE
-        // =========================
+        // INSERT SIN telefono ❌
         $stmt = $pdo->prepare("
-            INSERT INTO clientes (razon_social, rut, direccion, pais, telefono, id_comercial, fecha_creacion)
-            VALUES (?, ?, ?, ?, ?, ?, NOW())
+            INSERT INTO clientes (
+                razon_social,
+                rut,
+                direccion,
+                pais,
+                id_comercial,
+                fecha_creacion
+            )
+            VALUES (?, ?, ?, ?, ?, NOW())
         ");
 
         $stmt->execute([
@@ -66,7 +70,6 @@ try {
             $rut ?: null,
             $direccion,
             $pais,
-            $fono,
             $id_comercial
         ]);
 
@@ -74,84 +77,93 @@ try {
     }
 
     // =========================
-    // 2. CONTACTO PRIMARIO
+    // 2. CONTACTO (USANDO rut_cliente ✅)
     // =========================
-    if ($contacto) {
+    if ($contacto && $rut) {
 
-        // eliminar primarios anteriores
-        $pdo->prepare("UPDATE contactos SET primario = 'N' WHERE id_cliente = ?")
-            ->execute([$id_cliente]);
+        // limpiar primarios
+        $pdo->prepare("UPDATE contactos SET primario = 'N' WHERE rut_cliente = ?")
+            ->execute([$rut]);
 
-        // insertar nuevo
+        // insertar contacto
         $stmt = $pdo->prepare("
-            INSERT INTO contactos (id_cliente, nom_contacto, email, fono, primario)
+            INSERT INTO contactos (
+                rut_cliente,
+                nom_contacto,
+                email,
+                fono_contacto,
+                primario
+            )
             VALUES (?, ?, ?, ?, 'S')
         ");
-        $stmt->execute([$id_cliente, $contacto, $email, $fono]);
+
+        $stmt->execute([
+            $rut,
+            $contacto,
+            $email,
+            $fono
+        ]);
     }
 
     // =========================
-    // 3. CREAR PROSPECTO
+    // 3. PROSPECTO
     // =========================
     $stmt = $pdo->prepare("
-    INSERT INTO prospectos (
-        razon_social,
-        rut_empresa,
-        fono_empresa,
-        pais,
-        direccion,
-        operacion,
-        tipo_oper,
-        fecha_alta,
-        estado,
-        concatenado,
-        booking,
-        notas_comerciales,
-        notas_operaciones,
-        id_comercial,
-        nombre
-    ) VALUES (
-        :razon_social,
-        :rut_empresa,
-        :fono_empresa,
-        :pais,
-        :direccion,
-        :operacion,
-        :tipo_oper,
-        :fecha_alta,
-        :estado,
-        :concatenado,
-        :booking,
-        :notas_comerciales,
-        :notas_operaciones,
-        :id_comercial,
-        :nombre
-    )
-");
+        INSERT INTO prospectos (
+            razon_social,
+            rut_empresa,
+            fono_empresa,
+            pais,
+            direccion,
+            operacion,
+            tipo_oper,
+            fecha_alta,
+            estado,
+            concatenado,
+            booking,
+            notas_comerciales,
+            notas_operaciones,
+            id_comercial,
+            nombre
+        ) VALUES (
+            :razon_social,
+            :rut_empresa,
+            :fono_empresa,
+            :pais,
+            :direccion,
+            :operacion,
+            :tipo_oper,
+            :fecha_alta,
+            :estado,
+            :concatenado,
+            :booking,
+            :notas_comerciales,
+            :notas_operaciones,
+            :id_comercial,
+            :nombre
+        )
+    ");
 
-$stmt->execute([
-    ':razon_social' => $_POST['razon_social'] ?? null,
-    ':rut_empresa' => $_POST['rut_empresa'] ?? null,
-    ':fono_empresa' => $_POST['fono_empresa'] ?? null,
-    ':pais' => $_POST['pais'] ?? null,
-    ':direccion' => $_POST['direccion'] ?? null,
-    ':operacion' => $_POST['operacion'] ?? null,
-    ':tipo_oper' => $_POST['tipo_oper'] ?? null,
-    ':fecha_alta' => $_POST['fecha_alta'] ?? date('Y-m-d'),
-    ':estado' => $_POST['estado'] ?? 'Pendiente',
-    ':concatenado' => $_POST['concatenado'] ?? null,
-    ':booking' => $_POST['booking'] ?? null,
-    ':notas_comerciales' => $_POST['notas_comerciales'] ?? null,
-    ':notas_operaciones' => $_POST['notas_operaciones'] ?? null,
-    ':id_comercial' => $_POST['id_comercial'] ?? null,
-    ':nombre' => $_POST['nombre'] ?? null
-]);
+    $stmt->execute([
+        ':razon_social' => $_POST['razon_social'] ?? null,
+        ':rut_empresa' => $_POST['rut_empresa'] ?? null,
+        ':fono_empresa' => $_POST['fono_empresa'] ?? null,
+        ':pais' => $_POST['pais'] ?? null,
+        ':direccion' => $_POST['direccion'] ?? null,
+        ':operacion' => $_POST['operacion'] ?? null,
+        ':tipo_oper' => $_POST['tipo_oper'] ?? null,
+        ':fecha_alta' => $_POST['fecha_alta'] ?? date('Y-m-d'),
+        ':estado' => $_POST['estado'] ?? 'Pendiente',
+        ':concatenado' => $_POST['concatenado'] ?? null,
+        ':booking' => $_POST['booking'] ?? null,
+        ':notas_comerciales' => $_POST['notas_comerciales'] ?? null,
+        ':notas_operaciones' => $_POST['notas_operaciones'] ?? null,
+        ':id_comercial' => $_POST['id_comercial'] ?? null,
+        ':nombre' => $_POST['nombre'] ?? null
+    ]);
 
     $id_prospecto = $pdo->lastInsertId();
 
-    // =========================
-    // COMMIT
-    // =========================
     $pdo->commit();
 
     echo json_encode([
