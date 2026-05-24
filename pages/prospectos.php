@@ -60,11 +60,10 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 1 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Razón Social *</label>
-
-            <select id="razon_social_select" style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"> 
+            <select id="razon_social_select" style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" /> 
                 <option value="">Seleccionar cliente</option>
             </select>
-            <input type="text" name="razon_social" id="razon_social_input" placeholder="O escribe nueva razón social" style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="razon_social" id="razon_social_input" placeholder="O escribe nueva razón social" style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             
         </div>
         <!-- Fila 2 -->
@@ -85,10 +84,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 3 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>País</label>
-            <input type="text" name="pais" id="pais" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="pais" id="pais" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Dirección</label>
-            <input type="text" name="direccion" id="direccion" style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
-            <label>Estado</label>
+            <input type="text" name="direccion" id="direccion" style="grid-column: span 3; style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
         <!-- Fila 4: Operación y Tipo Operación -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
@@ -108,7 +106,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <!-- Fila 5 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Comercial Asignado</label>
-            <input type="text" name="nombre" id="nombre" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
+            <input type="text" name="nombre" id="nombre" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Contacto Primario Clte.</label>
             <input type="text" name="contacto" id="contacto" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
             <label>Email</label>
@@ -2882,11 +2880,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                 if (!razonFinal) {
                     advertencia('Debes ingresar la razón social');
-                    return;
-                }
-
-                if (rut && !validarRUT(rut)) {
-                    advertencia('RUT inválido');
                     return;
                 }
 
