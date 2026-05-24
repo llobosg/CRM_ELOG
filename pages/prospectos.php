@@ -86,7 +86,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <label>País</label>
             <input type="text" name="pais" id="pais" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Dirección</label>
-            <input type="text" name="direccion" id="direccion" style="grid-column: span 3; style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="direccion" id="direccion" style="grid-column: span 3; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
         <!-- Fila 4: Operación y Tipo Operación -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
@@ -604,11 +604,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 .then(r => r.json())
                 .then(data => {
                     const sel = document.getElementById('razon_social_select');
-                    // 🔥 sincronizar input visible con selección
-                    document.getElementById('razon_social_input').value = c.razon_social || '';
-
-                    // 🔥 marcar que es cliente existente
-                    document.getElementById('razon_social_hidden').value = c.razon_social || '';
                     if (!sel) return;
                     sel.innerHTML = '<option value="">Seleccionar cliente</option>';
                     (data.clientes || []).forEach(c => {
