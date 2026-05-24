@@ -61,22 +61,18 @@ require_once __DIR__ . '/../includes/auth_check.php';
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Razón Social *</label>
 
-            <select id="razon_social_select"
-                    style="grid-column: span 3;">
+            <select id="razon_social_select" style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"> 
                 <option value="">Seleccionar cliente</option>
             </select>
-            <input type="text" name="razon_social" id="razon_social_input" placeholder="O escribe nueva razón social" style="grid-column: span 3;" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <input type="text" name="razon_social" id="razon_social_input" placeholder="O escribe nueva razón social" style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            
+        </div>
+        <!-- Fila 2 -->
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>RUT Empresa *</label>
             <input type="text" name="rut_empresa" id="rut_empresa" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Fecha</label>
             <input type="date" name="fecha_alta" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" value="<?= date('Y-m-d') ?>" />
-        </div>
-        <!-- Fila 2 -->
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
-            <label>País</label>
-            <input type="text" name="pais" id="pais" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
-            <label>Dirección</label>
-            <input type="text" name="direccion" id="direccion" style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
             <label>Estado</label>
             <select name="estado" id="estado" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; box-sizing: border-box;">
                 <option value="Pendiente">Pendiente</option>
@@ -86,7 +82,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 <option value="Rechazado">Rechazado</option>
             </select>
         </div>
-        <!-- Fila 3: Operación y Tipo Operación -->
+        <!-- Fila 3 -->
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
+            <label>País</label>
+            <input type="text" name="pais" id="pais" style="width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <label>Dirección</label>
+            <input type="text" name="direccion" id="direccion" style="grid-column: span 3; width: 100%; padding: 0.5rem; background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
+            <label>Estado</label>
+        </div>
+        <!-- Fila 4: Operación y Tipo Operación -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Operación *</label>
             <select name="operacion" id="operacion" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
@@ -101,7 +105,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <label>Booking</label>
             <input type="text" name="booking" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" />
         </div>
-        <!-- Fila 4 -->
+        <!-- Fila 5 -->
         <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1rem; margin-bottom: 1.2rem; align-items: center;">
             <label>Comercial Asignado</label>
             <input type="text" name="nombre" id="nombre" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; box-sizing: border-box;" />
@@ -2662,12 +2666,54 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
             console.log('✅ Prospectos inicializado PRO');
 
-            // ===============================
+            // =========================
             // 1. CARGAS INICIALES
-            // ===============================
+            // =========================
             cargarPaises();
             cargarOperacionesYTipos();
             cargarClientesEnSelect();
+
+            // =========================
+            // EVENTO: SELECT CLIENTE
+            // =========================
+            const selectCliente = document.getElementById('razon_social_select');
+
+            if (selectCliente) {
+                selectCliente.addEventListener('change', async function() {
+
+                    const rut = this.value;
+
+                    if (!rut) {
+                        limpiarFormularioCliente();
+                        return;
+                    }
+
+                    try {
+                        const res = await fetch(`/api/get_cliente.php?rut=${encodeURIComponent(rut)}`);
+                        const data = await res.json();
+
+                        if (!data.existe) return;
+
+                        const c = data.cliente;
+
+                        setClienteEnFormulario(c);
+
+                        // cargar contacto
+                        const res2 = await fetch(`/api/get_contactos.php?rut=${encodeURIComponent(rut)}`);
+                        const data2 = await res2.json();
+
+                        const primario = (data2.contactos || []).find(ct => ct.primario === 'S');
+
+                        document.getElementById('contacto').value = primario?.nom_contacto || '';
+                        document.getElementById('email').value = primario?.email || '';
+                        document.getElementById('fono_empresa').value = primario?.fono_contacto || '';
+
+                    } catch (e) {
+                        error('Error cargando cliente');
+                        console.error(e);
+                    }
+                });
+            }
 
             // ===============================
             // 2. MENSAJES URL
@@ -2839,6 +2885,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     return;
                 }
 
+                if (rut && !validarRUT(rut)) {
+                    advertencia('RUT inválido');
+                    return;
+                }
+
+                const duplicado = await detectarDuplicado(razonFinal);
+                if (duplicado) return;
+
                 formData.set('razon_social', razonFinal);
 
                 // =========================
@@ -2865,12 +2919,27 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                 if (data.ok) {
 
-                    exito('✅ Prospecto guardado');
+                    exito('✅ Prospecto guardado correctamente');
 
-                    form.reset();
+                    // 🔥 recargar cliente recién creado
+                    if (data.id_cliente) {
 
-                } else {
-                    throw new Error(data.error || 'Error al guardar');
+                        const rut = formData.get('rut_empresa');
+
+                        if (rut) {
+                            const select = document.getElementById('razon_social_select');
+
+                            // forzar selección
+                            if (select) {
+                                select.value = rut;
+                                select.dispatchEvent(new Event('change'));
+                            }
+                        }
+                    }
+
+                    // limpiar SOLO datos de prospecto (no cliente)
+                    limpiarCamposProspecto();
+
                 }
 
             } catch (err) {
@@ -4220,6 +4289,69 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
             document.getElementById('rut_empresa').style.background = '#fff';
             document.getElementById('direccion').style.background = '#fff';
+
+        }
+
+        function validarRUT(rut) {
+            rut = rut.replace(/\./g, '').replace('-', '');
+
+            if (rut.length < 2) return false;
+
+            const cuerpo = rut.slice(0, -1);
+            let dv = rut.slice(-1).toUpperCase();
+
+            let suma = 0;
+            let multiplo = 2;
+
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                suma += multiplo * parseInt(cuerpo.charAt(i));
+                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            }
+
+            const dvEsperado = 11 - (suma % 11);
+
+            let dvFinal =
+                dvEsperado === 11 ? '0' :
+                dvEsperado === 10 ? 'K' :
+                dvEsperado.toString();
+
+            return dvFinal === dv;
+        }
+
+        async function detectarDuplicado(nombre) {
+
+            const res = await fetch(`/api/buscar_cliente_similar.php?term=${encodeURIComponent(nombre)}`);
+            const data = await res.json();
+
+            if (data.length > 0) {
+
+                advertencia('⚠️ Cliente similar encontrado');
+
+                console.log('Coincidencias:', data);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        function setClienteEnFormulario(c) {
+
+            document.getElementById('rut_empresa').value = c.rut || '';
+            document.getElementById('pais').value = c.pais || '';
+            document.getElementById('direccion').value = c.direccion || '';
+
+            document.getElementById('nombre').value = c.nombre_comercial || '';
+            document.getElementById('id_comercial').value = c.id_comercial || '';
+
+        }
+
+        function limpiarCamposProspecto() {
+
+            document.getElementById('operacion').value = '';
+            document.getElementById('tipo_oper').value = '';
+            document.getElementById('concatenado').value = '';
+            document.getElementById('booking').value = '';
 
         }
         // Exponer funciones globales
