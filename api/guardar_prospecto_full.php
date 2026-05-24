@@ -117,8 +117,7 @@ try {
     // =========================
     $prefijo = 'PPL'; // o PRS, o lo que quieras
 
-    // $stmt = $pdo->query("SELECT MAX(id_ppl) as max_id FROM prospectos");
-    $stmt = $pdo->query("AUTO_INCREMENT + trigger as max_id FROM prospectos");
+    $stmt = $pdo->query("SELECT MAX(id_ppl) as max_id FROM prospectos");
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     $next = ($row['max_id'] ?? 0) + 1;
