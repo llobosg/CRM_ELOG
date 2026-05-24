@@ -2934,15 +2934,16 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
                     exito('✅ Prospecto guardado correctamente');
 
-                    // 🔥 recargar cliente recién creado
+                    // 🔥 recargar cliente en UI
                     if (data.id_cliente) {
+
+                        await cargarClientesEnSelect();
 
                         const rut = formData.get('rut_empresa');
 
                         if (rut) {
                             const select = document.getElementById('razon_social_select');
 
-                            // forzar selección
                             if (select) {
                                 select.value = rut;
                                 select.dispatchEvent(new Event('change'));
@@ -2950,9 +2951,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
                         }
                     }
 
-                    // limpiar SOLO datos de prospecto (no cliente)
+                    // 🔥 SOLO limpiar datos del prospecto
                     limpiarCamposProspecto();
-
                 }
 
             } catch (err) {
@@ -4377,12 +4377,35 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         }
 
-        function limpiarCamposProspecto() {
+       function limpiarCamposProspecto() {
 
-            document.getElementById('operacion').value = '';
-            document.getElementById('tipo_oper').value = '';
-            document.getElementById('concatenado').value = '';
-            document.getElementById('booking').value = '';
+            console.log('🧹 Limpiando formulario (modo seguro)');
+
+            const campos = [
+                'operacion',
+                'tipo_oper',
+                'concatenado',
+                'booking',
+                'notas_comerciales',
+                'notas_operaciones'
+            ];
+
+            campos.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = '';
+                } else {
+                    console.warn(`⚠️ Campo no encontrado: ${id}`);
+                }
+            });
+
+            // 👇 IMPORTANTE: NO tocar datos del cliente
+            // NO limpiar:
+            // razon_social_input
+            // razon_social_select
+            // rut_empresa
+            // direccion
+            // etc
 
         }
 
