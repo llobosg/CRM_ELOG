@@ -26,6 +26,7 @@ if (php_sapi_name() !== 'cli') {
                 p.operacion,
                 p.tipo_oper,
                 p.concatenado,
+                p.nombre AS comercial,
                 COALESCE(cost_data.total_costo, 0) AS total_costo,
                 COALESCE(cost_data.total_venta, 0) AS total_venta,
                 COALESCE(gasto_data.gdc, 0) AS gdc,
@@ -111,6 +112,7 @@ if (php_sapi_name() !== 'cli') {
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th style="width: 12%;">Comercial</th>
                         <th style="width: 30%;">Cliente</th>      <!-- +10% -->
                         <th style="width: 9%;">Fecha</th>        <!-- +10% -->
                         <th style="width: 11%;">Concatenado</th>
@@ -130,6 +132,7 @@ if (php_sapi_name() !== 'cli') {
                 <?php else: ?>
                     <?php foreach ($prospectos as $p): ?>
                     <tr>
+                        <td><?= htmlspecialchars($p['comercial'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['cliente_nombre'] ?? '–') ?></td>
                         <td><?= htmlspecialchars($p['fecha'] ? date('d-m-Y', strtotime($p['fecha'])) : '–') ?></td>
                         <td><?= htmlspecialchars($p['concatenado'] ?? '–') ?></td>
