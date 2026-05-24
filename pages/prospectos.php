@@ -2978,6 +2978,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     if (operacion) document.getElementById('operacion').value = operacion;
                     if (tipoOper) document.getElementById('tipo_oper').value = tipoOper;
 
+                    const idProspectInput = document.getElementById('id_prospect');
+                    if (idProspectInput && data.id_prospect) {
+                        idProspectInput.value = data.id_prospect;
+                    }
+
                     // =========================
                     // RECALCULAR CONCATENADO
                     // =========================

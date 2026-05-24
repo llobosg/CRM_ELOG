@@ -113,10 +113,25 @@ try {
     }
 
     // =========================
+    // GENERAR ID_PROSPECT (NEGOCIO)
+    // =========================
+    $prefijo = 'PPL'; // o PRS, o lo que quieras
+
+    // $stmt = $pdo->query("SELECT MAX(id_ppl) as max_id FROM prospectos");
+    $stmt = $pdo->query("AUTO_INCREMENT + trigger as max_id FROM prospectos");
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $next = ($row['max_id'] ?? 0) + 1;
+
+    // formato: PPL-000123
+    $id_prospect = $prefijo . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
+
+    // =========================
     // 3. PROSPECTO
     // =========================
     $stmt = $pdo->prepare("
-        INSERT INTO prospectos (
+    INSERT INTO prospectos (
+            id_prospect,
             razon_social,
             rut_empresa,
             fono_empresa,
@@ -133,6 +148,7 @@ try {
             id_comercial,
             nombre
         ) VALUES (
+            :id_prospect,
             :razon_social,
             :rut_empresa,
             :fono_empresa,
@@ -152,6 +168,7 @@ try {
     ");
 
     $stmt->execute([
+        ':id_prospect' => $id_prospect,
         ':razon_social' => $_POST['razon_social'] ?? null,
         ':rut_empresa' => $_POST['rut_empresa'] ?? null,
         ':fono_empresa' => $_POST['fono_empresa'] ?? null,
@@ -178,7 +195,8 @@ try {
 
     echo json_encode([
         'ok' => true,
-        'id_prospecto' => $id_prospecto,
+        // 'id_prospecto' => $id_prospecto,
+        'id_prospect' => $id_prospect, // 👈 CLAVE
         'id_cliente' => $id_cliente,
         'id_ppl' => $id_prospecto,
         'concatenado' => $_POST['concatenado'] ?? null
