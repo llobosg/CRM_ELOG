@@ -589,7 +589,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 transform: 'translateY(-50%)',
                 padding: '16px 24px',
                 borderRadius: '12px',
-                color: 'white',
+                color: '#078d72',
                 fontWeight: '600',
                 maxWidth: '320px',
                 zIndex: '10000',
