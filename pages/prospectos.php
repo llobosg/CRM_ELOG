@@ -4302,8 +4302,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
             });
         }
 
-        document.getElementById('razon_social').addEventListener('input', function () {
-
+        // ✅ Escuchar cambios en el input manual de razón social
+        document.getElementById('razon_social_manual')?.addEventListener('input', function () {
             // 🔥 Rompe vínculo con cliente existente
             document.getElementById('razon_social_hidden').value = '';
 
@@ -4312,7 +4312,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             document.getElementById('pais').value = '';
             document.getElementById('direccion').value = '';
             document.getElementById('fono_empresa').value = '';
-
         });
 
         function cargarContactoPrimario(rut) {
