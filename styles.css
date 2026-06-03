@@ -613,3 +613,46 @@ table tr:hover {
     color: white;
     font-weight: bold;
 }
+/* Estilo para notificaciones Toast */
+.toast-notification {
+    position: fixed;
+    right: 20px;           /* A 20px del borde derecho */
+    top: 50%;               /* Mitad vertical */
+    transform: translateY(-50%); /* Centrar exactamente */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    font-weight: 600;
+    z-index: 10000;
+    max-width: 320px;
+    animation: slideInRight 0.4s ease forwards, fadeOut 0.5s ease 2.5s forwards;
+    opacity: 0;
+}
+
+.toast-notification.error {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+}
+
+.toast-notification.success {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%) translateY(-50%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0) translateY(-50%);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(20px) translateY(-50%);
+    }
+}

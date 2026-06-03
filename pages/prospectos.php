@@ -544,12 +544,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
     </div>
 
-    <!-- Toast de notificaciones -->
-    <div id="toast" class="toast" style="display:none;">
-        <i class="fas fa-info-circle"></i> 
-        <span id="toast-message">Mensaje</span>
-    </div>
-
     <script>
         console.log('✅ Script de prospectos iniciado');
         // ===================================================================
@@ -569,6 +563,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // === 2. FUNCIONES AUXILIARES ===
         // ===================================================================
         function mostrarNotificacion(mensaje, tipo = 'info') {
+            // Mapeo de tipos
             const tipoMap = {
                 'exito': 'success',
                 'error': 'error',
@@ -577,26 +572,61 @@ require_once __DIR__ . '/../includes/auth_check.php';
             };
             const claseTipo = tipoMap[tipo] || 'info';
 
-            const toast = document.getElementById('toast');
-            const msg = document.getElementById('toast-message');
-            if (!toast || !msg) return;
+            // Eliminar toasts anteriores para evitar acumulación
+            const toastExistente = document.querySelector('.toast-dinamico');
+            if (toastExistente) toastExistente.remove();
 
-            msg.textContent = mensaje;
-            toast.className = 'toast ' + claseTipo; // Ej: 'toast success'
+            // Crear contenedor del toast
+            const toast = document.createElement('div');
+            toast.className = `toast-dinamico ${claseTipo}`;
+            toast.textContent = mensaje;
+
+            // Estilos inline (puedes moverlos a CSS si prefieres)
+            Object.assign(toast.style, {
+                position: 'fixed',
+                right: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                padding: '16px 24px',
+                borderRadius: '12px',
+                color: 'white',
+                fontWeight: '600',
+                maxWidth: '320px',
+                zIndex: '10000',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                opacity: '0',
+                transition: 'opacity 0.4s ease, transform 0.4s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+            });
+
+            // Colores por tipo
+            const colores = {
+                success: 'linear-gradient(135deg, #4ecdc4, #44a08d)',
+                error: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
+                warning: 'linear-gradient(135deg, #feca57, #ff9ff3)',
+                info: 'linear-gradient(135deg, #667eea, #764ba2)'
+            };
+            toast.style.background = colores[claseTipo] || colores.info;
+
+            // Añadir al body
+            document.body.appendChild(toast);
 
             // Mostrar con animación
-            toast.style.display = 'flex';
-            // Forzar reflow para que la transición funcione
-            void toast.offsetWidth;
-            toast.classList.add('show');
-
-            // Ocultar después de 5 segundos
             setTimeout(() => {
-                toast.classList.remove('show');
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(-50%)';
+            }, 10);
+
+            // Ocultar después de 4 segundos
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px) translateY(-50%)';
                 setTimeout(() => {
-                    toast.style.display = 'none';
-                }, 400); // tiempo de transición
-            }, 5000);
+                    toast.remove();
+                }, 400);
+            }, 4000);
         }
 
         function cargarClientesEnSelect() {
