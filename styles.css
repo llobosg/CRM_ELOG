@@ -620,7 +620,7 @@ table tr:hover {
     top: 50%;               /* Mitad vertical */
     transform: translateY(-50%); /* Centrar exactamente */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    color: rgb(42, 182, 7);
     padding: 16px 24px;
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.2);
