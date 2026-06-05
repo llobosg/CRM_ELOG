@@ -1284,9 +1284,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         // === FUNCIÓN: Abrir Modal Llamado ===
         function abrirModalLlamado() {
+            const idProspecto = document.getElementById('id_ppl')?.value;
             const razonSocial = document.getElementById('razon_social_manual')?.value.trim() || 
                             document.getElementById('razon_social_select')?.selectedOptions[0]?.text.trim();
             const comercial = document.getElementById('nombre')?.value.trim();
+            
+            // ✅ Validar que el prospecto ya esté guardado (tiene ID)
+            if (!idProspecto || idProspecto === '0') {
+                return error('Debe guardar el Prospecto primero antes de registrar llamados');
+            }
             
             if (!razonSocial) {
                 return error('Debe seleccionar o ingresar un Cliente primero');
@@ -1296,7 +1302,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             }
             
             // Cargar datos en el modal
-            document.getElementById('llamado_id_prospecto').value = document.getElementById('id_ppl')?.value || '';
+            document.getElementById('llamado_id_prospecto').value = idProspecto;
             document.getElementById('llamado_rut_cliente').value = document.getElementById('rut_empresa')?.value || '';
             document.getElementById('llamado_razon_social').value = razonSocial;
             document.getElementById('llamado_id_comercial').value = '<?php echo $_SESSION["user_id"] ?? ""; ?>';
