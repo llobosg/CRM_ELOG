@@ -364,25 +364,25 @@ require_once __DIR__ . '/../includes/auth_check.php';
     </div>
 
     <!-- Modal Llamado -->
-    <div id="modal-llamado" class="modal" style="display:none;">
-        <div class="modal-content" style="max-width: 600px;">
+    <div id="modal-llamado" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:12000;">
+        <div class="modal-content" style="max-width: 600px; margin: 2rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
             <h3><i class="fas fa-phone-alt"></i> Registrar Llamado</h3>
-            <span class="close" onclick="cerrarModalLlamado()">&times;</span>
+            <span class="close" onclick="cerrarModalLlamado()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
             
-            <input type="hidden" id="llamado_id_prospecto" value="<?= $id_ppl ?? '' ?>">
-            <input type="hidden" id="llamado_rut_cliente" value="<?= $prospecto['rut_empresa'] ?? '' ?>">
-            <input type="hidden" id="llamado_razon_social" value="<?= $prospecto['razon_social'] ?? '' ?>">
-            <input type="hidden" id="llamado_id_comercial" value="<?= $_SESSION['user_id'] ?? '' ?>">
-            <input type="hidden" id="llamado_nombre_comercial" value="<?= $_SESSION['nombre'] ?? '' ?>">
+            <input type="hidden" id="llamado_id_prospecto">
+            <input type="hidden" id="llamado_rut_cliente">
+            <input type="hidden" id="llamado_razon_social">
+            <input type="hidden" id="llamado_id_comercial">
+            <input type="hidden" id="llamado_nombre_comercial">
 
             <div style="margin: 1rem 0;">
-                <label>Fecha</label>
-                <input type="date" id="llamado_fecha" value="<?= date('Y-m-d') ?>" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+                <label>Fecha *</label>
+                <input type="date" id="llamado_fecha" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
             </div>
 
             <div style="margin: 1rem 0;">
-                <label>Hora</label>
-                <input type="time" id="llamado_hora" value="<?= date('H:i') ?>" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+                <label>Hora *</label>
+                <input type="time" id="llamado_hora" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
             </div>
 
             <div style="margin: 1rem 0;">
@@ -1232,7 +1232,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
             });
         }
 
-        // Guardar llamado
+        // === FUNCIÓN: Guardar Llamado ===
         function guardarLlamado() {
             const idProspecto = document.getElementById('llamado_id_prospecto').value;
             const fecha = document.getElementById('llamado_fecha').value;
@@ -1256,7 +1256,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 nota: nota
             };
             
-            fetch('/api/guardar_llamado.php', {
+            fetch('/api/crear_llamado.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -1264,14 +1264,55 @@ require_once __DIR__ . '/../includes/auth_check.php';
             .then(r => r.json())
             .then(res => {
                 if (res.success) {
-                    cargarLlamados(idProspecto);
-                    cerrarModalLlamado();
                     exito('Llamado registrado correctamente');
+                    cerrarModalLlamado();
+                    // Opcional: recargar lista de llamados si ya tienes esa funcionalidad
                 } else {
-                    error(res.message || 'Error al guardar');
+                    error(res.message || 'Error al guardar el llamado');
                 }
             })
-            .catch(err => error('Error de conexión'));
+            .catch(err => {
+                console.error('Error:', err);
+                error('No se pudo conectar con el servidor');
+            });
+        }
+
+        // === FUNCIÓN: Cerrar Modal ===
+        function cerrarModalLlamado() {
+            document.getElementById('modal-llamado').style.display = 'none';
+        }
+
+        // === FUNCIÓN: Abrir Modal Llamado ===
+        function abrirModalLlamado() {
+            const razonSocial = document.getElementById('razon_social_manual')?.value.trim() || 
+                            document.getElementById('razon_social_select')?.selectedOptions[0]?.text.trim();
+            const comercial = document.getElementById('nombre')?.value.trim();
+            
+            if (!razonSocial) {
+                return error('Debe seleccionar o ingresar un Cliente primero');
+            }
+            if (!comercial) {
+                return error('Debe tener un Comercial Asignado');
+            }
+            
+            // Cargar datos en el modal
+            document.getElementById('llamado_id_prospecto').value = document.getElementById('id_ppl')?.value || '';
+            document.getElementById('llamado_rut_cliente').value = document.getElementById('rut_empresa')?.value || '';
+            document.getElementById('llamado_razon_social').value = razonSocial;
+            document.getElementById('llamado_id_comercial').value = '<?php echo $_SESSION["user_id"] ?? ""; ?>';
+            document.getElementById('llamado_nombre_comercial').value = '<?php echo $_SESSION["nombre"] ?? ""; ?>';
+            
+            // Fecha y hora actuales
+            const ahora = new Date();
+            document.getElementById('llamado_fecha').value = ahora.toISOString().split('T')[0];
+            document.getElementById('llamado_hora').value = ahora.toTimeString().slice(0, 5);
+            
+            // Limpiar campos
+            document.getElementById('llamado_tipo').selectedIndex = 0;
+            document.getElementById('llamado_nota').value = '';
+            
+            // Mostrar modal
+            document.getElementById('modal-llamado').style.display = 'block';
         }
 
         // ===================================================================
