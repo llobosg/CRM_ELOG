@@ -167,20 +167,31 @@ require_once __DIR__ . '/../includes/auth_check.php';
             </button>
         </div>
 
-        <!-- Tabla de llamados -->
-        <div class="table-container">
-            <table id="tabla-llamados">
-                <thead>
-                    <tr>
-                        <th>Fecha/Hora</th>
-                        <th>Tipo Gestión</th>
-                        <th>Comercial</th>
-                        <th>Nota</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="llamados-body"></tbody>
-            </table>
+        <!-- ========== LLAMADOS COMERCIALES ========== -->
+        <div class="card" style="margin-top: 2rem;">
+            <h3><i class="fas fa-phone-alt"></i> Llamados Comerciales</h3>
+            
+            <div style="text-align: right; margin-bottom: 1rem;">
+                <button type="button" class="btn-primary" onclick="abrirModalLlamado()">
+                    <i class="fas fa-plus"></i> Nuevo Llamado
+                </button>
+            </div>
+
+            <!-- Tabla de llamados -->
+            <div class="table-container">
+                <table id="tabla-llamados">
+                    <thead>
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Tipo Gestión</th>
+                            <th>Comercial</th>
+                            <th>Nota</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="llamados-body"></tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Botón Exportar Excel -->
@@ -1193,21 +1204,41 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // Variables globales
         let llamados = [];
 
-        // Cargar llamados al abrir prospecto
+        // === FUNCIÓN: Cargar y mostrar llamados ===
         function cargarLlamados(idProspecto) {
             if (!idProspecto || idProspecto === '0') {
-                llamados = [];
-                actualizarTablaLlamados();
+                document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
                 return;
             }
             
             fetch(`/api/get_llamados.php?id_prospecto=${idProspecto}`)
                 .then(r => r.json())
                 .then(data => {
-                    llamados = data.llamados || [];
-                    actualizarTablaLlamados();
+                    const tbody = document.getElementById('llamados-body');
+                    if (!tbody) return;
+                    
+                    if (!data.success || !data.llamados || data.llamados.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
+                        return;
+                    }
+                    
+                    tbody.innerHTML = data.llamados.map((l, i) => `
+                        <tr>
+                            <td>${l.fecha} ${l.hora}</td>
+                            <td>${l.tipo_gestion}</td>
+                            <td>${l.nombre_comercial}</td>
+                            <td>${l.nota}</td>
+                            <td>
+                                <button type="button" onclick="editarLlamado(${l.id_llamado})">✏️</button>
+                                <button type="button" onclick="eliminarLlamado(${l.id_llamado})">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('');
                 })
-                .catch(err => error('Error al cargar llamados'));
+                .catch(err => {
+                    console.error('Error al cargar llamados:', err);
+                    document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar llamados</td></tr>';
+                });
         }
 
         // Actualizar tabla de llamados
@@ -1266,7 +1297,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 if (res.success) {
                     exito('Llamado registrado correctamente');
                     cerrarModalLlamado();
-                    // Opcional: recargar lista de llamados si ya tienes esa funcionalidad
+                    // ✅ Recargar lista de llamados
+                    const idProspecto = document.getElementById('id_ppl').value;
+                    cargarLlamados(idProspecto);
                 } else {
                     error(res.message || 'Error al guardar el llamado');
                 }
@@ -1717,6 +1750,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     console.error('Error al cargar prospecto:', err);
                     error('No se pudo cargar el prospecto');
                 });
+                
+                // Al final, después de actualizar todos los campos:
+                setTimeout(() => {
+                    cargarLlamados(id); // ✅ Cargar llamados del prospecto
+                }, 100);
         }
         // ===================================================================
         // === 5. MODALES Y SUBMODALES ===
