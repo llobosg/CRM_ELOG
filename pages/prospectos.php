@@ -167,31 +167,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
             </button>
         </div>
 
-        <!-- ========== LLAMADOS COMERCIALES ========== -->
-        <div class="card" style="margin-top: 2rem;">
-            <h3><i class="fas fa-phone-alt"></i> Llamados Comerciales</h3>
-            
-            <div style="text-align: right; margin-bottom: 1rem;">
-                <button type="button" class="btn-primary" onclick="abrirModalLlamado()">
-                    <i class="fas fa-plus"></i> Nuevo Llamado
-                </button>
-            </div>
-
-            <!-- Tabla de llamados -->
-            <div class="table-container">
-                <table id="tabla-llamados">
-                    <thead>
-                        <tr>
-                            <th>Fecha/Hora</th>
-                            <th>Tipo Gestión</th>
-                            <th>Comercial</th>
-                            <th>Nota</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="llamados-body"></tbody>
-                </table>
-            </div>
+        <!-- Tabla de llamados -->
+        <div class="table-container">
+            <table id="tabla-llamados">
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Tipo Gestión</th>
+                        <th>Comercial</th>
+                        <th>Nota</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="llamados-body"></tbody>
+            </table>
+        </div>
         </div>
 
         <!-- Botón Exportar Excel -->
@@ -1750,7 +1740,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     console.error('Error al cargar prospecto:', err);
                     error('No se pudo cargar el prospecto');
                 });
-                
+
                 // Al final, después de actualizar todos los campos:
                 setTimeout(() => {
                     cargarLlamados(id); // ✅ Cargar llamados del prospecto
