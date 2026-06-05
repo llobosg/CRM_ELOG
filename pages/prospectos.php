@@ -156,6 +156,41 @@ require_once __DIR__ . '/../includes/auth_check.php';
     </div>
     <input type="hidden" name="servicios_json" id="servicios_json" />
 
+    <!-- ========== LLAMADOS COMERCIALES ========== -->
+    <div class="card" style="margin-top: 2rem;">
+        <h3><i class="fas fa-phone-alt"></i> Llamados Comerciales</h3>
+        
+        <!-- Botón para agregar llamado -->
+        <div style="text-align: right; margin-bottom: 1rem;">
+            <button type="button" class="btn-primary" onclick="abrirModalLlamado()">
+                <i class="fas fa-plus"></i> Nuevo Llamado
+            </button>
+        </div>
+
+        <!-- Tabla de llamados -->
+        <div class="table-container">
+            <table id="tabla-llamados">
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Tipo Gestión</th>
+                        <th>Comercial</th>
+                        <th>Nota</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="llamados-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Botón Exportar Excel -->
+        <div style="text-align: right; margin-top: 1rem;">
+            <button type="button" class="btn-secondary" onclick="exportarLlamadosExcel()">
+                <i class="fas fa-file-excel"></i> Exportar a Excel
+            </button>
+        </div>
+    </div>
+
     <!-- Submodal: Cubicador -->
     <div id="submodal-cubicador" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:11000;">
         <div class="modal-content" style="max-width: 600px; width: 90%; margin: 2rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
@@ -324,6 +359,52 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     <button type="button" class="btn-secondary" onclick="cerrarModalServicioConConfirmacion()">Volver</button>
                     <button type="button" class="btn-add" id="btn-guardar-servicio-modal">Agregar Servicio</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Llamado -->
+    <div id="modal-llamado" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3><i class="fas fa-phone-alt"></i> Registrar Llamado</h3>
+            <span class="close" onclick="cerrarModalLlamado()">&times;</span>
+            
+            <input type="hidden" id="llamado_id_prospecto" value="<?= $id_ppl ?? '' ?>">
+            <input type="hidden" id="llamado_rut_cliente" value="<?= $prospecto['rut_empresa'] ?? '' ?>">
+            <input type="hidden" id="llamado_razon_social" value="<?= $prospecto['razon_social'] ?? '' ?>">
+            <input type="hidden" id="llamado_id_comercial" value="<?= $_SESSION['user_id'] ?? '' ?>">
+            <input type="hidden" id="llamado_nombre_comercial" value="<?= $_SESSION['nombre'] ?? '' ?>">
+
+            <div style="margin: 1rem 0;">
+                <label>Fecha</label>
+                <input type="date" id="llamado_fecha" value="<?= date('Y-m-d') ?>" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+            </div>
+
+            <div style="margin: 1rem 0;">
+                <label>Hora</label>
+                <input type="time" id="llamado_hora" value="<?= date('H:i') ?>" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+            </div>
+
+            <div style="margin: 1rem 0;">
+                <label>Tipo de Gestión *</label>
+                <select id="llamado_tipo" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+                    <option value="">Seleccionar</option>
+                    <option value="Llamado">Llamado telefónico</option>
+                    <option value="Email">Envío de correo</option>
+                    <option value="Reunión">Reunión presencial/virtual</option>
+                    <option value="Primer Contacto">Primer contacto</option>
+                    <option value="Seguimiento">Seguimiento</option>
+                </select>
+            </div>
+
+            <div style="margin: 1rem 0;">
+                <label>Nota *</label>
+                <textarea id="llamado_nota" rows="4" placeholder="Describa la gestión realizada..." style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;"></textarea>
+            </div>
+
+            <div style="text-align: right; margin-top: 1.5rem;">
+                <button type="button" class="btn-secondary" onclick="cerrarModalLlamado()">Cancelar</button>
+                <button type="button" class="btn-primary" onclick="guardarLlamado()">Guardar</button>
             </div>
         </div>
     </div>
@@ -1107,6 +1188,90 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 exito('Notas del servicio listas para guardar con el servicio');
             }
             cerrarSubmodalNotasServicio();
+        }
+
+        // Variables globales
+        let llamados = [];
+
+        // Cargar llamados al abrir prospecto
+        function cargarLlamados(idProspecto) {
+            if (!idProspecto || idProspecto === '0') {
+                llamados = [];
+                actualizarTablaLlamados();
+                return;
+            }
+            
+            fetch(`/api/get_llamados.php?id_prospecto=${idProspecto}`)
+                .then(r => r.json())
+                .then(data => {
+                    llamados = data.llamados || [];
+                    actualizarTablaLlamados();
+                })
+                .catch(err => error('Error al cargar llamados'));
+        }
+
+        // Actualizar tabla de llamados
+        function actualizarTablaLlamados() {
+            const tbody = document.getElementById('llamados-body');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            llamados.forEach((l, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${l.fecha} ${l.hora}</td>
+                    <td>${l.tipo_gestion}</td>
+                    <td>${l.nombre_comercial}</td>
+                    <td>${l.nota}</td>
+                    <td>
+                        <button type="button" onclick="editarLlamado(${i})">✏️</button>
+                        <button type="button" onclick="eliminarLlamado(${i})">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Guardar llamado
+        function guardarLlamado() {
+            const idProspecto = document.getElementById('llamado_id_prospecto').value;
+            const fecha = document.getElementById('llamado_fecha').value;
+            const hora = document.getElementById('llamado_hora').value;
+            const tipo = document.getElementById('llamado_tipo').value;
+            const nota = document.getElementById('llamado_nota').value.trim();
+            
+            if (!fecha || !hora || !tipo || !nota) {
+                return error('Todos los campos son obligatorios');
+            }
+            
+            const data = {
+                id_prospecto: idProspecto,
+                fecha: fecha,
+                hora: hora,
+                rut_cliente: document.getElementById('llamado_rut_cliente').value,
+                razon_social: document.getElementById('llamado_razon_social').value,
+                id_comercial: document.getElementById('llamado_id_comercial').value,
+                nombre_comercial: document.getElementById('llamado_nombre_comercial').value,
+                tipo_gestion: tipo,
+                nota: nota
+            };
+            
+            fetch('/api/guardar_llamado.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    cargarLlamados(idProspecto);
+                    cerrarModalLlamado();
+                    exito('Llamado registrado correctamente');
+                } else {
+                    error(res.message || 'Error al guardar');
+                }
+            })
+            .catch(err => error('Error de conexión'));
         }
 
         // ===================================================================
