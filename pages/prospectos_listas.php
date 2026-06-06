@@ -93,8 +93,8 @@ $comerciales = array_keys($comerciales);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lista de Prospectos</title>
-    <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="/styles.css">
     <script>
         function confirmarEliminacion(id, concatenado) {
             const mensaje = `¿Está seguro de eliminar el prospecto ${concatenado}?\n\n⚠️ Esta acción eliminará todos los Gastos, Ventas, Costos y Servicios asociados.`;
@@ -164,8 +164,9 @@ $comerciales = array_keys($comerciales);
                         <td><?= number_format((float)$p['gdv'], 0, ',', '.') ?></td>
                         <td style="text-align: center; padding: 0.4rem;">
                             <!-- ✏️ Editar -->
+                            <!-- En prospectos_listas.php -->
                             <button type="button" 
-                                    onclick="window.location.href='/?page=prospectos&id_ppl=<?= $row['id_ppl'] ?>'"
+                                    onclick="window.location.href='/?page=prospectos&buscar_concatenado=<?= urlencode($p['concatenado']) ?>'"
                                     title="Editar"
                                     style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
                                 ✏️
