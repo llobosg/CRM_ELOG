@@ -1745,6 +1745,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 setTimeout(() => {
                     cargarLlamados(id); // ✅ Cargar llamados del prospecto
                 }, 100);
+
+                // ✅ CARGAR LLAMADOS DEL PROSPECTO
+                setTimeout(() => {
+                    cargarLlamados(p.id_ppl);
+                }, 100);
         }
         // ===================================================================
         // === 5. MODALES Y SUBMODALES ===
