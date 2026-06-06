@@ -4725,8 +4725,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
             }
         });
         // === FUNCIÓN: Editar Llamado ===
+        // === FUNCIÓN: Editar Llamado ===
         function editarLlamado(idLlamado) {
-            // Cargar datos del llamado
+            // Cargar datos del llamado específico
             fetch(`/api/get_llamados.php?id=${idLlamado}`)
                 .then(r => r.json())
                 .then(data => {
