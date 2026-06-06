@@ -1594,7 +1594,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
         function seleccionarProspecto(id) {
             logDebug('🔍 [seleccionarProspecto] Iniciando carga de prospecto ID:', id);
             
-            fetch(`/api/get_prospecto.php?id=${id}`)
+            if (!idPpl || isNaN(idPpl)) {
+                error('ID de prospecto inválido');
+                return;
+            }
+            fetch(`/api/get_prospecto.php?id=${parseInt(idPpl)}`)
                 .then(r => {
                     logDebug('🔍 [seleccionarProspecto] Respuesta HTTP:', { status: r.status, ok: r.ok });
                     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -3165,14 +3169,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
             const urlParams = new URLSearchParams(window.location.search);
 
             const idFromUrl = urlParams.get('id_ppl');
-            const buscarConcatenado = urlParams.get('buscar_concatenado');
-
             if (idFromUrl && !isNaN(idFromUrl)) {
-
+                seleccionarProspecto(parseInt(idFromUrl));
                 setTimeout(() => {
                     seleccionarProspecto(parseInt(idFromUrl));
                 }, 300);
-
             } else if (buscarConcatenado) {
 
                 setTimeout(async () => {

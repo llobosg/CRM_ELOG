@@ -166,7 +166,7 @@ $comerciales = array_keys($comerciales);
                             <!-- ✏️ Editar -->
                             <!-- En prospectos_listas.php -->
                             <button type="button" 
-                                    onclick="window.location.href='/?page=prospectos&buscar_concatenado=<?= urlencode($p['concatenado']) ?>'"
+                                    onclick="window.location.href='/?page=prospectos&id_ppl=<?= $row['id_ppl'] ?>'"
                                     title="Editar"
                                     style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
                                 ✏️
