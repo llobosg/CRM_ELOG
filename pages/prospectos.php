@@ -1196,40 +1196,54 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         // === FUNCIÓN: Cargar y mostrar llamados ===
         function cargarLlamados(idProspecto) {
-            if (!idProspecto || idProspecto === '0') {
-                document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
+    logDebug('📞 [cargarLlamados] Iniciando carga para ID:', idProspecto);
+    
+    if (!idProspecto || idProspecto === '0') {
+        logDebug('⚠️ [cargarLlamados] ID inválido, limpiando tabla');
+        document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
+        return;
+    }
+    
+    fetch(`/api/get_llamados.php?id_prospecto=${idProspecto}`)
+        .then(r => {
+            logDebug('📞 [cargarLlamados] Respuesta HTTP:', { status: r.status, ok: r.ok });
+            return r.json();
+        })
+        .then(data => {
+            logDebug('📞 [cargarLlamados] Datos recibidos:', data);
+            
+            const tbody = document.getElementById('llamados-body');
+            if (!tbody) {
+                logDebug('❌ [cargarLlamados] ERROR: tbody no encontrado');
                 return;
             }
             
-            fetch(`/api/get_llamados.php?id_prospecto=${idProspecto}`)
-                .then(r => r.json())
-                .then(data => {
-                    const tbody = document.getElementById('llamados-body');
-                    if (!tbody) return;
-                    
-                    if (!data.success || !data.llamados || data.llamados.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
-                        return;
-                    }
-                    
-                    tbody.innerHTML = data.llamados.map((l, i) => `
-                        <tr>
-                            <td>${l.fecha} ${l.hora}</td>
-                            <td>${l.tipo_gestion}</td>
-                            <td>${l.nombre_comercial}</td>
-                            <td>${l.nota}</td>
-                            <td>
-                                <button type="button" onclick="editarLlamado(${l.id_llamado})">✏️</button>
-                                <button type="button" onclick="eliminarLlamado(${l.id_llamado})">🗑️</button>
-                            </td>
-                        </tr>
-                    `).join('');
-                })
-                .catch(err => {
-                    console.error('Error al cargar llamados:', err);
-                    document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar llamados</td></tr>';
-                });
-        }
+            if (!data.success || !data.llamados || data.llamados.length === 0) {
+                logDebug('ℹ️ [cargarLlamados] No hay llamados para este prospecto');
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
+                return;
+            }
+            
+            logDebug('✅ [cargarLlamados] Llamados encontrados:', data.llamados.length);
+            tbody.innerHTML = data.llamados.map((l, i) => `
+                <tr>
+                    <td>${l.fecha} ${l.hora}</td>
+                    <td>${l.tipo_gestion}</td>
+                    <td>${l.nombre_comercial}</td>
+                    <td>${l.nota}</td>
+                    <td>
+                        <button type="button" onclick="editarLlamado(${l.id_llamado})">✏️</button>
+                        <button type="button" onclick="eliminarLlamado(${l.id_llamado})">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(err => {
+            logDebug('❌ [cargarLlamados] ERROR:', err.message);
+            console.error('Error al cargar llamados:', err);
+            document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar llamados</td></tr>';
+        });
+}
 
         // Actualizar tabla de llamados
         function actualizarTablaLlamados() {
@@ -1578,179 +1592,173 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // === 4. MANEJO DE PROSPECTOS ===
         // ===================================================================
         function seleccionarProspecto(id) {
-            fetch(`/api/get_prospecto.php?id=${id}`)
-                .then(r => {
-                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                    return r.json();
-                })
-                .then(data => {
-                    // ✅ "p" solo existe DENTRO de este bloque
-                    if (!data.success || !data.prospecto) {
-                        error('Prospecto no encontrado');
-                        return;
+    logDebug('🔍 [seleccionarProspecto] Iniciando carga de prospecto ID:', id);
+    
+    fetch(`/api/get_prospecto.php?id=${id}`)
+        .then(r => {
+            logDebug('🔍 [seleccionarProspecto] Respuesta HTTP:', { status: r.status, ok: r.ok });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        })
+        .then(data => {
+            logDebug('🔍 [seleccionarProspecto] Datos recibidos de API:', data);
+            
+            if (!data.success || !data.prospecto) {
+                error('Prospecto no encontrado');
+                logDebug('❌ [seleccionarProspecto] ERROR: Prospecto no encontrado en respuesta');
+                return;
+            }
+            
+            const p = data.prospecto;
+            logDebug('✅ [seleccionarProspecto] Prospecto cargado correctamente:', p);
+            
+            // === Actualizar campos ocultos ===
+            ['prospecto_notas_comerciales', 'prospecto_notas_operaciones', 
+             'prospecto_razon_social', 'prospecto_direccion', 'prospecto_rut_empresa']
+            .forEach(fieldId => {
+                const el = document.getElementById(fieldId);
+                const value = p[fieldId.replace('prospecto_', '')] || '';
+                if (el) {
+                    el.value = value;
+                    logDebug(`📝 [seleccionarProspecto] Campo ${fieldId} actualizado:`, value);
+                }
+            });
+
+            // === Llenar select de razón social ===
+            const razonSelect = document.getElementById('razon_social_select');
+            if (razonSelect && p.rut_empresa && p.razon_social) {
+                let optionFound = false;
+                for (let i = 0; i < razonSelect.options.length; i++) {
+                    if (razonSelect.options[i].value === p.rut_empresa) {
+                        razonSelect.selectedIndex = i;
+                        optionFound = true;
+                        break;
                     }
-                    const p = data.prospecto;
+                }
+                if (!optionFound) {
+                    const opt = document.createElement('option');
+                    opt.value = p.rut_empresa;
+                    opt.textContent = p.razon_social;
+                    razonSelect.appendChild(opt);
+                    razonSelect.value = p.rut_empresa;
+                }
+                logDebug('📝 [seleccionarProspecto] Select razon_social_select actualizado');
+            }
 
-                    console.log('🔍 [DEBUG] Datos del prospecto:', p);
-                    console.log('🔍 [DEBUG] Servicios recibidos:', data.servicios);
+            // === Llenar campos visibles ===
+            const fields = [
+                { id: 'rut_empresa', value: p.rut_empresa },
+                { id: 'fono_empresa', value: p.fono_empresa },
+                { id: 'direccion', value: p.direccion },
+                { id: 'booking', value: p.booking },
+                { id: 'incoterm', value: p.incoterm },
+                { id: 'fecha_alta', value: p.fecha_alta },
+                { id: 'nombre', value: p.nombre },
+                { id: 'pais', value: p.pais }
+            ];
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                if (el) {
+                    el.value = f.value || '';
+                    logDebug(`📝 [seleccionarProspecto] Campo visible ${f.id} actualizado:`, f.value);
+                }
+            });
 
-                    // === Actualizar campos ocultos ===
-                    document.getElementById('prospecto_notas_comerciales').value = p.notas_comerciales || '';
-                    document.getElementById('prospecto_notas_operaciones').value = p.notas_operaciones || '';
-                    document.getElementById('prospecto_razon_social').value = p.razon_social || '';
-                    document.getElementById('prospecto_direccion').value = p.direccion || '';
-                    document.getElementById('prospecto_rut_empresa').value = p.rut_empresa || '';
-
-                    // === Actualizar select de razón social ===
-                    const razonSelect = document.getElementById('razon_social_select');
-                    if (razonSelect) {
-                        let optionFound = false;
-                        for (let i = 0; i < razonSelect.options.length; i++) {
-                            if (razonSelect.options[i].value === p.rut_empresa) {
-                                razonSelect.selectedIndex = i;
-                                optionFound = true;
-                                break;
-                            }
-                        }
-                        if (!optionFound && p.rut_empresa && p.razon_social) {
+            // === Cargar operación y tipo_oper ===
+            const opSel = document.getElementById('operacion');
+            const tipoSel = document.getElementById('tipo_oper');
+            if (opSel && p.operacion) {
+                opSel.value = p.operacion;
+                logDebug('📝 [seleccionarProspecto] Operación seleccionada:', p.operacion);
+                
+                fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                        (data.tipos || []).forEach(t => {
                             const opt = document.createElement('option');
-                            opt.value = p.rut_empresa;
-                            opt.textContent = p.razon_social;
-                            razonSelect.appendChild(opt);
-                            razonSelect.value = p.rut_empresa;
-                        }
-                    }
-
-                    // === Llenar campos visibles ===
-                    const fields = [
-                        { id: 'rut_empresa', value: p.rut_empresa },
-                        { id: 'fono_empresa', value: p.fono_empresa },
-                        { id: 'direccion', value: p.direccion },
-                        { id: 'booking', value: p.booking },
-                        { id: 'incoterm', value: p.incoterm },
-                        { id: 'fecha_alta', value: p.fecha_alta },
-                        { id: 'fecha_estado', value: p.fecha_estado },
-                        { id: 'nombre', value: p.nombre },
-                        { id: 'pais', value: p.pais }
-                    ];
-                    fields.forEach(f => {
-                        const el = document.getElementById(f.id);
-                        if (el) el.value = f.value || '';
-                    });
-
-                    // === Cargar operación y tipo_oper ===
-                    const opSel = document.getElementById('operacion');
-                    const tipoSel = document.getElementById('tipo_oper');
-                    if (opSel && p.operacion) {
-                        opSel.value = p.operacion;
-                        fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
-                            .then(r => r.json())
-                            .then(data => {
-                                tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                                (data.tipos || []).forEach(t => {
-                                    const opt = document.createElement('option');
-                                    opt.value = t;
-                                    opt.textContent = t;
-                                    tipoSel.appendChild(opt);
-                                });
-                                if (p.tipo_oper) tipoSel.value = p.tipo_oper;
-                            });
-                    }
-
-                    // === Notas ===
-                    const setNota = (name, val) => {
-                        const inp = document.getElementById(name);
-                        const ta = document.getElementById(`${name}_input`);
-                        if (inp) inp.value = val || '';
-                        if (ta) ta.value = val || '';
-                    };
-                    setNota('notas_comerciales', p.notas_comerciales);
-                    setNota('notas_operaciones', p.notas_operaciones);
-
-                    // === Servicios ===
-                    console.log('📥 [DEBUG] Servicios recibidos de la API:', data.servicios);
-
-                    // Procesar servicios con protección contra errores
-                    servicios = [];
-                    if (Array.isArray(data.servicios)) {
-                        servicios = data.servicios.map(servicio => {
-                            // Asegurar que los campos numéricos sean números
-                            return {
-                                ...servicio,
-                                costo: (servicio.costo && !isNaN(parseFloat(servicio.costo))) ? parseFloat(servicio.costo) : 0,
-                                venta: (servicio.venta && !isNaN(parseFloat(servicio.venta))) ? parseFloat(servicio.venta) : 0,
-                                costogastoslocalesdestino: (servicio.costogastoslocalesdestino && !isNaN(parseFloat(servicio.costogastoslocalesdestino))) ? parseFloat(servicio.costogastoslocalesdestino) : 0,
-                                ventasgastoslocalesdestino: (servicio.ventasgastoslocalesdestino && !isNaN(parseFloat(servicio.ventasgastoslocalesdestino))) ? parseFloat(servicio.ventasgastoslocalesdestino) : 0,
-                                bultos: parseInt(servicio.bultos) || 0,
-                                peso: parseFloat(servicio.peso) || 0,
-                                volumen: parseFloat(servicio.volumen) || 0
-                            };
+                            opt.value = t;
+                            opt.textContent = t;
+                            tipoSel.appendChild(opt);
                         });
-                    } else {
-                        console.warn('⚠️ [DEBUG] data.servicios no es un array:', data.servicios);
-                    }
+                        if (p.tipo_oper) {
+                            tipoSel.value = p.tipo_oper;
+                            logDebug('📝 [seleccionarProspecto] Tipo operación seleccionado:', p.tipo_oper);
+                        }
+                    });
+            }
 
-                    console.log('✅ [DEBUG] Servicios procesados:', servicios);
-                    actualizarTabla();
+            // === Notas ===
+            ['notas_comerciales', 'notas_operaciones'].forEach(name => {
+                const inp = document.getElementById(name);
+                const ta = document.getElementById(`${name}_input`);
+                const val = p[name] || '';
+                if (inp) inp.value = val;
+                if (ta) ta.value = val;
+                logDebug(`📝 [seleccionarProspecto] Notas ${name} cargadas`);
+            });
 
-                    // ✅ CARGAR CONTACTO PRIMARIO DIRECTAMENTE
-                    if (p.rut_empresa) {
-                        fetch(`/api/get_contactos.php?rut=${encodeURIComponent(p.rut_empresa)}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
-                                const contactoEl = document.getElementById('contacto');
-                                const emailEl = document.getElementById('email');
-                                if (contactoPrimario && contactoEl && emailEl) {
-                                    contactoEl.value = contactoPrimario.nom_contacto || '';
-                                    emailEl.value = contactoPrimario.email || '';
-                                } else {
-                                    if (contactoEl) contactoEl.value = '';
-                                    if (emailEl) emailEl.value = '';
-                                }
-                            })
-                            .catch(err => {
-                                console.error('Error al cargar contactos:', err);
-                                const contactoEl = document.getElementById('contacto');
-                                const emailEl = document.getElementById('email');
-                                if (contactoEl) contactoEl.value = '';
-                                if (emailEl) emailEl.value = '';
-                            });
-                    }
+            // === Servicios ===
+            servicios = Array.isArray(data.servicios) ? data.servicios.map(s => ({
+                ...s,
+                costo: parseFloat(s.costo) || 0,
+                venta: parseFloat(s.venta) || 0,
+                costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0,
+                bultos: parseInt(s.bultos) || 0,
+                peso: parseFloat(s.peso) || 0,
+                volumen: parseFloat(s.volumen) || 0
+            })) : [];
+            logDebug('✅ [seleccionarProspecto] Servicios procesados:', servicios);
+            actualizarTabla();
 
-                    // === Asignaciones clave ===
-                    const idPplInput = document.getElementById('id_ppl');
-                    const idPpl = document.getElementById('id_ppl')?.value;
-                    const concatenadoInput = document.getElementById('concatenado');
-                    if (idPplInput) idPplInput.value = p.id_ppl || '';
-                    if (concatenadoInput) concatenadoInput.value = p.concatenado || '';
+            // === Cargar contacto primario ===
+            if (p.rut_empresa) {
+                fetch(`/api/get_contactos.php?rut=${encodeURIComponent(p.rut_empresa)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
+                        ['contacto', 'email'].forEach(id => {
+                            const el = document.getElementById(id);
+                            const val = contactoPrimario ? contactoPrimario[id === 'contacto' ? 'nom_contacto' : 'email'] : '';
+                            if (el) el.value = val;
+                            logDebug(`📝 [seleccionarProspecto] Contacto ${id} actualizado:`, val);
+                        });
+                    });
+            }
 
-                    // === Habilitar campos ===
-                    document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])')
-                        .forEach(i => { i.readOnly = false; i.style.backgroundColor = ''; });
-                    document.querySelectorAll('select')
-                        .forEach(s => s.disabled = false);
+            // === Asignaciones clave ===
+            const idPplInput = document.getElementById('id_ppl');
+            const concatenadoInput = document.getElementById('concatenado');
+            if (idPplInput) {
+                idPplInput.value = p.id_ppl || '';
+                logDebug('🔑 [seleccionarProspecto] ID Prospecto asignado:', p.id_ppl);
+            }
+            if (concatenadoInput) {
+                concatenadoInput.value = p.concatenado || '';
+                logDebug('🔑 [seleccionarProspecto] Concatenado asignado:', p.concatenado);
+            }
 
-                    const btnAgregar = document.getElementById('btn-agregar-servicio');
-                    if (btnAgregar && p.id_ppl > 0) {
-                        btnAgregar.style.display = 'inline-flex';
-                    }
-                })
-                .catch(err => {
-                    console.error('Error al cargar prospecto:', err);
-                    error('No se pudo cargar el prospecto');
-                });
+            // === BOTÓN AGREGAR SERVICIO ===
+            const btnAgregar = document.getElementById('btn-agregar-servicio');
+            if (btnAgregar && p.id_ppl > 0) {
+                btnAgregar.style.display = 'inline-flex';
+                logDebug('✅ [seleccionarProspecto] Botón "Agregar Servicio" habilitado');
+            }
 
-                // Al final, después de actualizar todos los campos:
-                setTimeout(() => {
-                    cargarLlamados(id); // ✅ Cargar llamados del prospecto
-                }, 100);
+            // ✅ CARGAR LLAMADOS DEL PROSPECTO
+            setTimeout(() => {
+                logDebug('📞 [seleccionarProspecto] Iniciando carga de llamados...');
+                cargarLlamados(p.id_ppl);
+            }, 100);
 
-                // ✅ CARGAR LLAMADOS DEL PROSPECTO
-                setTimeout(() => {
-                    cargarLlamados(p.id_ppl);
-                }, 100);
-        }
+        })
+        .catch(err => {
+            logDebug('❌ [seleccionarProspecto] ERROR:', err.message);
+            console.error('Error al cargar prospecto:', err);
+            error('No se pudo cargar el prospecto');
+        });
+}
         // ===================================================================
         // === 5. MODALES Y SUBMODALES ===
         // ===================================================================
@@ -4704,5 +4712,21 @@ require_once __DIR__ . '/../includes/auth_check.php';
         window.guardarServicio = guardarServicio;
         window.abrirModalServicio = abrirModalServicio;
         window.eliminarServicio = eliminarServicio;
+
+        // === FUNCIÓN DE LOG PARA DEPURACIÓN ===
+        function logDebug(message, data = null) {
+            const debugDiv = document.getElementById('debug-trace');
+            if (debugDiv) {
+                debugDiv.style.display = 'block';
+                const timestamp = new Date().toISOString().slice(11, 23);
+                const logEntry = `[${timestamp}] ${message}`;
+                debugDiv.innerHTML += `<div>${logEntry}</div>`;
+                if (data) {
+                    debugDiv.innerHTML += `<div style="margin-left: 1rem; font-family: monospace; white-space: pre-wrap;">${JSON.stringify(data, null, 2)}</div>`;
+                }
+                debugDiv.scrollTop = debugDiv.scrollHeight; // Auto-scroll
+            }
+            console.log(message, data);
+        }
     </script>
 </form>
