@@ -1196,54 +1196,54 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         // === FUNCIÓN: Cargar y mostrar llamados ===
         function cargarLlamados(idProspecto) {
-    logDebug('📞 [cargarLlamados] Iniciando carga para ID:', idProspecto);
-    
-    if (!idProspecto || idProspecto === '0') {
-        logDebug('⚠️ [cargarLlamados] ID inválido, limpiando tabla');
-        document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
-        return;
-    }
-    
-    fetch(`/api/get_llamados.php?id_prospecto=${idProspecto}`)
-        .then(r => {
-            logDebug('📞 [cargarLlamados] Respuesta HTTP:', { status: r.status, ok: r.ok });
-            return r.json();
-        })
-        .then(data => {
-            logDebug('📞 [cargarLlamados] Datos recibidos:', data);
+            logDebug('📞 [cargarLlamados] Iniciando carga para ID:', idProspecto);
             
-            const tbody = document.getElementById('llamados-body');
-            if (!tbody) {
-                logDebug('❌ [cargarLlamados] ERROR: tbody no encontrado');
+            if (!idProspecto || idProspecto === '0') {
+                logDebug('⚠️ [cargarLlamados] ID inválido, limpiando tabla');
+                document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
                 return;
             }
             
-            if (!data.success || !data.llamados || data.llamados.length === 0) {
-                logDebug('ℹ️ [cargarLlamados] No hay llamados para este prospecto');
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
-                return;
-            }
-            
-            logDebug('✅ [cargarLlamados] Llamados encontrados:', data.llamados.length);
-            tbody.innerHTML = data.llamados.map((l, i) => `
-                <tr>
-                    <td>${l.fecha} ${l.hora}</td>
-                    <td>${l.tipo_gestion}</td>
-                    <td>${l.nombre_comercial}</td>
-                    <td>${l.nota}</td>
-                    <td>
-                        <button type="button" onclick="editarLlamado(${l.id_llamado})">✏️</button>
-                        <button type="button" onclick="eliminarLlamado(${l.id_llamado})">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
-        })
-        .catch(err => {
-            logDebug('❌ [cargarLlamados] ERROR:', err.message);
-            console.error('Error al cargar llamados:', err);
-            document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar llamados</td></tr>';
-        });
-}
+            fetch(`/api/get_llamados.php?id_prospecto=${idProspecto}`)
+                .then(r => {
+                    logDebug('📞 [cargarLlamados] Respuesta HTTP:', { status: r.status, ok: r.ok });
+                    return r.json();
+                })
+                .then(data => {
+                    logDebug('📞 [cargarLlamados] Datos recibidos:', data);
+                    
+                    const tbody = document.getElementById('llamados-body');
+                    if (!tbody) {
+                        logDebug('❌ [cargarLlamados] ERROR: tbody no encontrado');
+                        return;
+                    }
+                    
+                    if (!data.success || !data.llamados || data.llamados.length === 0) {
+                        logDebug('ℹ️ [cargarLlamados] No hay llamados para este prospecto');
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
+                        return;
+                    }
+                    
+                    logDebug('✅ [cargarLlamados] Llamados encontrados:', data.llamados.length);
+                    tbody.innerHTML = data.llamados.map((l, i) => `
+                        <tr>
+                            <td>${l.fecha} ${l.hora}</td>
+                            <td>${l.tipo_gestion}</td>
+                            <td>${l.nombre_comercial}</td>
+                            <td>${l.nota}</td>
+                            <td>
+                                <button type="button" onclick="editarLlamado(${l.id_llamado})">✏️</button>
+                                <button type="button" onclick="eliminarLlamado(${l.id_llamado})">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(err => {
+                    logDebug('❌ [cargarLlamados] ERROR:', err.message);
+                    console.error('Error al cargar llamados:', err);
+                    document.getElementById('llamados-body').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar llamados</td></tr>';
+                });
+        }
 
         // Actualizar tabla de llamados
         function actualizarTablaLlamados() {
@@ -4725,5 +4725,17 @@ require_once __DIR__ . '/../includes/auth_check.php';
             }
             console.log(message, data);
         }
+        // === CARGAR PROSPECTO DESDE URL AL INICIAR ===
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idFromUrl = urlParams.get('id_ppl');
+            
+            if (idFromUrl && !isNaN(idFromUrl)) {
+                console.log('🔍 [CARGA INICIAL] Cargando prospecto ID:', idFromUrl);
+                setTimeout(() => {
+                    seleccionarProspecto(parseInt(idFromUrl));
+                }, 300);
+            }
+        });
     </script>
 </form>
