@@ -1594,11 +1594,14 @@ require_once __DIR__ . '/../includes/auth_check.php';
         function seleccionarProspecto(id) {
             logDebug('🔍 [seleccionarProspecto] Iniciando carga de prospecto ID:', id);
             
-            if (!idPpl || isNaN(idPpl)) {
+            // ✅ Validar que el parámetro "id" sea un número válido
+            if (!id || isNaN(id)) {
                 error('ID de prospecto inválido');
+                logDebug('❌ [seleccionarProspecto] ERROR: ID proporcionado no es un número válido:', id);
                 return;
             }
-            fetch(`/api/get_prospecto.php?id=${parseInt(idPpl)}`)
+            
+            fetch(`/api/get_prospecto.php?id=${parseInt(id)}`)
                 .then(r => {
                     logDebug('🔍 [seleccionarProspecto] Respuesta HTTP:', { status: r.status, ok: r.ok });
                     if (!r.ok) throw new Error(`HTTP ${r.status}`);
