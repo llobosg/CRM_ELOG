@@ -164,9 +164,8 @@ $comerciales = array_keys($comerciales);
                         <td><?= number_format((float)$p['gdv'], 0, ',', '.') ?></td>
                         <td style="text-align: center; padding: 0.4rem;">
                             <!-- ✏️ Editar -->
-                            <!-- En prospectos_listas.php -->
                             <button type="button" 
-                                    onclick="window.location.href='/?page=prospectos&buscar_concatenado=<?= urlencode($p['concatenado']) ?>'"
+                                    onclick="window.location.href='/?page=prospectos&amp;id_ppl=<?= (int)($p['id_ppl'] ?? 0) ?>'"
                                     title="Editar"
                                     style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
                                 ✏️

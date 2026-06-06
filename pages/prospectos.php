@@ -3174,26 +3174,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 setTimeout(() => {
                     seleccionarProspecto(parseInt(idFromUrl));
                 }, 300);
-            } else if (buscarConcatenado) {
-
-                setTimeout(async () => {
-
-                    try {
-                        const res = await fetch(`/api/buscar_inteligente.php?term=${encodeURIComponent(buscarConcatenado)}`);
-                        const data = await res.json();
-
-                        if (data.length > 0) {
-                            seleccionarProspecto(data[0].id_ppl);
-                        } else {
-                            advertencia('Prospecto no encontrado');
-                        }
-
-                    } catch (e) {
-                        console.error(e);
-                        error('Error cargando prospecto');
-                    }
-
-                }, 300);
             }
 
         });
