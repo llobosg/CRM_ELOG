@@ -4,18 +4,16 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 
 try {
-    $id_prospecto = $_GET['id_prospecto'] ?? null;
-    if (!$id_prospecto) throw new Exception('ID de prospecto requerido');
+    $id_llamado = $_GET['id'] ?? null;
+    if (!$id_llamado) throw new Exception('ID de llamado requerido');
     
-    $stmt = $pdo->prepare("
-        SELECT * FROM llamados 
-        WHERE id_prospecto = ? 
-        ORDER BY fecha DESC, hora DESC
-    ");
-    $stmt->execute([$id_prospecto]);
-    $llamados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt = $pdo->prepare("SELECT * FROM llamados WHERE id_llamado = ?");
+    $stmt->execute([$id_llamado]);
+    $llamado = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    echo json_encode(['success' => true, 'llamados' => $llamados]);
+    if (!$llamado) throw new Exception('Llamado no encontrado');
+    
+    echo json_encode(['success' => true, 'llamado' => $llamado]);
     
 } catch (Exception $e) {
     http_response_code(400);
