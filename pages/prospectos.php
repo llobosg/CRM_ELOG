@@ -2,8 +2,6 @@
 require_once __DIR__ . '/../includes/auth_check.php';
 // ✅ Nada más relacionado con roles
 ?>
-<!-- Mini consola de depuración -->
-<div id="debug-trace" style="margin: 1rem; padding: 0.5rem; background: #f0f8ff; border: 1px solid #87ceeb; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
 
 <!-- Búsqueda inteligente -->
 <div style="height: 4rem;"></div>
@@ -370,11 +368,13 @@ require_once __DIR__ . '/../includes/auth_check.php';
             <h3><i class="fas fa-phone-alt"></i> Registrar Llamado</h3>
             <span class="close" onclick="cerrarModalLlamado()" style="cursor:pointer; float:right; font-size:1.8rem; margin-top:-5px;">&times;</span>
             
+            <input type="hidden" id="llamado_id">
             <input type="hidden" id="llamado_id_prospecto">
             <input type="hidden" id="llamado_rut_cliente">
             <input type="hidden" id="llamado_razon_social">
             <input type="hidden" id="llamado_id_comercial">
             <input type="hidden" id="llamado_nombre_comercial">
+
 
             <div style="margin: 1rem 0;">
                 <label>Fecha *</label>
@@ -1269,6 +1269,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
         // === FUNCIÓN: Guardar Llamado ===
         function guardarLlamado() {
+            const idLlamado = document.getElementById('llamado_id').value;
             const idProspecto = document.getElementById('llamado_id_prospecto').value;
             const fecha = document.getElementById('llamado_fecha').value;
             const hora = document.getElementById('llamado_hora').value;
@@ -1291,7 +1292,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 nota: nota
             };
             
-            fetch('/api/crear_llamado.php', {
+            // Determinar si es creación o actualización
+            const url = idLlamado ? '/api/editar_llamado.php' : '/api/crear_llamado.php';
+            if (idLlamado) data.id_llamado = idLlamado;
+            
+            fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -1299,10 +1304,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
             .then(r => r.json())
             .then(res => {
                 if (res.success) {
-                    exito('Llamado registrado correctamente');
+                    exito(idLlamado ? 'Llamado actualizado correctamente' : 'Llamado registrado correctamente');
                     cerrarModalLlamado();
-                    // ✅ Recargar lista de llamados
-                    const idProspecto = document.getElementById('id_ppl').value;
                     cargarLlamados(idProspecto);
                 } else {
                     error(res.message || 'Error al guardar el llamado');
@@ -4721,5 +4724,38 @@ require_once __DIR__ . '/../includes/auth_check.php';
                 }, 300);
             }
         });
+        // === FUNCIÓN: Editar Llamado ===
+        function editarLlamado(idLlamado) {
+            // Cargar datos del llamado
+            fetch(`/api/get_llamado.php?id=${idLlamado}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success || !data.llamado) {
+                        return error('No se pudo cargar el llamado');
+                    }
+                    
+                    const l = data.llamado;
+                    
+                    // Llenar modal
+                    document.getElementById('llamado_id').value = l.id_llamado;
+                    document.getElementById('llamado_id_prospecto').value = l.id_prospecto;
+                    document.getElementById('llamado_rut_cliente').value = l.rut_cliente;
+                    document.getElementById('llamado_razon_social').value = l.razon_social;
+                    document.getElementById('llamado_id_comercial').value = l.id_comercial;
+                    document.getElementById('llamado_nombre_comercial').value = l.nombre_comercial;
+                    
+                    document.getElementById('llamado_fecha').value = l.fecha;
+                    document.getElementById('llamado_hora').value = l.hora.substring(0, 5); // HH:mm
+                    document.getElementById('llamado_tipo').value = l.tipo_gestion;
+                    document.getElementById('llamado_nota').value = l.nota;
+                    
+                    // Mostrar modal
+                    document.getElementById('modal-llamado').style.display = 'block';
+                })
+                .catch(err => {
+                    console.error('Error al cargar llamado:', err);
+                    error('Error de conexión');
+                });
+        }
     </script>
 </form>
