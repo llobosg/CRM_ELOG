@@ -1592,173 +1592,170 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // === 4. MANEJO DE PROSPECTOS ===
         // ===================================================================
         function seleccionarProspecto(id) {
-    logDebug('🔍 [seleccionarProspecto] Iniciando carga de prospecto ID:', id);
-    
-    fetch(`/api/get_prospecto.php?id=${id}`)
-        .then(r => {
-            logDebug('🔍 [seleccionarProspecto] Respuesta HTTP:', { status: r.status, ok: r.ok });
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            return r.json();
-        })
-        .then(data => {
-            logDebug('🔍 [seleccionarProspecto] Datos recibidos de API:', data);
+            logDebug('🔍 [seleccionarProspecto] Iniciando carga de prospecto ID:', id);
             
-            if (!data.success || !data.prospecto) {
-                error('Prospecto no encontrado');
-                logDebug('❌ [seleccionarProspecto] ERROR: Prospecto no encontrado en respuesta');
-                return;
-            }
-            
-            const p = data.prospecto;
-            logDebug('✅ [seleccionarProspecto] Prospecto cargado correctamente:', p);
-            
-            // === Actualizar campos ocultos ===
-            ['prospecto_notas_comerciales', 'prospecto_notas_operaciones', 
-             'prospecto_razon_social', 'prospecto_direccion', 'prospecto_rut_empresa']
-            .forEach(fieldId => {
-                const el = document.getElementById(fieldId);
-                const value = p[fieldId.replace('prospecto_', '')] || '';
-                if (el) {
-                    el.value = value;
-                    logDebug(`📝 [seleccionarProspecto] Campo ${fieldId} actualizado:`, value);
-                }
-            });
-
-            // === Llenar select de razón social ===
-            const razonSelect = document.getElementById('razon_social_select');
-            if (razonSelect && p.rut_empresa && p.razon_social) {
-                let optionFound = false;
-                for (let i = 0; i < razonSelect.options.length; i++) {
-                    if (razonSelect.options[i].value === p.rut_empresa) {
-                        razonSelect.selectedIndex = i;
-                        optionFound = true;
-                        break;
+            fetch(`/api/get_prospecto.php?id=${id}`)
+                .then(r => {
+                    logDebug('🔍 [seleccionarProspecto] Respuesta HTTP:', { status: r.status, ok: r.ok });
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    return r.json();
+                })
+                .then(data => {
+                    logDebug('🔍 [seleccionarProspecto] Datos recibidos de API:', data);
+                    
+                    if (!data.success || !data.prospecto) {
+                        error('Prospecto no encontrado');
+                        logDebug('❌ [seleccionarProspecto] ERROR: Prospecto no encontrado en respuesta');
+                        return;
                     }
-                }
-                if (!optionFound) {
-                    const opt = document.createElement('option');
-                    opt.value = p.rut_empresa;
-                    opt.textContent = p.razon_social;
-                    razonSelect.appendChild(opt);
-                    razonSelect.value = p.rut_empresa;
-                }
-                logDebug('📝 [seleccionarProspecto] Select razon_social_select actualizado');
-            }
-
-            // === Llenar campos visibles ===
-            const fields = [
-                { id: 'rut_empresa', value: p.rut_empresa },
-                { id: 'fono_empresa', value: p.fono_empresa },
-                { id: 'direccion', value: p.direccion },
-                { id: 'booking', value: p.booking },
-                { id: 'incoterm', value: p.incoterm },
-                { id: 'fecha_alta', value: p.fecha_alta },
-                { id: 'nombre', value: p.nombre },
-                { id: 'pais', value: p.pais }
-            ];
-            fields.forEach(f => {
-                const el = document.getElementById(f.id);
-                if (el) {
-                    el.value = f.value || '';
-                    logDebug(`📝 [seleccionarProspecto] Campo visible ${f.id} actualizado:`, f.value);
-                }
-            });
-
-            // === Cargar operación y tipo_oper ===
-            const opSel = document.getElementById('operacion');
-            const tipoSel = document.getElementById('tipo_oper');
-            if (opSel && p.operacion) {
-                opSel.value = p.operacion;
-                logDebug('📝 [seleccionarProspecto] Operación seleccionada:', p.operacion);
-                
-                fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        tipoSel.innerHTML = '<option value="">Seleccionar</option>';
-                        (data.tipos || []).forEach(t => {
-                            const opt = document.createElement('option');
-                            opt.value = t;
-                            opt.textContent = t;
-                            tipoSel.appendChild(opt);
-                        });
-                        if (p.tipo_oper) {
-                            tipoSel.value = p.tipo_oper;
-                            logDebug('📝 [seleccionarProspecto] Tipo operación seleccionado:', p.tipo_oper);
+                    
+                    const p = data.prospecto;
+                    logDebug('✅ [seleccionarProspecto] Prospecto cargado correctamente:', p);
+                    
+                    // === Actualizar campos ocultos ===
+                    ['prospecto_notas_comerciales', 'prospecto_notas_operaciones', 
+                    'prospecto_razon_social', 'prospecto_direccion', 'prospecto_rut_empresa']
+                    .forEach(fieldId => {
+                        const el = document.getElementById(fieldId);
+                        const value = p[fieldId.replace('prospecto_', '')] || '';
+                        if (el) {
+                            el.value = value;
+                            logDebug(`📝 [seleccionarProspecto] Campo ${fieldId} actualizado:`, value);
                         }
                     });
-            }
 
-            // === Notas ===
-            ['notas_comerciales', 'notas_operaciones'].forEach(name => {
-                const inp = document.getElementById(name);
-                const ta = document.getElementById(`${name}_input`);
-                const val = p[name] || '';
-                if (inp) inp.value = val;
-                if (ta) ta.value = val;
-                logDebug(`📝 [seleccionarProspecto] Notas ${name} cargadas`);
-            });
+                    // === Llenar select de razón social ===
+                    const razonSelect = document.getElementById('razon_social_select');
+                    if (razonSelect && p.rut_empresa && p.razon_social) {
+                        let optionFound = false;
+                        for (let i = 0; i < razonSelect.options.length; i++) {
+                            if (razonSelect.options[i].value === p.rut_empresa) {
+                                razonSelect.selectedIndex = i;
+                                optionFound = true;
+                                break;
+                            }
+                        }
+                        if (!optionFound) {
+                            const opt = document.createElement('option');
+                            opt.value = p.rut_empresa;
+                            opt.textContent = p.razon_social;
+                            razonSelect.appendChild(opt);
+                            razonSelect.value = p.rut_empresa;
+                        }
+                        logDebug('📝 [seleccionarProspecto] Select razon_social_select actualizado');
+                    }
 
-            // === Servicios ===
-            servicios = Array.isArray(data.servicios) ? data.servicios.map(s => ({
-                ...s,
-                costo: parseFloat(s.costo) || 0,
-                venta: parseFloat(s.venta) || 0,
-                costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
-                ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0,
-                bultos: parseInt(s.bultos) || 0,
-                peso: parseFloat(s.peso) || 0,
-                volumen: parseFloat(s.volumen) || 0
-            })) : [];
-            logDebug('✅ [seleccionarProspecto] Servicios procesados:', servicios);
-            actualizarTabla();
-
-            // === Cargar contacto primario ===
-            if (p.rut_empresa) {
-                fetch(`/api/get_contactos.php?rut=${encodeURIComponent(p.rut_empresa)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
-                        ['contacto', 'email'].forEach(id => {
-                            const el = document.getElementById(id);
-                            const val = contactoPrimario ? contactoPrimario[id === 'contacto' ? 'nom_contacto' : 'email'] : '';
-                            if (el) el.value = val;
-                            logDebug(`📝 [seleccionarProspecto] Contacto ${id} actualizado:`, val);
-                        });
+                    // === Llenar campos visibles ===
+                    const fields = [
+                        { id: 'rut_empresa', value: p.rut_empresa },
+                        { id: 'fono_empresa', value: p.fono_empresa },
+                        { id: 'direccion', value: p.direccion },
+                        { id: 'booking', value: p.booking },
+                        { id: 'incoterm', value: p.incoterm },
+                        { id: 'fecha_alta', value: p.fecha_alta },
+                        { id: 'nombre', value: p.nombre },
+                        { id: 'pais', value: p.pais }
+                    ];
+                    fields.forEach(f => {
+                        const el = document.getElementById(f.id);
+                        if (el) {
+                            el.value = f.value || '';
+                            logDebug(`📝 [seleccionarProspecto] Campo visible ${f.id} actualizado:`, f.value);
+                        }
                     });
-            }
 
-            // === Asignaciones clave ===
-            const idPplInput = document.getElementById('id_ppl');
-            const concatenadoInput = document.getElementById('concatenado');
-            if (idPplInput) {
-                idPplInput.value = p.id_ppl || '';
-                logDebug('🔑 [seleccionarProspecto] ID Prospecto asignado:', p.id_ppl);
-            }
-            if (concatenadoInput) {
-                concatenadoInput.value = p.concatenado || '';
-                logDebug('🔑 [seleccionarProspecto] Concatenado asignado:', p.concatenado);
-            }
+                    // === Cargar operación y tipo_oper ===
+                    const opSel = document.getElementById('operacion');
+                    const tipoSel = document.getElementById('tipo_oper');
+                    if (opSel && p.operacion) {
+                        opSel.value = p.operacion;
+                        logDebug('📝 [seleccionarProspecto] Operación seleccionada:', p.operacion);
+                        
+                        fetch(`/api/get_tipos_por_operacion.php?operacion=${encodeURIComponent(p.operacion)}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                tipoSel.innerHTML = '<option value="">Seleccionar</option>';
+                                (data.tipos || []).forEach(t => {
+                                    const opt = document.createElement('option');
+                                    opt.value = t;
+                                    opt.textContent = t;
+                                    tipoSel.appendChild(opt);
+                                });
+                                if (p.tipo_oper) {
+                                    tipoSel.value = p.tipo_oper;
+                                    logDebug('📝 [seleccionarProspecto] Tipo operación seleccionado:', p.tipo_oper);
+                                }
+                            });
+                    }
 
-            // === BOTÓN AGREGAR SERVICIO ===
-            const btnAgregar = document.getElementById('btn-agregar-servicio');
-            if (btnAgregar && p.id_ppl > 0) {
-                btnAgregar.style.display = 'inline-flex';
-                logDebug('✅ [seleccionarProspecto] Botón "Agregar Servicio" habilitado');
-            }
+                    // === Notas ===
+                    ['notas_comerciales', 'notas_operaciones'].forEach(name => {
+                        const inp = document.getElementById(name);
+                        const ta = document.getElementById(`${name}_input`);
+                        const val = p[name] || '';
+                        if (inp) inp.value = val;
+                        if (ta) ta.value = val;
+                        logDebug(`📝 [seleccionarProspecto] Notas ${name} cargadas`);
+                    });
 
-            // ✅ CARGAR LLAMADOS DEL PROSPECTO
-            setTimeout(() => {
-                logDebug('📞 [seleccionarProspecto] Iniciando carga de llamados...');
-                cargarLlamados(p.id_ppl);
-            }, 100);
+                    // === Servicios ===
+                    servicios = Array.isArray(data.servicios) ? data.servicios.map(s => ({
+                        ...s,
+                        costo: parseFloat(s.costo) || 0,
+                        venta: parseFloat(s.venta) || 0,
+                        costogastoslocalesdestino: parseFloat(s.costogastoslocalesdestino) || 0,
+                        ventasgastoslocalesdestino: parseFloat(s.ventasgastoslocalesdestino) || 0,
+                        bultos: parseInt(s.bultos) || 0,
+                        peso: parseFloat(s.peso) || 0,
+                        volumen: parseFloat(s.volumen) || 0
+                    })) : [];
+                    logDebug('✅ [seleccionarProspecto] Servicios procesados:', servicios);
+                    actualizarTabla();
 
-        })
-        .catch(err => {
-            logDebug('❌ [seleccionarProspecto] ERROR:', err.message);
-            console.error('Error al cargar prospecto:', err);
-            error('No se pudo cargar el prospecto');
-        });
-}
+                    // === Cargar contacto primario ===
+                    if (p.rut_empresa) {
+                        fetch(`/api/get_contactos.php?rut=${encodeURIComponent(p.rut_empresa)}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                const contactoPrimario = (data.contactos || []).find(c => c.primario === 'S');
+                                ['contacto', 'email'].forEach(id => {
+                                    const el = document.getElementById(id);
+                                    const val = contactoPrimario ? contactoPrimario[id === 'contacto' ? 'nom_contacto' : 'email'] : '';
+                                    if (el) el.value = val;
+                                    logDebug(`📝 [seleccionarProspecto] Contacto ${id} actualizado:`, val);
+                                });
+                            });
+                    }
+
+                    // === Asignaciones clave ===
+                    const idPplInput = document.getElementById('id_ppl');
+                    const concatenadoInput = document.getElementById('concatenado');
+                    if (idPplInput) idPplInput.value = p.id_ppl || '';
+                    if (concatenadoInput) concatenadoInput.value = p.concatenado || '';
+
+                    // === Habilitar campos ===
+                    document.querySelectorAll('input:not([type="hidden"]):not([name="concatenado"])')
+                    .forEach(i => { i.readOnly = false; i.style.backgroundColor = ''; });
+                    document.querySelectorAll('select')
+                    .forEach(s => s.disabled = false);
+                    const btnAgregar = document.getElementById('btn-agregar-servicio');
+                    if (btnAgregar && p.id_ppl > 0) {
+                        btnAgregar.style.display = 'inline-flex';
+                    }
+
+                    // ✅ CARGAR LLAMADOS DEL PROSPECTO
+                    setTimeout(() => {
+                        logDebug('📞 [seleccionarProspecto] Iniciando carga de llamados...');
+                        cargarLlamados(p.id_ppl);
+                    }, 100);
+
+                })
+                .catch(err => {
+                    logDebug('❌ [seleccionarProspecto] ERROR:', err.message);
+                    console.error('Error al cargar prospecto:', err);
+                    error('No se pudo cargar el prospecto');
+                });
+        }
         // ===================================================================
         // === 5. MODALES Y SUBMODALES ===
         // ===================================================================
