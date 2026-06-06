@@ -4727,7 +4727,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // === FUNCIÓN: Editar Llamado ===
         function editarLlamado(idLlamado) {
             // Cargar datos del llamado
-            fetch(`/api/get_llamado.php?id=${idLlamado}`)
+            fetch(`/api/get_llamados.php?id=${idLlamado}`)
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success || !data.llamado) {
