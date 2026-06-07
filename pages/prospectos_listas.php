@@ -152,6 +152,7 @@ $comerciales = array_keys($comerciales);
                             <th>Fecha/Hora</th>
                             <th>Tipo Llamado</th>
                             <th>Nota</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-llamados-body">
@@ -179,6 +180,22 @@ $comerciales = array_keys($comerciales);
                             <td>${l.fecha_completa}</td>
                             <td>${l.tipo_llamado}</td>
                             <td>${l.nota}</td>
+                            <td style="text-align: center; padding: 0.4rem;">
+                            <!-- ✏️ Editar -->
+                            <button type="button" 
+                                    onclick="window.location.href='/?page=prospectos&amp;id_ppl=<?= (int)($p['id_ppl'] ?? 0) ?>'"
+                                    title="Editar"
+                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
+                                ✏️
+                            </button>
+                            <!-- 🗑️ Eliminar -->
+                            <button type="button"
+                                    onclick="confirmarEliminacion(<?= $p['id_ppl'] ?>, '<?= addslashes($p['concatenado']) ?>')"
+                                    title="Eliminar"
+                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
+                                🗑️
+                            </button>
+                        </td>
                         </tr>
                     `).join('');
                 })
