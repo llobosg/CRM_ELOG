@@ -299,7 +299,7 @@ document.querySelectorAll('.pill').forEach(btn => {
 
 // Modal para editar llamado
 function abrirModalEditarLlamado(idLlamado) {
-    fetch(`/api/get_llamado.php?id=${idLlamado}`)
+    fetch(`/api/get_llamado.php?id=${idLlamado}`) // ✅ get_llamado.php, no get_llamados.php
         .then(r => r.json())
         .then(data => {
             if (!data.success || !data.llamado) {
