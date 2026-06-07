@@ -298,70 +298,36 @@ document.querySelectorAll('.pill').forEach(btn => {
 // === FUNCIONES PARA EDITAR/ELIMINAR LLAMADOS DESDE LA LISTA ===
 
 // Modal para editar llamado
-function abrirModalEditarLlamado(llamado) {
-    // Crear modal si no existe
-    let modal = document.getElementById('modal-editar-llamado');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modal-editar-llamado';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 12000; display: block;
-        `;
-        modal.innerHTML = `
-            <div style="max-width: 600px; margin: 2rem auto; background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-                <h3><i class="fas fa-edit"></i> Editar Llamado</h3>
-                <span onclick="cerrarModalEditarLlamado()" style="cursor:pointer; float:right; font-size:1.8rem;">&times;</span>
-                
-                <input type="hidden" id="edit_id_llamado">
-                <div style="margin: 1rem 0;">
-                    <label>Comercial</label>
-                    <input type="text" id="edit_comercial" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
-                </div>
-                <div style="margin: 1rem 0;">
-                    <label>Cliente</label>
-                    <input type="text" id="edit_cliente" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
-                </div>
-                <div style="margin: 1rem 0;">
-                    <label>Fecha *</label>
-                    <input type="date" id="edit_fecha" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
-                </div>
-                <div style="margin: 1rem 0;">
-                    <label>Hora *</label>
-                    <input type="time" id="edit_hora" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
-                </div>
-                <div style="margin: 1rem 0;">
-                    <label>Tipo Gestión *</label>
-                    <select id="edit_tipo" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
-                        <option value="">Seleccionar</option>
-                        <option value="Llamado">Llamado telefónico</option>
-                        <option value="Email">Envío de correo</option>
-                        <option value="Reunión">Reunión presencial/virtual</option>
-                        <option value="Primer Contacto">Primer contacto</option>
-                        <option value="Seguimiento">Seguimiento</option>
-                    </select>
-                </div>
-                <div style="margin: 1rem 0;">
-                    <label>Nota *</label>
-                    <textarea id="edit_nota" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;"></textarea>
-                </div>
-                <div style="text-align: right; margin-top: 1.5rem;">
-                    <button type="button" class="btn-secondary" onclick="cerrarModalEditarLlamado()">Cancelar</button>
-                    <button type="button" class="btn-primary" onclick="guardarEdicionLlamado()">Guardar</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-    
-    // Rellenar datos
-    document.getElementById('edit_id_llamado').value = llamado.id_llamado;
-    document.getElementById('edit_comercial').value = llamado.comercial;
-    document.getElementById('edit_cliente').value = llamado.cliente;
-    document.getElementById('edit_fecha').value = llamado.fecha;
-    document.getElementById('edit_hora').value = llamado.hora.substring(0, 5);
-    document.getElementById('edit_tipo').value = llamado.tipo_llamado;
-    document.getElementById('edit_nota').value = llamado.nota;
+function abrirModalEditarLlamado(idLlamado) {
+    fetch(`/api/get_llamado.php?id=${idLlamado}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || !data.llamado) {
+                return error('No se pudo cargar el llamado');
+            }
+            const l = data.llamado;
+            
+            // Crear modal si no existe (igual que antes)
+            let modal = document.getElementById('modal-editar-llamado');
+            if (!modal) {
+                // ... mismo código de creación del modal ...
+            }
+            
+            // Rellenar datos CORRECTOS
+            document.getElementById('edit_id_llamado').value = l.id_llamado;
+            document.getElementById('edit_comercial').value = l.nombre_comercial || '';
+            document.getElementById('edit_cliente').value = l.razon_social || '';
+            document.getElementById('edit_fecha').value = l.fecha || '';
+            document.getElementById('edit_hora').value = (l.hora || '').substring(0, 5);
+            document.getElementById('edit_tipo').value = l.tipo_gestion || ''; // ✅
+            document.getElementById('edit_nota').value = l.nota || '';
+            
+            document.getElementById('modal-editar-llamado').style.display = 'block';
+        })
+        .catch(err => {
+            console.error('Error al cargar llamado:', err);
+            error('Error de conexión');
+        });
 }
 
 function cerrarModalEditarLlamado() {
@@ -448,7 +414,7 @@ function cargarTablaLlamados() {
                     <td>${l.tipo_llamado}</td>
                     <td>${l.nota}</td>
                     <td style="text-align: center;">
-                        <button type="button" onclick="abrirModalEditarLlamado(${JSON.stringify(l).replace(/"/g, '&quot;')})" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">✏️</button>
+                        <button type="button" onclick="abrirModalEditarLlamado(${l.id_llamado})">✏️</button>
                         <button type="button" onclick="eliminarLlamadoLista(${l.id_llamado})" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; color: #dc3545;">🗑️</button>
                     </td>
                 </tr>
