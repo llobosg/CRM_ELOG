@@ -117,7 +117,12 @@ $comerciales = array_keys($comerciales);
     </div>
 
     <div class="filtro-comercial-container">
-        <span class="filtro-label">Filtrar por comercial:</span>
+        <span class="filtro-label">Filtros:</span>
+        <!-- Filtros adicionales -->
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <a href="?page=prospectos_listas" class="btn-secondary">📋 Prospectos</a>
+            <a href="?page=prospectos_listas&filtro=llamados" class="btn-primary">📞 Llamados</a>
+        </div>
 
         <button class="pill active" data-comercial="all">Todos</button>
 
@@ -129,6 +134,65 @@ $comerciales = array_keys($comerciales);
     </div>
 
     <div class="card">
+    <?php
+        $filtro = $_GET['filtro'] ?? 'prospectos';
+
+        if ($filtro === 'llamados'): ?>
+            
+            <h3 style="margin: 1.5rem 0 1rem 0; color: #3a4f63; font-size: 1.1rem;">
+                <i class="fas fa-phone-alt"></i> Últimos Llamados Comerciales
+            </h3>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Comercial</th>
+                            <th>Cliente</th>
+                            <th>Fecha/Hora</th>
+                            <th>Tipo Llamado</th>
+                            <th>Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-llamados-body">
+                        <!-- Los datos se cargarán vía JavaScript -->
+                        <tr><td colspan="5" style="text-align: center;">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <script>
+            // Cargar llamados al iniciar
+            fetch('/api/get_todos_llamados.php')
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById('tabla-llamados-body');
+                    if (!data.success || !data.llamados?.length) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
+                        return;
+                    }
+                    
+                    tbody.innerHTML = data.llamados.map(l => `
+                        <tr>
+                            <td>${l.comercial}</td>
+                            <td>${l.cliente}</td>
+                            <td>${l.fecha_completa}</td>
+                            <td>${l.tipo_llamado}</td>
+                            <td>${l.nota}</td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(err => {
+                    document.getElementById('tabla-llamados-body').innerHTML = 
+                        '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar llamados</td></tr>';
+                });
+        </script>
+
+    <?php else: ?>
+        <!-- Tabla original de prospectos -->
+        <h3 style="margin: 1.5rem 0 1rem 0; color: #3a4f63; font-size: 1.1rem;">
+            <i class="fas fa-list"></i> Últimos Prospectos
+        </h3>
         <div class="table-container">
             <table class="data-table">
                 <thead>
@@ -184,6 +248,7 @@ $comerciales = array_keys($comerciales);
                 </tbody>
             </table>
         </div>
+    <?php endif; ?>
     </div>
 </div>
 </body>
