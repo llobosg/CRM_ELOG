@@ -1270,7 +1270,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             });
         }
 
-        // === FUNCIÓN: Guardar Llamado ===
         function guardarLlamado() {
             const idLlamado = document.getElementById('llamado_id').value;
             const idProspecto = document.getElementById('llamado_id_prospecto').value;
@@ -1296,8 +1295,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
             };
             
             // Determinar si es creación o actualización
-            const url = idLlamado ? '/api/editar_llamado.php' : '/api/crear_llamado.php';
-            if (idLlamado) data.id_llamado = idLlamado;
+            let url = '/api/crear_llamado.php';
+            if (idLlamado) {
+                url = '/api/editar_llamado.php';
+                data.id_llamado = idLlamado;
+            }
             
             fetch(url, {
                 method: 'POST',
@@ -1312,6 +1314,33 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     cargarLlamados(idProspecto);
                 } else {
                     error(res.message || 'Error al guardar el llamado');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                error('No se pudo conectar con el servidor');
+            });
+        }
+
+        // === FUNCIÓN: Eliminar Llamado ===
+        function eliminarLlamado(idLlamado) {
+            if (!confirm('¿Está seguro de eliminar este llamado? Esta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            fetch('/api/eliminar_llamado.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_llamado: idLlamado })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    exito('Llamado eliminado correctamente');
+                    const idProspecto = document.getElementById('id_ppl')?.value;
+                    cargarLlamados(idProspecto);
+                } else {
+                    error(data.message || 'Error al eliminar el llamado');
                 }
             })
             .catch(err => {
@@ -4730,7 +4759,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
         // === FUNCIÓN: Editar Llamado ===
         function editarLlamado(idLlamado) {
             // Cargar datos del llamado específico
-            fetch(`/api/get_llamados.php?id=${idLlamado}`)
+            fetch(`/api/get_llamado.php?id=${idLlamado}`)
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success || !data.llamado) {
