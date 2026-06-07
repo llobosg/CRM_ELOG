@@ -179,22 +179,10 @@ $comerciales = array_keys($comerciales);
                             <td>${l.fecha_completa}</td>
                             <td>${l.tipo_llamado}</td>
                             <td>${l.nota}</td>
-                            <td style="text-align: center; padding: 0.4rem;">
-                            <!-- ✏️ Editar -->
-                            <button type="button" 
-                                    onclick="window.location.href='/?page=prospectos&amp;id_ppl=<?= (int)($p['id_ppl'] ?? 0) ?>'"
-                                    title="Editar"
-                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
-                                ✏️
-                            </button>
-                            <!-- 🗑️ Eliminar -->
-                            <button type="button"
-                                    onclick="confirmarEliminacion(<?= $p['id_ppl'] ?>, '<?= addslashes($p['concatenado']) ?>')"
-                                    title="Eliminar"
-                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
-                                🗑️
-                            </button>
-                        </td>
+                            <td style="text-align: center;">
+                                <button type="button" onclick="abrirModalEditarLlamado(${l.id_llamado})">✏️</button>
+                                <button type="button" onclick="eliminarLlamadoLista(${l.id_llamado})">🗑️</button>
+                            </td>
                         </tr>
                     `).join('');
                 })
@@ -299,7 +287,12 @@ document.querySelectorAll('.pill').forEach(btn => {
 
 // Modal para editar llamado
 function abrirModalEditarLlamado(idLlamado) {
-    fetch(`/api/get_llamado.php?id=${idLlamado}`) // ✅ get_llamado.php, no get_llamados.php
+    // Validar que sea un número
+    if (!idLlamado || isNaN(idLlamado)) {
+        return error('ID de llamado inválido');
+    }
+    
+    fetch(`/api/get_llamado.php?id=${idLlamado}`)
         .then(r => r.json())
         .then(data => {
             if (!data.success || !data.llamado) {

@@ -4,7 +4,6 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 
 try {
-    // Solo comerciales ven sus propios llamados
     $filtro_sql = '';
     $params = [];
     
@@ -15,6 +14,7 @@ try {
     
     $stmt = $pdo->prepare("
         SELECT 
+            l.id_llamado,          -- ✅ Agregar ID
             l.nombre_comercial AS comercial,
             l.razon_social AS cliente,
             CONCAT(l.fecha, ' ', l.hora) AS fecha_completa,
