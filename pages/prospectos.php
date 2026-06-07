@@ -183,11 +183,9 @@ require_once __DIR__ . '/../includes/auth_check.php';
         </div>
 
         <!-- Botón Exportar Excel -->
-        <div style="text-align: right; margin-top: 1rem;">
-            <button type="button" class="btn-secondary" onclick="exportarLlamadosExcel()">
-                <i class="fas fa-file-excel"></i> Exportar a Excel
-            </button>
-        </div>
+        <button type="button" class="btn-secondary" onclick="exportarLlamadosExcel()">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </button>
     </div>
 
     <!-- Submodal: Cubicador -->
@@ -4789,5 +4787,15 @@ require_once __DIR__ . '/../includes/auth_check.php';
                     error('Error de conexión');
                 });
         }
+        // === FUNCIÓN: Exportar Llamados a Excel ===
+function exportarLlamadosExcel() {
+    const idProspecto = document.getElementById('id_ppl')?.value;
+    if (!idProspecto || idProspecto === '0') {
+        return error('No hay un prospecto seleccionado para exportar');
+    }
+    
+    // Redirigir a la API de exportación
+    window.location.href = `/api/exportar_llamados_excel.php?id_prospecto=${encodeURIComponent(idProspecto)}`;
+}
     </script>
 </form>
