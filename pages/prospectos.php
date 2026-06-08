@@ -181,11 +181,6 @@ require_once __DIR__ . '/../includes/auth_check.php';
             </table>
         </div>
         </div>
-
-        <!-- Botón Exportar Excel -->
-        <button type="button" class="btn-secondary" onclick="exportarLlamadosExcel()">
-            <i class="fas fa-file-excel"></i> Exportar a Excel
-        </button>
     </div>
 
     <!-- Submodal: Cubicador -->
