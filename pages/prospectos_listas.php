@@ -10,6 +10,7 @@ $prospectos = [];
 if (php_sapi_name() !== 'cli') {
     try {
         require_once __DIR__ . '/../config.php';
+        require_once __DIR__ . '/../vendor/autoload.php';
         // 🔍 Log 1: Verificar conexión
         error_log("✅ [DEBUG] Conexión a DB establecida.");
 

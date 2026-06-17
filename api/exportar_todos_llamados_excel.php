@@ -2,67 +2,58 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 
-ob_clean();
-header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-header('Content-Disposition: attachment; filename="llamados_' . date('Ymd_His') . '.xlsx"');
+// Encabezados para CSV en UTF-8 (compatible con Excel)
+header('Content-Type: text/csv; charset=utf-8');
+header('Content-Disposition: attachment; filename="llamados_' . date('Ymd_His') . '.csv"');
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+// Salida UTF-8 BOM para Excel (opcional pero recomendado)
+echo "\xEF\xBB\xBF";
 
-try {
-    $spreadsheet = new Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-    
-    // Encabezados: Comercial, Cliente, Fecha/Hora, Tipo Llamado, Nota
-    $headers = ['Comercial', 'Cliente', 'Fecha/Hora', 'Tipo Llamado', 'Nota'];
-    $sheet->fromArray([$headers], null, 'A1');
+$output = fopen('php://output', 'w');
 
-    $sql = "
-        SELECT 
-            nombre_comercial AS comercial,
-            razon_social AS cliente,
-            CONCAT(fecha, ' ', hora) AS fecha_hora,
-            tipo_gestion AS tipo_llamado,
-            nota
-        FROM llamados WHERE 1=1
-    ";
-    $params = [];
-    
-    if ($_SESSION['rol'] === 'comercial') {
-        $sql .= " AND id_comercial = ?";
-        $params[] = $_SESSION['user_id'];
-    }
-    
-    $sql .= " ORDER BY fecha DESC, hora DESC";
-    
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Escribir encabezados
+fputcsv($output, [
+    'Comercial',
+    'Cliente',
+    'Fecha/Hora',
+    'Tipo Llamado',
+    'Nota'
+], ';'); // Usamos ';' como delimitador (Excel en español lo espera así)
 
-    $rowIndex = 2;
-    foreach ($rows as $r) {
-        $sheet->setCellValue("A{$rowIndex}", $r['comercial'] ?? '');
-        $sheet->setCellValue("B{$rowIndex}", $r['cliente'] ?? '');
-        $sheet->setCellValue("C{$rowIndex}", $r['fecha_hora'] ?? '');
-        $sheet->setCellValue("D{$rowIndex}", $r['tipo_llamado'] ?? '');
-        $sheet->setCellValue("E{$rowIndex}", $r['nota'] ?? '');
-        $rowIndex++;
-    }
+// Consulta segura
+$sql = "
+    SELECT 
+        l.nombre_comercial AS comercial,
+        l.razon_social AS cliente,
+        CONCAT(l.fecha, ' ', l.hora) AS fecha_hora,
+        l.tipo_gestion AS tipo_llamado,
+        l.nota
+    FROM llamados l
+    WHERE 1=1
+";
+$params = [];
 
-    $sheet->getColumnDimension('A')->setWidth(20);
-    $sheet->getColumnDimension('B')->setWidth(30);
-    $sheet->getColumnDimension('C')->setWidth(20);
-    $sheet->getColumnDimension('D')->setWidth(20);
-    $sheet->getColumnDimension('E')->setWidth(50);
-
-    $writer = new Xlsx($spreadsheet);
-    $writer->save('php://output');
-    exit;
-
-} catch (Exception $e) {
-    error_log("Error exportar llamados: " . $e->getMessage());
-    http_response_code(500);
-    echo "Error al generar el archivo Excel.";
-    exit;
+if ($_SESSION['rol'] === 'comercial') {
+    $sql .= " AND l.id_comercial = ?";
+    $params[] = $_SESSION['user_id'];
 }
+
+$sql .= " ORDER BY l.fecha DESC, l.hora DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+
+// Escribir filas
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    fputcsv($output, [
+        $row['comercial'] ?? '',
+        $row['cliente'] ?? '',
+        $row['fecha_hora'] ?? '',
+        $row['tipo_llamado'] ?? '',
+        $row['nota'] ?? ''
+    ], ';');
+}
+
+fclose($output);
+exit;
 ?>

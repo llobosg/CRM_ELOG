@@ -3,7 +3,7 @@
         'name' => 'elog/crm',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'b91ec5631612717d4f95e48e9f8e241f5e7e319d',
+        'reference' => 'b80a1162a8a9a7d79041bef3a060ca7dd8e77d45',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'elog/crm' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'b91ec5631612717d4f95e48e9f8e241f5e7e319d',
+            'reference' => 'b80a1162a8a9a7d79041bef3a060ca7dd8e77d45',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

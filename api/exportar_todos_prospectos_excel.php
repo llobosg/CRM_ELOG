@@ -1,24 +1,24 @@
 <?php
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
-
-// Evitar caché y salida de errores
-ob_clean();
-header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-header('Content-Disposition: attachment; filename="prospectos_' . date('Ymd_His') . '.xlsx"');
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+if (ob_get_level()) {
+    ob_end_clean();
+}
+
+header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+header('Content-Disposition: attachment; filename="prospectos_' . date('Ymd_His') . '.xlsx"');
 
 try {
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     
-    // Encabezados solicitados: Razón Social, RUT, País, Estado
     $headers = ['Razón Social', 'RUT', 'País', 'Estado'];
     $sheet->fromArray([$headers], null, 'A1');
 
-    // Consulta segura (solo columnas existentes)
     $sql = "SELECT razon_social, rut_empresa, pais, estado FROM prospectos WHERE 1=1";
     $params = [];
     
@@ -42,7 +42,6 @@ try {
         $rowIndex++;
     }
 
-    // Ajustar ancho
     $sheet->getColumnDimension('A')->setWidth(35);
     $sheet->getColumnDimension('B')->setWidth(15);
     $sheet->getColumnDimension('C')->setWidth(20);
@@ -54,7 +53,6 @@ try {
 
 } catch (Exception $e) {
     error_log("Error exportar prospectos: " . $e->getMessage());
-    http_response_code(500);
     echo "Error al generar el archivo Excel.";
     exit;
 }
