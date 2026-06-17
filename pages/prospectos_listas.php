@@ -115,6 +115,10 @@ $comerciales = array_keys($comerciales);
         <a href="/?page=prospectos" class="btn-primary" style="text-decoration: none; padding: 0.4rem 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
             <i class="fas fa-plus"></i> Crear Prospecto
         </a>
+        <!-- ✅ BOTÓN EXPORTAR A EXCEL -->
+        <button type="button" class="btn-primary" onclick="exportarExcel()">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </button>
     </div>
 
     <div class="filtro-comercial-container">
@@ -132,11 +136,6 @@ $comerciales = array_keys($comerciales);
                 <?= htmlspecialchars($c) ?>
             </button>
         <?php endforeach; ?>
-
-         <!-- ✅ BOTÓN EXPORTAR A EXCEL -->
-        <button type="button" class="btn-primary" onclick="exportarExcel()">
-            <i class="fas fa-file-excel"></i> Exportar a Excel
-        </button>
     </div>
 
     <div class="card">
