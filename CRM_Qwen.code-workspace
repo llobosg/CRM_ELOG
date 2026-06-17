@@ -1,0 +1,59 @@
+{
+	"folders": [
+		{
+			"name": "CRM_Qwen",
+			"path": "."
+		},
+		{
+			"name": "Cancha",
+			"path": "../Cancha"
+		},
+		{
+			"name": "medicalot",
+			"path": "../medicalot"
+		},
+		{
+			"name": "CampeonatoGOMS2026",
+			"path": "../CampeonatoGOMS2026"
+		},
+		{
+			"name": "GestionAFV",
+			"path": "../GestionAFV"
+		},
+		{
+			"name": "SaborYa",
+			"path": "../SaborYa"
+		},
+		{
+			"name": "OTEC",
+			"path": "../OTEC"
+		},
+		{
+			"name": "VTLG",
+			"path": "../VTLG"
+		},
+		{
+			"name": "SIGEF",
+			"path": "../SIGEF"
+		},
+		{
+			"name": "FlightTrackerPro",
+			"path": "../FlightTrackerPro"
+		},
+		{
+			"name": "app_vibraciones",
+			"path": "../app_vibraciones"
+		},
+		{
+			"name": "Polla_FIFA2026",
+			"path": "../Polla_FIFA2026"
+		},
+		{
+			"name": "comandos",
+			"path": "../comandos"
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}

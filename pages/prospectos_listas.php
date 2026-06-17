@@ -134,126 +134,130 @@ $comerciales = array_keys($comerciales);
     </div>
 
     <div class="card">
-    <?php
-        $filtro = $_GET['filtro'] ?? 'prospectos';
+        <?php
+            $filtro = $_GET['filtro'] ?? 'prospectos';
 
-        if ($filtro === 'llamados'): ?>
-            
+            if ($filtro === 'llamados'): ?>
+                
+                <h3 style="margin: 1.5rem 0 1rem 0; color: #3a4f63; font-size: 1.1rem;">
+                    <i class="fas fa-phone-alt"></i> Últimos Llamados Comerciales
+                </h3>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Comercial</th>
+                                <th>Cliente</th>
+                                <th>Fecha/Hora</th>
+                                <th>Tipo Llamado</th>
+                                <th>Nota</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-llamados-body">
+                            <tr><td colspan="6" style="text-align: center;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <script>
+                // Cargar llamados al iniciar
+                fetch('/api/get_todos_llamados.php')
+                    .then(r => r.json())
+                    .then(data => {
+                        const tbody = document.getElementById('tabla-llamados-body');
+                        if (!data.success || !data.llamados?.length) {
+                            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
+                            return;
+                        }
+                        
+                        tbody.innerHTML = data.llamados.map(l => `
+                            <tr>
+                                <td>${l.comercial}</td>
+                                <td>${l.cliente}</td>
+                                <td>${l.fecha_completa}</td>
+                                <td>${l.tipo_llamado}</td>
+                                <td>${l.nota}</td>
+                                <td style="text-align: center;">
+                                    <button type="button" onclick="abrirModalEditarLlamado(${l.id_llamado})">✏️</button>
+                                    <button type="button" onclick="eliminarLlamadoLista(${l.id_llamado})">🗑️</button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    })
+                    .catch(err => {
+                        document.getElementById('tabla-llamados-body').innerHTML = 
+                            '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar llamados</td></tr>';
+                    });
+            </script>
+
+        <?php else: ?>
+            <!-- Tabla original de prospectos -->
             <h3 style="margin: 1.5rem 0 1rem 0; color: #3a4f63; font-size: 1.1rem;">
-                <i class="fas fa-phone-alt"></i> Últimos Llamados Comerciales
+                <i class="fas fa-list"></i> Últimos Prospectos
             </h3>
-
             <div class="table-container">
-                <table>
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Comercial</th>
-                            <th>Cliente</th>
-                            <th>Fecha/Hora</th>
-                            <th>Tipo Llamado</th>
-                            <th>Nota</th>
-                            <th>Acción</th>
+                            <th style="width: 12%;">Comercial</th>
+                            <th style="width: 30%;">Cliente</th>      <!-- +10% -->
+                            <th style="width: 9%;">Fecha</th>        <!-- +10% -->
+                            <th style="width: 11%;">Concatenado</th>
+                            <th style="width: 16%;">Servicio</th>
+                            <th style="width: 7%;">Costo</th>
+                            <th style="width: 7%;">Venta</th>
+                            <th style="width: 7%;">GDC</th>
+                            <th style="width: 7%;">GDV</th>
+                            <th style="width: 7%;">Acción</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-llamados-body">
-                        <tr><td colspan="6" style="text-align: center;">Cargando...</td></tr>
+                    <tbody>
+                    <?php if (empty($prospectos)): ?>
+                        <tr>
+                            <td colspan="12" style="text-align: center;">No hay prospectos registrados.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($prospectos as $p): ?>
+                        <tr data-comercial="<?= htmlspecialchars($p['comercial'] ?? '') ?>">
+                            <td><?= htmlspecialchars($p['comercial'] ?? '–') ?></td>
+                            <td><?= htmlspecialchars($p['cliente_nombre'] ?? '–') ?></td>
+                            <td><?= htmlspecialchars($p['fecha'] ? date('d-m-Y', strtotime($p['fecha'])) : '–') ?></td>
+                            <td><?= htmlspecialchars($p['concatenado'] ?? '–') ?></td>
+                            <td><?= htmlspecialchars($p['servicio'] ?? '–') ?></td>
+                            <td><?= number_format((float)$p['total_costo'], 0, ',', '.') ?></td>
+                            <td><?= number_format((float)$p['total_venta'], 0, ',', '.') ?></td>
+                            <td><?= number_format((float)$p['gdc'], 0, ',', '.') ?></td>
+                            <td><?= number_format((float)$p['gdv'], 0, ',', '.') ?></td>
+                            <td style="text-align: center; padding: 0.4rem;">
+                                <!-- ✏️ Editar -->
+                                <button type="button" 
+                                        onclick="window.location.href='/?page=prospectos&amp;id_ppl=<?= (int)($p['id_ppl'] ?? 0) ?>'"
+                                        title="Editar"
+                                        style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
+                                    ✏️
+                                </button>
+                                <!-- 🗑️ Eliminar -->
+                                <button type="button"
+                                        onclick="confirmarEliminacion(<?= $p['id_ppl'] ?>, '<?= addslashes($p['concatenado']) ?>')"
+                                        title="Eliminar"
+                                        style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
+                                    🗑️
+                                </button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                     </tbody>
                 </table>
             </div>
-
-            <script>
-            // Cargar llamados al iniciar
-            fetch('/api/get_todos_llamados.php')
-                .then(r => r.json())
-                .then(data => {
-                    const tbody = document.getElementById('tabla-llamados-body');
-                    if (!data.success || !data.llamados?.length) {
-                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay llamados registrados</td></tr>';
-                        return;
-                    }
-                    
-                    tbody.innerHTML = data.llamados.map(l => `
-                        <tr>
-                            <td>${l.comercial}</td>
-                            <td>${l.cliente}</td>
-                            <td>${l.fecha_completa}</td>
-                            <td>${l.tipo_llamado}</td>
-                            <td>${l.nota}</td>
-                            <td style="text-align: center;">
-                                <button type="button" onclick="abrirModalEditarLlamado(${l.id_llamado})">✏️</button>
-                                <button type="button" onclick="eliminarLlamadoLista(${l.id_llamado})">🗑️</button>
-                            </td>
-                        </tr>
-                    `).join('');
-                })
-                .catch(err => {
-                    document.getElementById('tabla-llamados-body').innerHTML = 
-                        '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar llamados</td></tr>';
-                });
-        </script>
-
-    <?php else: ?>
-        <!-- Tabla original de prospectos -->
-        <h3 style="margin: 1.5rem 0 1rem 0; color: #3a4f63; font-size: 1.1rem;">
-            <i class="fas fa-list"></i> Últimos Prospectos
-        </h3>
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width: 12%;">Comercial</th>
-                        <th style="width: 30%;">Cliente</th>      <!-- +10% -->
-                        <th style="width: 9%;">Fecha</th>        <!-- +10% -->
-                        <th style="width: 11%;">Concatenado</th>
-                        <th style="width: 16%;">Servicio</th>
-                        <th style="width: 7%;">Costo</th>
-                        <th style="width: 7%;">Venta</th>
-                        <th style="width: 7%;">GDC</th>
-                        <th style="width: 7%;">GDV</th>
-                        <th style="width: 7%;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php if (empty($prospectos)): ?>
-                    <tr>
-                        <td colspan="12" style="text-align: center;">No hay prospectos registrados.</td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($prospectos as $p): ?>
-                    <tr data-comercial="<?= htmlspecialchars($p['comercial'] ?? '') ?>">
-                        <td><?= htmlspecialchars($p['comercial'] ?? '–') ?></td>
-                        <td><?= htmlspecialchars($p['cliente_nombre'] ?? '–') ?></td>
-                        <td><?= htmlspecialchars($p['fecha'] ? date('d-m-Y', strtotime($p['fecha'])) : '–') ?></td>
-                        <td><?= htmlspecialchars($p['concatenado'] ?? '–') ?></td>
-                        <td><?= htmlspecialchars($p['servicio'] ?? '–') ?></td>
-                        <td><?= number_format((float)$p['total_costo'], 0, ',', '.') ?></td>
-                        <td><?= number_format((float)$p['total_venta'], 0, ',', '.') ?></td>
-                        <td><?= number_format((float)$p['gdc'], 0, ',', '.') ?></td>
-                        <td><?= number_format((float)$p['gdv'], 0, ',', '.') ?></td>
-                        <td style="text-align: center; padding: 0.4rem;">
-                            <!-- ✏️ Editar -->
-                            <button type="button" 
-                                    onclick="window.location.href='/?page=prospectos&amp;id_ppl=<?= (int)($p['id_ppl'] ?? 0) ?>'"
-                                    title="Editar"
-                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
-                                ✏️
-                            </button>
-                            <!-- 🗑️ Eliminar -->
-                            <button type="button"
-                                    onclick="confirmarEliminacion(<?= $p['id_ppl'] ?>, '<?= addslashes($p['concatenado']) ?>')"
-                                    title="Eliminar"
-                                    style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0;">
-                                🗑️
-                            </button>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    <?php endif; ?>
+        <?php endif; ?>
     </div>
+    <!-- Botón Exportar dinámico -->
+    <button type="button" class="btn-primary" onclick="exportarExcel()">
+        <i class="fas fa-file-excel"></i> Exportar a Excel
+    </button>
 </div>
 </body>
 </html>
@@ -471,5 +475,17 @@ function cargarTablaLlamados() {
 // Cargar llamados al iniciar
 if (document.getElementById('tabla-llamados-body')) {
     cargarTablaLlamados();
+}
+function exportarExcel() {
+    const filtro = new URLSearchParams(window.location.search).get('filtro');
+    let url;
+    
+    if (filtro === 'llamados') {
+        url = '/api/exportar_llamados_excel.php';
+    } else {
+        url = '/api/exportar_prospectos_excel.php';
+    }
+    
+    window.location.href = url;
 }
 </script>
