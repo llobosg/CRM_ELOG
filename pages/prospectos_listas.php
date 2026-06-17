@@ -124,10 +124,6 @@ $comerciales = array_keys($comerciales);
             <a href="?page=prospectos_listas" class="btn-secondary">📋 Prospectos</a>
             <a href="?page=prospectos_listas&filtro=llamados" class="btn-primary">📞 Llamados</a>
         </div>
-        <!-- ✅ BOTÓN EXPORTAR A EXCEL -->
-        <button type="button" class="btn-primary" onclick="exportarExcel()">
-            <i class="fas fa-file-excel"></i> Exportar a Excel
-        </button>
 
         <button class="pill active" data-comercial="all">Todos</button>
 
@@ -136,6 +132,11 @@ $comerciales = array_keys($comerciales);
                 <?= htmlspecialchars($c) ?>
             </button>
         <?php endforeach; ?>
+
+         <!-- ✅ BOTÓN EXPORTAR A EXCEL -->
+        <button type="button" class="btn-primary" onclick="exportarExcel()">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </button>
     </div>
 
     <div class="card">
