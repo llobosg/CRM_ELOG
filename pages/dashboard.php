@@ -225,13 +225,6 @@
             </table>
         </div>
 
-        <!-- Botón Exportar Excel -->
-        <div style="text-align: right; margin-top: 2rem;">
-            <a href="exportar_excel.php" class="btn-primary">
-                <i class="fas fa-file-excel"></i> Exportar a Excel
-            </a>
-        </div>
-
     </main>
 
     <script>
