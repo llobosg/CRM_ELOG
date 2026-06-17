@@ -123,6 +123,10 @@ $comerciales = array_keys($comerciales);
             <a href="?page=prospectos_listas" class="btn-secondary">📋 Prospectos</a>
             <a href="?page=prospectos_listas&filtro=llamados" class="btn-primary">📞 Llamados</a>
         </div>
+        <!-- ✅ BOTÓN EXPORTAR A EXCEL -->
+        <button type="button" class="btn-primary" onclick="exportarExcel()">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </button>
 
         <button class="pill active" data-comercial="all">Todos</button>
 
@@ -254,10 +258,6 @@ $comerciales = array_keys($comerciales);
             </div>
         <?php endif; ?>
     </div>
-    <!-- Botón Exportar dinámico -->
-    <button type="button" class="btn-primary" onclick="exportarExcel()">
-        <i class="fas fa-file-excel"></i> Exportar a Excel
-    </button>
 </div>
 </body>
 </html>
@@ -476,16 +476,20 @@ function cargarTablaLlamados() {
 if (document.getElementById('tabla-llamados-body')) {
     cargarTablaLlamados();
 }
+
+// === FUNCIÓN: Exportar según filtro activo ===
 function exportarExcel() {
-    const filtro = new URLSearchParams(window.location.search).get('filtro');
+    const urlParams = new URLSearchParams(window.location.search);
+    const filtro = urlParams.get('filtro');
+
     let url;
-    
     if (filtro === 'llamados') {
-        url = '/api/exportar_llamados_excel.php';
+        url = '/api/exportar_todos_llamados_excel.php';
     } else {
-        url = '/api/exportar_prospectos_excel.php';
+        url = '/api/exportar_todos_prospectos_excel.php';
     }
-    
+
+    // Redirigir para descargar el archivo Excel
     window.location.href = url;
 }
 </script>
